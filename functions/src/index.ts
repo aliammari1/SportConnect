@@ -3845,7 +3845,7 @@ export const createPaymentIntent = onCall(
 export const stripeWebhook = onRequest(
   // FIX: Webhooks do NOT need cors:true — they are called by Stripe, not by browsers.
   // Enabling CORS on a webhook can expose it unnecessarily.
-  { secrets: [stripeSecretKey, stripeWebhookSecret] },
+  { secrets: [stripeSecretKey, stripeWebhookSecret], region: "us-central1" },
   async (req, res) => {
     const stripe = getStripeClient(stripeSecretKey.value().trim());
     const sig = req.headers["stripe-signature"];
@@ -6011,6 +6011,7 @@ export const requestAccountDeletion = onRequest(
   {
     secrets: [resendApiKey, supportFromEmail, supportInboxEmail],
     cors: true,
+    region: "us-central1",
   },
   async (req, res) => {
     if (req.method !== "POST") {
