@@ -3662,18 +3662,19 @@ export const createPaymentIntent = onCall(
         "Ride is no longer available for payment",
       );
     }
-    // FIX CF-3: Also verify the booking is still pending/accepted (not cancelled)
+    // Payment happens only after driver acceptance; requesting a seat and
+    // paying for an accepted seat are separate domain states.
     const bookingsSnap = await db
       .collection("bookings")
       .where("rideId", "==", rideId)
       .where("passengerId", "==", riderId)
-      .where("status", "in", ["pending", "accepted"])
+      .where("status", "==", "accepted")
       .limit(1)
       .get();
     if (bookingsSnap.empty) {
       throw new HttpsError(
         "failed-precondition",
-        "No active booking found for this ride",
+        "No accepted booking found for this ride",
       );
     }
     const bookingId = bookingsSnap.docs[0].id;
@@ -3766,10 +3767,17 @@ export const createPaymentIntent = onCall(
         amount: amountInCents,
         currency: paymentCurrency,
         automatic_payment_methods: { enabled: true },
-        application_fee_amount: platformFee,
-        transfer_data: { destination: driverStripeAccountId },
         description: description || `SportConnect ride payment - ${rideId}`,
-        metadata: { rideId, driverId, riderId, bookingId },
+        metadata: {
+          rideId,
+          driverId,
+          riderId,
+          bookingId,
+          moneyFlow: "platform_held",
+          driverStripeAccountId,
+          platformFeeInCents: String(platformFee),
+          driverAmountInCents: String(driverAmount),
+        },
       },
       { idempotencyKey },
     );
@@ -3794,6 +3802,11 @@ export const createPaymentIntent = onCall(
         platformFeeInCents: platformFee,
         driverEarnings: driverAmount / 100,
         driverEarningsInCents: driverAmount,
+        moneyFlow: "platform_held",
+        payoutStatus: "pending_completion",
+        transferStatus: "not_transferred",
+        earnedAt: null,
+        transferredAt: null,
         stripeFee: 0,
         stripeFeeInCents: 0,
         seatsBooked,

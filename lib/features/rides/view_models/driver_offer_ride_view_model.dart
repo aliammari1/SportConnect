@@ -225,6 +225,7 @@ class DriverOfferRideFormState {
       hasCompleteRoute &&
       hasCompleteDateTime &&
       selectedVehicleId != null &&
+      selectedEvent != null &&
       hasValidSeats &&
       hasValidPrice &&
       hasValidRecurring &&
@@ -260,6 +261,9 @@ class DriverOfferRideFormState {
     }
     if (selectedVehicleId == null) {
       return 'Please select a vehicle in Step 2';
+    }
+    if (selectedEvent == null) {
+      return 'Please select an event for this ride';
     }
     if (!hasValidSeats) {
       return 'Number of seats must be between 1 and 8 — go back to Step 2';
@@ -582,10 +586,12 @@ class DriverOfferRideViewModel extends _$DriverOfferRideViewModel {
     try {
       final departure = state.fullDepartureDateTime;
 
-      // Additional event-specific validation
-      if (state.eventId != null) {
-        // We'd need the event end time here, but for now we'll trust
-        // that the caller has already validated this at the UI level
+      if (state.selectedEvent == null || state.eventId == null) {
+        state = state.copyWith(
+          isSubmitting: false,
+          submissionError: 'Please select an event for this ride',
+        );
+        return null;
       }
 
       // Resolve vehicle info for denormalization on the ride document

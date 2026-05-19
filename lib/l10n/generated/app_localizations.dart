@@ -7037,7 +7037,7 @@ abstract class AppLocalizations {
   /// No description provided for @locationNotEnabledDescription.
   ///
   /// In en, this message translates to:
-  /// **'You declined location access. Enable it to find rides near you.'**
+  /// **'Location access is off. You can still browse rides by city.'**
   String get locationNotEnabledDescription;
 
   /// No description provided for @browseByCity.
@@ -7055,7 +7055,7 @@ abstract class AppLocalizations {
   /// No description provided for @locationPermissionBlockedDescription.
   ///
   /// In en, this message translates to:
-  /// **'Location permission is permanently denied. Please enable it in your device settings.'**
+  /// **'Location access is off in device settings. Features that need your current location are unavailable until changed in Settings.'**
   String get locationPermissionBlockedDescription;
 
   /// No description provided for @locationServicesOff.
@@ -7067,7 +7067,7 @@ abstract class AppLocalizations {
   /// No description provided for @locationServicesOffDescription.
   ///
   /// In en, this message translates to:
-  /// **'Your device\'s location services are turned off. Please enable them in settings.'**
+  /// **'Your device\'s location services are turned off. Features that need your current location are unavailable until changed in Settings.'**
   String get locationServicesOffDescription;
 
   /// No description provided for @openLocationSettings.

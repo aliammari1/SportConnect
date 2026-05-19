@@ -15,6 +15,8 @@ import 'package:sport_connect/core/models/location/location_point.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/custom_button.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
@@ -45,6 +47,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
       ref.read(rideSearchResultsProvider);
 
   final _scrollController = ScrollController();
+  String? _selectedRideId;
 
   @override
   void initState() {
@@ -109,40 +112,40 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
           extraLarge: 1520,
         ),
         child: RefreshIndicator.adaptive(
-        onRefresh: _handlePullToRefresh,
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          slivers: [
-            _buildSliverAppBar(),
-
-            MultiSliver(
-              children: [
-                SliverToBoxAdapter(child: _buildSearchCard()),
-                SliverToBoxAdapter(child: _buildQuickDateSelection()),
-                if (_hasActiveFilters)
-                  SliverToBoxAdapter(child: _buildActiveFilters()),
-              ],
+          onRefresh: _handlePullToRefresh,
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
             ),
+            slivers: [
+              _buildSliverAppBar(),
 
-            if (!_resultsState.hasSearched &&
-                !_resultsState.isLoading &&
-                _resultsState.visibleResults.isEmpty)
-              ..._buildDiscoverySection()
-            else
               MultiSliver(
                 children: [
-                  SliverToBoxAdapter(child: _buildResultsHeader()),
-                  _buildResultsList(),
+                  SliverToBoxAdapter(child: _buildSearchCard()),
+                  SliverToBoxAdapter(child: _buildQuickDateSelection()),
+                  if (_hasActiveFilters)
+                    SliverToBoxAdapter(child: _buildActiveFilters()),
                 ],
               ),
 
-            SliverToBoxAdapter(child: SizedBox(height: 100.h)),
-          ],
+              if (!_resultsState.hasSearched &&
+                  !_resultsState.isLoading &&
+                  _resultsState.visibleResults.isEmpty)
+                ..._buildDiscoverySection()
+              else
+                MultiSliver(
+                  children: [
+                    SliverToBoxAdapter(child: _buildResultsHeader()),
+                    _buildResultsList(),
+                  ],
+                ),
+
+              SliverToBoxAdapter(child: SizedBox(height: 100.h)),
+            ],
+          ),
         ),
-      ),
       ),
       floatingActionButton: _buildFloatingFilterButton(),
     );
@@ -1586,7 +1589,6 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                               ),
                             ],
                           ),
-
                         ],
                       ),
                     ),
@@ -1781,204 +1783,200 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
               : AppColors.border.withValues(alpha: 0.5),
         ),
       ),
-      child: Material(
-        color: Colors.transparent,
+      child: AdaptiveTapSurface(
         borderRadius: BorderRadius.circular(16.r),
-        child: InkWell(
-          onTap: () => context.pushNamed(
-            AppRoutes.rideDetail.name,
-            pathParameters: {'id': ride.id},
-          ),
-          borderRadius: BorderRadius.circular(16.r),
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(14.w),
-                child: Column(
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        DriverAvatarWidget(driverId: ride.driverId, radius: 22),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              DriverNameWidget(
-                                driverId: ride.driverId,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-                              Wrap(
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                spacing: 8.w,
-                                runSpacing: 2.h,
-                                children: [
-                                  DriverRatingWidget(
-                                    driverId: ride.driverId,
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  Text(
-                                    durationFormatted,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Container(
-                          constraints: BoxConstraints(maxWidth: 92.w),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10.w,
-                            vertical: 6.h,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.primary,
-                                AppColors.primary.withValues(alpha: 0.8),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Text(
-                            AppLocalizations.of(context).value5(
-                              (ride.pricePerSeatInCents / 100).toStringAsFixed(
-                                2,
-                              ),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    SizedBox(height: 12.h),
-
-                    Row(
-                      children: [
-                        Column(
+        onTap: () => context.pushNamed(
+          AppRoutes.rideDetail.name,
+          pathParameters: {'id': ride.id},
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(14.w),
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DriverAvatarWidget(driverId: ride.driverId, radius: 22),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              departureTimeFormatted,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            DriverNameWidget(
+                              driverId: ride.driverId,
                               style: TextStyle(
-                                fontSize: 11.sp,
+                                fontSize: 14.sp,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
                             ),
-                            Container(
-                              width: 2.w,
-                              height: 24.h,
-                              margin: EdgeInsets.symmetric(vertical: 4.h),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [AppColors.primary, AppColors.error],
+                            SizedBox(height: 2.h),
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8.w,
+                              runSpacing: 2.h,
+                              children: [
+                                DriverRatingWidget(
+                                  driverId: ride.driverId,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
-                                borderRadius: BorderRadius.circular(1.r),
-                              ),
-                            ),
-                            Text(
-                              arrivalTimeFormatted,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
+                                Text(
+                                  durationFormatted,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 8.w,
-                                    height: 8.w,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.primary,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  Expanded(
-                                    child: Text(
-                                      ride.origin.address,
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 20.h),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on,
-                                    color: AppColors.error,
-                                    size: 12.sp,
-                                  ),
-                                  SizedBox(width: 6.w),
-                                  Expanded(
-                                    child: Text(
-                                      ride.destination.address,
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Container(
+                        constraints: BoxConstraints(maxWidth: 92.w),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 6.h,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primary,
+                              AppColors.primary.withValues(alpha: 0.8),
                             ],
                           ),
+                          borderRadius: BorderRadius.circular(10.r),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                        child: Text(
+                          AppLocalizations.of(context).value5(
+                            (ride.pricePerSeatInCents / 100).toStringAsFixed(
+                              2,
+                            ),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  Row(
+                    children: [
+                      Column(
+                        children: [
+                          Text(
+                            departureTimeFormatted,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          Container(
+                            width: 2.w,
+                            height: 24.h,
+                            margin: EdgeInsets.symmetric(vertical: 4.h),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [AppColors.primary, AppColors.error],
+                              ),
+                              borderRadius: BorderRadius.circular(1.r),
+                            ),
+                          ),
+                          Text(
+                            arrivalTimeFormatted,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8.w,
+                                  height: 8.w,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Text(
+                                    ride.origin.address,
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 20.h),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on,
+                                  color: AppColors.error,
+                                  size: 12.sp,
+                                ),
+                                SizedBox(width: 6.w),
+                                Expanded(
+                                  child: Text(
+                                    ride.destination.address,
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              _buildRideCardBottomBar(ride),
-            ],
-          ),
+            ),
+            _buildRideCardBottomBar(ride),
+          ],
         ),
       ),
     );

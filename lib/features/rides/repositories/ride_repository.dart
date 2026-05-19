@@ -5,6 +5,7 @@ import 'package:firebase_database/firebase_database.dart' hide Query;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/constants/app_constants.dart';
 import 'package:sport_connect/core/services/firebase_service.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/features/rides/models/booking/ride_booking.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 import 'package:sport_connect/features/rides/repositories/booking_repository.dart';
@@ -68,6 +69,9 @@ class RideRepository {
   /// Create a new ride
 
   Future<String> createRide(RideModel ride) async {
+    if (!ride.hasRequiredEvent) {
+      throw ArgumentError('Ride must be linked to an event');
+    }
     final docRef = _ridesCollection.doc();
     final rideWithId = ride.copyWith(
       id: docRef.id,
@@ -94,6 +98,9 @@ class RideRepository {
   /// Update ride
 
   Future<void> updateRide(RideModel ride) async {
+    if (!ride.hasRequiredEvent) {
+      throw ArgumentError('Ride must be linked to an event');
+    }
     final json = ride.toJson()
       ..remove('id')
       ..remove('createdAt');
@@ -745,9 +752,17 @@ class RideRepository {
       try {
         await rtdbRef.onDisconnect().remove();
         _disconnectRegistered.add(rideId);
-      } catch (_) {
+      } on Exception catch (e, st) {
         // Do not block the live location write if disconnect cleanup cannot be
         // registered yet. The next update will try again.
+        TalkerService.warning(
+          'Failed to register RTDB onDisconnect cleanup for ride $rideId: $e',
+        );
+        TalkerService.error(
+          'RTDB onDisconnect registration error',
+          e,
+          st,
+        );
       }
     }
     await rtdbRef.update({

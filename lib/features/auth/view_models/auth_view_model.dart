@@ -8,7 +8,6 @@ import 'package:sport_connect/core/services/firebase_service.dart';
 import 'package:sport_connect/features/auth/models/auth_exception.dart';
 import 'package:sport_connect/features/auth/models/social_sign_in_result.dart';
 import 'package:sport_connect/features/auth/repositories/auth_repository.dart';
-import 'package:sport_connect/features/profile/repositories/profile_repository.dart';
 
 part 'auth_view_model.g.dart';
 
@@ -175,6 +174,7 @@ class RegisterViewModel extends _$RegisterViewModel {
     required String username,
     required UserRole role,
     String? phone,
+    DateTime? dateOfBirth,
     File? profileImage,
     Expertise expertise = Expertise.rookie,
   }) async {
@@ -189,6 +189,8 @@ class RegisterViewModel extends _$RegisterViewModel {
             username: username,
             role: role,
             phone: phone,
+            dateOfBirth: dateOfBirth,
+            expertise: expertise,
             profileImage: profileImage,
           );
       if (!ref.mounted) return false;
@@ -197,12 +199,6 @@ class RegisterViewModel extends _$RegisterViewModel {
       final analyticsService = ref.read(firebaseServiceProvider);
       if (uid != null) {
         await analyticsService.setUserId(uid);
-        if (expertise != Expertise.rookie) {
-          await ref.read(profileRepositoryProvider).updateProfile(uid, {
-            'expertise': expertise.name,
-          });
-          if (!ref.mounted) return false;
-        }
       }
       await analyticsService.logSignUp('email');
       state = const AsyncValue.data(null);

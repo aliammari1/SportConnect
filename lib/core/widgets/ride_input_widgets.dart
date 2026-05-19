@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
 // ─── Seats Stepper Widget ─────────────────────────────────────────────────────
@@ -147,22 +148,19 @@ class _StepButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return AdaptiveTapSurface(
       color: enabled
           ? accent.withValues(alpha: 0.12)
           : AppColors.surfaceVariant,
       borderRadius: BorderRadius.circular(10.r),
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(10.r),
-        child: SizedBox(
-          width: 40.w,
-          height: 40.w,
-          child: Icon(
-            icon,
-            color: enabled ? accent : AppColors.textTertiary,
-            size: 20.sp,
-          ),
+      onTap: enabled ? onTap : null,
+      child: SizedBox(
+        width: 40.w,
+        height: 40.w,
+        child: Icon(
+          icon,
+          color: enabled ? accent : AppColors.textTertiary,
+          size: 20.sp,
         ),
       ),
     );
@@ -561,50 +559,40 @@ class _DateTimeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    final placeholder = text == AppLocalizations.of(context).selectDatePlaceholder ||
+        text == AppLocalizations.of(context).selectTimePlaceholder;
+
+    return AdaptiveTapSurface(
       color: accent.withValues(alpha: 0.06),
       borderRadius: BorderRadius.circular(12.r),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: hasError
-                  ? AppColors.error
-                  : accent.withValues(alpha: 0.15),
-            ),
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: hasError ? AppColors.error : accent.withValues(alpha: 0.15),
           ),
-          child: Row(
-            children: [
-              Icon(icon, color: accent, size: 18.sp),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  text,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w500,
-                    color:
-                        text ==
-                                AppLocalizations.of(
-                                  context,
-                                ).selectDatePlaceholder ||
-                            text ==
-                                AppLocalizations.of(
-                                  context,
-                                ).selectTimePlaceholder
-                        ? AppColors.textTertiary
-                        : AppColors.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: accent, size: 18.sp),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w500,
+                  color: placeholder
+                      ? AppColors.textTertiary
+                      : AppColors.textPrimary,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

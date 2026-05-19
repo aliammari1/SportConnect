@@ -163,6 +163,17 @@ class _PremiumButtonState extends State<PremiumButton>
     }
   }
 
+  double get _minHeight {
+    switch (widget.size) {
+      case PremiumButtonSize.small:
+        return 44.h;
+      case PremiumButtonSize.medium:
+        return 52.h;
+      case PremiumButtonSize.large:
+        return 60.h;
+    }
+  }
+
   /// Platform-adaptive border radii
   /// iOS: Pill-shaped (Liquid Glass) | Android: Material standard
   double get _borderRadius {
@@ -204,6 +215,10 @@ class _PremiumButtonState extends State<PremiumButton>
 
   @override
   Widget build(BuildContext context) {
+    final minButtonHeight =
+        widget.customHeight == null || widget.customHeight! < _minHeight
+        ? _minHeight
+        : widget.customHeight!;
     Widget button = AnimatedBuilder(
       animation: _pressController,
       builder: (context, child) {
@@ -216,7 +231,7 @@ class _PremiumButtonState extends State<PremiumButton>
         onTapCancel: _onTapCancel,
         child: Container(
           width: widget.fullWidth ? double.infinity : widget.customWidth,
-          height: widget.customHeight,
+          constraints: BoxConstraints(minHeight: minButtonHeight),
           padding: _padding,
           decoration: BoxDecoration(
             gradient: _gradient,
@@ -284,12 +299,14 @@ class _PremiumButtonState extends State<PremiumButton>
             widget.text,
             maxLines: 2,
             softWrap: true,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: _fontSize,
               fontWeight: FontWeight.w700,
               color: _textColor,
-              letterSpacing: 0.3,
+              height: 1.15,
+              letterSpacing: 0,
             ),
           ),
         ),

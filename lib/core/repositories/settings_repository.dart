@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,6 +27,7 @@ class SettingsRepository {
   static const String _languageCodeKey = 'language_code';
   static const String _notificationDialogShownKey = 'notification_dialog_shown';
   static const String _premiumPromptPrefix = 'premium_prompt_seen_';
+  static const String _onboardingDraftPrefix = 'onboarding_setup_draft_';
 
   final SharedPreferences _prefs;
   // ============================================================
@@ -72,4 +75,45 @@ class SettingsRepository {
     await _prefs.setBool('$_premiumPromptPrefix$uid', true);
   }
 
+  // ============================================================
+  // Onboarding Setup Drafts
+  // ============================================================
+
+  String _onboardingDraftKey(String uid, String path) {
+    return '$_onboardingDraftPrefix${uid}_$path';
+  }
+
+  Map<String, dynamic> onboardingDraftFor(String uid, String path) {
+    final raw = _prefs.getString(_onboardingDraftKey(uid, path));
+    if (raw == null || raw.isEmpty) return const <String, dynamic>{};
+
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) return const <String, dynamic>{};
+    return decoded;
+  }
+
+  Future<void> saveOnboardingDraft(
+    String uid,
+    String path,
+    Map<String, Object?> draft,
+  ) async {
+    final sanitized = <String, Object?>{
+      ...onboardingDraftFor(uid, path),
+    };
+    for (final entry in draft.entries) {
+      final value = entry.value;
+      if (value == null) continue;
+      if (value is String && value.trim().isEmpty) continue;
+      sanitized[entry.key] = value;
+    }
+
+    await _prefs.setString(
+      _onboardingDraftKey(uid, path),
+      jsonEncode(sanitized),
+    );
+  }
+
+  Future<void> clearOnboardingDraft(String uid, String path) async {
+    await _prefs.remove(_onboardingDraftKey(uid, path));
+  }
 }

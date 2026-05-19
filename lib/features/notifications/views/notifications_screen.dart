@@ -6,17 +6,19 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/models/user/user_model.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
-import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/theme/platform_adaptive.dart';
+import 'package:sport_connect/core/utils/locale_formatters.dart';
+import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_view_model.dart';
 import 'package:sport_connect/features/notifications/models/notification_model.dart';
 import 'package:sport_connect/features/notifications/view_models/notification_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
-import 'package:sport_connect/core/utils/responsive_utils.dart';
 
 /// Notifications Screen with Firestore real-time updates
 class NotificationsScreen extends ConsumerStatefulWidget {
@@ -30,6 +32,7 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  NotificationModel? _selectedNotification;
 
   void _showStatusSnackBar(String message, {required Color backgroundColor}) {
     if (!context.mounted) return;
@@ -89,12 +92,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     .read(notificationViewModelProvider.notifier)
                     .archiveAll();
                 if (!scaffoldContext.mounted) return;
+                setState(() => _selectedNotification = null);
                 AdaptiveSnackBar.show(
                   scaffoldContext,
                   message: l10n.allNotificationsCleared,
                   type: AdaptiveSnackBarType.success,
                 );
-              } on Object catch (_) {
+              } on Object catch (e, st) {
+                TalkerService.warning('Archiving notifications failed: $e');
+                TalkerService.error('Notification archive error', e, st);
                 if (!scaffoldContext.mounted) return;
                 AdaptiveSnackBar.show(
                   scaffoldContext,
@@ -288,73 +294,117 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final allNotifications = filteredAllNotifications;
     final unreadCount = notifications.where((n) => !n.isRead).length;
 
+    final selectedNotification = _selectedNotification == null
+        ? null
+        : notifications.firstWhere(
+            (notification) => notification.id == _selectedNotification!.id,
+            orElse: () => _selectedNotification!,
+          );
+
     return AdaptiveScaffold(
       appBar: _buildAppBar(unreadCount),
-      body: MaxWidthContainer(
-        child: Column(
-          children: [
-            // Search
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                0,
-                AppSpacing.md,
-                AppSpacing.sm,
-              ),
-              child: TextField(
-                controller: _searchController,
-                textInputAction: TextInputAction.search,
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context).searchConversations,
-                  hintText: AppLocalizations.of(context).searchConversations,
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  suffixIcon: _searchQuery.isEmpty
-                      ? null
-                      : IconButton(
-                          icon: const Icon(Icons.close_rounded),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                            });
-                          },
-                        ),
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
-
-            // Notifications list
-            Expanded(
-              child: AdaptiveTabBarView(
-                tabs: [
-                  if (unreadCount > 0)
-                    '${AppLocalizations.of(context).unread} ($unreadCount)'
-                  else
-                    AppLocalizations.of(context).unread,
-                  AppLocalizations.of(context).all,
-                ],
-                selectedColor: Colors.white,
-                backgroundColor: AppColors.primary,
-                children: [
-                  _buildNotificationsList(unreadNotifications, userId),
-                  _buildNotificationsList(allNotifications, userId),
-                ],
-              ),
-            ),
-          ],
+      body: AdaptiveMasterDetailScaffold(
+        master: _buildNotificationListPane(
+          unreadCount: unreadCount,
+          unreadNotifications: unreadNotifications,
+          allNotifications: allNotifications,
+          userId: userId,
+          onNotificationTap: _selectNotificationForTablet,
+        ),
+        detail: selectedNotification == null
+            ? TabletEmptyDetail(
+                icon: Icons.notifications_none_rounded,
+                title: AppLocalizations.of(context).settingsNotifications,
+                message: AppLocalizations.of(context).youReAllCaughtUp,
+              )
+            : _buildNotificationDetail(selectedNotification),
+        phone: MaxWidthContainer(
+          child: _buildNotificationListPane(
+            unreadCount: unreadCount,
+            unreadNotifications: unreadNotifications,
+            allNotifications: allNotifications,
+            userId: userId,
+            onNotificationTap: _handleNotificationTap,
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildNotificationListPane({
+    required int unreadCount,
+    required List<NotificationModel> unreadNotifications,
+    required List<NotificationModel> allNotifications,
+    required String userId,
+    required ValueChanged<NotificationModel> onNotificationTap,
+  }) {
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.sm,
+          ),
+          child: TextField(
+            controller: _searchController,
+            textInputAction: TextInputAction.search,
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context).searchConversations,
+              hintText: AppLocalizations.of(context).searchConversations,
+              prefixIcon: const Icon(Icons.search_rounded),
+              suffixIcon: _searchQuery.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                        });
+                      },
+                    ),
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: AdaptiveTabBarView(
+            tabs: [
+              if (unreadCount > 0)
+                '${AppLocalizations.of(context).unread} ($unreadCount)'
+              else
+                AppLocalizations.of(context).unread,
+              AppLocalizations.of(context).all,
+            ],
+            selectedColor: Colors.white,
+            backgroundColor: AppColors.primary,
+            children: [
+              _buildNotificationsList(
+                unreadNotifications,
+                userId,
+                onNotificationTap: onNotificationTap,
+              ),
+              _buildNotificationsList(
+                allNotifications,
+                userId,
+                onNotificationTap: onNotificationTap,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -453,8 +503,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   Widget _buildNotificationsList(
     List<NotificationModel> notifications,
-    String userId,
-  ) {
+    String userId, {
+    required ValueChanged<NotificationModel> onNotificationTap,
+  }) {
     if (notifications.isEmpty) {
       return RefreshIndicator.adaptive(
         onRefresh: () async {
@@ -512,7 +563,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           final notification = notifications[index];
           return _NotificationTile(
                 notification: notification,
-                onTap: () => _handleNotificationTap(notification),
+                isSelected: _selectedNotification?.id == notification.id,
+                onTap: () => onNotificationTap(notification),
                 onDismiss: () => _dismissNotification(notification.id),
               )
               .animate()
@@ -521,6 +573,174 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         },
       ),
     );
+  }
+
+  void _selectNotificationForTablet(NotificationModel notification) {
+    if (!notification.isRead) {
+      ref
+          .read(notificationViewModelProvider.notifier)
+          .markAsRead(notification.id);
+    }
+    setState(
+      () => _selectedNotification = notification.copyWith(isRead: true),
+    );
+  }
+
+  Widget _buildNotificationDetail(NotificationModel notification) {
+    final l10n = AppLocalizations.of(context);
+    final isRead =
+        notification.isRead || _selectedNotification?.id == notification.id;
+    final typeIcon = _notificationTypeIcon(notification.type);
+    final typeColor = _notificationTypeColor(notification.type);
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (notification.senderPhotoUrl != null)
+                  PremiumAvatar(
+                    name: notification.senderName ?? '',
+                    imageUrl: notification.senderPhotoUrl,
+                    size: 56,
+                  )
+                else
+                  Container(
+                    width: 56.w,
+                    height: 56.w,
+                    decoration: BoxDecoration(
+                      color: typeColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16.r),
+                    ),
+                    child: Icon(typeIcon, color: typeColor, size: 28.sp),
+                  ),
+                SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        notification.type.name,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w700,
+                          color: typeColor,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.xs),
+                      Text(
+                        notification.title,
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: AppSpacing.lg),
+            Text(
+              notification.body,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppColors.textPrimary,
+                height: 1.5,
+              ),
+            ),
+            SizedBox(height: AppSpacing.lg),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(color: AppColors.divider),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (notification.senderName != null &&
+                      notification.senderName!.isNotEmpty)
+                    _buildDetailRow(
+                      icon: Icons.person_outline_rounded,
+                      value: notification.senderName!,
+                    ),
+                  if (notification.createdAt != null)
+                    _buildDetailRow(
+                      icon: Icons.calendar_today_outlined,
+                      value:
+                          '${l10n.date}: ${AppLocaleFormatters.formatRelativeTime(context, notification.createdAt)}',
+                    ),
+                  _buildDetailRow(
+                    icon: isRead
+                        ? Icons.done_all_rounded
+                        : Icons.mark_email_unread_outlined,
+                    value: isRead
+                        ? l10n.allNotificationsMarkedAsRead
+                        : l10n.unread,
+                    valueColor: isRead ? AppColors.success : AppColors.primary,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: AppSpacing.lg),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _openNotificationDestination(notification),
+                icon: const Icon(Icons.open_in_new_rounded),
+                label: Text(l10n.open),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(48),
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String value,
+    Color? valueColor,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: valueColor ?? AppColors.textSecondary, size: 20.sp),
+          SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              value,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: valueColor ?? AppColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openNotificationDestination(NotificationModel notification) {
+    _handleNotificationTap(notification);
   }
 
   void _handleNotificationTap(NotificationModel notification) {
@@ -591,6 +811,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   void _dismissNotification(String notificationId) {
+    if (_selectedNotification?.id == notificationId) {
+      setState(() => _selectedNotification = null);
+    }
     ref
         .read(notificationViewModelProvider.notifier)
         .deleteNotification(notificationId);
@@ -634,13 +857,64 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 }
 
+IconData _notificationTypeIcon(NotificationType type) {
+  switch (type) {
+    case NotificationType.rideBookingRequest:
+    case NotificationType.rideBookingAccepted:
+    case NotificationType.rideStartingSoon:
+    case NotificationType.rideStarted:
+    case NotificationType.rideCompleted:
+      return Icons.directions_car_rounded;
+    case NotificationType.rideBookingRejected:
+    case NotificationType.rideBookingCancelled:
+    case NotificationType.rideCancelled:
+      return Icons.cancel_rounded;
+    case NotificationType.newMessage:
+    case NotificationType.newGroupMessage:
+      return Icons.message_rounded;
+    case NotificationType.achievementUnlocked:
+    case NotificationType.levelUp:
+      return Icons.emoji_events_rounded;
+    case NotificationType.xpEarned:
+      return Icons.star_rounded;
+    default:
+      return Icons.notifications_rounded;
+  }
+}
+
+Color _notificationTypeColor(NotificationType type) {
+  switch (type) {
+    case NotificationType.rideBookingRequest:
+    case NotificationType.rideBookingAccepted:
+    case NotificationType.rideStartingSoon:
+    case NotificationType.rideStarted:
+    case NotificationType.rideCompleted:
+      return AppColors.primary;
+    case NotificationType.rideBookingRejected:
+    case NotificationType.rideBookingCancelled:
+    case NotificationType.rideCancelled:
+      return AppColors.error;
+    case NotificationType.newMessage:
+    case NotificationType.newGroupMessage:
+      return AppColors.info;
+    case NotificationType.achievementUnlocked:
+    case NotificationType.levelUp:
+    case NotificationType.xpEarned:
+      return AppColors.warning;
+    default:
+      return AppColors.textSecondary;
+  }
+}
+
 class _NotificationTile extends StatelessWidget {
   const _NotificationTile({
     required this.notification,
+    required this.isSelected,
     required this.onTap,
     required this.onDismiss,
   });
   final NotificationModel notification;
+  final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback onDismiss;
 
@@ -666,12 +940,16 @@ class _NotificationTile extends StatelessWidget {
           margin: EdgeInsets.only(bottom: 12.h),
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
-            color: notification.isRead
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.08)
+                : notification.isRead
                 ? AppColors.surface
                 : AppColors.primary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
-              color: notification.isRead
+              color: isSelected
+                  ? AppColors.primary
+                  : notification.isRead
                   ? AppColors.divider
                   : AppColors.primary.withValues(alpha: 0.3),
             ),
@@ -757,37 +1035,8 @@ class _NotificationTile extends StatelessWidget {
       );
     }
 
-    IconData iconData;
-    Color iconColor;
-
-    switch (notification.type) {
-      case NotificationType.rideBookingRequest:
-      case NotificationType.rideBookingAccepted:
-      case NotificationType.rideStartingSoon:
-      case NotificationType.rideStarted:
-      case NotificationType.rideCompleted:
-        iconData = Icons.directions_car_rounded;
-        iconColor = AppColors.primary;
-      case NotificationType.rideBookingRejected:
-      case NotificationType.rideBookingCancelled:
-      case NotificationType.rideCancelled:
-        iconData = Icons.cancel_rounded;
-        iconColor = AppColors.error;
-      case NotificationType.newMessage:
-      case NotificationType.newGroupMessage:
-        iconData = Icons.message_rounded;
-        iconColor = AppColors.info;
-      case NotificationType.achievementUnlocked:
-      case NotificationType.levelUp:
-        iconData = Icons.emoji_events_rounded;
-        iconColor = AppColors.warning;
-      case NotificationType.xpEarned:
-        iconData = Icons.star_rounded;
-        iconColor = AppColors.warning;
-      default:
-        iconData = Icons.notifications_rounded;
-        iconColor = AppColors.textSecondary;
-    }
+    final iconData = _notificationTypeIcon(notification.type);
+    final iconColor = _notificationTypeColor(notification.type);
 
     return Container(
       width: 44.w,

@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +11,7 @@ import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/admin_access_provider.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/platform_adaptive.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
@@ -63,7 +64,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: l10n.settingsTitle,
       ),
       body: MaxWidthContainer(
-        maxWidth: kMaxWidthContent,
         child: ListView(
           padding: adaptiveScreenPadding(
             context,
@@ -1239,8 +1239,9 @@ class _BlockedUsersScreenState extends ConsumerState<_BlockedUsersScreen> {
                       )
                     : RefreshIndicator.adaptive(
                         onRefresh: () async {
-                          ref.invalidate(blockedUsersProvider);
-                          ref.invalidate(currentUserProvider);
+                          ref
+                            ..invalidate(blockedUsersProvider)
+                            ..invalidate(currentUserProvider);
 
                           await Future<void>.delayed(
                             const Duration(milliseconds: 250),
@@ -1380,7 +1381,15 @@ class _BlockedUsersScreenState extends ConsumerState<_BlockedUsersScreen> {
                                           message: l10n.userUnblocked,
                                           type: AdaptiveSnackBarType.success,
                                         );
-                                      } catch (_) {
+                                      } on Object catch (e, st) {
+                                        TalkerService.warning(
+                                          'Failed to unblock user ${user.uid}: $e',
+                                        );
+                                        TalkerService.error(
+                                          'Unblock user flow error',
+                                          e,
+                                          st,
+                                        );
                                         if (!context.mounted) return;
 
                                         AdaptiveSnackBar.show(

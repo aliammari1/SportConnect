@@ -3897,7 +3897,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get locationNotEnabledDescription =>
-      'Vous avez refusé l\'accès à la localisation. Activez-la pour trouver des trajets à proximité.';
+      'L\'accès à la localisation est désactivé. Vous pouvez toujours parcourir les trajets par ville.';
 
   @override
   String get browseByCity => 'Parcourir par ville';
@@ -3907,14 +3907,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get locationPermissionBlockedDescription =>
-      'La permission de localisation est définitivement refusée. Veuillez l\'activer dans les paramètres de votre appareil.';
+      'L\'accès à la localisation est désactivé dans les paramètres de l\'appareil. Les fonctionnalités qui utilisent votre position actuelle restent indisponibles tant que ce réglage n\'est pas modifié.';
 
   @override
   String get locationServicesOff => 'Services de localisation désactivés';
 
   @override
   String get locationServicesOffDescription =>
-      'Les services de localisation de votre appareil sont désactivés. Veuillez les activer dans les paramètres.';
+      'Les services de localisation de votre appareil sont désactivés. Les fonctionnalités qui utilisent votre position actuelle restent indisponibles tant que ce réglage n\'est pas modifié.';
 
   @override
   String get openLocationSettings => 'Ouvrir les paramètres de localisation';

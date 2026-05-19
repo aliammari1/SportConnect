@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/reactive_adaptive_text_field.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
@@ -667,52 +668,49 @@ class _ColorChoiceChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLight = _isLightVehicleColor(option.color);
 
-    return Material(
+    return AdaptiveTapSurface(
       color: selected
           ? AppColors.primary.withValues(alpha: 0.1)
           : AppColors.background.withValues(alpha: 0.92),
       borderRadius: BorderRadius.circular(999.r),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999.r),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999.r),
-            border: Border.all(
-              color: selected
-                  ? AppColors.primary.withValues(alpha: 0.55)
-                  : AppColors.border.withValues(alpha: 0.45),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999.r),
+          border: Border.all(
+            color: selected
+                ? AppColors.primary.withValues(alpha: 0.55)
+                : AppColors.border.withValues(alpha: 0.45),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 13.w,
+              height: 13.w,
+              decoration: BoxDecoration(
+                color: option.color,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isLight
+                      ? AppColors.border
+                      : Colors.white.withValues(alpha: 0.35),
+                ),
+              ),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 13.w,
-                height: 13.w,
-                decoration: BoxDecoration(
-                  color: option.color,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isLight
-                        ? AppColors.border
-                        : Colors.white.withValues(alpha: 0.35),
-                  ),
-                ),
+            SizedBox(width: 7.w),
+            Text(
+              _vehicleColorLabel(context, option.label),
+              style: TextStyle(
+                fontSize: 11.5.sp,
+                fontWeight: FontWeight.w800,
+                color: selected ? AppColors.primary : AppColors.textPrimary,
               ),
-              SizedBox(width: 7.w),
-              Text(
-                _vehicleColorLabel(context, option.label),
-                style: TextStyle(
-                  fontSize: 11.5.sp,
-                  fontWeight: FontWeight.w800,
-                  color: selected ? AppColors.primary : AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -731,44 +729,41 @@ class _OtherColorChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Material(
+    return AdaptiveTapSurface(
       color: selected
           ? AppColors.primary.withValues(alpha: 0.1)
           : AppColors.background.withValues(alpha: 0.92),
       borderRadius: BorderRadius.circular(999.r),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999.r),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999.r),
-            border: Border.all(
-              color: selected
-                  ? AppColors.primary.withValues(alpha: 0.55)
-                  : AppColors.border.withValues(alpha: 0.45),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999.r),
+          border: Border.all(
+            color: selected
+                ? AppColors.primary.withValues(alpha: 0.55)
+                : AppColors.border.withValues(alpha: 0.45),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.edit_rounded,
+              size: 14.sp,
+              color: selected ? AppColors.primary : AppColors.textSecondary,
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.edit_rounded,
-                size: 14.sp,
-                color: selected ? AppColors.primary : AppColors.textSecondary,
+            SizedBox(width: 6.w),
+            Text(
+              l10n.other_color,
+              style: TextStyle(
+                fontSize: 11.5.sp,
+                fontWeight: FontWeight.w800,
+                color: selected ? AppColors.primary : AppColors.textPrimary,
               ),
-              SizedBox(width: 6.w),
-              Text(
-                l10n.other_color,
-                style: TextStyle(
-                  fontSize: 11.5.sp,
-                  fontWeight: FontWeight.w800,
-                  color: selected ? AppColors.primary : AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1077,42 +1072,39 @@ class _NumberChoiceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return AdaptiveTapSurface(
       color: selected
           ? AppColors.primary
           : AppColors.background.withValues(alpha: 0.92),
       borderRadius: BorderRadius.circular(13.r),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(13.r),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          height: 46.h,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(13.r),
-            border: Border.all(
-              color: selected
-                  ? AppColors.primary
-                  : AppColors.border.withValues(alpha: 0.45),
-            ),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.18),
-                      blurRadius: 12,
-                      offset: Offset(0, 5.h),
-                    ),
-                  ]
-                : null,
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        height: 46.h,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(13.r),
+          border: Border.all(
+            color: selected
+                ? AppColors.primary
+                : AppColors.border.withValues(alpha: 0.45),
           ),
-          child: Center(
-            child: Text(
-              '$value',
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w900,
-                color: selected ? Colors.white : AppColors.textPrimary,
-              ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.18),
+                    blurRadius: 12,
+                    offset: Offset(0, 5.h),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: Text(
+            '$value',
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w900,
+              color: selected ? Colors.white : AppColors.textPrimary,
             ),
           ),
         ),

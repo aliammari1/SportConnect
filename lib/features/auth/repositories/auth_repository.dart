@@ -93,6 +93,8 @@ class AuthRepository {
     required String username,
     required UserRole role,
     String? phone,
+    DateTime? dateOfBirth,
+    Expertise expertise = Expertise.rookie,
     File? profileImage,
   }) async {
     UserCredential? credential;
@@ -111,31 +113,23 @@ class AuthRepository {
           photoUrl = await _uploadProfileImage(profileImage, uid);
         }
 
-        // 3. Create User Model with the new Photo URL
-        final UserModel userModel;
-        if (role == UserRole.driver) {
-          userModel = UserModel.driver(
-            uid: uid,
-            email: email.trim(),
-            username: username.trim(),
-            phoneNumber: phone?.trim(),
-            photoUrl: photoUrl,
-          );
-        } else {
-          userModel = UserModel.rider(
-            uid: uid,
-            email: email.trim(),
-            username: username.trim(),
-            phoneNumber: phone?.trim(),
-            photoUrl: photoUrl,
-          );
-        }
+        // Keep signup users pending until role-specific setup is complete.
+        final userModel = UserModel.pending(
+          uid: uid,
+          email: email.trim(),
+          username: username.trim(),
+          photoUrl: photoUrl,
+          phoneNumber: phone?.trim(),
+          dateOfBirth: dateOfBirth,
+          expertise: expertise,
+          selectedRoleIntent: role.name,
+        );
 
-        await _usersCollection
+        await _usersCollection.doc(uid).set(userModel);
+        await _firebaseService.firestore
+            .collection(AppConstants.usersCollection)
             .doc(uid)
-            .set(
-              userModel,
-            );
+            .set({'onboardingPath': role.name}, SetOptions(merge: true));
         await credential.user!.updateDisplayName(username);
 
         if (photoUrl != null) {

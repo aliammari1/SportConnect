@@ -118,7 +118,7 @@ class RoleSelectionScreen extends ConsumerWidget {
 
     return AdaptiveScaffold(
       body: MaxWidthContainer(
-        maxWidth: kMaxWidthForm,
+        maxWidth: kMaxWidthFormNarrow,
         child: SafeArea(
           child: SingleChildScrollView(
             padding: adaptiveScreenPadding(context),
@@ -286,7 +286,7 @@ Widget _buildHeader(AppLocalizations l10n) {
           fontSize: 24.sp,
           fontWeight: FontWeight.w800,
           color: AppColors.textPrimary,
-          letterSpacing: -0.5,
+          letterSpacing: 0,
         ),
         textAlign: TextAlign.center,
       ),

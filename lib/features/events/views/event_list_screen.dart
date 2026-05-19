@@ -13,104 +13,173 @@ import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
 import 'package:sport_connect/core/widgets/premium_card.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/events/models/event_model.dart';
 import 'package:sport_connect/features/events/view_models/event_view_model.dart';
+import 'package:sport_connect/features/events/views/event_detail_screen.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
 /// Browse / discover upcoming events, filter by sport type.
-class EventListScreen extends ConsumerWidget {
+class EventListScreen extends ConsumerStatefulWidget {
   const EventListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EventListScreen> createState() => _EventListScreenState();
+}
+
+class _EventListScreenState extends ConsumerState<EventListScreen> {
+  String? _selectedEventId;
+
+  @override
+  Widget build(BuildContext context) {
     final vm = ref.watch(eventListViewModelProvider);
+    final selectedEventId =
+        vm.filteredEvents.any(
+          (event) => event.id == _selectedEventId,
+        )
+        ? _selectedEventId
+        : null;
 
     return AdaptiveScaffold(
-      body: RefreshIndicator.adaptive(
-        onRefresh: () async {
-          ref.invalidate(eventListViewModelProvider);
-          await Future<void>.delayed(const Duration(milliseconds: 250));
-        },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          slivers: [
-            // ── Header ──
-            _buildAppBar(context),
+      body: AdaptiveMasterDetailScaffold(
+        master: _buildEventListBody(context, ref, vm, isTabletMaster: true),
+        detail: _buildTabletDetail(context, selectedEventId),
+        phone: _buildEventListBody(context, ref, vm),
+      ),
+      floatingActionButton: _buildCreateEventFab(context),
+    );
+  }
 
-            // ── Search bar ──
-            SliverToBoxAdapter(child: _buildSearchBar(context, ref, vm)),
-
-            // ── Filter chips ──
-            SliverToBoxAdapter(child: _buildFilterChips(context, ref, vm)),
-
-            // ── Event list ──
-            if (vm.isLoading)
-              const SliverToBoxAdapter(
-                child: SkeletonLoader(
-                  type: SkeletonType.eventCard,
-                ),
-              )
-            else if (vm.error != null)
-              SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        size: 48.sp,
-                        color: AppColors.textSecondary,
-                      ),
-                      SizedBox(height: 12.h),
-                      Text(
-                        AppLocalizations.of(context).unableToLoadData,
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
-                      TextButton.icon(
-                        onPressed: () =>
-                            ref.invalidate(eventListViewModelProvider),
-                        icon: const Icon(Icons.refresh_rounded),
-                        label: Text(AppLocalizations.of(context).retry),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else if (vm.filteredEvents.isEmpty)
-              SliverFillRemaining(
-                child: _buildEmptyState(context, vm.filterType),
-              )
-            else
-              _buildEventList(context, vm.filteredEvents),
-          ],
+  Widget _buildEventListBody(
+    BuildContext context,
+    WidgetRef ref,
+    EventListState vm, {
+    bool isTabletMaster = false,
+  }) {
+    return RefreshIndicator.adaptive(
+      onRefresh: () => _refreshEvents(ref),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        slivers: _buildEventSlivers(
+          context,
+          ref,
+          vm,
+          isTabletMaster: isTabletMaster,
         ),
       ),
-      floatingActionButton:
-          FloatingActionButton.extended(
-            heroTag: null,
-            onPressed: () => context.push(AppRoutes.createEvent.path),
-            backgroundColor: AppColors.primary,
-            icon: Icon(Icons.add_rounded, size: 22.sp),
-            label: Text(
-              AppLocalizations.of(context).createLabel,
-              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
-            ),
-          ).animate().scale(
-            delay: 300.ms,
-            duration: 400.ms,
-            curve: Curves.easeOutBack,
-          ),
     );
+  }
+
+  Future<void> _refreshEvents(WidgetRef ref) async {
+    ref.invalidate(eventListViewModelProvider);
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+  }
+
+  List<Widget> _buildEventSlivers(
+    BuildContext context,
+    WidgetRef ref,
+    EventListState vm, {
+    required bool isTabletMaster,
+  }) {
+    return [
+      // ── Header ──
+      _buildAppBar(context),
+
+      // ── Search bar ──
+      SliverToBoxAdapter(child: _buildSearchBar(context, ref, vm)),
+
+      // ── Filter chips ──
+      SliverToBoxAdapter(child: _buildFilterChips(context, ref, vm)),
+
+      // ── Event list ──
+      if (vm.isLoading)
+        const SliverToBoxAdapter(
+          child: SkeletonLoader(
+            type: SkeletonType.eventCard,
+          ),
+        )
+      else if (vm.error != null)
+        SliverFillRemaining(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 48.sp,
+                  color: AppColors.textSecondary,
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  AppLocalizations.of(context).unableToLoadData,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                TextButton.icon(
+                  onPressed: () => ref.invalidate(eventListViewModelProvider),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text(AppLocalizations.of(context).retry),
+                ),
+              ],
+            ),
+          ),
+        )
+      else if (vm.filteredEvents.isEmpty)
+        SliverFillRemaining(
+          child: _buildEmptyState(context, vm.filterType),
+        )
+      else if (isTabletMaster)
+        _buildTabletEventList(context, vm.filteredEvents)
+      else
+        _buildEventList(context, vm.filteredEvents),
+    ];
+  }
+
+  Widget _buildTabletDetail(BuildContext context, String? selectedEventId) {
+    if (selectedEventId == null) {
+      final l10n = AppLocalizations.of(context);
+      return TabletEmptyDetail(
+        icon: Icons.event_note_rounded,
+        title: l10n.viewDetails,
+        message: l10n.searchEventsHint,
+      );
+    }
+
+    return EventDetailScreen(
+      key: ValueKey(selectedEventId),
+      eventId: selectedEventId,
+    );
+  }
+
+  Widget _buildCreateEventFab(BuildContext context) {
+    return FloatingActionButton.extended(
+      heroTag: null,
+      onPressed: () => context.push(AppRoutes.createEvent.path),
+      backgroundColor: AppColors.primary,
+      icon: Icon(Icons.add_rounded, size: 22.sp),
+      label: Text(
+        AppLocalizations.of(context).createLabel,
+        style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+      ),
+    ).animate().scale(
+      delay: 300.ms,
+      duration: 400.ms,
+      curve: Curves.easeOutBack,
+    );
+  }
+
+  void _selectEvent(String eventId) {
+    unawaited(HapticFeedback.selectionClick());
+    setState(() => _selectedEventId = eventId);
   }
 
   // -------------------------------------------------------------------
@@ -475,6 +544,41 @@ class EventListScreen extends ConsumerWidget {
     );
   }
 
+  SliverPadding _buildTabletEventList(
+    BuildContext context,
+    List<EventModel> events,
+  ) {
+    final screenPadding = adaptiveScreenPadding(context);
+
+    return SliverPadding(
+      padding: EdgeInsets.fromLTRB(
+        screenPadding.left,
+        16.h,
+        screenPadding.right,
+        100.h,
+      ),
+      sliver: SliverList.separated(
+        itemCount: events.length,
+        separatorBuilder: (_, _) =>
+            SizedBox(height: AppSpacing.listItemSpacing),
+        itemBuilder: (context, index) {
+          final event = events[index];
+          return _TabletEventListItem(
+                event: event,
+                isSelected: event.id == _selectedEventId,
+                onTap: () => _selectEvent(event.id),
+              )
+              .animate()
+              .fadeIn(
+                delay: Duration(milliseconds: 40 * index.clamp(0, 10)),
+                duration: 300.ms,
+              )
+              .slideY(begin: 0.03, end: 0);
+        },
+      ),
+    );
+  }
+
   // -------------------------------------------------------------------
   // Empty state
   // -------------------------------------------------------------------
@@ -585,6 +689,202 @@ class _FilterChip extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TabletEventListItem extends StatelessWidget {
+  const _TabletEventListItem({
+    required this.event,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final EventModel event;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dateLabel = AppLocaleFormatters.formatMediumDateTime(
+      context,
+      event.startsAt.toLocal(),
+    );
+    final borderColor = isSelected ? AppColors.primary : AppColors.border;
+    final typeColor = event.type.color;
+
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppSpacing.borderRadiusXl,
+          child: AnimatedContainer(
+            duration: 200.ms,
+            constraints: BoxConstraints(minHeight: AppSpacing.buttonHeightLg),
+            padding: EdgeInsets.all(AppSpacing.lg),
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primarySurface : AppColors.surface,
+              borderRadius: AppSpacing.borderRadiusXl,
+              border: Border.all(
+                color: borderColor,
+                width: isSelected ? 1.5 : 1,
+              ),
+              boxShadow: isSelected ? AppSpacing.shadowMd : AppSpacing.shadowSm,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: AppSpacing.buttonHeightMd,
+                  height: AppSpacing.buttonHeightMd,
+                  decoration: BoxDecoration(
+                    color: typeColor.withValues(alpha: 0.12),
+                    borderRadius: AppSpacing.borderRadiusLg,
+                  ),
+                  child: Icon(
+                    event.type.icon,
+                    size: 22.sp,
+                    color: typeColor,
+                  ),
+                ),
+                SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              event.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                                height: 1.2,
+                              ),
+                            ),
+                          ),
+                          if (isSelected) ...[
+                            SizedBox(width: AppSpacing.sm),
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 18.sp,
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ],
+                      ),
+                      SizedBox(height: AppSpacing.sm),
+                      _TabletEventMetaRow(
+                        icon: Icons.calendar_today_rounded,
+                        label: dateLabel,
+                      ),
+                      SizedBox(height: AppSpacing.xs),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: _TabletEventPill(
+                              icon: event.type.icon,
+                              label: event.type.label,
+                              color: typeColor,
+                            ),
+                          ),
+                          SizedBox(width: AppSpacing.sm),
+                          Flexible(
+                            child: _TabletEventPill(
+                              icon: Icons.group_rounded,
+                              label: event.participantLabel,
+                              color: event.isFull
+                                  ? AppColors.warning
+                                  : AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TabletEventMetaRow extends StatelessWidget {
+  const _TabletEventMetaRow({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 14.sp, color: AppColors.textTertiary),
+        SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TabletEventPill extends StatelessWidget {
+  const _TabletEventPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: AppSpacing.borderRadiusFull,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13.sp, color: color),
+          SizedBox(width: AppSpacing.xs),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

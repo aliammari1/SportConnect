@@ -6,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
-import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/glass_panel.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
@@ -111,7 +110,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               fontSize: 28.sp,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
-              letterSpacing: -0.5,
+              letterSpacing: 0,
             ),
           ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1),
 

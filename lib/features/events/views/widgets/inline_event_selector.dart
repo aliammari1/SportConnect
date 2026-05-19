@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/features/events/models/event_model.dart';
 import 'package:sport_connect/features/events/repositories/event_repository.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
@@ -371,115 +372,112 @@ class _InlineEventSelectorState extends ConsumerState<InlineEventSelector> {
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
-      child: Material(
+      child: AdaptiveTapSurface(
         color: isSelected
             ? event.type.color.withValues(alpha: 0.08)
             : AppColors.background,
         borderRadius: BorderRadius.circular(14.r),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14.r),
-          onTap: () {
-            unawaited(HapticFeedback.selectionClick());
-            if (isSelected) {
-              widget.onChanged(null);
-            } else {
-              widget.onChanged(event);
-              setState(() => _expanded = false);
-            }
-          },
-          child: Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14.r),
-              border: Border.all(
-                color: isSelected ? event.type.color : AppColors.border,
-                width: isSelected ? 1.5 : 1,
-              ),
+        onTap: () {
+          unawaited(HapticFeedback.selectionClick());
+          if (isSelected) {
+            widget.onChanged(null);
+          } else {
+            widget.onChanged(event);
+            setState(() => _expanded = false);
+          }
+        },
+        child: Container(
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(
+              color: isSelected ? event.type.color : AppColors.border,
+              width: isSelected ? 1.5 : 1,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 38.w,
-                  height: 38.w,
-                  decoration: BoxDecoration(
-                    color: event.type.color.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    event.type.icon,
-                    size: 18.sp,
-                    color: event.type.color,
-                  ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38.w,
+                height: 38.w,
+                decoration: BoxDecoration(
+                  color: event.type.color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
                 ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        event.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 3.h),
-                      Text(
-                        AppLocaleFormatters.formatShortWeekdayDateTime(
-                          context,
-                          event.startsAt,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      SizedBox(height: 3.h),
-                      Text(
-                        event.location.address,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textTertiary,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: Icon(
+                  event.type.icon,
+                  size: 18.sp,
+                  color: event.type.color,
                 ),
-                SizedBox(width: 10.w),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      isSelected
-                          ? Icons.check_circle_rounded
-                          : Icons.chevron_right_rounded,
-                      size: 20.sp,
-                      color: isSelected
-                          ? event.type.color
-                          : AppColors.textTertiary,
-                    ),
-                    SizedBox(height: 8.h),
                     Text(
-                      _countdown(diff),
+                      event.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
-                        color: diff.inHours < 24
-                            ? AppColors.warning
-                            : AppColors.primary,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      AppLocaleFormatters.formatShortWeekdayDateTime(
+                        context,
+                        event.startsAt,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      event.location.address,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textTertiary,
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              SizedBox(width: 10.w),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Icon(
+                    isSelected
+                        ? Icons.check_circle_rounded
+                        : Icons.chevron_right_rounded,
+                    size: 20.sp,
+                    color: isSelected
+                        ? event.type.color
+                        : AppColors.textTertiary,
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    _countdown(diff),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w700,
+                      color: diff.inHours < 24
+                          ? AppColors.warning
+                          : AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

@@ -60,6 +60,12 @@ void main() {
     expect(find.byType(NavigationRail), findsNothing);
   });
 
+  testWidgets('keeps bottom navigation on narrow tablets', (tester) async {
+    await pumpShell(tester, const Size(700, 900));
+
+    expect(find.byType(NavigationRail), findsNothing);
+  });
+
   testWidgets('promotes to navigation rail on taller tablet widths', (
     tester,
   ) async {

@@ -102,8 +102,10 @@ class HttpService {
 
       _cachedDio = dio;
       return dio;
-    } catch (_) {
+    } on Object catch (e, st) {
       _cachedDioFuture = null;
+      TalkerService.warning('cachedDio initialization failed: $e');
+      TalkerService.error('cachedDio initialization error', e, st);
       rethrow;
     }
   }

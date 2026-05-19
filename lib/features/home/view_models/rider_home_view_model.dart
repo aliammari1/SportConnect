@@ -42,7 +42,6 @@ class RiderHomeState {
     this.nearbyQueryAnchor,
     this.lastMapMoveAt,
     this.currentZoom = 14,
-    this.selectedMapStyle = 'standard',
     this.showNearbyDrivers = true,
     this.showDistanceRadius = false,
     this.searchRadius = 5.0,
@@ -66,7 +65,6 @@ class RiderHomeState {
 
   // Map view settings
   final double currentZoom;
-  final String selectedMapStyle;
   final bool showNearbyDrivers;
   final bool showDistanceRadius;
   final double searchRadius;
@@ -91,7 +89,6 @@ class RiderHomeState {
     LatLng? nearbyQueryAnchor,
     DateTime? lastMapMoveAt,
     double? currentZoom,
-    String? selectedMapStyle,
     bool? showNearbyDrivers,
     bool? showDistanceRadius,
     double? searchRadius,
@@ -110,7 +107,6 @@ class RiderHomeState {
       nearbyQueryAnchor: nearbyQueryAnchor ?? this.nearbyQueryAnchor,
       lastMapMoveAt: lastMapMoveAt ?? this.lastMapMoveAt,
       currentZoom: currentZoom ?? this.currentZoom,
-      selectedMapStyle: selectedMapStyle ?? this.selectedMapStyle,
       showNearbyDrivers: showNearbyDrivers ?? this.showNearbyDrivers,
       showDistanceRadius: showDistanceRadius ?? this.showDistanceRadius,
       searchRadius: searchRadius ?? this.searchRadius,
@@ -128,7 +124,6 @@ class RiderHomeState {
     return RiderHomeState(
       locationState: locationState,
       currentZoom: currentZoom,
-      selectedMapStyle: selectedMapStyle,
       showNearbyDrivers: showNearbyDrivers,
       showDistanceRadius: showDistanceRadius,
       searchRadius: searchRadius,
@@ -150,7 +145,6 @@ class RiderHomeState {
       nearbyQueryAnchor: nearbyQueryAnchor,
       lastMapMoveAt: lastMapMoveAt,
       currentZoom: currentZoom,
-      selectedMapStyle: selectedMapStyle,
       showNearbyDrivers: showNearbyDrivers,
       showDistanceRadius: showDistanceRadius,
       searchRadius: searchRadius,
@@ -392,10 +386,6 @@ class RiderHomeViewModel extends _$RiderHomeViewModel {
     }
   }
 
-  /// Update map style
-  void setMapStyle(String style) {
-    state = state.copyWith(selectedMapStyle: style);
-  }
 
   /// Toggle nearby drivers visibility
   void toggleNearbyDrivers() {

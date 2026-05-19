@@ -13,12 +13,14 @@ import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
 import 'package:sport_connect/core/widgets/premium_text_field.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/messaging/models/message_model.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_list_view_model.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_view_model.dart';
+import 'package:sport_connect/features/messaging/views/chat_detail_screen.dart';
 import 'package:sport_connect/features/profile/view_models/user_search_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
@@ -76,48 +78,141 @@ class _ChatUserData {
   );
 }
 
+class _SelectedChatDetail {
+  const _SelectedChatDetail({
+    required this.chatId,
+    required this.receiver,
+    required this.isGroup,
+  });
+
+  final String chatId;
+  final UserModel receiver;
+  final bool isGroup;
+}
+
 class _ChatListScreenState extends ConsumerState<ChatListScreen> {
+  _SelectedChatDetail? _selectedChat;
+
   // ── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     return AdaptiveScaffold(
-      body: MaxWidthContainer(
-        maxWidth: kMaxWidthForm,
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Padding(
-                padding: adaptiveScreenPadding(
-                  context,
-                ).copyWith(bottom: 12.h, top: 12.h),
-                child: PremiumSearchField(
-                  hint: l10n.searchChatsOrPeople,
-                  onChanged: (value) => ref
-                      .read(chatListUiViewModelProvider.notifier)
-                      .setSearchQuery(value),
-                ),
-              ),
-              // FIX: searchQuery no longer passed as param — all tabs read from
-              // provider internally, making them consistent with _buildDirectChats.
-              Expanded(
-                child: AdaptiveTabBarView(
-                  tabs: [l10n.direct, l10n.groups, l10n.rides],
-                  selectedColor: Colors.white,
-                  backgroundColor: AppColors.primary,
-                  children: [
-                    _buildDirectChats(),
-                    _buildGroupChats(),
-                    _buildRideChats(),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+      body: AdaptiveMasterDetailScaffold(
+        master: _buildChatListBody(constrainWidth: false),
+        detail: _buildTabletDetail(),
+        phone: _buildChatListBody(),
       ),
+    );
+  }
+
+  Widget _buildChatListBody({bool constrainWidth = true}) {
+    final l10n = AppLocalizations.of(context);
+    final body = SafeArea(
+      child: Column(
+        children: [
+          _buildHeader(),
+          Padding(
+            padding: adaptiveScreenPadding(
+              context,
+            ).copyWith(bottom: 12.h, top: 12.h),
+            child: PremiumSearchField(
+              hint: l10n.searchChatsOrPeople,
+              onChanged: (value) => ref
+                  .read(chatListUiViewModelProvider.notifier)
+                  .setSearchQuery(value),
+            ),
+          ),
+          Expanded(
+            child: AdaptiveTabBarView(
+              tabs: [l10n.direct, l10n.groups, l10n.rides],
+              selectedColor: Colors.white,
+              backgroundColor: AppColors.primary,
+              children: [
+                _buildDirectChats(),
+                _buildGroupChats(),
+                _buildRideChats(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (!constrainWidth) return body;
+
+    return MaxWidthContainer(maxWidth: kMaxWidthForm, child: body);
+  }
+
+  Widget _buildTabletDetail() {
+    final selectedChat = _selectedChat;
+    if (selectedChat == null) {
+      final l10n = AppLocalizations.of(context);
+      return TabletEmptyDetail(
+        icon: Icons.chat_bubble_outline_rounded,
+        title: l10n.messages,
+        message: l10n.searchChatsOrPeople,
+      );
+    }
+
+    return ChatDetailScreen(
+      key: ValueKey(
+        'chat_${selectedChat.chatId}_${selectedChat.receiver.uid}_${selectedChat.isGroup}',
+      ),
+      chatId: selectedChat.chatId,
+      receiver: selectedChat.receiver,
+      isGroup: selectedChat.isGroup,
+    );
+  }
+
+  bool get _usesTwoPaneLayout => context.screenWidth >= Breakpoints.medium;
+
+  UserModel _receiverForChat(ChatModel chat, String currentUserId) {
+    final title = chat.getChatTitle(currentUserId);
+    final photoUrl = chat.getChatPhoto(currentUserId);
+    final otherParticipant = chat.getOtherParticipant(currentUserId);
+    final fallbackId = chat.participantIds.firstWhere(
+      (id) => id != currentUserId,
+      orElse: () => '',
+    );
+
+    return UserModel.rider(
+      uid: otherParticipant?.userId ?? fallbackId,
+      email: '',
+      username: title,
+      photoUrl: photoUrl,
+    );
+  }
+
+  void _openExistingChat(ChatModel chat, String currentUserId) {
+    final receiverUser = _receiverForChat(chat, currentUserId);
+    final isGroup = chat.type != ChatType.private;
+
+    if (_usesTwoPaneLayout) {
+      setState(() {
+        _selectedChat = _SelectedChatDetail(
+          chatId: chat.id,
+          receiver: receiverUser,
+          isGroup: isGroup,
+        );
+      });
+      return;
+    }
+
+    final routeName = switch (chat.type) {
+      ChatType.rideGroup || ChatType.eventGroup => AppRoutes.chatGroup.name,
+      _ => AppRoutes.chatDetail.name,
+    };
+    context.pushNamed(
+      routeName,
+      pathParameters: {'id': chat.id},
+      queryParameters: {
+        'receiverId': receiverUser.uid,
+        'receiverName': receiverUser.username,
+        if (receiverUser.photoUrl != null)
+          'receiverPhotoUrl': receiverUser.photoUrl,
+      },
+      extra: receiverUser,
     );
   }
 
@@ -163,7 +258,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             fontSize: 32.sp,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
-            letterSpacing: -0.8,
+            letterSpacing: 0,
             height: 1,
           ),
         ),
@@ -174,8 +269,6 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   // ── Tab: Direct ──────────────────────────────────────────────────────────
 
   Widget _buildDirectChats() {
-    // FIX: Read searchQuery from provider internally — consistent with the
-    // other two tabs rather than relying on the outer build's uiState snapshot.
     final searchQuery = ref.watch(
       chatListUiViewModelProvider.select((state) => state.searchQuery),
     );
@@ -228,8 +321,6 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             ),
           ),
           data: (chats) {
-            // FIX: _filterDirectChats extracts the logic that was inline
-            // inside build, making it independently readable and testable.
             final directChats = _filterDirectChats(
               chats: chats,
               currentUserId: currentUser.uid,
@@ -297,10 +388,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     );
   }
 
-  // FIX: Filter logic extracted from build — was 20+ inline lines.
-  // FIX: Blocked chats are now ALWAYS hidden (not only when searching).
-  // The original `if (searchQuery.isNotEmpty && blockedIds.contains(otherId))`
-  // meant blocked chats were visible when search was empty — inconsistent UX.
+  // Always hide blocked users, including when search is empty.
   List<ChatModel> _filterDirectChats({
     required List<ChatModel> chats,
     required String currentUserId,
@@ -346,8 +434,6 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
   // ── Tab: Groups ──────────────────────────────────────────────────────────
 
-  // FIX: No longer takes searchQuery as a param — reads from provider,
-  // consistent with _buildDirectChats and _buildRideChats.
   Widget _buildGroupChats() {
     final searchQuery = ref.watch(
       chatListUiViewModelProvider.select((state) => state.searchQuery),
@@ -374,10 +460,6 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             onRetry: () => ref.invalidate(userChatsProvider(currentUserId)),
           ),
           data: (chats) {
-            // FIX: Simplified filter — removed `c.groupName != null` which
-            // incorrectly matched private chats that happened to have a name.
-            // Also removed the redundant `c.type != ChatType.rideGroup` since
-            // eventGroup and support already exclude it.
             final groupChats = chats.where((c) {
               if (c.type != ChatType.eventGroup && c.type != ChatType.support) {
                 return false;
@@ -472,8 +554,6 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     );
   }
 
-  // FIX: Extracted shared ListView — was duplicated verbatim in both
-  // _buildGroupChats and _buildRideChats.
   Widget _buildChatList(List<ChatModel> chats, String currentUserId) {
     return ListView.separated(
       padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -520,6 +600,17 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
       if (!mounted) return;
       context.pop(); // Close spinner.
+      if (_usesTwoPaneLayout) {
+        setState(() {
+          _selectedChat = _SelectedChatDetail(
+            chatId: chatModel.id,
+            receiver: user,
+            isGroup: false,
+          );
+        });
+        return;
+      }
+
       context.pushNamed(
         AppRoutes.chatDetail.name,
         pathParameters: {'id': chatModel.id},
@@ -764,8 +855,6 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     );
   }
 
-  // FIX: Extracted repeated swipe background widget — was duplicated for
-  // left and right sides with identical structure.
   Widget _buildSwipeBackground({
     required AlignmentGeometry alignment,
     required Color color,
@@ -798,7 +887,6 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     );
   }
 
-  // FIX: Extracted confirmDismiss logic — was an 80-line anonymous closure.
   Future<bool?> _confirmDismiss({
     required DismissDirection direction,
     required ChatModel chat,
@@ -878,6 +966,9 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
         type: AdaptiveSnackBarType.success,
         duration: const Duration(seconds: 2),
       );
+      if (_selectedChat?.chatId == chat.id) {
+        setState(() => _selectedChat = null);
+      }
       return true;
     } on Exception {
       if (!mounted) return false;
@@ -899,45 +990,16 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     final unreadCount = chat.getUnreadCount(currentUserId);
     final lastMessage =
         chat.lastMessageContent ?? AppLocalizations.of(context).noMessagesYet;
-    // FIX: Pass through toLocal() so relative time computes against local now.
     final lastMessageTime = _formatTime(chat.lastMessageAt);
-    final otherParticipant = chat.getOtherParticipant(currentUserId);
-    final fallbackId = chat.participantIds.firstWhere(
-      (id) => id != currentUserId,
-      orElse: () => '',
-    );
 
     return InkWell(
-      onTap: () {
-        final receiverUser = UserModel.rider(
-          uid: otherParticipant?.userId ?? fallbackId,
-          email: '',
-          username: title,
-          photoUrl: photoUrl,
-        );
-        final routeName = switch (chat.type) {
-          ChatType.rideGroup || ChatType.eventGroup => AppRoutes.chatGroup.name,
-          _ => AppRoutes.chatDetail.name,
-        };
-        context.pushNamed(
-          routeName,
-          pathParameters: {'id': chat.id},
-          queryParameters: {
-            'receiverId': receiverUser.uid,
-            'receiverName': receiverUser.username,
-            if (receiverUser.photoUrl != null)
-              'receiverPhotoUrl': receiverUser.photoUrl,
-          },
-          extra: receiverUser,
-        );
-      },
+      onTap: () => _openExistingChat(chat, currentUserId),
       child: Padding(
         padding: adaptiveScreenPadding(
           context,
         ).copyWith(bottom: 12.h, top: 12.h),
         child: Row(
           children: [
-            // FIX: Removed unnecessary single-child Stack wrapper.
             PremiumAvatar(imageUrl: photoUrl, name: title, size: 56),
             SizedBox(width: 12.w),
             Expanded(
@@ -1030,9 +1092,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
-  // FIX: Convert to local time before computing relative difference and
-  // before reading .day/.month. Firestore timestamps are UTC — without
-  // toLocal(), "today" and day/month display are wrong for non-UTC users.
+  // Firestore timestamps are UTC; convert to local before relative formatting.
   String _formatTime(DateTime? dateTime) {
     if (dateTime == null) return '';
     final local = dateTime.toLocal();

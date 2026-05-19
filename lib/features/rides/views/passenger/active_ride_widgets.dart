@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 import 'package:sport_connect/features/rides/view_models/ride_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
@@ -17,21 +18,19 @@ class MapCircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return AdaptiveTapSurface(
       color: Colors.white,
       shape: const CircleBorder(),
+      customBorder: const CircleBorder(),
       elevation: 3,
       shadowColor: Colors.black.withValues(alpha: 0.2),
-      child: InkWell(
-        onTap: () {
-          unawaited(HapticFeedback.lightImpact());
-          onTap();
-        },
-        customBorder: const CircleBorder(),
-        child: Padding(
-          padding: EdgeInsets.all(10.w),
-          child: Icon(icon, size: 20.sp, color: AppColors.textPrimary),
-        ),
+      onTap: () {
+        unawaited(HapticFeedback.lightImpact());
+        onTap();
+      },
+      child: Padding(
+        padding: EdgeInsets.all(10.w),
+        child: Icon(icon, size: 20.sp, color: AppColors.textPrimary),
       ),
     );
   }

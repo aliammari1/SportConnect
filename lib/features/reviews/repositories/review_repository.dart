@@ -4,6 +4,7 @@ import 'package:sport_connect/core/constants/app_constants.dart';
 import 'package:sport_connect/core/models/models.dart';
 import 'package:sport_connect/core/services/firebase_service.dart';
 import 'package:sport_connect/features/reviews/models/review_model.dart';
+import 'package:sport_connect/features/rides/models/booking/ride_booking.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 import 'package:uuid/uuid.dart';
 
@@ -151,6 +152,17 @@ class ReviewRepository {
       );
     }
 
+    final eligibleBooking = await _hasCompletedPaidSeat(
+      rideId: request.rideId,
+      reviewerId: currentUser.uid,
+      revieweeId: request.revieweeId,
+    );
+    if (!eligibleBooking) {
+      throw StateError(
+        'Reviews require a completed paid seat between these users.',
+      );
+    }
+
     // Check if user already reviewed this person for this ride
     final existingReview = await _reviewsCollection
         .where('rideId', isEqualTo: request.rideId)
@@ -187,6 +199,42 @@ class ReviewRepository {
     await _updateUserRatingStats(request.revieweeId);
 
     return review;
+  }
+
+  Future<bool> _hasCompletedPaidSeat({
+    required String rideId,
+    required String reviewerId,
+    required String revieweeId,
+  }) async {
+    final riderReviewQuery = await _firestore
+        .collection(AppConstants.bookingsCollection)
+        .where('rideId', isEqualTo: rideId)
+        .where('passengerId', isEqualTo: reviewerId)
+        .where('driverId', isEqualTo: revieweeId)
+        .where('status', isEqualTo: BookingStatus.completed.name)
+        .limit(1)
+        .get();
+
+    if (_containsPaidSeat(riderReviewQuery)) return true;
+
+    final driverReviewQuery = await _firestore
+        .collection(AppConstants.bookingsCollection)
+        .where('rideId', isEqualTo: rideId)
+        .where('driverId', isEqualTo: reviewerId)
+        .where('passengerId', isEqualTo: revieweeId)
+        .where('status', isEqualTo: BookingStatus.completed.name)
+        .limit(1)
+        .get();
+
+    return _containsPaidSeat(driverReviewQuery);
+  }
+
+  bool _containsPaidSeat(QuerySnapshot<Map<String, dynamic>> snapshot) {
+    return snapshot.docs.any((doc) {
+      final data = doc.data();
+      final paymentIntentId = data['paymentIntentId'];
+      return paymentIntentId is String && paymentIntentId.trim().isNotEmpty;
+    });
   }
 
   /// Get all reviews for a user (reviews they received).

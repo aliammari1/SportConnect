@@ -303,8 +303,8 @@ class RideActionsViewModel extends _$RideActionsViewModel {
 
   /// Pushes the driver's GPS coordinates to Firestore.
   ///
-  /// Failures are silently swallowed — a missed location ping must not
-  /// interrupt the navigation flow.
+  /// A missed location ping must not interrupt navigation flow; failure
+  /// handling is delegated to the underlying repository/service layer.
   Future<void> updateLiveLocation(
     String rideId,
     double latitude,
@@ -636,8 +636,43 @@ class DisputeFormViewModel extends _$DisputeFormViewModel {
 Stream<({double latitude, double longitude})?> driverLiveLocation(
   Ref ref,
   String rideId,
-) {
-  return ref.watch(rideRepositoryProvider).streamLiveLocation(rideId);
+) async* {
+  final userId = ref.watch(currentAuthUidProvider).value;
+  final ride = ref.watch(rideStreamProvider(rideId)).value;
+  if (userId == null || ride == null) {
+    yield null;
+    return;
+  }
+
+  final rideHasActiveTracking =
+      ride.status == RideStatus.active || ride.status == RideStatus.inProgress;
+  if (!rideHasActiveTracking) {
+    yield null;
+    return;
+  }
+
+  if (ride.driverId == userId) {
+    yield* ref.watch(rideRepositoryProvider).streamLiveLocation(rideId);
+    return;
+  }
+
+  final bookings = ref.watch(bookingsByPassengerProvider(userId)).value;
+  final hasPaidSeat =
+      bookings?.any((booking) {
+        if (booking.rideId != rideId) return false;
+        final hasPayment =
+            (booking.paymentIntentId?.trim().isNotEmpty ?? false) ||
+            booking.paidAt != null;
+        return hasPayment && booking.status != BookingStatus.cancelled;
+      }) ??
+      false;
+
+  if (!hasPaidSeat) {
+    yield null;
+    return;
+  }
+
+  yield* ref.watch(rideRepositoryProvider).streamLiveLocation(rideId);
 }
 
 @riverpod
@@ -1950,33 +1985,31 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
 
   @override
   ActiveRideState build(String rideId) {
-    ref.onDispose(() {
-      final positionStreamSubscription = _positionStreamSubscription;
-      if (positionStreamSubscription != null) {
-        unawaited(positionStreamSubscription.cancel());
-      }
-    });
-
-    ref.listen(rideStreamProvider(rideId), (_, next) {
-      Future.microtask(() {
-        if (!ref.mounted) return;
-        _handleRideUpdate(next);
+    ref
+      ..onDispose(() {
+        final positionStreamSubscription = _positionStreamSubscription;
+        if (positionStreamSubscription != null) {
+          unawaited(positionStreamSubscription.cancel());
+        }
+      })
+      ..listen(rideStreamProvider(rideId), (_, next) {
+        Future.microtask(() {
+          if (!ref.mounted) return;
+          _handleRideUpdate(next);
+        });
+      })
+      ..listen(bookingsByRideProvider(rideId), (_, next) {
+        Future.microtask(() {
+          if (!ref.mounted) return;
+          _handleBookingsUpdate(next.value ?? const <RideBooking>[]);
+        });
+      })
+      ..listen(driverLiveLocationProvider(rideId), (_, next) {
+        Future.microtask(() {
+          if (!ref.mounted) return;
+          _handleDriverLiveLocationUpdate(next.value);
+        });
       });
-    });
-
-    ref.listen(bookingsByRideProvider(rideId), (_, next) {
-      Future.microtask(() {
-        if (!ref.mounted) return;
-        _handleBookingsUpdate(next.value ?? const <RideBooking>[]);
-      });
-    });
-
-    ref.listen(driverLiveLocationProvider(rideId), (_, next) {
-      Future.microtask(() {
-        if (!ref.mounted) return;
-        _handleDriverLiveLocationUpdate(next.value);
-      });
-    });
 
     // Sync picked-up passengers from Firestore so the driver's confirmed
     // pickups survive app restarts and are visible to all parties.

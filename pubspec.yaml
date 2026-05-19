@@ -2,10 +2,11 @@ name: sport_connect
 description: "SportConnect - Social carpooling app for sports enthusiasts"
 publish_to: "none"
 
-version: 1.1.19
+version: 1.1.20
 
 environment:
   sdk: ^3.11.0
+  flutter: ">=3.41.0"
 
 dependencies:
   flutter:
@@ -79,7 +80,7 @@ dependencies:
 
   # Authentication
   google_sign_in: ^7.2.0
-  sign_in_with_apple: ^7.0.1
+  sign_in_with_apple: ^8.0.0
 
   # App Features
   in_app_review: ^2.0.10

@@ -36,6 +36,14 @@ AdaptiveButtonSize _adaptiveSize(ButtonSize size) {
   };
 }
 
+double _minButtonHeight(ButtonSize size) {
+  return switch (size) {
+    ButtonSize.small => 44.h,
+    ButtonSize.medium => 52.h,
+    ButtonSize.large => 60.h,
+  };
+}
+
 Color? _adaptiveColor(PremiumButtonStyle style) {
   return switch (style) {
     PremiumButtonStyle.primary => AppColors.primary,
@@ -87,13 +95,16 @@ class PremiumButton extends StatelessWidget {
 
     return SizedBox(
       width: width ?? double.infinity,
-      child: AdaptiveButton.child(
-        onPressed: enabled ? onPressed : null,
-        enabled: enabled,
-        style: _adaptiveStyle(style),
-        size: _adaptiveSize(size),
-        color: _adaptiveColor(style),
-        child: content,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: _minButtonHeight(size)),
+        child: AdaptiveButton.child(
+          onPressed: enabled ? onPressed : null,
+          enabled: enabled,
+          style: _adaptiveStyle(style),
+          size: _adaptiveSize(size),
+          color: _adaptiveColor(style),
+          child: content,
+        ),
       ),
     );
   }
@@ -103,6 +114,7 @@ class PremiumButton extends StatelessWidget {
       text,
       maxLines: 2,
       softWrap: true,
+      overflow: TextOverflow.ellipsis,
       textAlign: TextAlign.center,
       style: TextStyle(
         fontSize: switch (size) {
@@ -111,6 +123,8 @@ class PremiumButton extends StatelessWidget {
           ButtonSize.large => 16.sp,
         },
         fontWeight: FontWeight.w600,
+        height: 1.15,
+        letterSpacing: 0,
       ),
     );
 

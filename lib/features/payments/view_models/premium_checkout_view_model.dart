@@ -124,12 +124,13 @@ class PremiumCheckoutViewModel extends _$PremiumCheckoutViewModel {
       await ref.read(profileRepositoryProvider).updateProfile(
         currentUser.uid,
         {
-          'isPremium': true,
+          'premiumEntitlementStatus': 'pending_server_verification',
           'premiumPlan': selectedPlan.name,
           'premiumSource': 'iap',
           'premiumPlatform': purchase?.verificationData.source,
           'premiumProductId': purchase?.productID,
           'premiumPurchaseStatus': purchase?.status.name,
+          'premiumPurchaseVerificationRequired': true,
           'premiumUpdatedAt': DateTime.now(),
 
           // Useful for debugging Google Play subscriptions with multiple

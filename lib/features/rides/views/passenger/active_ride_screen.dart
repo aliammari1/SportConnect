@@ -939,7 +939,7 @@ class _PassengerActiveRideScreenState
             ),
           ),
 
-        // AR-6: Location permission denied — prompt to re-enable
+        // AR-6: Location permission denied — inform and link to settings.
         if (_locationPermissionDeniedForever)
           Positioned(
             bottom: 220.h,
@@ -959,7 +959,7 @@ class _PassengerActiveRideScreenState
                     SizedBox(width: 8.w),
                     Expanded(
                       child: Text(
-                        'Location access denied. Tap to open Settings and re-enable.',
+                        'Location access is off. Open Settings to change access for live trip updates.',
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: Colors.white,
@@ -1123,10 +1123,8 @@ class _PassengerActiveRideScreenState
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: ListView(
-        controller: scrollController,
-        padding: EdgeInsets.zero,
-        children: [
+      child: Builder(builder: (context) {
+        final sheetItems = <Widget>[
           // Drag handle
           Center(
             child: Container(
@@ -1907,8 +1905,14 @@ class _PassengerActiveRideScreenState
           ),
 
           SizedBox(height: 12.h + bottomPadding),
-        ],
-      ),
+        ];
+        return ListView.builder(
+          controller: scrollController,
+          padding: EdgeInsets.zero,
+          itemCount: sheetItems.length,
+          itemBuilder: (context, index) => sheetItems[index],
+        );
+      }),
     );
   }
 

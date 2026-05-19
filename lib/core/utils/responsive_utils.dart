@@ -304,7 +304,7 @@ EdgeInsets adaptiveScreenPadding(BuildContext context) {
 /// on short landscape phones.
 bool useNavigationRailLayout(BuildContext context) {
   final viewport = MediaQuery.sizeOf(context);
-  return viewport.width >= Breakpoints.compact && viewport.height >= 500;
+  return viewport.width >= Breakpoints.medium && viewport.height >= 600;
 }
 
 /// Adaptive padding for all edges.

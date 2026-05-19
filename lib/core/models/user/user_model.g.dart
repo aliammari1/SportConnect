@@ -168,6 +168,8 @@ PendingUserModel _$PendingUserModelFromJson(Map json) => PendingUserModel(
   email: json['email'] as String,
   username: json['username'] as String,
   photoUrl: json['photoUrl'] as String?,
+  phoneNumber: json['phoneNumber'] as String?,
+  dateOfBirth: const TimestampConverter().fromJson(json['dateOfBirth']),
   expertise:
       $enumDecodeNullable(_$ExpertiseEnumMap, json['expertise']) ??
       Expertise.rookie,
@@ -186,6 +188,8 @@ Map<String, dynamic> _$PendingUserModelToJson(PendingUserModel instance) =>
       'email': instance.email,
       'username': instance.username,
       'photoUrl': instance.photoUrl,
+      'phoneNumber': instance.phoneNumber,
+      'dateOfBirth': const TimestampConverter().toJson(instance.dateOfBirth),
       'expertise': _$ExpertiseEnumMap[instance.expertise]!,
       'isEmailVerified': instance.isEmailVerified,
       'isBanned': instance.isBanned,

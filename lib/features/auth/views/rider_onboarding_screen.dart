@@ -122,6 +122,8 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
 
   final _phoneKey = GlobalKey<IntlPhoneInputState>();
   final _addressKey = GlobalKey<AddressAutocompleteFieldState>();
+  StreamSubscription<dynamic>? _draftSubscription;
+  String? _draftUid;
 
   @override
   void initState() {
@@ -137,6 +139,8 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
       final state = ref.read(onboardingViewModelProvider);
 
       _populateProfileFields(user);
+      _restoreSetupDraft(user.uid);
+      _startDraftAutosave(user.uid);
 
       if (!state.riderProfilePopulated) {
         notifier.markRiderProfilePopulated();
@@ -146,8 +150,64 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
 
   @override
   void dispose() {
+    _draftSubscription?.cancel();
     _form.dispose();
     super.dispose();
+  }
+
+  void _startDraftAutosave(String uid) {
+    if (_draftUid == uid) return;
+    _draftUid = uid;
+    _draftSubscription?.cancel();
+    _draftSubscription = _form.valueChanges.listen((_) {
+      unawaited(_saveSetupDraft(uid));
+    });
+  }
+
+  void _restoreSetupDraft(String uid) {
+    final draft = ref
+        .read(onboardingViewModelProvider.notifier)
+        .setupDraftFor(uid, UserRole.rider);
+    if (draft.isEmpty) return;
+
+    final dobText = draft['dateOfBirth'] as String?;
+    final dateOfBirth = dobText == null ? null : DateTime.tryParse(dobText);
+    final expertiseText = draft['expertise'] as String?;
+    final expertise = switch (expertiseText) {
+      'intermediate' => Expertise.intermediate,
+      'advanced' => Expertise.advanced,
+      'expert' => Expertise.expert,
+      'rookie' => Expertise.rookie,
+      _ => null,
+    };
+
+    _form.patchValue({
+      _FormFields.name: draft['name'] as String?,
+      _FormFields.gender: draft['gender'] as String?,
+      _FormFields.dob: dateOfBirth,
+      _FormFields.expertise: expertise,
+      _FormFields.terms: draft['termsAccepted'] as bool?,
+    });
+    _phoneKey.currentState?.setValue(draft['phoneNumber'] as String?);
+    _addressKey.currentState?.setText(draft['address'] as String?);
+  }
+
+  Future<void> _saveSetupDraft(String uid) {
+    final values = _form.value;
+    final dateOfBirth = values[_FormFields.dob] as DateTime?;
+    return ref.read(onboardingViewModelProvider.notifier).saveSetupDraft(
+      uid,
+      UserRole.rider,
+      {
+        'name': (values[_FormFields.name] as String?)?.trim(),
+        'gender': values[_FormFields.gender] as String?,
+        'dateOfBirth': dateOfBirth?.toIso8601String(),
+        'expertise': (values[_FormFields.expertise] as Expertise?)?.name,
+        'termsAccepted': values[_FormFields.terms] as bool?,
+        'phoneNumber': _phoneKey.currentState?.fullNumber,
+        'address': _addressKey.currentState?.text.trim(),
+      },
+    );
   }
 
   Widget _sectionLabel(String text) => Padding(
@@ -179,6 +239,7 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
     final patchedDob = switch (user) {
       final RiderModel rider => rider.dateOfBirth,
       final DriverModel driver => driver.dateOfBirth,
+      final PendingUserModel pending => pending.dateOfBirth,
       _ => null,
     };
 
@@ -339,7 +400,8 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
       ),
     );
 
-    if (confirmed == true && mounted) {
+    if (!mounted) return;
+    if (confirmed == true) {
       context.go(AppRoutes.roleSelection.path);
     }
   }
@@ -423,13 +485,17 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
 
     final values = _form.value;
     final dateOfBirth = values[_FormFields.dob] as DateTime?;
+    final phoneInputValue = _phoneKey.currentState?.fullNumber;
+    final phoneNumber = (phoneInputValue?.trim().isNotEmpty ?? false)
+        ? phoneInputValue!.trim()
+        : vmState.riderPhoneNumber;
 
     final profileUpdates = <String, dynamic>{
       'username':
           ((values[_FormFields.name] as String?)?.trim().isNotEmpty ?? false)
           ? (values[_FormFields.name]! as String).trim()
           : currentUser.username.trim(),
-      'phoneNumber': vmState.riderPhoneNumber,
+      'phoneNumber': phoneNumber,
       'address': _addressKey.currentState?.text.trim(),
       'gender': values[_FormFields.gender] as String?,
       'dateOfBirth': dateOfBirth == null ? null : _dateOnly(dateOfBirth),
@@ -437,6 +503,9 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
           ((values[_FormFields.expertise] as Expertise?) ?? Expertise.rookie)
               .name,
     };
+
+    await _saveSetupDraft(currentUser.uid);
+    if (!mounted) return;
 
     await ref
         .read(onboardingViewModelProvider.notifier)
@@ -812,21 +881,29 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
                                     final RiderModel rider => rider.phoneNumber,
                                     final DriverModel driver =>
                                       driver.phoneNumber,
+                                    final PendingUserModel pending =>
+                                      pending.phoneNumber,
                                     _ => null,
                                   },
                                   label: l10n.authPhoneOptional,
                                   hint: l10n.authPhoneHint,
                                   accentColor: AppColors.primary,
                                   fillColor: AppColors.background,
-                                  onChanged: (phone) => ref
-                                      .read(
-                                        onboardingViewModelProvider.notifier,
-                                      )
-                                      .setRiderDraftContact(
-                                        phoneNumber: phone.isValid
-                                            ? phone.fullNumber
-                                            : null,
-                                      ),
+                                  onChanged: (phone) {
+                                    ref
+                                        .read(
+                                          onboardingViewModelProvider.notifier,
+                                        )
+                                        .setRiderDraftContact(
+                                          phoneNumber: phone.isValid
+                                              ? phone.fullNumber
+                                              : null,
+                                        );
+                                    final uid = _draftUid;
+                                    if (uid != null) {
+                                      unawaited(_saveSetupDraft(uid));
+                                    }
+                                  },
                                 )
                                 .animate()
                                 .fadeIn(duration: 300.ms, delay: 180.ms)
@@ -845,7 +922,12 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
                                   },
                                   accentColor: AppColors.primary,
                                   fillColor: AppColors.background,
-                                  onSelected: (_) {},
+                                  onSelected: (_) {
+                                    final uid = _draftUid;
+                                    if (uid != null) {
+                                      unawaited(_saveSetupDraft(uid));
+                                    }
+                                  },
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) {
                                       return l10n.address_is_required;

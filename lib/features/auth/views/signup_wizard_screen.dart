@@ -17,6 +17,7 @@ import 'package:reactive_forms/reactive_forms.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/models/user/models.dart';
+import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/expertise_picker.dart';
@@ -270,6 +271,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
           username: (step0Values['name'] as String? ?? '').trim(),
           role: uiState.selectedRole,
           phone: uiState.phoneNumber,
+          dateOfBirth: uiState.dateOfBirth,
           profileImage: uiState.profileImage,
           expertise: uiState.expertise,
         );
@@ -346,24 +348,85 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
       }
     });
 
+    final isTabletLayout = context.isExpandedOrLarger;
+
     return PopScope(
       canPop: wizardUiState.currentStep == 0,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _prevStep();
       },
       child: AdaptiveScaffold(
-        body: MaxWidthContainer(
-          maxWidth: context.isExpandedOrLarger ? 1180 : kMaxWidthFormNarrow,
-          child: SafeArea(
-            child: Column(
-              children: [
-                _buildTopBar(theme),
-                _buildStepIndicator(),
-                Expanded(child: _buildAdaptiveContent(theme)),
-                _buildBottomCTA(theme, registerState, socialState),
-              ],
+        body: isTabletLayout
+            ? _buildTabletLayout(theme, registerState, socialState)
+            : _buildPhoneLayout(theme, registerState, socialState),
+      ),
+    );
+  }
+
+  Widget _buildPhoneLayout(
+    _StepTheme theme,
+    AsyncValue<void> registerState,
+    SocialAuthState socialState,
+  ) {
+    return MaxWidthContainer(
+      maxWidth: kMaxWidthFormNarrow,
+      child: SafeArea(
+        child: Column(
+          children: [
+            _buildTopBar(theme),
+            _buildStepIndicator(),
+            Expanded(child: _buildAdaptiveContent(theme)),
+            _buildBottomCTA(theme, registerState, socialState),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabletLayout(
+    _StepTheme theme,
+    AsyncValue<void> registerState,
+    SocialAuthState socialState,
+  ) {
+    return MaxWidthContainer(
+      maxWidth: 1180,
+      child: SafeArea(
+        child: Column(
+          children: [
+            _buildTopBar(theme),
+            _buildStepIndicator(),
+            Expanded(
+              child: Padding(
+                padding: adaptiveScreenPadding(context).copyWith(
+                  top: AppSpacing.sm,
+                  bottom: AppSpacing.xl,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(flex: 4, child: _buildTabletOverview(theme)),
+                    SizedBox(width: AppSpacing.xxl),
+                    Expanded(
+                      flex: 5,
+                      child: AnimatedPadding(
+                        duration: 250.ms,
+                        curve: Curves.easeOutCubic,
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.viewInsetsOf(context).bottom,
+                        ),
+                        child: Column(
+                          children: [
+                            Expanded(child: _buildAdaptiveContent(theme)),
+                            _buildBottomCTA(theme, registerState, socialState),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -418,7 +481,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                   l10n.stepOfCount(
                     wizardUiState.currentStep + 1,
                     3,
-                  ), // UX FIX: 3 steps
+                  ),
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: theme.accent.withOpacity(0.8),
@@ -429,7 +492,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
           ),
           Row(
             children: List.generate(
-              3, // UX FIX: 3 steps
+              3,
               (i) => AnimatedContainer(
                 duration: 300.ms,
                 margin: EdgeInsets.only(left: 5.w),
@@ -456,7 +519,6 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
       padding: EdgeInsets.fromLTRB(24.w, 4.h, 24.w, 12.h),
       child: Row(
         children: List.generate(3, (i) {
-          // UX FIX: 3 steps
           return Expanded(
             child: AnimatedContainer(
               duration: 300.ms,
@@ -476,50 +538,31 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
   }
 
   // ── Tinder Card Stack ───────────────────────────────────────────────────────
-  Widget _buildCard(_StepTheme theme) {
+  Widget _buildCard(_StepTheme theme, {bool includeOuterPadding = true}) {
+    final card = Container(
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: AppSpacing.borderRadiusXl,
+        boxShadow: AppSpacing.shadowMd,
+      ),
+      child: ClipRRect(
+        borderRadius: AppSpacing.borderRadiusXl,
+        child: _buildStepContent(theme),
+      ),
+    );
+
+    if (!includeOuterPadding) return card;
+
     return Padding(
       padding: adaptiveScreenPadding(context),
-      child: Container(
-        decoration: BoxDecoration(
-          color: _kCard,
-          borderRadius: BorderRadius.circular(24.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.07),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24.r),
-          child: _buildStepContent(theme),
-        ),
-      ),
+      child: card,
     );
   }
 
   Widget _buildAdaptiveContent(_StepTheme theme) {
-    if (!context.isExpandedOrLarger) {
-      return _buildCard(theme);
-    }
-
-    return Padding(
-      padding: adaptiveScreenPadding(context),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            flex: 4,
-            child: _buildTabletOverview(theme),
-          ),
-          SizedBox(width: 20.w),
-          Expanded(
-            flex: 6,
-            child: _buildCard(theme),
-          ),
-        ],
-      ),
+    return _buildCard(
+      theme,
+      includeOuterPadding: !context.isExpandedOrLarger,
     );
   }
 
@@ -1024,7 +1067,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
     final currentStep = ref.watch(
       signupWizardUiViewModelProvider.select((s) => s.currentStep),
     );
-    final isLast = currentStep == 2; // UX FIX: 3 steps total
+    final isLast = currentStep == 2;
     final isLoading = registerState.isLoading;
     final isDisabled = registerState.isLoading || socialState.isLoading;
 
@@ -1108,7 +1151,6 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                 ),
               ),
             ),
-            // UX FIX: Allow users to skip the Profile setup phase
             if (isLast) ...[
               SizedBox(height: 8.h),
               TextButton(
@@ -1193,7 +1235,6 @@ class _StyledField extends StatelessWidget {
   Widget build(BuildContext context) => AdaptiveReactiveTextField(
     formControlName: formControlName,
     obscureText: obscure,
-    maxLines: 1,
     keyboardType: keyboardType,
     validationMessages: validationMessages,
     textCapitalization: capitalization,

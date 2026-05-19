@@ -196,31 +196,24 @@ class DriverViewModel extends _$DriverViewModel {
     ref.listen(currentUserProvider, (_, next) {
       state = state.copyWith(user: next);
     });
-
     ref.listen(driverStatsProvider, (_, next) {
       state = state.copyWith(stats: next);
     });
-
     ref.listen(pendingRideRequestsProvider, (_, next) {
       state = state.copyWith(pendingRequests: next);
     });
-
     ref.listen(acceptedRideRequestsProvider, (_, next) {
       state = state.copyWith(acceptedRequests: next);
     });
-
     ref.listen(rejectedRideRequestsProvider, (_, next) {
       state = state.copyWith(rejectedRequests: next);
     });
-
     ref.listen(upcomingDriverRidesProvider, (_, next) {
       state = state.copyWith(upcomingRides: next);
     });
-
     ref.listen(earningsTransactionsProvider, (_, next) {
       state = state.copyWith(earningsTransactions: next);
     });
-
     ref.listen(activeDriverRideProvider, (_, next) {
       state = state.copyWith(activeRideAsync: next);
     });

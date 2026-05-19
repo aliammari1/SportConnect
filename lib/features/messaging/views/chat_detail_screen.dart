@@ -265,7 +265,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     _scrollToBottom();
   }
 
-  // FIX: Unified — replaces duplicated _sendImage + _sendImageFromCamera.
   Future<void> _sendImageFromSource(ImageSource source) async {
     final l10n = AppLocalizations.of(context);
     final customMessage = source == ImageSource.gallery
@@ -767,9 +766,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
             ?.contains(_receiver.uid) ??
         false;
 
-    // FIX: ref.listen in build is correct for ConsumerStatefulWidget —
-    // Riverpod deduplicates it across rebuilds. Delegate read side-effect
-    // to the notifier's markVisibleMessagesAsRead instead of doing it inline.
     ref.listen(
       chatDetailViewModelProvider(_chatId, currentUser!.uid),
       (prev, next) {
@@ -1160,8 +1156,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     );
   }
 
-  // FIX: Delegates message-type rendering to extracted widgets.
-  // Each widget is self-contained and testable independently.
   Widget _buildMessageBubble(
     MessageModel message,
     bool isMe,
@@ -1395,7 +1389,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     );
   }
 
-  // FIX: Convert Firestore UTC DateTime to local before displaying.
+  // Firestore timestamps are UTC; render local device time in chat UI.
   String _formatTime(DateTime? dateTime) {
     if (dateTime == null) return '';
     final local = dateTime.toLocal();
@@ -1628,9 +1622,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     );
   }
 
-  // FIX: Permission checks happen BEFORE the spinner.
-  // Dialog is NOT awaited — closed programmatically after getting position.
-  // Duplicate permission checks inside the try block removed.
+  // Check location/service permissions before showing a blocking progress dialog.
   Future<void> _shareLocation() async {
     final l10n = AppLocalizations.of(context);
 
@@ -1658,8 +1650,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     if (!await _ensurePersistedChat()) return;
     if (!mounted) return;
 
-    // FIX: Do NOT await the dialog — we close it programmatically below.
-    // Awaiting it would deadlock because barrierDismissible is false.
+    // Do not await this dialog; it is dismissed programmatically below.
     unawaited(
       showDialog<void>(
         context: context,

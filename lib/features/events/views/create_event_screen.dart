@@ -102,28 +102,34 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
             onTap: () => FocusScope.of(context).unfocus(),
             child: SafeArea(
               top: false,
-              child: ListView(
-                padding: adaptiveScreenPadding(context),
-                children: [
-                  _buildSportTypeSelector(ref, createState, l10n),
-                  SizedBox(height: 20.h),
-                  _buildTitleField(ref, createState, l10n),
-                  SizedBox(height: 14.h),
-                  SizedBox(height: 14.h),
-                  _buildDescriptionField(ref, createState, l10n),
-                  SizedBox(height: 20.h),
-                  _buildImagePicker(ref, createState, l10n),
-                  SizedBox(height: 20.h),
-                  _buildLocationPicker(context, ref, createState, l10n),
-                  SizedBox(height: 20.h),
-                  _buildWhenSection(context, ref, createState, l10n),
-                  SizedBox(height: 20.h),
-                  _buildParticipantSlider(ref, createState, l10n),
-                  SizedBox(height: 20.h),
-                  _buildRecurringToggle(context, ref, createState, l10n),
-                  SizedBox(height: 32.h),
-                  _buildSubmitButton(context, ref, createState, l10n),
-                ],
+              child: Builder(
+                builder: (context) {
+                  final formItems = <Widget>[
+                    _buildSportTypeSelector(ref, createState, l10n),
+                    SizedBox(height: 20.h),
+                    _buildTitleField(ref, createState, l10n),
+                    SizedBox(height: 14.h),
+                    SizedBox(height: 14.h),
+                    _buildDescriptionField(ref, createState, l10n),
+                    SizedBox(height: 20.h),
+                    _buildImagePicker(ref, createState, l10n),
+                    SizedBox(height: 20.h),
+                    _buildLocationPicker(context, ref, createState, l10n),
+                    SizedBox(height: 20.h),
+                    _buildWhenSection(context, ref, createState, l10n),
+                    SizedBox(height: 20.h),
+                    _buildParticipantSlider(ref, createState, l10n),
+                    SizedBox(height: 20.h),
+                    _buildRecurringToggle(context, ref, createState, l10n),
+                    SizedBox(height: 32.h),
+                    _buildSubmitButton(context, ref, createState, l10n),
+                  ];
+                  return ListView.builder(
+                    padding: adaptiveScreenPadding(context),
+                    itemCount: formItems.length,
+                    itemBuilder: (context, index) => formItems[index],
+                  );
+                },
               ),
             ),
           ),
@@ -581,7 +587,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
             unawaited(HapticFeedback.selectionClick());
             ref
                 .read(createEventFormViewModelProvider.notifier)
-                .setIsRecurring(v);
+                .setIsRecurring(value: v);
           },
           title: Text(
             l10n.eventRecurring,

@@ -3809,7 +3809,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get locationNotEnabledDescription =>
-      'You declined location access. Enable it to find rides near you.';
+      'Location access is off. You can still browse rides by city.';
 
   @override
   String get browseByCity => 'Browse by City';
@@ -3819,14 +3819,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get locationPermissionBlockedDescription =>
-      'Location permission is permanently denied. Please enable it in your device settings.';
+      'Location access is off in device settings. Features that need your current location are unavailable until changed in Settings.';
 
   @override
   String get locationServicesOff => 'Location Services Off';
 
   @override
   String get locationServicesOffDescription =>
-      'Your device\'s location services are turned off. Please enable them in settings.';
+      'Your device\'s location services are turned off. Features that need your current location are unavailable until changed in Settings.';
 
   @override
   String get openLocationSettings => 'Open Location Settings';

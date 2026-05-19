@@ -338,7 +338,7 @@ class _RideCompletionScreenState extends ConsumerState<RideCompletionScreen> {
               child: uiState.isGeneratingPdf
                   ? const Center(
                       child: Padding(
-                        padding: EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(12),
                         child: SizedBox(
                           width: 20,
                           height: 20,

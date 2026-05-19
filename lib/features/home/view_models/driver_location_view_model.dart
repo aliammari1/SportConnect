@@ -11,6 +11,7 @@ class DriverLocationState {
     this.isLoading = true,
     this.hasInitialized = false,
     this.locationGranted = false,
+    this.locationDenied = false,
     this.locationDeniedForever = false,
     this.servicesDisabled = false,
     this.currentPosition,
@@ -19,6 +20,7 @@ class DriverLocationState {
   final bool isLoading;
   final bool hasInitialized;
   final bool locationGranted;
+  final bool locationDenied;
   final bool locationDeniedForever;
   final bool servicesDisabled;
   final Position? currentPosition;
@@ -28,6 +30,7 @@ class DriverLocationState {
     bool? isLoading,
     bool? hasInitialized,
     bool? locationGranted,
+    bool? locationDenied,
     bool? locationDeniedForever,
     bool? servicesDisabled,
     Position? currentPosition,
@@ -38,6 +41,7 @@ class DriverLocationState {
       isLoading: isLoading ?? this.isLoading,
       hasInitialized: hasInitialized ?? this.hasInitialized,
       locationGranted: locationGranted ?? this.locationGranted,
+      locationDenied: locationDenied ?? this.locationDenied,
       locationDeniedForever:
           locationDeniedForever ?? this.locationDeniedForever,
       servicesDisabled: servicesDisabled ?? this.servicesDisabled,
@@ -86,6 +90,7 @@ class DriverLocationViewModel extends _$DriverLocationViewModel {
           hasInitialized: true,
           servicesDisabled: true,
           locationGranted: false,
+          locationDenied: false,
           locationDeniedForever: false,
         );
         return;
@@ -100,6 +105,7 @@ class DriverLocationViewModel extends _$DriverLocationViewModel {
         hasInitialized: true,
         servicesDisabled: false,
         locationGranted: granted,
+        locationDenied: false,
         locationDeniedForever: permanentlyDenied,
       );
 
@@ -144,6 +150,7 @@ class DriverLocationViewModel extends _$DriverLocationViewModel {
           hasInitialized: true,
           servicesDisabled: true,
           locationGranted: false,
+          locationDenied: false,
         );
         return;
       }
@@ -157,6 +164,7 @@ class DriverLocationViewModel extends _$DriverLocationViewModel {
         isLoading: false,
         hasInitialized: true,
         locationGranted: granted,
+        locationDenied: !granted && !permanentlyDenied,
         servicesDisabled: false,
         locationDeniedForever: permanentlyDenied && !granted,
       );
@@ -184,6 +192,7 @@ class DriverLocationViewModel extends _$DriverLocationViewModel {
     state = state.copyWith(
       currentPosition: position,
       locationGranted: true,
+      locationDenied: false,
       servicesDisabled: false,
     );
   }

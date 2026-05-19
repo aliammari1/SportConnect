@@ -40,7 +40,7 @@ class _PayoutDetailScreenState extends ConsumerState<PayoutDetailScreen> {
       ),
       body: payoutAsync.when(
         loading: () => const Padding(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: SkeletonLoader(),
         ),
         error: (e, _) => _ErrorView(
@@ -291,7 +291,7 @@ class _AmountCard extends StatelessWidget {
               fontSize: 44.sp,
               fontWeight: FontWeight.w800,
               color: Colors.white,
-              letterSpacing: -1,
+              letterSpacing: 0,
             ),
           ),
           SizedBox(height: 12.h),

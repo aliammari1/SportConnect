@@ -13,43 +13,74 @@ import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/features/profile/view_models/user_search_view_model.dart';
+import 'package:sport_connect/features/profile/views/profile_screen.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
 /// Premium User Search Screen with autocomplete
-class UserSearchScreen extends ConsumerWidget {
+class UserSearchScreen extends ConsumerStatefulWidget {
   const UserSearchScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UserSearchScreen> createState() => _UserSearchScreenState();
+}
+
+class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
+  String? _selectedUserId;
+
+  @override
+  Widget build(BuildContext context) {
     final uiState = ref.watch(userSearchUiViewModelProvider);
     final searchResults = ref.watch(searchResultsProvider(uiState.query));
 
+    final searchBody = SafeArea(
+      child: Column(
+        children: [
+          _buildHeader(context),
+          _buildSearchBar(context, ref, uiState),
+          Expanded(
+            child: uiState.query.isEmpty
+                ? _buildEmptyState(context, ref)
+                : searchResults.when(
+                    data: (users) => users.isEmpty
+                        ? _buildNoResults(context, uiState.query)
+                        : _buildResults(context, ref, users, uiState.query),
+                    loading: () => _buildLoadingState(context),
+                    error: (error, _) =>
+                        _buildErrorState(context, error.toString()),
+                  ),
+          ),
+        ],
+      ),
+    );
+
     return AdaptiveScaffold(
-      body: MaxWidthContainer(
-        maxWidth: kMaxWidthContent,
-        child: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            _buildSearchBar(context, ref, uiState),
-            Expanded(
-              child: uiState.query.isEmpty
-                  ? _buildEmptyState(context, ref)
-                  : searchResults.when(
-                      data: (users) => users.isEmpty
-                          ? _buildNoResults(context, uiState.query)
-                          : _buildResults(context, ref, users, uiState.query),
-                      loading: () => _buildLoadingState(context),
-                      error: (error, _) =>
-                          _buildErrorState(context, error.toString()),
-                    ),
-            ),
-          ],
+      body: AdaptiveMasterDetailScaffold(
+        master: MaxWidthContainer(
+          maxWidth: kMaxWidthContent,
+          child: searchBody,
+        ),
+        detail: _buildTabletDetail(context),
+        phone: MaxWidthContainer(
+          maxWidth: kMaxWidthContent,
+          child: searchBody,
         ),
       ),
-    ),
     );
+  }
+
+  Widget _buildTabletDetail(BuildContext context) {
+    if (_selectedUserId == null) {
+      final l10n = AppLocalizations.of(context);
+      return TabletEmptyDetail(
+        icon: Icons.person_search_rounded,
+        title: l10n.viewDetails,
+        message: l10n.searchByNameHint,
+      );
+    }
+    return ProfileScreen(userId: _selectedUserId);
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -375,6 +406,10 @@ class UserSearchScreen extends ConsumerWidget {
 
           void navigateToProfile() {
             unawaited(HapticFeedback.lightImpact());
+            if (context.isTabletOrLarger) {
+              setState(() => _selectedUserId = user.uid);
+              return;
+            }
             if (user.role == UserRole.driver) {
               context.pushNamed(
                 AppRoutes.driverProfile.name,
@@ -450,136 +485,133 @@ class _UserCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: AppSpacing.shadowSm,
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16.r),
-          child: Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Row(
-              children: [
-                // Avatar
-                Container(
-                  width: 56.w,
-                  height: 56.w,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: user.photoUrl == null
-                        ? AppColors.primaryGradient
-                        : null,
-                    image: user.photoUrl != null
-                        ? DecorationImage(
-              image: CachedNetworkImageProvider(user.photoUrl!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: user.photoUrl == null
-                      ? Center(
-                          child: Text(
-                            user.username.isNotEmpty
-                                ? user.username[0].toUpperCase()
-                                : '?',
-                            style: TextStyle(
-                              fontSize: 22.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
+      child: AdaptiveTapSurface(
+        borderRadius: BorderRadius.circular(16.r),
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Row(
+            children: [
+              // Avatar
+              Container(
+                width: 56.w,
+                height: 56.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: user.photoUrl == null
+                      ? AppColors.primaryGradient
+                      : null,
+                  image: user.photoUrl != null
+                      ? DecorationImage(
+                          image: CachedNetworkImageProvider(user.photoUrl!),
+                          fit: BoxFit.cover,
                         )
                       : null,
                 ),
-                SizedBox(width: 14.w),
+                child: user.photoUrl == null
+                    ? Center(
+                        child: Text(
+                          user.username.isNotEmpty
+                              ? user.username[0].toUpperCase()
+                              : '?',
+                          style: TextStyle(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+              SizedBox(width: 14.w),
 
-                // User info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              user.username,
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+              // User info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            user.username,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (user.isEmailVerified)
+                          Container(
+                            padding: EdgeInsets.all(4.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.info.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.verified_rounded,
+                              size: 14.sp,
+                              color: AppColors.info,
                             ),
                           ),
-                          if (user.isEmailVerified)
-                            Container(
-                              padding: EdgeInsets.all(4.w),
-                              decoration: BoxDecoration(
-                                color: AppColors.info.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.verified_rounded,
+                      ],
+                    ),
+                    SizedBox(height: 4.h),
+                    Row(
+                      children: [
+                        _buildRoleBadge(user.role),
+                        SizedBox(width: 8.w),
+                        if (switch (user) {
+                              final RiderModel rider =>
+                                rider.asRider?.rating.average ?? 0,
+                              final DriverModel driver =>
+                                driver.asDriver?.rating.average ?? 0,
+                              _ => 0,
+                            } >
+                            0)
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.star_rounded,
                                 size: 14.sp,
-                                color: AppColors.info,
+                                color: AppColors.warning,
                               ),
-                            ),
-                        ],
-                      ),
-                      SizedBox(height: 4.h),
-                      Row(
-                        children: [
-                          _buildRoleBadge(user.role),
-                          SizedBox(width: 8.w),
-                          if (switch (user) {
-                                final RiderModel rider =>
-                                  rider.asRider?.rating.average ?? 0,
-                                final DriverModel driver =>
-                                  driver.asDriver?.rating.average ?? 0,
-                                _ => 0,
-                              } >
-                              0)
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.star_rounded,
-                                  size: 14.sp,
-                                  color: AppColors.warning,
+                              SizedBox(width: 2.w),
+                              Text(
+                                switch (user) {
+                                  final RiderModel rider =>
+                                    rider.asRider?.rating.average
+                                            .toStringAsFixed(1) ??
+                                        '0.0',
+                                  final DriverModel driver =>
+                                    driver.asDriver?.rating.average
+                                            .toStringAsFixed(1) ??
+                                        '0.0',
+                                  _ => '0.0',
+                                },
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
                                 ),
-                                SizedBox(width: 2.w),
-                                Text(
-                                  switch (user) {
-                                    final RiderModel rider =>
-                                      rider.asRider?.rating.average
-                                              .toStringAsFixed(1) ??
-                                          '0.0',
-                                    final DriverModel driver =>
-                                      driver.asDriver?.rating.average
-                                              .toStringAsFixed(1) ??
-                                          '0.0',
-                                    _ => '0.0',
-                                  },
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
+              ),
 
-                // Arrow
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.textTertiary,
-                  size: 24.sp,
-                ),
-              ],
-            ),
+              // Arrow
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textTertiary,
+                size: 24.sp,
+              ),
+            ],
           ),
         ),
       ),

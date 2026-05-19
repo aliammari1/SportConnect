@@ -13,6 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/custom_button.dart';
 import 'package:sport_connect/core/widgets/permission_dialog_helper.dart';
@@ -100,70 +101,81 @@ class _VehicleListView extends ConsumerWidget {
       children: [
         MaxWidthContainer(
           maxWidth: context.isTablet ? kMaxWidthWide : kMaxWidthContent,
-          child: ListView(
+          child: ListView.builder(
             physics: const BouncingScrollPhysics(),
             padding: adaptiveScreenPadding(context).copyWith(bottom: 120.h),
-            children: [
-              _StatsHero(
-                total: sorted.length,
-                activeName: active.isActive ? active.displayName : null,
-              ).animate().fadeIn(duration: 320.ms).slideY(begin: 0.05, end: 0),
-              SizedBox(height: 24.h),
-              _AddVehicleBanner(onTap: () => _openAddSheet(context, ref))
-                  .animate(delay: 80.ms)
-                  .fadeIn(duration: 320.ms)
-                  .slideY(begin: 0.05, end: 0),
-              SizedBox(height: 20.h),
-              if (context.isTablet)
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: sorted.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: context.isExpandedOrLarger ? 3 : 2,
-                    mainAxisSpacing: 16.h,
-                    crossAxisSpacing: 16.w,
-                    childAspectRatio: context.isExpandedOrLarger ? 1.18 : 0.96,
-                  ),
-                  itemBuilder: (context, index) {
-                    final vehicle = sorted[index];
-                    return _VehicleCard(
-                      vehicle: vehicle,
-                      onSetActive: vehicle.isActive
-                          ? null
-                          : () => ref
-                                .read(vehicleViewModelProvider.notifier)
-                                .setActiveVehicle(vehicle.id),
-                      onEdit: () => _openEditSheet(context, ref, vehicle),
-                      onDelete: () => _confirmDelete(context, ref, vehicle),
-                      onTap: () => _openDetailsSheet(context, ref, vehicle),
-                    ).animate(
-                      delay: Duration(milliseconds: 120 + index * 60),
-                    ).fadeIn(duration: 320.ms).slideY(begin: 0.06, end: 0);
-                  },
-                )
-              else
-                ...sorted.asMap().entries.map((entry) {
-                  final i = entry.key;
-                  final v = entry.value;
+            itemCount: 3 + (context.isTablet ? 1 : sorted.length),
+            itemBuilder: (context, index) {
+              switch (index) {
+                case 0:
+                  return _StatsHero(
+                    total: sorted.length,
+                    activeName: active.isActive ? active.displayName : null,
+                  ).animate().fadeIn(duration: 320.ms).slideY(begin: 0.05, end: 0);
+                case 1:
+                  return _AddVehicleBanner(onTap: () => _openAddSheet(context, ref))
+                      .animate(delay: 80.ms)
+                      .fadeIn(duration: 320.ms)
+                      .slideY(begin: 0.05, end: 0);
+                case 2:
+                  return SizedBox(height: 20.h);
+                default:
+                  final vehicleIndex = index - 3;
+                  if (context.isTablet) {
+                    // Tablet uses a single GridView item
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: sorted.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: context.isExpandedOrLarger ? 3 : 2,
+                        mainAxisSpacing: 16.h,
+                        crossAxisSpacing: 16.w,
+                        childAspectRatio: context.isExpandedOrLarger ? 1.18 : 0.96,
+                      ),
+                      itemBuilder: (context, vi) {
+                        final vehicle = sorted[vi];
+                        return _VehicleCard(
+                              vehicle: vehicle,
+                              onSetActive: vehicle.isActive
+                                  ? null
+                                  : () => ref
+                                        .read(vehicleViewModelProvider.notifier)
+                                        .setActiveVehicle(vehicle.id),
+                              onEdit: () => _openEditSheet(context, ref, vehicle),
+                              onDelete: () => _confirmDelete(context, ref, vehicle),
+                              onTap: () => _openDetailsSheet(context, ref, vehicle),
+                            )
+                            .animate(
+                              delay: Duration(milliseconds: 120 + vi * 60),
+                            )
+                            .fadeIn(duration: 320.ms)
+                            .slideY(begin: 0.06, end: 0);
+                      },
+                    );
+                  }
+                  final v = sorted[vehicleIndex];
                   return Padding(
                     padding: EdgeInsets.only(bottom: 16.h),
                     child: _VehicleCard(
-                      vehicle: v,
-                      onSetActive: v.isActive
-                          ? null
-                          : () => ref
-                                .read(vehicleViewModelProvider.notifier)
-                                .setActiveVehicle(v.id),
-                      onEdit: () => _openEditSheet(context, ref, v),
-                      onDelete: () => _confirmDelete(context, ref, v),
-                      onTap: () => _openDetailsSheet(context, ref, v),
-                    ).animate(
-                      delay: Duration(milliseconds: 120 + i * 80),
-                    ).fadeIn(duration: 320.ms).slideY(begin: 0.06, end: 0),
+                          vehicle: v,
+                          onSetActive: v.isActive
+                              ? null
+                              : () => ref
+                                    .read(vehicleViewModelProvider.notifier)
+                                    .setActiveVehicle(v.id),
+                          onEdit: () => _openEditSheet(context, ref, v),
+                          onDelete: () => _confirmDelete(context, ref, v),
+                          onTap: () => _openDetailsSheet(context, ref, v),
+                        )
+                        .animate(
+                          delay: Duration(milliseconds: 120 + vehicleIndex * 80),
+                        )
+                        .fadeIn(duration: 320.ms)
+                        .slideY(begin: 0.06, end: 0),
                   );
-                }),
-            ],
+              }
+            },
           ),
         ),
         if (!context.isTablet)
@@ -458,65 +470,62 @@ class _AddVehicleBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(10.w),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySurface,
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Icon(
-                  Icons.add_rounded,
-                  color: AppColors.primary,
-                  size: 22.sp,
-                ),
+    return AdaptiveTapSurface(
+      borderRadius: BorderRadius.circular(14.r),
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(
+                color: AppColors.primarySurface,
+                borderRadius: BorderRadius.circular(10.r),
               ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).addVehicle,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      AppLocalizations.of(
-                        context,
-                      ).register_a_new_car_for_carpool_rides,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
+              child: Icon(
+                Icons.add_rounded,
                 color: AppColors.primary,
                 size: 22.sp,
               ),
-            ],
-          ),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context).addVehicle,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    AppLocalizations.of(
+                      context,
+                    ).register_a_new_car_for_carpool_rides,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.primary,
+              size: 22.sp,
+            ),
+          ],
         ),
       ),
     );
@@ -545,112 +554,109 @@ class _VehicleCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final isActive = vehicle.isActive;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16.r),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(
+    return AdaptiveTapSurface(
+      borderRadius: BorderRadius.circular(16.r),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: isActive
+                ? AppColors.primary.withValues(alpha: 0.5)
+                : AppColors.border.withValues(alpha: 0.5),
+            width: isActive ? 1.5 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
               color: isActive
-                  ? AppColors.primary.withValues(alpha: 0.5)
-                  : AppColors.border.withValues(alpha: 0.5),
-              width: isActive ? 1.5 : 1,
+                  ? AppColors.primary.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.03),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: isActive
-                    ? AppColors.primary.withValues(alpha: 0.08)
-                    : Colors.black.withValues(alpha: 0.03),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _HeroImageStrip(vehicle: vehicle),
-              Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 14.h, 12.w, 14.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                vehicle.displayName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 17.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _HeroImageStrip(vehicle: vehicle),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 14.h, 12.w, 14.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              vehicle.displayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 17.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
                               ),
-                              SizedBox(height: 4.h),
-                              _PlateChip(plate: vehicle.licensePlate),
-                            ],
-                          ),
+                            ),
+                            SizedBox(height: 4.h),
+                            _PlateChip(plate: vehicle.licensePlate),
+                          ],
                         ),
-                        _CardActionsMenu(
-                          isActive: isActive,
-                          onSetActive: onSetActive,
-                          onEdit: onEdit,
-                          onDelete: onDelete,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 14.h),
-                    Wrap(
-                      spacing: 8.w,
-                      runSpacing: 8.h,
-                      children: [
+                      ),
+                      _CardActionsMenu(
+                        isActive: isActive,
+                        onSetActive: onSetActive,
+                        onEdit: onEdit,
+                        onDelete: onDelete,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 14.h),
+                  Wrap(
+                    spacing: 8.w,
+                    runSpacing: 8.h,
+                    children: [
+                      _MetaPill(
+                        icon: Icons.airline_seat_recline_normal_rounded,
+                        label: '${vehicle.capacity} ${l10n.seats}',
+                        color: AppColors.primary,
+                      ),
+                      if (vehicle.totalRides > 0)
                         _MetaPill(
-                          icon: Icons.airline_seat_recline_normal_rounded,
-                          label: '${vehicle.capacity} ${l10n.seats}',
-                          color: AppColors.primary,
+                          icon: Icons.route_rounded,
+                          label: '${vehicle.totalRides} rides',
+                          color: AppColors.warning,
                         ),
-                        if (vehicle.totalRides > 0)
-                          _MetaPill(
-                            icon: Icons.route_rounded,
-                            label: '${vehicle.totalRides} rides',
-                            color: AppColors.warning,
-                          ),
-                        if (vehicle.averageRating > 0)
-                          _MetaPill(
-                            icon: Icons.star_rounded,
-                            label: vehicle.averageRating.toStringAsFixed(1),
-                            color: AppColors.starFilled,
-                          ),
-                      ],
-                    ),
-                    SizedBox(height: 14.h),
-                    Container(
-                      height: 1,
-                      color: AppColors.border.withValues(alpha: 0.5),
-                    ),
-                    SizedBox(height: 12.h),
-                    Row(
-                      children: [
-                        if (isActive)
-                          _ActiveBadge()
-                        else if (onSetActive != null)
-                          _SetActiveButton(onPressed: onSetActive!),
-                      ],
-                    ),
-                  ],
-                ),
+                      if (vehicle.averageRating > 0)
+                        _MetaPill(
+                          icon: Icons.star_rounded,
+                          label: vehicle.averageRating.toStringAsFixed(1),
+                          color: AppColors.starFilled,
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: 14.h),
+                  Container(
+                    height: 1,
+                    color: AppColors.border.withValues(alpha: 0.5),
+                  ),
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      if (isActive)
+                        _ActiveBadge()
+                      else if (onSetActive != null)
+                        _SetActiveButton(onPressed: onSetActive!),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -938,42 +944,39 @@ class _FloatingAddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          unawaited(HapticFeedback.lightImpact());
-          onPressed();
-        },
-        borderRadius: BorderRadius.circular(16.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(16.r),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.18),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
+    return AdaptiveTapSurface(
+      borderRadius: BorderRadius.circular(16.r),
+      onTap: () {
+        unawaited(HapticFeedback.lightImpact());
+        onPressed();
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.18),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_rounded, color: Colors.white, size: 22.sp),
+            SizedBox(width: 8.w),
+            Text(
+              AppLocalizations.of(context).addVehicle,
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add_rounded, color: Colors.white, size: 22.sp),
-              SizedBox(width: 8.w),
-              Text(
-                AppLocalizations.of(context).addVehicle,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1407,63 +1410,60 @@ class _ImagePickerHero extends StatelessWidget {
         !hasFile && existingUrl != null && existingUrl!.isNotEmpty;
     final hasImage = hasFile || hasExisting;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16.r),
-        child: Container(
-          height: 132.h,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceVariant,
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(
-              color: AppColors.border.withValues(alpha: 0.8),
-            ),
+    return AdaptiveTapSurface(
+      borderRadius: BorderRadius.circular(16.r),
+      onTap: onTap,
+      child: Container(
+        height: 132.h,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: AppColors.border.withValues(alpha: 0.8),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16.r),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (hasFile)
-                  Image.file(imageFile!, fit: BoxFit.cover)
-                else if (hasExisting)
-                  CachedNetworkImage(
-                    imageUrl: existingUrl!,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, _, _) => _placeholder(context),
-                    placeholder: (_, _) => _placeholder(context),
-                  )
-                else
-                  _placeholder(context),
-                if (hasImage)
-                  Positioned(
-                    right: 12.w,
-                    bottom: 12.h,
-                    child: Container(
-                      padding: EdgeInsets.all(8.w),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.camera_alt_rounded,
-                        size: 18.sp,
-                        color: AppColors.primary,
-                      ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16.r),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (hasFile)
+                Image.file(imageFile!, fit: BoxFit.cover)
+              else if (hasExisting)
+                CachedNetworkImage(
+                  imageUrl: existingUrl!,
+                  fit: BoxFit.cover,
+                  errorWidget: (_, _, _) => _placeholder(context),
+                  placeholder: (_, _) => _placeholder(context),
+                )
+              else
+                _placeholder(context),
+              if (hasImage)
+                Positioned(
+                  right: 12.w,
+                  bottom: 12.h,
+                  child: Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.camera_alt_rounded,
+                      size: 18.sp,
+                      color: AppColors.primary,
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),

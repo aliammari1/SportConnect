@@ -31,6 +31,10 @@ class RideService extends _$RideService {
       throw ArgumentError('Price cannot be negative');
     }
 
+    if (!ride.hasRequiredEvent) {
+      throw ArgumentError('Ride must be linked to an event');
+    }
+
     // Save to repository
     final repo = ref.read(rideRepositoryProvider);
     final rideId = await repo.createRide(ride);
@@ -57,24 +61,15 @@ class RideService extends _$RideService {
       throw ArgumentError('Ride not found');
     }
 
-    // Business rules: cannot change certain fields if ride has bookings
-    if (existing.bookingIds.isNotEmpty) {
-      // Can't change departure time within 24 hours
-      if (ride.schedule.departureTime != existing.schedule.departureTime) {
-        final hoursUntilDeparture = existing.schedule.departureTime
-            .difference(DateTime.now())
-            .inHours;
-        if (hoursUntilDeparture < 24) {
-          throw ArgumentError(
-            'Cannot change departure time within 24 hours of ride',
-          );
-        }
-      }
+    if (!ride.hasRequiredEvent) {
+      throw ArgumentError('Ride must be linked to an event');
+    }
 
-      // Can't reduce capacity below booked seats
-      if (ride.capacity.available < existing.capacity.booked) {
-        throw ArgumentError('Cannot reduce capacity below booked seats');
-      }
+    // Requested Ride Lock: ride details cannot change once demand exists.
+    if (existing.bookingIds.isNotEmpty) {
+      throw ArgumentError(
+        'Cannot edit ride details after a booking request exists',
+      );
     }
 
     await repo.updateRide(ride);

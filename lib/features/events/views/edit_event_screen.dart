@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -179,27 +179,30 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
       );
     }
 
-    return ListView(
+    final formItems = <Widget>[
+      _buildSportTypeSelector(editState),
+      SizedBox(height: 20.h),
+      _buildTitleField(editState),
+      SizedBox(height: 14.h),
+      _buildDescriptionField(),
+      SizedBox(height: 20.h),
+      _buildImagePicker(editState),
+      SizedBox(height: 20.h),
+      _buildLocationPicker(editState),
+      SizedBox(height: 20.h),
+      _buildWhenSection(editState),
+      SizedBox(height: 20.h),
+      _buildParticipantSlider(editState),
+      SizedBox(height: 20.h),
+      _buildRecurringSection(editState),
+      SizedBox(height: 32.h),
+      _buildSubmitButton(eventActions.isLoading || editState.isSubmitting),
+    ];
+
+    return ListView.builder(
       padding: adaptiveScreenPadding(context),
-      children: [
-        _buildSportTypeSelector(editState),
-        SizedBox(height: 20.h),
-        _buildTitleField(editState),
-        SizedBox(height: 14.h),
-        _buildDescriptionField(),
-        SizedBox(height: 20.h),
-        _buildImagePicker(editState),
-        SizedBox(height: 20.h),
-        _buildLocationPicker(editState),
-        SizedBox(height: 20.h),
-        _buildWhenSection(editState),
-        SizedBox(height: 20.h),
-        _buildParticipantSlider(editState),
-        SizedBox(height: 20.h),
-        _buildRecurringSection(editState),
-        SizedBox(height: 32.h),
-        _buildSubmitButton(eventActions.isLoading || editState.isSubmitting),
-      ],
+      itemCount: formItems.length,
+      itemBuilder: (context, index) => formItems[index],
     );
   }
 
@@ -324,7 +327,10 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
       return DecorationImage(image: FileImage(imageFile), fit: BoxFit.cover);
     }
     if (imageUrl != null && imageUrl.isNotEmpty) {
-      return DecorationImage(image: CachedNetworkImageProvider(imageUrl), fit: BoxFit.cover);
+      return DecorationImage(
+        image: CachedNetworkImageProvider(imageUrl),
+        fit: BoxFit.cover,
+      );
     }
     return null;
   }
@@ -583,7 +589,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
           value: state.isRecurring,
           onChanged: (value) {
             unawaited(HapticFeedback.selectionClick());
-            _editForm.setRecurring(value);
+            _editForm.setRecurring(value: value);
           },
           title: Text(
             AppLocalizations.of(context).eventRecurring,
@@ -724,7 +730,9 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
             ),
             if (patterns.isEmpty)
               Padding(
-                padding: adaptiveScreenPadding(context).copyWith(bottom: 8.h, top: 8.h),
+                padding: adaptiveScreenPadding(
+                  context,
+                ).copyWith(bottom: 8.h, top: 8.h),
                 child: Text(
                   '${AppLocalizations.of(context).no_recurrence_pattern_fits_this_startend_window}'
                   '${AppLocalizations.of(context).extend_end_time_or_set_a_later_repeat_end_date}',

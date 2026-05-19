@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 
 abstract final class _GenderValue {
   static const male = 'Male';
@@ -128,40 +129,35 @@ class _GenderSegmentButton extends StatelessWidget {
                 ]
               : null,
         ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(11.r),
-            onTap: onTap,
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 11.h),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    icon,
-                    size: 18.sp,
-                    color: selected
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
-                  ),
-                  SizedBox(width: 6.w),
-                  Flexible(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w700,
-                        color: selected
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
-                      ),
+        child: AdaptiveTapSurface(
+          borderRadius: BorderRadius.circular(11.r),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 11.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 18.sp,
+                  color: selected ? AppColors.primary : AppColors.textSecondary,
+                ),
+                SizedBox(width: 6.w),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: selected
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

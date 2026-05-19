@@ -17,15 +17,19 @@
 	<key>IS_ADS_ENABLED</key>
 	<false/>
 	<key>IS_ANALYTICS_ENABLED</key>
-	<true/>
-	<key>IS_APPINVITE_ENABLED</key>
 	<false/>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true/>
 	<key>IS_GCM_ENABLED</key>
 	<true/>
 	<key>IS_SIGNIN_ENABLED</key>
 	<true/>
 	<key>GOOGLE_APP_ID</key>
 	<string>__FILL_GOOGLE_APP_ID__</string>
+	<key>DATABASE_URL</key>
+	<string>__FILL_DATABASE_URL__</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>__FILL_ANDROID_CLIENT_ID__</string>
 	<key>CLIENT_ID</key>
 	<string>__FILL_IOS_CLIENT_ID__</string>
 	<key>REVERSED_CLIENT_ID</key>

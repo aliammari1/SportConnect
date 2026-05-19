@@ -103,6 +103,16 @@ class ChatRepository {
       if (chat.participantIds.contains(userId2)) return chat;
     }
 
+    final hasRideInteraction = await _hasRideInteractionBetween(
+      userId1,
+      userId2,
+    );
+    if (!hasRideInteraction) {
+      throw StateError(
+        'Direct chat requires a booking request or ride participation.',
+      );
+    }
+
     final newChat = ChatModel(
       id: '',
       participantIds: [userId1, userId2],
@@ -124,6 +134,27 @@ class ChatRepository {
 
     final chatId = await createChat(newChat);
     return newChat.copyWith(id: chatId);
+  }
+
+  Future<bool> _hasRideInteractionBetween(
+    String userId1,
+    String userId2,
+  ) async {
+    final firstDirection = await _firestore
+        .collection(AppConstants.bookingsCollection)
+        .where('passengerId', isEqualTo: userId1)
+        .where('driverId', isEqualTo: userId2)
+        .limit(1)
+        .get();
+    if (firstDirection.docs.isNotEmpty) return true;
+
+    final secondDirection = await _firestore
+        .collection(AppConstants.bookingsCollection)
+        .where('passengerId', isEqualTo: userId2)
+        .where('driverId', isEqualTo: userId1)
+        .limit(1)
+        .get();
+    return secondDirection.docs.isNotEmpty;
   }
 
   Future<ChatModel> createRideChat({
@@ -405,9 +436,6 @@ class ChatRepository {
     final messageJson = messageWithId.toJson()
       ..['createdAt'] = FieldValue.serverTimestamp();
     batch.set(_rawMessageRef(message.chatId, docRef.id), messageJson);
-
-    // FIX: Use serverTimestamp for lastMessageAt and updatedAt — was
-    // DateTime.now() which propagates client clock skew to the ordering query.
     batch.set(
       _rawChatRef(message.chatId),
       {

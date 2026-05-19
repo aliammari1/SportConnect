@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -319,7 +320,7 @@ class CreateEventFormViewModel extends _$CreateEventFormViewModel {
     );
   }
 
-  void setIsRecurring(bool value) {
+  void setIsRecurring({required bool value}) {
     state = state.copyWith(
       isRecurring: value,
       clearRecurringPattern: !value,
@@ -351,7 +352,7 @@ class CreateEventFormViewModel extends _$CreateEventFormViewModel {
     );
   }
 
-  void setCostSplitEnabled(bool value) {
+  void setCostSplitEnabled({required bool value}) {
     state = state.copyWith(costSplitEnabled: value, clearError: true);
   }
 
@@ -663,7 +664,7 @@ class EditEventFormViewModel extends _$EditEventFormViewModel {
     // from the screen with ref.read(...) can start the fetch on an auto-disposed
     // instance, then leave the watched provider stuck in its initial loading
     // state.
-    Future<void>.microtask(_loadEvent);
+    unawaited(Future<void>.microtask(_loadEvent));
 
     return const EditEventFormState.loading();
   }
@@ -822,7 +823,7 @@ class EditEventFormViewModel extends _$EditEventFormViewModel {
     );
   }
 
-  void setRecurring(bool value) {
+  void setRecurring({required bool value}) {
     state = state.copyWith(
       isRecurring: value,
       clearRecurringPattern: !value,
@@ -861,7 +862,7 @@ class EditEventFormViewModel extends _$EditEventFormViewModel {
     );
   }
 
-  void setCostSplitEnabled(bool value) {
+  void setCostSplitEnabled({required bool value}) {
     state = state.copyWith(
       costSplitEnabled: value,
       savedEvent: null,
@@ -1270,23 +1271,23 @@ class EventDetailViewModel extends _$EventDetailViewModel {
         final organizer = ref.read(currentUserProvider).value;
         final notifRepo = ref.read(notificationRepositoryProvider);
         for (final uid in event.participantIds) {
-          if (uid == organizer?.uid) continue; // don't notify the organiser
-          notifRepo
-              .sendEventCancelled(
-                toUserId: uid,
-                organizerName:
-                    organizer?.username ?? event.organizerName ?? 'Organizer',
-                organizerPhoto: organizer?.photoUrl,
-                eventId: eventId,
-                eventTitle: event.title,
-                reason: reason,
-              )
-              .catchError((e, st) {
-                TalkerService.error(
-                  'Failed to send cancellation notification to $uid',
-                  e,
-                );
-              });
+          if (uid == organizer?.uid) continue;
+          try {
+            await notifRepo.sendEventCancelled(
+              toUserId: uid,
+              organizerName:
+                  organizer?.username ?? event.organizerName ?? 'Organizer',
+              organizerPhoto: organizer?.photoUrl,
+              eventId: eventId,
+              eventTitle: event.title,
+              reason: reason,
+            );
+          } on Exception catch (e) {
+            TalkerService.error(
+              'Failed to send cancellation notification to $uid',
+              e,
+            );
+          }
         }
       }
 
@@ -1637,8 +1638,8 @@ class EventListViewModel extends _$EventListViewModel {
         final dist = _haversineKm(
           _userLat!,
           _userLng!,
-          e.location.latitude ?? 0,
-          e.location.longitude ?? 0,
+          e.location.latitude,
+          e.location.longitude,
         );
         return dist <= _radiusKm!;
       }).toList();

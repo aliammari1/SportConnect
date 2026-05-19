@@ -87,33 +87,33 @@ class _DriverStripeOnboardingScreenState
       driverStripeOnboardingFlowViewModelProvider,
     );
 
-    ref.listen(currentUserProvider, (previous, next) {
-      final previousUser = previous?.value;
-      final user = next.value;
-      if (user != null && previousUser?.uid != user.uid) {
-        ref
-            .read(driverStripeOnboardingFlowViewModelProvider.notifier)
-            .checkExistingAccount(user);
-      }
-    });
+    ref
+      ..listen(currentUserProvider, (previous, next) {
+        final previousUser = previous?.value;
+        final user = next.value;
+        if (user != null && previousUser?.uid != user.uid) {
+          ref
+              .read(driverStripeOnboardingFlowViewModelProvider.notifier)
+              .checkExistingAccount(user);
+        }
+      })
+      ..listen(driverStripeOnboardingFlowViewModelProvider, (previous, next) {
+        if (next.successMessage != null &&
+            next.successMessage != previous?.successMessage &&
+            context.mounted) {
+          AdaptiveSnackBar.show(
+            context,
+            message: next.successMessage!,
+            type: AdaptiveSnackBarType.success,
+          );
+        }
 
-    ref.listen(driverStripeOnboardingFlowViewModelProvider, (previous, next) {
-      if (next.successMessage != null &&
-          next.successMessage != previous?.successMessage &&
-          context.mounted) {
-        AdaptiveSnackBar.show(
-          context,
-          message: next.successMessage!,
-          type: AdaptiveSnackBarType.success,
-        );
-      }
-
-      if (next.isConnected &&
-          previous?.isConnected != true &&
-          context.mounted) {
-        setState(() => _page = _PayoutSetupPage.success);
-      }
-    });
+        if (next.isConnected &&
+            previous?.isConnected != true &&
+            context.mounted) {
+          setState(() => _page = _PayoutSetupPage.success);
+        }
+      });
 
     if (onboardingState.showWebView && onboardingState.onboardingUrl != null) {
       return _buildWebView(onboardingState);
@@ -242,7 +242,7 @@ class _DriverStripeOnboardingScreenState
                       color: Colors.white,
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: -0.2,
+                      letterSpacing: 0,
                     ),
                   ),
                   const Spacer(),
@@ -272,7 +272,7 @@ class _DriverStripeOnboardingScreenState
                   fontSize: 31.sp,
                   height: 1.10,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: -0.8,
+                  letterSpacing: 0,
                 ),
               ).animate().fadeIn(duration: 260.ms).slideY(begin: 0.04, end: 0),
               SizedBox(height: 12.h),
@@ -363,7 +363,7 @@ class _DriverStripeOnboardingScreenState
                     color: _ink,
                     fontSize: 27.sp,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: -0.9,
+                    letterSpacing: 0,
                   ),
                 ),
                 SizedBox(height: 10.h),
@@ -424,7 +424,7 @@ class _DriverStripeOnboardingScreenState
             fontSize: 18.sp,
             height: 1.18,
             fontWeight: FontWeight.w900,
-            letterSpacing: -0.35,
+            letterSpacing: 0,
           ),
         ),
         SizedBox(height: 16.h),
@@ -1086,7 +1086,7 @@ class _GradientButton extends StatelessWidget {
                             color: Colors.white,
                             fontSize: 14.5.sp,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: -0.1,
+                            letterSpacing: 0,
                           ),
                         ),
                       ),
@@ -1121,7 +1121,7 @@ class _PoweredByStripe extends StatelessWidget {
             color: _stripeGreen,
             fontSize: 17.sp,
             fontWeight: FontWeight.w900,
-            letterSpacing: -0.8,
+            letterSpacing: 0,
           ),
         ),
       ],
@@ -1682,7 +1682,7 @@ class _PayoutAccountCard extends StatelessWidget {
                         color: _ink,
                         fontSize: 21.sp,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: -0.4,
+                        letterSpacing: 0,
                       ),
                     ),
                   ],
@@ -1797,7 +1797,7 @@ class _SnapshotMetric extends StatelessWidget {
             color: _ink,
             fontSize: 19.sp,
             fontWeight: FontWeight.w900,
-            letterSpacing: -0.45,
+            letterSpacing: 0,
           ),
         ),
       ],
@@ -2125,7 +2125,7 @@ TextStyle _titleStyle(double fontSize) {
     color: _ink,
     fontSize: fontSize.sp,
     fontWeight: FontWeight.w900,
-    letterSpacing: -0.7,
+    letterSpacing: 0,
   );
 }
 

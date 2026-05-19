@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 
 class RideMatchChip extends StatelessWidget {
   const RideMatchChip({
@@ -61,18 +62,15 @@ class SeatCounterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12.r),
-        child: Container(
-          padding: EdgeInsets.all(12.w),
-          child: Icon(
-            icon,
-            color: isEnabled ? AppColors.primary : AppColors.textTertiary,
-            size: 22.sp,
-          ),
+    return AdaptiveTapSurface(
+      borderRadius: BorderRadius.circular(12.r),
+      onTap: onPressed,
+      child: Container(
+        padding: EdgeInsets.all(12.w),
+        child: Icon(
+          icon,
+          color: isEnabled ? AppColors.primary : AppColors.textTertiary,
+          size: 22.sp,
         ),
       ),
     );

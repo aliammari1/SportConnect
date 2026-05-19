@@ -125,6 +125,9 @@ class _DriverOnboardingScreenState
 
   final _phoneKey = GlobalKey<IntlPhoneInputState>();
   final _addressKey = GlobalKey<AddressAutocompleteFieldState>();
+  StreamSubscription<dynamic>? _profileDraftSubscription;
+  StreamSubscription<dynamic>? _vehicleDraftSubscription;
+  String? _draftUid;
 
   FormGroup _buildProfileForm() {
     return FormGroup({
@@ -298,6 +301,9 @@ class _DriverOnboardingScreenState
         _populateProfileFields(user);
       }
 
+      _restoreSetupDraft(user.uid);
+      _startDraftAutosave(user.uid);
+
       if (skipProfileStep && state.driverCurrentStep == 0) {
         notifier.setDriverCurrentStep(1);
       }
@@ -394,6 +400,7 @@ class _DriverOnboardingScreenState
     final patchedDob = switch (user) {
       DriverModel(:final dateOfBirth) => dateOfBirth,
       RiderModel(:final dateOfBirth) => dateOfBirth,
+      PendingUserModel(:final dateOfBirth) => dateOfBirth,
       _ => null,
     };
 
@@ -421,18 +428,23 @@ class _DriverOnboardingScreenState
 
     final vmState = ref.read(onboardingViewModelProvider);
     final dateOfBirth = values[_PF.dob] as DateTime?;
+    final phoneInputValue = _phoneKey.currentState?.fullNumber;
+    final phoneNumber = (phoneInputValue?.trim().isNotEmpty ?? false)
+        ? phoneInputValue!.trim()
+        : vmState.driverPhoneNumber;
 
     final profileUpdates = <String, dynamic>{
       'username': (values[_PF.name] as String? ?? '').trim(),
-      'phoneNumber': (vmState.driverPhoneNumber?.isNotEmpty ?? false)
-          ? vmState.driverPhoneNumber
-          : null,
+      'phoneNumber': phoneNumber,
       'address': _addressKey.currentState?.text.trim() ?? '',
       'gender': values[_PF.gender] as String?,
       'dateOfBirth': dateOfBirth == null ? null : _dateOnly(dateOfBirth),
       'expertise':
           ((values[_PF.expertise] as Expertise?) ?? Expertise.rookie).name,
     };
+
+    await _saveSetupDraft(currentUser.uid);
+    if (!mounted) return;
 
     await ref
         .read(onboardingViewModelProvider.notifier)
@@ -462,6 +474,9 @@ class _DriverOnboardingScreenState
       capacity: int.parse((values[VehicleFormFields.seats] as String?)!),
       isActive: true,
     );
+
+    await _saveSetupDraft(currentUser.uid);
+    if (!mounted) return;
 
     await ref
         .read(onboardingViewModelProvider.notifier)
@@ -532,9 +547,99 @@ class _DriverOnboardingScreenState
 
   @override
   void dispose() {
+    _profileDraftSubscription?.cancel();
+    _vehicleDraftSubscription?.cancel();
     _profileForm.dispose();
     _vehicleForm.dispose();
     super.dispose();
+  }
+
+  void _startDraftAutosave(String uid) {
+    if (_draftUid == uid) return;
+    _draftUid = uid;
+    _profileDraftSubscription?.cancel();
+    _vehicleDraftSubscription?.cancel();
+    _profileDraftSubscription = _profileForm.valueChanges.listen((_) {
+      unawaited(_saveSetupDraft(uid));
+    });
+    _vehicleDraftSubscription = _vehicleForm.valueChanges.listen((_) {
+      unawaited(_saveSetupDraft(uid));
+    });
+  }
+
+  void _restoreSetupDraft(String uid) {
+    final draft = ref
+        .read(onboardingViewModelProvider.notifier)
+        .setupDraftFor(uid, UserRole.driver);
+    if (draft.isEmpty) return;
+
+    final dobText = draft['dateOfBirth'] as String?;
+    final dateOfBirth = dobText == null ? null : DateTime.tryParse(dobText);
+    final expertiseText = draft['expertise'] as String?;
+    final expertise = switch (expertiseText) {
+      'intermediate' => Expertise.intermediate,
+      'advanced' => Expertise.advanced,
+      'expert' => Expertise.expert,
+      'rookie' => Expertise.rookie,
+      _ => null,
+    };
+
+    _profileForm.patchValue({
+      _PF.name: draft['name'] as String?,
+      _PF.gender: draft['gender'] as String?,
+      _PF.dob: dateOfBirth,
+      _PF.expertise: expertise,
+    });
+    _vehicleForm.patchValue({
+      VehicleFormFields.make: draft['vehicleMake'] as String?,
+      VehicleFormFields.model: draft['vehicleModel'] as String?,
+      VehicleFormFields.year: draft['vehicleYear'] as String?,
+      VehicleFormFields.color: draft['vehicleColor'] as String?,
+      VehicleFormFields.licensePlate: draft['licensePlate'] as String?,
+      VehicleFormFields.seats: draft['vehicleSeats'] as String?,
+    });
+    _phoneKey.currentState?.setValue(draft['phoneNumber'] as String?);
+    _addressKey.currentState?.setText(draft['address'] as String?);
+
+    final currentStep = draft['currentStep'];
+    if (currentStep is int) {
+      ref
+          .read(onboardingViewModelProvider.notifier)
+          .setDriverCurrentStep(
+            currentStep,
+          );
+    }
+  }
+
+  Future<void> _saveSetupDraft(String uid) {
+    final profileValues = _profileForm.value;
+    final vehicleValues = _vehicleForm.value;
+    final dateOfBirth = profileValues[_PF.dob] as DateTime?;
+    return ref.read(onboardingViewModelProvider.notifier).saveSetupDraft(
+      uid,
+      UserRole.driver,
+      {
+        'currentStep': ref.read(onboardingViewModelProvider).driverCurrentStep,
+        'name': (profileValues[_PF.name] as String?)?.trim(),
+        'gender': profileValues[_PF.gender] as String?,
+        'dateOfBirth': dateOfBirth?.toIso8601String(),
+        'expertise': (profileValues[_PF.expertise] as Expertise?)?.name,
+        'phoneNumber': _phoneKey.currentState?.fullNumber,
+        'address': _addressKey.currentState?.text.trim(),
+        'vehicleMake': (vehicleValues[VehicleFormFields.make] as String?)
+            ?.trim(),
+        'vehicleModel': (vehicleValues[VehicleFormFields.model] as String?)
+            ?.trim(),
+        'vehicleYear': (vehicleValues[VehicleFormFields.year] as String?)
+            ?.trim(),
+        'vehicleColor': (vehicleValues[VehicleFormFields.color] as String?)
+            ?.trim(),
+        'licensePlate':
+            (vehicleValues[VehicleFormFields.licensePlate] as String?)?.trim(),
+        'vehicleSeats': (vehicleValues[VehicleFormFields.seats] as String?)
+            ?.trim(),
+      },
+    );
   }
 
   @override
@@ -1077,17 +1182,24 @@ class _DriverOnboardingScreenState
                   initialValue: switch (currentUser) {
                     final DriverModel driver => driver.phoneNumber,
                     final RiderModel rider => rider.phoneNumber,
+                    final PendingUserModel pending => pending.phoneNumber,
                     _ => null,
                   },
                   label: l10n.authPhoneOptional,
                   hint: l10n.authPhoneHint,
                   accentColor: AppColors.primary,
                   fillColor: AppColors.background,
-                  onChanged: (phone) => ref
-                      .read(onboardingViewModelProvider.notifier)
-                      .setDriverDraftContact(
-                        phoneNumber: phone.isValid ? phone.fullNumber : null,
-                      ),
+                  onChanged: (phone) {
+                    ref
+                        .read(onboardingViewModelProvider.notifier)
+                        .setDriverDraftContact(
+                          phoneNumber: phone.isValid ? phone.fullNumber : null,
+                        );
+                    final uid = _draftUid;
+                    if (uid != null) {
+                      unawaited(_saveSetupDraft(uid));
+                    }
+                  },
                 )
                 .animate()
                 .fadeIn(duration: 300.ms, delay: 180.ms)
@@ -1109,7 +1221,12 @@ class _DriverOnboardingScreenState
                   },
                   accentColor: AppColors.primary,
                   fillColor: AppColors.background,
-                  onSelected: (_) {},
+                  onSelected: (_) {
+                    final uid = _draftUid;
+                    if (uid != null) {
+                      unawaited(_saveSetupDraft(uid));
+                    }
+                  },
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return l10n.address_is_required;
@@ -1945,7 +2062,7 @@ class _DriverOnboardingAside extends StatelessWidget {
               fontSize: 24.sp,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
-              letterSpacing: -0.4,
+              letterSpacing: 0,
             ),
           ),
           SizedBox(height: 10.h),

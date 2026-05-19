@@ -50,15 +50,15 @@ class RoleSelectionViewModel extends _$RoleSelectionViewModel {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      // Keep user role as `pending` until onboarding completion, but persist
-      // selected intent so refresh can resume at the correct onboarding screen.
+      // Keep user role as `pending`; persist the Onboarding Path so refreshes
+      // and native app restarts resume the correct setup flow.
       final authActions = ref.read(authActionsViewModelProvider.notifier);
       final currentUser = authActions.currentUser;
       if (currentUser == null) throw StateError('User not authenticated');
 
       await ref.read(profileActionsViewModelProvider.notifier).updateProfile(
         currentUser.uid,
-        {'selectedRoleIntent': role.name},
+        {'selectedRoleIntent': role.name, 'onboardingPath': role.name},
       );
       if (!ref.mounted) return;
 

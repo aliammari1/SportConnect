@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/models/user/models.dart';
+import 'package:sport_connect/core/repositories/settings_repository.dart';
 import 'package:sport_connect/core/utils/user_facing_error.dart';
 import 'package:sport_connect/features/auth/view_models/auth_view_model.dart';
 import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
@@ -139,6 +140,38 @@ class OnboardingViewModel extends _$OnboardingViewModel {
     );
   }
 
+  Map<String, dynamic> setupDraftFor(String uid, UserRole path) {
+    return ref
+        .read(settingsRepositoryProvider)
+        .onboardingDraftFor(
+          uid,
+          path.name,
+        );
+  }
+
+  Future<void> saveSetupDraft(
+    String uid,
+    UserRole path,
+    Map<String, Object?> draft,
+  ) {
+    return ref
+        .read(settingsRepositoryProvider)
+        .saveOnboardingDraft(
+          uid,
+          path.name,
+          draft,
+        );
+  }
+
+  Future<void> clearSetupDraft(String uid, UserRole path) {
+    return ref
+        .read(settingsRepositoryProvider)
+        .clearOnboardingDraft(
+          uid,
+          path.name,
+        );
+  }
+
   /// Saves a rider profile and clears the needsRoleSelection flag.
   Future<void> completeRiderOnboarding(
     String uid,
@@ -160,6 +193,9 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       await ref
           .read(profileActionsViewModelProvider.notifier)
           .updateProfile(uid, profileJson);
+      if (!ref.mounted) return;
+
+      await clearSetupDraft(uid, UserRole.rider);
       if (!ref.mounted) return;
 
       state = state.copyWith(
@@ -190,6 +226,11 @@ class OnboardingViewModel extends _$OnboardingViewModel {
           .read(profileActionsViewModelProvider.notifier)
           .updateProfile(uid, profileJson);
       if (!ref.mounted) return;
+      await saveSetupDraft(uid, UserRole.driver, {
+        'profileSaved': true,
+        'currentStep': 1,
+      });
+      if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,
         completedAction: OnboardingAction.profileSaved,
@@ -214,6 +255,11 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       await ref
           .read(profileActionsViewModelProvider.notifier)
           .addVehicle(uid, vehicle);
+      if (!ref.mounted) return;
+      await saveSetupDraft(uid, UserRole.driver, {
+        'vehicleSaved': true,
+        'currentStep': 2,
+      });
       if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,
@@ -243,6 +289,8 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       }
       await authActions.finalizeRoleAs(uid, UserRole.driver);
       if (!ref.mounted) return;
+      await clearSetupDraft(uid, UserRole.driver);
+      if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,
         completedAction: OnboardingAction.finalizedStripe,
@@ -270,6 +318,8 @@ class OnboardingViewModel extends _$OnboardingViewModel {
         throw StateError('User not authenticated');
       }
       await authActions.finalizeRoleAs(uid, UserRole.driver);
+      if (!ref.mounted) return;
+      await clearSetupDraft(uid, UserRole.driver);
       if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,

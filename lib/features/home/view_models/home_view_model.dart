@@ -24,7 +24,6 @@ class HomeState {
     this.locationError,
     this.userHeading = 0.0,
     this.currentZoom = 14,
-    this.selectedMapStyle = 'standard',
     this.showNearbyDrivers = true,
     this.showDistanceRadius = false,
     this.searchRadius = 5.0,
@@ -48,7 +47,6 @@ class HomeState {
 
   // Map state
   final double currentZoom;
-  final String selectedMapStyle;
   final bool showNearbyDrivers;
   final bool showDistanceRadius;
   final double searchRadius;
@@ -75,7 +73,6 @@ class HomeState {
     String? locationError,
     double? userHeading,
     double? currentZoom,
-    String? selectedMapStyle,
     bool? showNearbyDrivers,
     bool? showDistanceRadius,
     double? searchRadius,
@@ -95,7 +92,6 @@ class HomeState {
       locationError: locationError,
       userHeading: userHeading ?? this.userHeading,
       currentZoom: currentZoom ?? this.currentZoom,
-      selectedMapStyle: selectedMapStyle ?? this.selectedMapStyle,
       showNearbyDrivers: showNearbyDrivers ?? this.showNearbyDrivers,
       showDistanceRadius: showDistanceRadius ?? this.showDistanceRadius,
       searchRadius: searchRadius ?? this.searchRadius,
@@ -119,15 +115,13 @@ class HomeViewModel extends _$HomeViewModel {
   @override
   HomeState build() {
     // Cancel subscription on dispose
-    ref.onDispose(() {
-      _positionStreamSubscription?.cancel();
-    });
-
-    // Subscribe to user streams via ref.listen so that Firestore
-    // emissions do NOT re-run build() (which would reset location state).
-    ref.listen(currentUserProvider, (_, next) {
-      state = state.copyWith(user: next);
-    });
+    ref
+      ..onDispose(() {
+        unawaited(_positionStreamSubscription?.cancel());
+      })
+      ..listen(currentUserProvider, (_, next) {
+        state = state.copyWith(user: next);
+      });
 
     return HomeState(
       user: ref.read(currentUserProvider),
@@ -176,7 +170,7 @@ class HomeViewModel extends _$HomeViewModel {
         state = state.copyWith(
           isLoadingLocation: false,
           locationError: permanentlyDenied
-              ? 'Location permission denied forever. Please enable in settings.'
+              ? 'Location access is off in device settings.'
               : 'Location permission denied',
         );
         return;
@@ -220,7 +214,7 @@ class HomeViewModel extends _$HomeViewModel {
               userHeading: position.heading,
             );
           },
-          onError: (error) {
+          onError: (Object error) {
             TalkerService.error('Location tracking error: $error');
             state = state.copyWith(locationError: 'Location tracking error');
           },
@@ -228,8 +222,8 @@ class HomeViewModel extends _$HomeViewModel {
   }
 
   /// Stop location tracking
-  void stopLocationTracking() {
-    _positionStreamSubscription?.cancel();
+  Future<void> stopLocationTracking() async {
+    await _positionStreamSubscription?.cancel();
     _positionStreamSubscription = null;
   }
 
@@ -250,12 +244,7 @@ class HomeViewModel extends _$HomeViewModel {
     state = state.copyWith(currentZoom: zoom);
   }
 
-  /// Change map style
-  void setMapStyle(String style) {
-    if (availableMapStyles.containsKey(style)) {
-      state = state.copyWith(selectedMapStyle: style);
-    }
-  }
+
 
   /// Toggle nearby drivers/riders visibility on map
   void toggleNearbyDrivers() {
@@ -313,7 +302,7 @@ class HomeViewModel extends _$HomeViewModel {
   }
 
   /// Set route loading state
-  void setLoadingRoute(bool loading) {
+  void setLoadingRoute({required bool loading}) {
     state = state.copyWith(isLoadingRoute: loading);
   }
 

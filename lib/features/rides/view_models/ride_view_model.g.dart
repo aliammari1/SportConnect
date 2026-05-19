@@ -445,7 +445,7 @@ final class DriverLiveLocationProvider
 }
 
 String _$driverLiveLocationHash() =>
-    r'217785d5126bdeb025740f7076c5e6489bebdab5';
+    r'52e9c60a6af6559413c59aacb58bee755b1aca7c';
 
 /// Streams the driver's live GPS location for a ride.
 
@@ -894,7 +894,7 @@ final class ActiveRideViewModelProvider
 }
 
 String _$activeRideViewModelHash() =>
-    r'e3d09446314422b0437120f7b45de2a963faed62';
+    r'dbd32227d64bc8d21d9555c7a58d458b2ea28704';
 
 /// ViewModel for active-ride screens — views watch only this provider.
 

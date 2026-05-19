@@ -9,12 +9,14 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/theme/platform_adaptive.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/payment_error_handler.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/analytics_payment_widgets.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
@@ -313,7 +315,7 @@ class DriverEarningsScreen extends ConsumerWidget {
                     fontSize: 40.sp,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
-                    letterSpacing: -1,
+                    letterSpacing: 0,
                   ),
                 ).animate().fadeIn().scale(begin: const Offset(0.9, 0.9)),
                 SizedBox(height: 6.h),
@@ -398,39 +400,36 @@ class DriverEarningsScreen extends ConsumerWidget {
   ) {
     final chips = _periodKeys.map((period) {
       final isSelected = selectedPeriod == period;
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(999.r),
-          onTap: () => ref
-              .read(driverEarningsPeriodViewModelProvider.notifier)
-              .setPeriod(period),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: EdgeInsets.symmetric(
-              horizontal: 18.w,
-              vertical: 8.h,
+      return AdaptiveTapSurface(
+        borderRadius: BorderRadius.circular(999.r),
+        onTap: () => ref
+            .read(driverEarningsPeriodViewModelProvider.notifier)
+            .setPeriod(period),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: EdgeInsets.symmetric(
+            horizontal: 18.w,
+            vertical: 8.h,
+          ),
+          constraints: BoxConstraints(minHeight: 40.h, minWidth: 96.w),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : AppColors.surface,
+            borderRadius: BorderRadius.circular(999.r),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : AppColors.border,
             ),
-            constraints: BoxConstraints(minHeight: 40.h, minWidth: 96.w),
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : AppColors.surface,
-              borderRadius: BorderRadius.circular(999.r),
-              border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.border,
-              ),
-              boxShadow: isSelected ? AppSpacing.shadowSm : null,
-            ),
-            child: Center(
-              child: Text(
-                _periodLabel(context, period),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                softWrap: true,
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w700,
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
-                ),
+            boxShadow: isSelected ? AppSpacing.shadowSm : null,
+          ),
+          child: Center(
+            child: Text(
+              _periodLabel(context, period),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              softWrap: true,
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? Colors.white : AppColors.textSecondary,
               ),
             ),
           ),
@@ -525,33 +524,17 @@ class DriverEarningsScreen extends ConsumerWidget {
 
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.w),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: cards.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: context.isExpandedOrLarger ? 4 : 2,
-              crossAxisSpacing: 12.w,
-              mainAxisSpacing: 12.h,
-              childAspectRatio: context.isTabletOrLarger ? 1.75 : 2.2,
-            ),
-            itemBuilder: (_, index) => cards[index],
+          child: _buildStatCardsGrid(
+            context: context,
+            cards: cards,
           ),
         ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1);
       },
       loading: () => Padding(
         padding: EdgeInsets.symmetric(horizontal: 20.w),
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: 4,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: context.isExpandedOrLarger ? 4 : 2,
-            crossAxisSpacing: 12.w,
-            mainAxisSpacing: 12.h,
-            childAspectRatio: context.isTabletOrLarger ? 1.75 : 2.2,
-          ),
-          itemBuilder: (_, _) => _buildLoadingStatCard(),
+        child: _buildStatCardsGrid(
+          context: context,
+          cards: List<Widget>.generate(4, (_) => _buildLoadingStatCard()),
         ),
       ),
       error: (_, _) => _buildErrorPlaceholder(context),
@@ -591,6 +574,33 @@ class DriverEarningsScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: const SkeletonLoader(type: SkeletonType.compactTile, itemCount: 1),
+    );
+  }
+
+  // This section is rendered inside an outer scroll view, so a non-scrollable
+  // wrap layout avoids shrink-wrapped nested GridView overhead.
+  Widget _buildStatCardsGrid({
+    required BuildContext context,
+    required List<Widget> cards,
+  }) {
+    final crossAxisCount = context.isExpandedOrLarger ? 4 : 2;
+    final spacingW = 12.w;
+    final spacingH = 12.h;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalSpacing = spacingW * (crossAxisCount - 1);
+        final itemWidth =
+            (constraints.maxWidth - totalSpacing) / crossAxisCount;
+
+        return Wrap(
+          spacing: spacingW,
+          runSpacing: spacingH,
+          children: cards
+              .map((card) => SizedBox(width: itemWidth, child: card))
+              .toList(growable: false),
+        );
+      },
     );
   }
 
@@ -1243,10 +1253,11 @@ class DriverEarningsScreen extends ConsumerWidget {
               ),
           type: AdaptiveSnackBarType.success,
         );
-        ref.invalidate(driverStripeStatusProvider);
-        ref.invalidate(driverPayoutEligibilityProvider);
-        ref.invalidate(driverStatsProvider);
-        ref.invalidate(earningsTransactionsProvider);
+        ref
+          ..invalidate(driverStripeStatusProvider)
+          ..invalidate(driverPayoutEligibilityProvider)
+          ..invalidate(driverStatsProvider)
+          ..invalidate(earningsTransactionsProvider);
         unawaited(_refreshStripeStatusAfterPayout(context, ref));
       } else {
         if (!context.mounted) return;
@@ -1278,8 +1289,10 @@ class DriverEarningsScreen extends ConsumerWidget {
       await ref.read(driverStripeStatusProvider.future);
       if (!context.mounted) return;
       ref.invalidate(currentDriverConnectedAccountProvider);
-    } catch (_) {
+    } on Object catch (e, st) {
       // The next manual refresh will retry the server sync.
+      TalkerService.warning('Post-payout Stripe status refresh failed: $e');
+      TalkerService.error('Post-payout Stripe status refresh error', e, st);
     }
   }
 

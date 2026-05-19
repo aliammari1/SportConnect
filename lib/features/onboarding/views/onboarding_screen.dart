@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/features/onboarding/view_models/onboarding_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
@@ -397,27 +398,23 @@ class _TextActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      child: Material(
-        color: Colors.transparent,
+      child: AdaptiveTapSurface(
         borderRadius: BorderRadius.circular(18.r),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18.r),
-          onTap: () {
-            unawaited(HapticFeedback.lightImpact());
-            onPressed();
-          },
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: _clamped(10.w, 8, 12),
-              vertical: _clamped(8.h, 6, 9),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: _clamped(13.sp, 12, 14),
-                fontWeight: FontWeight.w700,
-              ),
+        onTap: () {
+          unawaited(HapticFeedback.lightImpact());
+          onPressed();
+        },
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: _clamped(10.w, 8, 12),
+            vertical: _clamped(8.h, 6, 9),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: _clamped(13.sp, 12, 14),
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -475,7 +472,7 @@ class _OnboardingPage extends StatelessWidget {
                   fontSize: _clamped(29.sp, 24, 32),
                   height: 1.08,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: -0.55,
+                  letterSpacing: 0,
                 ),
               ),
             ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.08),
@@ -521,7 +518,6 @@ class _OnboardingPage extends StatelessWidget {
                 constraints: BoxConstraints(maxWidth: maxContentWidth),
                 child: isTabletLayout
                     ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(flex: 6, child: visual),
                           SizedBox(width: _clamped(28.w, 24, 36)),
@@ -741,7 +737,7 @@ class _RideAvailabilityCard extends StatelessWidget {
                     fontSize: _clamped(23.sp, 20, 25),
                     fontWeight: FontWeight.w900,
                     height: 1.05,
-                    letterSpacing: -0.40,
+                    letterSpacing: 0,
                   ),
                 ),
               ),
@@ -944,7 +940,7 @@ class _EarningsHeroCard extends StatelessWidget {
                               color: AppColors.textPrimary,
                               fontSize: _clamped(44.sp, 34, 48),
                               fontWeight: FontWeight.w900,
-                              letterSpacing: -1.4,
+                              letterSpacing: 0,
                               height: 0.95,
                             ),
                           ),
@@ -977,7 +973,7 @@ class _SeatSelectorHeader extends StatelessWidget {
             color: AppColors.textPrimary,
             fontSize: _clamped(13.sp, 12, 14),
             fontWeight: FontWeight.w900,
-            letterSpacing: -0.1,
+            letterSpacing: 0,
           ),
         ),
         const Spacer(),
@@ -1146,7 +1142,7 @@ class _PlanPickupVisual extends StatelessWidget {
                         context,
                       ).onboardingSharedArrivalLabel,
                     ),
-                    child: SizedBox.expand(),
+                    child: const SizedBox.expand(),
                   ),
                 ),
               ],
@@ -1253,7 +1249,7 @@ class _ConnectGoVisual extends StatelessWidget {
                       subtitle: AppLocalizations.of(context).trusted_runners,
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: _FeatureTile(
                       icon: Icons.chat_bubble_outline_rounded,
@@ -1273,7 +1269,7 @@ class _ConnectGoVisual extends StatelessWidget {
                       subtitle: AppLocalizations.of(context).trip_visibility,
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: _FeatureTile(
                       icon: Icons.shield_outlined,
@@ -1340,7 +1336,7 @@ class _ConfirmedRideCard extends StatelessWidget {
                                 color: AppColors.textPrimary,
                                 fontSize: _clamped(20.sp, 18, 22),
                                 fontWeight: FontWeight.w900,
-                                letterSpacing: -0.3,
+                                letterSpacing: 0,
                               ),
                             ),
                             SizedBox(height: _clamped(5.h, 4, 7)),
@@ -1577,7 +1573,7 @@ class _HeroEventTitle extends StatelessWidget {
               color: AppColors.primary,
               fontSize: 34.sp,
               fontWeight: FontWeight.w900,
-              letterSpacing: -1.05,
+              letterSpacing: 0,
               height: 0.92,
             ),
           ),
@@ -1587,7 +1583,7 @@ class _HeroEventTitle extends StatelessWidget {
               color: AppColors.primary,
               fontSize: 50.sp,
               fontWeight: FontWeight.w900,
-              letterSpacing: -1.6,
+              letterSpacing: 0,
               height: 0.98,
             ),
           ),
@@ -2321,20 +2317,17 @@ class _BackButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: AppLocalizations.of(context).previous_step,
-      child: Material(
+      child: AdaptiveTapSurface(
         color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(16.r),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16.r),
-          onTap: onPressed,
-          child: SizedBox(
-            width: _clamped(54.w, 48, 58),
-            height: _clamped(54.h, 48, 58),
-            child: Icon(
-              Icons.adaptive.arrow_back_rounded,
-              color: AppColors.textSecondary,
-              size: _clamped(21.sp, 19, 23),
-            ),
+        onTap: onPressed,
+        child: SizedBox(
+          width: _clamped(54.w, 48, 58),
+          height: _clamped(54.h, 48, 58),
+          child: Icon(
+            Icons.adaptive.arrow_back_rounded,
+            color: AppColors.textSecondary,
+            size: _clamped(21.sp, 19, 23),
           ),
         ),
       ),
@@ -2360,60 +2353,56 @@ class _PrimaryCtaButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: !disabled,
-      child: Material(
-        color: Colors.transparent,
+      child: AdaptiveTapSurface(
         borderRadius: BorderRadius.circular(16.r),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16.r),
-          onTap: onPressed,
-          child: Ink(
-            height: _clamped(62.h, 54, 68),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: disabled
-                    ? [
-                        AppColors.primary.withValues(alpha: 0.35),
-                        AppColors.primary.withValues(alpha: 0.26),
-                      ]
-                    : [
-                        AppColors.primary.withValues(alpha: 0.86),
-                        AppColors.primary,
-                      ],
-              ),
-              borderRadius: BorderRadius.circular(16.r),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.20),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+        onTap: onPressed,
+        child: Container(
+          height: _clamped(62.h, 54, 68),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: disabled
+                  ? [
+                      AppColors.primary.withValues(alpha: 0.35),
+                      AppColors.primary.withValues(alpha: 0.26),
+                    ]
+                  : [
+                      AppColors.primary.withValues(alpha: 0.86),
+                      AppColors.primary,
+                    ],
             ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: _clamped(20.w, 16, 22)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      label,
-                      maxLines: 2,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: _clamped(16.sp, 14, 17),
-                        fontWeight: FontWeight.w800,
-                      ),
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.20),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: _clamped(20.w, 16, 22)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: _clamped(16.sp, 14, 17),
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  SizedBox(width: _clamped(12.w, 9, 14)),
-                  Icon(
-                    icon,
-                    color: Colors.white,
-                    size: _clamped(21.sp, 19, 22),
-                  ),
-                ],
-              ),
+                ),
+                SizedBox(width: _clamped(12.w, 9, 14)),
+                Icon(
+                  icon,
+                  color: Colors.white,
+                  size: _clamped(21.sp, 19, 22),
+                ),
+              ],
             ),
           ),
         ),
@@ -2568,16 +2557,17 @@ class _FindRidePainter extends CustomPainter {
       ..color = color.withValues(alpha: 0.55)
       ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(
-      Offset(center.dx - size * 0.55, center.dy + size * 0.40),
-      size * 0.15,
-      wheelPaint,
-    );
-    canvas.drawCircle(
-      Offset(center.dx + size * 0.55, center.dy + size * 0.40),
-      size * 0.15,
-      wheelPaint,
-    );
+    canvas
+      ..drawCircle(
+        Offset(center.dx - size * 0.55, center.dy + size * 0.40),
+        size * 0.15,
+        wheelPaint,
+      )
+      ..drawCircle(
+        Offset(center.dx + size * 0.55, center.dy + size * 0.40),
+        size * 0.15,
+        wheelPaint,
+      );
   }
 
   @override

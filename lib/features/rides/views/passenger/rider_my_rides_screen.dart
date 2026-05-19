@@ -8,13 +8,15 @@ import 'package:intl/intl.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 import 'package:sport_connect/features/rides/view_models/ride_view_model.dart';
+import 'package:sport_connect/features/rides/views/passenger/rider_view_ride_screen.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
-import 'package:sport_connect/core/utils/responsive_utils.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // SCREEN ENTRY POINT
@@ -59,7 +61,7 @@ class _RiderMyRidesScreenState extends ConsumerState<RiderMyRidesScreen> {
 // MAIN CONTENT
 // ─────────────────────────────────────────────────────────────────
 
-class _RidesContent extends StatelessWidget {
+class _RidesContent extends StatefulWidget {
   const _RidesContent({
     required this.rides,
     required this.userId,
@@ -71,15 +73,24 @@ class _RidesContent extends StatelessWidget {
   final Future<void> Function() onRefresh;
 
   @override
+  State<_RidesContent> createState() => _RidesContentState();
+}
+
+class _RidesContentState extends State<_RidesContent> {
+  String? _selectedRideId;
+
+  bool get _usesTwoPaneLayout => context.screenWidth >= Breakpoints.medium;
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final now = DateTime.now();
 
-    final active = rides
+    final active = widget.rides
         .where((r) => r.status == RideStatus.inProgress)
         .toList();
     final upcoming =
-        rides
+        widget.rides
             .where(
               (r) =>
                   r.status == RideStatus.active && r.departureTime.isAfter(now),
@@ -87,7 +98,7 @@ class _RidesContent extends StatelessWidget {
             .toList()
           ..sort((a, b) => a.departureTime.compareTo(b.departureTime));
     final history =
-        rides
+        widget.rides
             .where(
               (r) =>
                   r.status == RideStatus.completed ||
@@ -97,21 +108,17 @@ class _RidesContent extends StatelessWidget {
           ..sort((a, b) => b.departureTime.compareTo(a.departureTime));
 
     return AdaptiveScaffold(
-      body: RefreshIndicator.adaptive(
-        color: AppColors.primary,
-        onRefresh: onRefresh,
-        child: CustomScrollView(
-          slivers: [
-            _SliverHeader(
-              rideCount: rides.length,
-            ),
-            if (active.isNotEmpty) _ActiveSection(rides: active),
-            _TabBody(
-              active: active,
-              upcoming: upcoming,
-              history: history,
-            ),
-          ],
+      body: AdaptiveMasterDetailScaffold(
+        master: _buildRidesList(
+          active: active,
+          upcoming: upcoming,
+          history: history,
+        ),
+        detail: _buildTabletDetail(l10n),
+        phone: _buildRidesList(
+          active: active,
+          upcoming: upcoming,
+          history: history,
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -121,6 +128,59 @@ class _RidesContent extends StatelessWidget {
         icon: const Icon(Icons.search_rounded),
         label: Text(l10n.findACarpoolNow),
       ),
+    );
+  }
+
+  Widget _buildRidesList({
+    required List<RideModel> active,
+    required List<RideModel> upcoming,
+    required List<RideModel> history,
+  }) {
+    return RefreshIndicator.adaptive(
+      color: AppColors.primary,
+      onRefresh: widget.onRefresh,
+      child: CustomScrollView(
+        slivers: [
+          _SliverHeader(
+            rideCount: widget.rides.length,
+          ),
+          if (active.isNotEmpty) _ActiveSection(rides: active),
+          _TabBody(
+            active: active,
+            upcoming: upcoming,
+            history: history,
+            onRideTap: _openRide,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabletDetail(AppLocalizations l10n) {
+    final selectedRideId = _selectedRideId;
+    if (selectedRideId == null) {
+      return TabletEmptyDetail(
+        icon: Icons.directions_car_outlined,
+        title: l10n.rideDetails,
+        message: l10n.noRidesYetSubtitle,
+      );
+    }
+
+    return RiderViewRideScreen(
+      key: ValueKey('rider_ride_$selectedRideId'),
+      rideId: selectedRideId,
+    );
+  }
+
+  void _openRide(String rideId) {
+    if (_usesTwoPaneLayout) {
+      setState(() => _selectedRideId = rideId);
+      return;
+    }
+
+    context.pushNamed(
+      AppRoutes.riderViewRide.name,
+      pathParameters: {'id': rideId},
     );
   }
 }
@@ -208,11 +268,13 @@ class _TabBody extends StatelessWidget {
     required this.active,
     required this.upcoming,
     required this.history,
+    required this.onRideTap,
   });
 
   final List<RideModel> active;
   final List<RideModel> upcoming;
   final List<RideModel> history;
+  final ValueChanged<String> onRideTap;
 
   @override
   Widget build(BuildContext context) {
@@ -226,9 +288,9 @@ class _TabBody extends StatelessWidget {
         selectedColor: Colors.white,
         backgroundColor: AppColors.primary,
         children: [
-          _ActiveTab(rides: active),
-          _UpcomingTab(rides: upcoming),
-          _HistoryTab(rides: history),
+          _ActiveTab(rides: active, onRideTap: onRideTap),
+          _UpcomingTab(rides: upcoming, onRideTap: onRideTap),
+          _HistoryTab(rides: history, onRideTap: onRideTap),
         ],
       ),
     );
@@ -392,8 +454,9 @@ class _PulsingDot extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 
 class _ActiveTab extends StatelessWidget {
-  const _ActiveTab({required this.rides});
+  const _ActiveTab({required this.rides, required this.onRideTap});
   final List<RideModel> rides;
+  final ValueChanged<String> onRideTap;
 
   @override
   Widget build(BuildContext context) {
@@ -410,6 +473,7 @@ class _ActiveTab extends StatelessWidget {
       itemCount: rides.length,
       itemBuilder: (context, i) => _UpcomingRideCard(
         ride: rides[i],
+        onTap: () => onRideTap(rides[i].id),
       ).animate().fadeIn(delay: (i * 60).ms, duration: 350.ms),
     );
   }
@@ -420,8 +484,9 @@ class _ActiveTab extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 
 class _UpcomingTab extends StatelessWidget {
-  const _UpcomingTab({required this.rides});
+  const _UpcomingTab({required this.rides, required this.onRideTap});
   final List<RideModel> rides;
+  final ValueChanged<String> onRideTap;
 
   @override
   Widget build(BuildContext context) {
@@ -438,6 +503,7 @@ class _UpcomingTab extends StatelessWidget {
       itemCount: rides.length,
       itemBuilder: (context, i) => _UpcomingRideCard(
         ride: rides[i],
+        onTap: () => onRideTap(rides[i].id),
       ).animate().fadeIn(delay: (i * 60).ms, duration: 350.ms),
     );
   }
@@ -448,8 +514,9 @@ class _UpcomingTab extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 
 class _UpcomingRideCard extends StatelessWidget {
-  const _UpcomingRideCard({required this.ride});
+  const _UpcomingRideCard({required this.ride, this.onTap});
   final RideModel ride;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -461,10 +528,12 @@ class _UpcomingRideCard extends StatelessWidget {
     final time = DateFormat('HH:mm').format(dt);
 
     return GestureDetector(
-      onTap: () => context.pushNamed(
-        AppRoutes.riderViewRide.name,
-        pathParameters: {'id': ride.id},
-      ),
+      onTap:
+          onTap ??
+          () => context.pushNamed(
+            AppRoutes.riderViewRide.name,
+            pathParameters: {'id': ride.id},
+          ),
       child: Container(
         margin: EdgeInsets.only(bottom: 12.h),
         decoration: BoxDecoration(
@@ -614,8 +683,9 @@ class _UpcomingRideCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 
 class _HistoryTab extends StatelessWidget {
-  const _HistoryTab({required this.rides});
+  const _HistoryTab({required this.rides, required this.onRideTap});
   final List<RideModel> rides;
+  final ValueChanged<String> onRideTap;
 
   @override
   Widget build(BuildContext context) {
@@ -658,7 +728,11 @@ class _HistoryTab extends StatelessWidget {
               ),
             ),
             ...monthRides.asMap().entries.map(
-              (e) => _HistoryTile(ride: e.value, index: gi * 10 + e.key),
+              (e) => _HistoryTile(
+                ride: e.value,
+                index: gi * 10 + e.key,
+                onTap: () => onRideTap(e.value.id),
+              ),
             ),
           ],
         );
@@ -672,9 +746,10 @@ class _HistoryTab extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 
 class _HistoryTile extends StatelessWidget {
-  const _HistoryTile({required this.ride, required this.index});
+  const _HistoryTile({required this.ride, required this.index, this.onTap});
   final RideModel ride;
   final int index;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -683,10 +758,12 @@ class _HistoryTile extends StatelessWidget {
     final date = DateFormat('d MMM · HH:mm').format(ride.departureTime);
 
     return GestureDetector(
-      onTap: () => context.pushNamed(
-        AppRoutes.riderViewRide.name,
-        pathParameters: {'id': ride.id},
-      ),
+      onTap:
+          onTap ??
+          () => context.pushNamed(
+            AppRoutes.riderViewRide.name,
+            pathParameters: {'id': ride.id},
+          ),
       child: Container(
         margin: EdgeInsets.only(bottom: 8.h),
         padding: EdgeInsets.all(14.w),

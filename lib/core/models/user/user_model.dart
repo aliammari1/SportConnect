@@ -112,6 +112,8 @@ sealed class UserModel with _$UserModel {
     required String email,
     required String username,
     String? photoUrl,
+    String? phoneNumber,
+    @TimestampConverter() DateTime? dateOfBirth,
     @Default(Expertise.rookie) Expertise expertise,
     @Default(false) bool isEmailVerified,
     @Default(false) bool isBanned,

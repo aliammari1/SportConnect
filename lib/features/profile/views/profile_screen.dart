@@ -15,6 +15,7 @@ import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/custom_button.dart';
 import 'package:sport_connect/core/widgets/gamification_widgets.dart';
 import 'package:sport_connect/core/widgets/permission_dialog_helper.dart';
@@ -527,7 +528,7 @@ class ProfileScreen extends ConsumerWidget {
               fontSize: 24.sp,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
-              letterSpacing: -0.5,
+              letterSpacing: 0,
             ),
           ),
 
@@ -989,67 +990,65 @@ class ProfileScreen extends ConsumerWidget {
 
             return Column(
               children: [
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: item.onTap,
-                    borderRadius: BorderRadius.vertical(
-                      top: index == 0 ? Radius.circular(16.r) : Radius.zero,
-                      bottom: isLast ? Radius.circular(16.r) : Radius.zero,
+                AdaptiveTapSurface(
+                  onTap: item.onTap,
+                  borderRadius: BorderRadius.vertical(
+                    top: index == 0 ? Radius.circular(16.r) : Radius.zero,
+                    bottom: isLast ? Radius.circular(16.r) : Radius.zero,
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 14.h,
                     ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 14.h,
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.all(10.w),
-                            decoration: BoxDecoration(
-                              color: item.color.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10.r),
-                            ),
-                            child: Icon(
-                              item.icon,
-                              color: item.color,
-                              size: 20.sp,
-                            ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10.w),
+                          decoration: BoxDecoration(
+                            color: item.color.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10.r),
                           ),
-                          SizedBox(width: 14.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.title,
-                                  style: TextStyle(
-                                    fontSize: 15.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
+                          child: Icon(
+                            item.icon,
+                            color: item.color,
+                            size: 20.sp,
+                          ),
+                        ),
+                        SizedBox(width: 14.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.title,
+                                style: TextStyle(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
                                 ),
-                                SizedBox(height: 2.h),
-                                Text(
-                                  item.subtitle,
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: AppColors.textSecondary,
-                                  ),
+                              ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                item.subtitle,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textSecondary,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            color: AppColors.textTertiary,
-                            size: 22.sp,
-                          ),
-                        ],
-                      ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppColors.textTertiary,
+                          size: 22.sp,
+                        ),
+                      ],
                     ),
                   ),
                 ),
+
                 if (!isLast)
                   Divider(
                     height: 1,

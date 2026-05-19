@@ -154,6 +154,7 @@ void _runApp(SharedPreferences prefs) {
         ],
       ],
       child: DevicePreview(
+        enabled: kDebugMode,
         builder: (context) => const SportConnectApp(), // Wrap your app
       ),
     ),

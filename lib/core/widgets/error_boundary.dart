@@ -111,10 +111,9 @@ class _DefaultErrorFallback extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   l10n.pleaseTryAgainLater,
-                  style:
-                      AppTypography.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),

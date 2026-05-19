@@ -9,7 +9,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sport_connect/core/services/map_service.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
@@ -101,6 +103,17 @@ class AddressAutocompleteFieldState
 
   String get text => _controller.text;
   LatLng? get location => _selectedLocation;
+
+  void setText(String? value) {
+    final nextText = value?.trim() ?? '';
+    if (_controller.text == nextText) return;
+
+    _controller.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(offset: nextText.length),
+    );
+    _draftMapAddress = nextText.isEmpty ? null : nextText;
+  }
 
   String? validate() {
     if (!mounted) return null;
@@ -341,7 +354,9 @@ class AddressAutocompleteFieldState
       });
 
       _ensureFieldVisible(delay: const Duration(milliseconds: 80));
-    } catch (_) {
+    } on Object catch (e, st) {
+      TalkerService.warning('Address search failed: $e');
+      TalkerService.error('Address search error', e, st);
       if (!mounted) return;
 
       setState(() {
@@ -366,9 +381,8 @@ class AddressAutocompleteFieldState
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
     if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
       throw Exception(
-        AppLocalizations.of(context).pleaseEnableLocationServices,
+        AppLocalizations.of(context).locationServicesOffDescription,
       );
     }
 
@@ -391,7 +405,6 @@ class AddressAutocompleteFieldState
     }
 
     if (permission == LocationPermission.deniedForever) {
-      await Geolocator.openAppSettings();
       throw Exception(
         AppLocalizations.of(context).locationPermissionBlockedDescription,
       );
@@ -740,8 +753,8 @@ class AddressAutocompleteFieldState
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
               decoration: BoxDecoration(
                 color: hasError
-                    ? AppColors.error.withOpacity(0.055)
-                    : accent.withOpacity(0.06),
+                    ? AppColors.error.withValues(alpha: 0.055)
+                    : accent.withValues(alpha: 0.06),
                 borderRadius: _expanded
                     ? BorderRadius.vertical(top: Radius.circular(14.r))
                     : BorderRadius.circular(14.r),
@@ -750,7 +763,7 @@ class AddressAutocompleteFieldState
                       ? AppColors.error
                       : _expanded || hasSelectedLocation
                       ? accent
-                      : accent.withOpacity(0.2),
+                      : accent.withValues(alpha: 0.2),
                   width: _expanded || hasError ? 2 : 1,
                 ),
               ),
@@ -778,7 +791,7 @@ class AddressAutocompleteFieldState
                               fontWeight: FontWeight.w600,
                               color: hasError
                                   ? AppColors.error
-                                  : accent.withOpacity(0.75),
+                                  : accent.withValues(alpha: 0.75),
                             ),
                           ),
                         if (widget.label != null) SizedBox(height: 2.h),
@@ -796,7 +809,7 @@ class AddressAutocompleteFieldState
                             fontWeight: FontWeight.w700,
                             color: hasValue
                                 ? AppColors.textPrimary
-                                : AppColors.textPrimary.withOpacity(0.38),
+                                : AppColors.textPrimary.withValues(alpha: 0.38),
                           ),
                         ),
                       ],
@@ -1062,10 +1075,10 @@ class _InlineSearchBoxState extends State<_InlineSearchBox> {
     return Container(
       height: 52.h,
       decoration: BoxDecoration(
-        color: widget.accent.withOpacity(0.055),
+        color: widget.accent.withValues(alpha: 0.055),
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: widget.accent.withOpacity(0.18),
+          color: widget.accent.withValues(alpha: 0.18),
         ),
       ),
       child: Row(
@@ -1151,80 +1164,77 @@ class _InlineCurrentLocationOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12.r),
-        onTap: isLoading ? null : onTap,
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 12.h),
-          decoration: BoxDecoration(
-            color: accent.withOpacity(0.065),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: accent.withOpacity(0.16),
+    return AdaptiveTapSurface(
+      borderRadius: BorderRadius.circular(12.r),
+      onTap: isLoading ? null : onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.065),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+color: accent.withValues(alpha: 0.16),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 34.w,
+              height: 34.w,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.13),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: isLoading
+                  ? Padding(
+                      padding: EdgeInsets.all(8.w),
+                      child: CircularProgressIndicator.adaptive(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(accent),
+                      ),
+                    )
+                  : Icon(
+                      Icons.my_location_rounded,
+                      color: accent,
+                      size: 18.sp,
+                    ),
             ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 34.w,
-                height: 34.w,
-                decoration: BoxDecoration(
-                  color: accent.withOpacity(0.13),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: isLoading
-                    ? Padding(
-                        padding: EdgeInsets.all(8.w),
-                        child: CircularProgressIndicator.adaptive(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(accent),
-                        ),
-                      )
-                    : Icon(
-                        Icons.my_location_rounded,
-                        color: accent,
-                        size: 18.sp,
-                      ),
-              ),
-              SizedBox(width: 11.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isLoading
-                          ? 'Getting your location...'
-                          : 'Use current location',
-                      style: TextStyle(
-                        fontSize: 13.5.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
+            SizedBox(width: 11.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isLoading
+                        ? 'Getting your location...'
+                        : 'Use current location',
+                    style: TextStyle(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
                     ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      'Fastest way to set your pickup point',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.5.sp,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
-                      ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'Fastest way to set your pickup point',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.5.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              if (!isLoading)
-                Icon(
-                  Icons.arrow_forward_rounded,
-                  color: accent,
-                  size: 18.sp,
-                ),
-            ],
-          ),
+            ),
+            if (!isLoading)
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: accent,
+                size: 18.sp,
+              ),
+          ],
         ),
       ),
     );
@@ -1244,74 +1254,71 @@ class _InlineMapToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12.r),
-        onTap: onTap,
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 12.h),
-          decoration: BoxDecoration(
-            color: accent.withOpacity(0.075),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: expanded ? accent : accent.withOpacity(0.18),
-              width: expanded ? 1.5 : 1,
+    return AdaptiveTapSurface(
+      borderRadius: BorderRadius.circular(12.r),
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 12.h),
+        decoration: BoxDecoration(
+color: accent.withValues(alpha: 0.075),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: expanded ? accent : accent.withValues(alpha: 0.18),
+            width: expanded ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 34.w,
+              height: 34.w,
+              decoration: BoxDecoration(
+                color: expanded ? accent : accent.withOpacity(0.13),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(
+                Icons.map_rounded,
+                color: expanded ? Colors.white : accent,
+                size: 18.sp,
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 34.w,
-                height: 34.w,
-                decoration: BoxDecoration(
-                  color: expanded ? accent : accent.withOpacity(0.13),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Icon(
-                  Icons.map_rounded,
-                  color: expanded ? Colors.white : accent,
-                  size: 18.sp,
-                ),
-              ),
-              SizedBox(width: 11.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).pickOnMap,
-                      style: TextStyle(
-                        fontSize: 13.5.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
+            SizedBox(width: 11.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context).pickOnMap,
+                    style: TextStyle(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
                     ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      'Expand map for exact pickup point',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.5.sp,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
-                      ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'Expand map for exact pickup point',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.5.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              AnimatedRotation(
-                turns: expanded ? 0.5 : 0,
-                duration: const Duration(milliseconds: 220),
-                child: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: accent,
-                  size: 22.sp,
-                ),
+            ),
+            AnimatedRotation(
+              turns: expanded ? 0.5 : 0,
+              duration: const Duration(milliseconds: 220),
+              child: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: accent,
+                size: 22.sp,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1746,76 +1753,73 @@ class _SuggestionTile extends StatelessWidget {
     final primary = parts.isEmpty ? result.displayName.trim() : parts.first;
     final secondary = parts.skip(1).join(', ').trim();
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12.r),
-        onTap: onTap,
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
-          decoration: BoxDecoration(
-            color: accent.withOpacity(0.045),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: accent.withOpacity(0.12),
-            ),
+    return AdaptiveTapSurface(
+      borderRadius: BorderRadius.circular(12.r),
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
+        decoration: BoxDecoration(
+          color: accent.withOpacity(0.045),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: accent.withOpacity(0.12),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 34.w,
-                height: 34.w,
-                decoration: BoxDecoration(
-                  color: accent.withOpacity(0.11),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Icon(
-                  Icons.place_rounded,
-                  color: accent,
-                  size: 18.sp,
-                ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 34.w,
+              height: 34.w,
+              decoration: BoxDecoration(
+                color: accent.withOpacity(0.11),
+                borderRadius: BorderRadius.circular(10.r),
               ),
-              SizedBox(width: 11.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: Icon(
+                Icons.place_rounded,
+                color: accent,
+                size: 18.sp,
+              ),
+            ),
+            SizedBox(width: 11.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    primary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.8.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  if (secondary.isNotEmpty) ...[
+                    SizedBox(height: 3.h),
                     Text(
-                      primary,
-                      maxLines: 1,
+                      secondary,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13.8.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        fontSize: 11.8.sp,
+                        height: 1.25,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
                       ),
                     ),
-                    if (secondary.isNotEmpty) ...[
-                      SizedBox(height: 3.h),
-                      Text(
-                        secondary,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11.8.sp,
-                          height: 1.25,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
-              SizedBox(width: 8.w),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 20.sp,
-                color: AppColors.textTertiary,
-              ),
-            ],
-          ),
+            ),
+            SizedBox(width: 8.w),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20.sp,
+              color: AppColors.textTertiary,
+            ),
+          ],
         ),
       ),
     );

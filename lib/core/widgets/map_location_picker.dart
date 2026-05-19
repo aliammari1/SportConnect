@@ -136,14 +136,12 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
       final svc = ref.read(locationServiceProvider);
 
       if (!await svc.isServiceEnabled()) {
-        await svc.openLocationSettings();
         if (!mounted) return;
         setState(() => _isLoadingLocation = false);
         return;
       }
 
       if (await svc.isPermissionPermanentlyDenied()) {
-        await svc.openAppSettings();
         if (!mounted) return;
         setState(() => _isLoadingLocation = false);
         return;

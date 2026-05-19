@@ -539,20 +539,22 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
 
 
   Widget _buildDetailsTab(RideModel ride) {
-    return ListView(
-      padding: EdgeInsets.all(16.w),
-      children: [
-        _buildRouteCard(ride),
+    final details = <Widget>[
+      _buildRouteCard(ride),
+      SizedBox(height: 12.h),
+      _buildVehicleCard(ride),
+      SizedBox(height: 12.h),
+      _buildPreferencesCard(ride),
+      if (ride.notes != null && ride.notes!.isNotEmpty) ...[
         SizedBox(height: 12.h),
-        _buildVehicleCard(ride),
-        SizedBox(height: 12.h),
-        _buildPreferencesCard(ride),
-        if (ride.notes != null && ride.notes!.isNotEmpty) ...[
-          SizedBox(height: 12.h),
-          _buildNotesCard(ride),
-        ],
-        SizedBox(height: 80.h),
+        _buildNotesCard(ride),
       ],
+      SizedBox(height: 80.h),
+    ];
+    return ListView.builder(
+      padding: EdgeInsets.all(16.w),
+      itemCount: details.length,
+      itemBuilder: (context, index) => details[index],
     );
   }
 

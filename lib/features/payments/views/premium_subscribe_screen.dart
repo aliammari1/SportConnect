@@ -11,6 +11,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/features/payments/models/premium_plan.dart';
 import 'package:sport_connect/features/payments/services/premium_iap_service.dart';
@@ -75,7 +76,9 @@ class _PremiumSubscribeScreenState
         _products = p;
         _loadingProducts = false;
       });
-    } catch (_) {
+    } on Object catch (e, st) {
+      TalkerService.warning('Premium plan load failed: $e');
+      TalkerService.error('Premium plan load error', e, st);
       if (!mounted) return;
       setState(() {
         _loadingProducts = false;
@@ -648,7 +651,7 @@ class _PremiumSubscribeScreenState
                 fontSize: 26.sp,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
-                letterSpacing: -0.5,
+                letterSpacing: 0,
               ),
               textAlign: TextAlign.center,
             ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.2),

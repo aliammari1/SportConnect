@@ -365,15 +365,17 @@ class _DriverRequestsScreenState extends ConsumerState<DriverRequestsScreen> {
   }
 
   bool _refreshAfterAccept() {
-    ref.invalidate(pendingRideRequestsProvider);
-    ref.invalidate(acceptedRideRequestsProvider);
-    ref.invalidate(upcomingDriverRidesProvider);
+    ref
+      ..invalidate(pendingRideRequestsProvider)
+      ..invalidate(acceptedRideRequestsProvider)
+      ..invalidate(upcomingDriverRidesProvider);
     return true;
   }
 
   bool _refreshAfterDecline() {
-    ref.invalidate(pendingRideRequestsProvider);
-    ref.invalidate(rejectedRideRequestsProvider);
+    ref
+      ..invalidate(pendingRideRequestsProvider)
+      ..invalidate(rejectedRideRequestsProvider);
     return true;
   }
 

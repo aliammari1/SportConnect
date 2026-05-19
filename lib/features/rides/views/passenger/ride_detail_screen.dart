@@ -1,7 +1,5 @@
 import 'dart:async';
 
-
-
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,6 +16,7 @@ import 'package:sport_connect/core/constants/app_constants.dart';
 import 'package:sport_connect/core/models/location/location_point.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
@@ -2381,7 +2380,9 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
         },
         extra: driverProfile,
       );
-    } catch (_) {
+    } on Object catch (e, st) {
+      TalkerService.warning('Failed to open driver chat: $e');
+      TalkerService.error('Open driver chat error', e, st);
       if (!mounted) return;
       _showSnackBar(AppLocalizations.of(context).failedToOpenChatTryAgain);
     }
@@ -2431,7 +2432,9 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
         },
         extra: passengerProfile,
       );
-    } catch (_) {
+    } on Object catch (e, st) {
+      TalkerService.warning('Failed to open passenger chat: $e');
+      TalkerService.error('Open passenger chat error', e, st);
       if (!mounted) return;
       _showSnackBar(AppLocalizations.of(context).failedToOpenChatTryAgain);
     }

@@ -1,7 +1,5 @@
 import 'dart:async';
 
-
-
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,6 +14,7 @@ import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
@@ -28,7 +27,6 @@ import 'package:sport_connect/features/rides/view_models/ride_countdown_view_mod
 import 'package:sport_connect/features/rides/view_models/ride_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:sport_connect/core/utils/responsive_utils.dart';
 
 class RideCountdownScreen extends ConsumerStatefulWidget {
   const RideCountdownScreen({required this.bookingId, super.key});
@@ -229,108 +227,110 @@ class _RideCountdownScreenState extends ConsumerState<RideCountdownScreen> {
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
           child: Column(
-          children: [
-            // Booking confirmed badge
-            _buildStatusBadge().animate().fadeIn(delay: 100.ms),
-            SizedBox(height: 32.h),
+            children: [
+              // Booking confirmed badge
+              _buildStatusBadge().animate().fadeIn(delay: 100.ms),
+              SizedBox(height: 32.h),
 
-            // Countdown display
-            if (!isInPast) ...[
-              Text(
-                isImminent
-                    ? AppLocalizations.of(context).departingSoonLabel
-                    : AppLocalizations.of(context).departureInLabel,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: isImminent
-                      ? AppColors.warning
-                      : AppColors.textSecondary,
+              // Countdown display
+              if (!isInPast) ...[
+                Text(
+                  isImminent
+                      ? AppLocalizations.of(context).departingSoonLabel
+                      : AppLocalizations.of(context).departureInLabel,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: isImminent
+                        ? AppColors.warning
+                        : AppColors.textSecondary,
+                  ),
                 ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                    _formatDuration(uiState.timeUntilDeparture),
-                    style: TextStyle(
-                      fontSize: 44.sp,
-                      fontWeight: FontWeight.bold,
+                SizedBox(height: 8.h),
+                Text(
+                      _formatDuration(uiState.timeUntilDeparture),
+                      style: TextStyle(
+                        fontSize: 44.sp,
+                        fontWeight: FontWeight.bold,
+                        color: isImminent
+                            ? AppColors.warning
+                            : AppColors.primary,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    )
+                    .animate(onPlay: (controller) => controller.repeat())
+                    .tint(
                       color: isImminent ? AppColors.warning : AppColors.primary,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                      duration: 1.seconds,
                     ),
-                  )
-                  .animate(onPlay: (controller) => controller.repeat())
-                  .tint(
-                    color: isImminent ? AppColors.warning : AppColors.primary,
-                    duration: 1.seconds,
-                  ),
-            ] else
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.directions_car_filled_rounded,
-                    color: AppColors.success,
-                    size: 28.sp,
-                  ),
-                  SizedBox(width: 10.w),
-                  Text(
-                    AppLocalizations.of(context).rideStartedMessage,
-                    style: TextStyle(
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.bold,
+              ] else
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.directions_car_filled_rounded,
                       color: AppColors.success,
+                      size: 28.sp,
+                    ),
+                    SizedBox(width: 10.w),
+                    Text(
+                      AppLocalizations.of(context).rideStartedMessage,
+                      style: TextStyle(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.success,
+                      ),
+                    ),
+                  ],
+                ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
+
+              SizedBox(height: 32.h),
+
+              // Route map preview
+              _buildRouteMapPreview(
+                ride,
+                uiState,
+              ).animate().fadeIn(delay: 150.ms),
+              SizedBox(height: 16.h),
+
+              // Route card
+              _buildRouteCard(ride).animate().slideY(delay: 200.ms),
+              SizedBox(height: 16.h),
+
+              // Driver info + contact buttons
+              _buildDriverCard(ride).animate().slideY(delay: 250.ms),
+              SizedBox(height: 16.h),
+
+              // Booking info card
+              _buildBookingInfoCard(
+                ride,
+                booking,
+              ).animate().slideY(delay: 300.ms),
+              SizedBox(height: 32.h),
+
+              // Action buttons
+              if (ride.status == RideStatus.inProgress || isInPast)
+                PremiumButton(
+                  text: AppLocalizations.of(context).joinActiveRideButton,
+                  style: PremiumButtonStyle.success,
+                  onPressed: () => context.push(
+                    '${AppRoutes.riderActiveRide.path}?rideId=${booking.rideId}',
+                  ),
+                )
+              else
+                PremiumButton(
+                  text: AppLocalizations.of(context).viewRideDetailsButton,
+                  onPressed: () => context.push(
+                    AppRoutes.riderViewRide.path.replaceFirst(
+                      ':id',
+                      booking.rideId,
                     ),
                   ),
-                ],
-              ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
-
-            SizedBox(height: 32.h),
-
-            // Route map preview
-            _buildRouteMapPreview(
-              ride,
-              uiState,
-            ).animate().fadeIn(delay: 150.ms),
-            SizedBox(height: 16.h),
-
-            // Route card
-            _buildRouteCard(ride).animate().slideY(delay: 200.ms),
-            SizedBox(height: 16.h),
-
-            // Driver info + contact buttons
-            _buildDriverCard(ride).animate().slideY(delay: 250.ms),
-            SizedBox(height: 16.h),
-
-            // Booking info card
-            _buildBookingInfoCard(
-              ride,
-              booking,
-            ).animate().slideY(delay: 300.ms),
-            SizedBox(height: 32.h),
-
-            // Action buttons
-            if (ride.status == RideStatus.inProgress || isInPast)
-              PremiumButton(
-                text: AppLocalizations.of(context).joinActiveRideButton,
-                style: PremiumButtonStyle.success,
-                onPressed: () => context.push(
-                  '${AppRoutes.riderActiveRide.path}?rideId=${booking.rideId}',
                 ),
-              )
-            else
-              PremiumButton(
-                text: AppLocalizations.of(context).viewRideDetailsButton,
-                onPressed: () => context.push(
-                  AppRoutes.riderViewRide.path.replaceFirst(
-                    ':id',
-                    booking.rideId,
-                  ),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   void _fitMapToBounds(List<LatLng> routePoints) {

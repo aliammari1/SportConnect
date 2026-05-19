@@ -94,8 +94,8 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
 
   /// Called when the user taps "Allow Location" on the gate screen.
   Future<void> _onAllowLocationTapped() async {
-    final vm = ref.read(riderHomeViewModelProvider.notifier);
-    vm.setAcquiringLocation();
+    final vm = ref.read(riderHomeViewModelProvider.notifier)
+      ..setAcquiringLocation();
 
     if (!mounted) return;
     final accepted = await PermissionDialogHelper.showLocationRationale(
@@ -180,12 +180,12 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
         LocationPermissionState.unknown => _buildLocationGate(),
         LocationPermissionState.acquiring => _buildAcquiringState(),
         LocationPermissionState.ready => ResponsiveLayoutBuilder(
-            phone: (_) => vmState.showMapView
-                ? _buildMapHome(vmState)
-                : _buildFeedHome(vmState),
-            tablet: (context) => _buildLargeScreenHome(context, vmState),
-            desktop: (context) => _buildLargeScreenHome(context, vmState),
-          ),
+          phone: (_) => vmState.showMapView
+              ? _buildMapHome(vmState)
+              : _buildFeedHome(vmState),
+          tablet: (context) => _buildLargeScreenHome(context, vmState),
+          desktop: (context) => _buildLargeScreenHome(context, vmState),
+        ),
         LocationPermissionState.deniedSoft => _buildDeniedSoftState(),
         LocationPermissionState.deniedHard => _buildDeniedHardState(),
         LocationPermissionState.serviceDisabled => _buildServiceDisabledState(),
@@ -445,7 +445,8 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
     );
   }
 
-  /// Soft deny: user tapped "Not now" — offer to try again or browse by city.
+  /// Soft deny: user declined location access — keep browsing available without
+  /// asking them to reconsider.
   Widget _buildDeniedSoftState() {
     final l10n = AppLocalizations.of(context);
     return SafeArea(
@@ -491,10 +492,10 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _onAllowLocationTapped,
-                icon: Icon(Icons.my_location_rounded, size: 20.sp),
+                onPressed: () => context.push(AppRoutes.searchRides.path),
+                icon: Icon(Icons.search_rounded, size: 20.sp),
                 label: Text(
-                  l10n.tryAgain,
+                  l10n.browseByCity,
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w700,
@@ -508,18 +509,6 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                     borderRadius: BorderRadius.circular(14.r),
                   ),
                   elevation: 0,
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-            TextButton(
-              onPressed: () => context.push(AppRoutes.searchRides.path),
-              child: Text(
-                l10n.browseByCity,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppColors.textSecondary,
-                  decoration: TextDecoration.underline,
                 ),
               ),
             ),
@@ -727,7 +716,6 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
     final loc = vmState.currentLocation ?? const LatLng(0, 0);
     final queryAnchor = vmState.nearbyQueryAnchor ?? loc;
     final currentZoom = _clampMapZoom(vmState.currentZoom);
-    final selectedMapStyle = vmState.selectedMapStyle;
     final showNearbyDrivers = vmState.showNearbyDrivers;
     final showDistanceRadius = vmState.showDistanceRadius;
     final searchRadius = vmState.searchRadius;
@@ -897,7 +885,9 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
             right: 0,
             child: Center(
               child: Container(
-                padding: adaptiveScreenPadding(context).copyWith(bottom: 12.h, top: 12.h),
+                padding: adaptiveScreenPadding(
+                  context,
+                ).copyWith(bottom: 12.h, top: 12.h),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(24.r),
@@ -1684,93 +1674,6 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // Map style picker
-  // ─────────────────────────────────────────────────────────────
-
-  void _showMapStylePicker() {
-    final l10n = AppLocalizations.of(context);
-    AppModalSheet.show<void>(
-      context: context,
-      title: l10n.mapStyle,
-      maxHeightFactor: 0.45,
-      child: Padding(
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _buildStyleOption(l10n.standard, l10n.standard2, Icons.map),
-                SizedBox(width: 12.w),
-                _buildStyleOption(l10n.terrain, l10n.terrain2, Icons.terrain),
-                SizedBox(width: 12.w),
-                _buildStyleOption(l10n.dark, l10n.dark2, Icons.dark_mode),
-                SizedBox(width: 12.w),
-                _buildStyleOption(
-                  'satellite',
-                  l10n.satellite,
-                  Icons.satellite_alt,
-                ),
-              ],
-            ),
-            SizedBox(height: 20.h),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStyleOption(String id, String label, IconData icon) {
-    final isSelected =
-        ref.watch(
-          riderHomeViewModelProvider.select((s) => s.selectedMapStyle),
-        ) ==
-        id;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          ref.read(riderHomeViewModelProvider.notifier).setMapStyle(id);
-          context.pop();
-        },
-        child: Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.primary.withValues(alpha: 0.1)
-                : AppColors.cardBg,
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(
-              color: isSelected ? AppColors.primary : AppColors.border,
-              width: 2,
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                size: 28.sp,
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
   // Search sheet
   // ─────────────────────────────────────────────────────────────
 
@@ -1811,7 +1714,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
               final l10n = AppLocalizations.of(ctx);
 
               return Container(
-                height: MediaQuery.of(ctx).size.height * 0.85,
+                height: MediaQuery.sizeOf(ctx).height * 0.85,
                 color: AppColors.background,
                 child: Column(
                   children: [
@@ -2722,5 +2625,6 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
     return AppLocaleFormatters.formatMonthDay(context, date);
   }
 
-  String _formatTime(DateTime dt) => AppLocaleFormatters.formatTime(context, dt);
+  String _formatTime(DateTime dt) =>
+      AppLocaleFormatters.formatTime(context, dt);
 }

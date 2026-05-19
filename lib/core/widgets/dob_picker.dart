@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 
 class DateOfBirthField extends StatelessWidget {
   const DateOfBirthField({
@@ -56,12 +57,10 @@ class DateOfBirthField extends StatelessWidget {
               hasError: showError,
             ),
             SizedBox(height: 8.h),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(14.r),
-                onTap: () => _pickDate(context, field),
-                child: Container(
+            AdaptiveTapSurface(
+              borderRadius: BorderRadius.circular(14.r),
+              onTap: () => _pickDate(context, field),
+              child: Container(
                   height: 54.h,
                   padding: EdgeInsets.symmetric(horizontal: 14.w),
                   decoration: BoxDecoration(
@@ -104,7 +103,6 @@ class DateOfBirthField extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
             _FieldErrorText(errorText),
           ],
         );

@@ -130,8 +130,9 @@ class FirebaseService {
             : const AndroidPlayIntegrityProvider(),
         providerApple: kDebugMode
             ? const AppleDebugProvider()
-            : const AppleDeviceCheckProvider(),
+            : const AppleAppAttestWithDeviceCheckFallbackProvider(),
       );
+      await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
 
       TalkerService.info('✅ App Check activated');
     } on Exception catch (e, st) {

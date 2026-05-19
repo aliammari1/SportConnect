@@ -15,6 +15,7 @@ import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 import 'package:sport_connect/features/rides/view_models/ride_view_model.dart';
@@ -540,7 +541,7 @@ class _Header extends StatelessWidget {
                     color: AppColors.textPrimary,
                     fontSize: 22.sp,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: -0.4,
+                    letterSpacing: 0,
                   ),
                 ),
                 SizedBox(height: 4.h),
@@ -775,7 +776,7 @@ class _RideSummaryHero extends ConsumerWidget {
                             fontSize: 24.sp,
                             fontWeight: FontWeight.w900,
                             height: 1.05,
-                            letterSpacing: -0.7,
+                            letterSpacing: 0,
                           ),
                         ),
                         SizedBox(height: 8.h),
@@ -1141,7 +1142,7 @@ class _PriceBreakdownCard extends StatelessWidget {
               color: AppColors.textPrimary,
               fontSize: 18.sp,
               fontWeight: FontWeight.w900,
-              letterSpacing: -0.2,
+              letterSpacing: 0,
             ),
           ),
           SizedBox(height: 16.h),
@@ -1283,7 +1284,7 @@ class _BookingFooter extends StatelessWidget {
                         color: AppColors.textPrimary,
                         fontSize: 30.sp,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: -1,
+                        letterSpacing: 0,
                         height: 1.15,
                       ),
                     ),
@@ -1364,7 +1365,7 @@ class _TabletBookingSidebar extends StatelessWidget {
               color: AppColors.textPrimary,
               fontSize: 32.sp,
               fontWeight: FontWeight.w900,
-              letterSpacing: -1,
+              letterSpacing: 0,
             ),
           ),
           SizedBox(height: 20.h),
@@ -1669,31 +1670,29 @@ class _GlassIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return AdaptiveTapSurface(
       color: Colors.white,
       shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onPressed,
-        child: Container(
-          width: size.w,
-          height: size.w,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.border),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 16,
-                offset: Offset(0, 8.h),
-              ),
-            ],
-          ),
-          child: Icon(
-            icon,
-            color: AppColors.textPrimary,
-            size: 21.sp,
-          ),
+      customBorder: const CircleBorder(),
+      onTap: onPressed,
+      child: Container(
+        width: size.w,
+        height: size.w,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 16,
+              offset: Offset(0, 8.h),
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          color: AppColors.textPrimary,
+          size: 21.sp,
         ),
       ),
     );
@@ -1747,7 +1746,7 @@ class _PrimaryActionButton extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15.5.sp,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: -0.2,
+                        letterSpacing: 0,
                       ),
                     ),
                   ),

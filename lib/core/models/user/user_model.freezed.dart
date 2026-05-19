@@ -42,7 +42,7 @@ UserModel _$UserModelFromJson(
 /// @nodoc
 mixin _$UserModel {
 
- String get uid; String get email; String get username; String? get photoUrl; String get fcmToken;// Verification & status
+ String get uid; String get email; String get username; String? get photoUrl; String? get phoneNumber;@TimestampConverter() DateTime? get dateOfBirth; String get fcmToken;// Verification & status
  bool get isEmailVerified; bool get isBanned;// Expertise
  Expertise get expertise;// Timestamps
 @TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;
@@ -58,16 +58,16 @@ $UserModelCopyWith<UserModel> get copyWith => _$UserModelCopyWithImpl<UserModel>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserModel&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.email, email) || other.email == email)&&(identical(other.username, username) || other.username == username)&&(identical(other.photoUrl, photoUrl) || other.photoUrl == photoUrl)&&(identical(other.fcmToken, fcmToken) || other.fcmToken == fcmToken)&&(identical(other.isEmailVerified, isEmailVerified) || other.isEmailVerified == isEmailVerified)&&(identical(other.isBanned, isBanned) || other.isBanned == isBanned)&&(identical(other.expertise, expertise) || other.expertise == expertise)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserModel&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.email, email) || other.email == email)&&(identical(other.username, username) || other.username == username)&&(identical(other.photoUrl, photoUrl) || other.photoUrl == photoUrl)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&(identical(other.fcmToken, fcmToken) || other.fcmToken == fcmToken)&&(identical(other.isEmailVerified, isEmailVerified) || other.isEmailVerified == isEmailVerified)&&(identical(other.isBanned, isBanned) || other.isBanned == isBanned)&&(identical(other.expertise, expertise) || other.expertise == expertise)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,uid,email,username,photoUrl,fcmToken,isEmailVerified,isBanned,expertise,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,uid,email,username,photoUrl,phoneNumber,dateOfBirth,fcmToken,isEmailVerified,isBanned,expertise,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'UserModel(uid: $uid, email: $email, username: $username, photoUrl: $photoUrl, fcmToken: $fcmToken, isEmailVerified: $isEmailVerified, isBanned: $isBanned, expertise: $expertise, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'UserModel(uid: $uid, email: $email, username: $username, photoUrl: $photoUrl, phoneNumber: $phoneNumber, dateOfBirth: $dateOfBirth, fcmToken: $fcmToken, isEmailVerified: $isEmailVerified, isBanned: $isBanned, expertise: $expertise, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -78,7 +78,7 @@ abstract mixin class $UserModelCopyWith<$Res>  {
   factory $UserModelCopyWith(UserModel value, $Res Function(UserModel) _then) = _$UserModelCopyWithImpl;
 @useResult
 $Res call({
- String uid, String email, String username, String? photoUrl, String fcmToken, bool isEmailVerified, bool isBanned, Expertise expertise,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
+ String uid, String email, String username, String? photoUrl, String? phoneNumber,@TimestampConverter() DateTime? dateOfBirth, String fcmToken, bool isEmailVerified, bool isBanned, Expertise expertise,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
 });
 
 
@@ -95,13 +95,15 @@ class _$UserModelCopyWithImpl<$Res>
 
 /// Create a copy of UserModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? uid = null,Object? email = null,Object? username = null,Object? photoUrl = freezed,Object? fcmToken = null,Object? isEmailVerified = null,Object? isBanned = null,Object? expertise = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? uid = null,Object? email = null,Object? username = null,Object? photoUrl = freezed,Object? phoneNumber = freezed,Object? dateOfBirth = freezed,Object? fcmToken = null,Object? isEmailVerified = null,Object? isBanned = null,Object? expertise = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,photoUrl: freezed == photoUrl ? _self.photoUrl : photoUrl // ignore: cast_nullable_to_non_nullable
-as String?,fcmToken: null == fcmToken ? _self.fcmToken : fcmToken // ignore: cast_nullable_to_non_nullable
+as String?,phoneNumber: freezed == phoneNumber ? _self.phoneNumber : phoneNumber // ignore: cast_nullable_to_non_nullable
+as String?,dateOfBirth: freezed == dateOfBirth ? _self.dateOfBirth : dateOfBirth // ignore: cast_nullable_to_non_nullable
+as DateTime?,fcmToken: null == fcmToken ? _self.fcmToken : fcmToken // ignore: cast_nullable_to_non_nullable
 as String,isEmailVerified: null == isEmailVerified ? _self.isEmailVerified : isEmailVerified // ignore: cast_nullable_to_non_nullable
 as bool,isBanned: null == isBanned ? _self.isBanned : isBanned // ignore: cast_nullable_to_non_nullable
 as bool,expertise: null == expertise ? _self.expertise : expertise // ignore: cast_nullable_to_non_nullable
@@ -195,12 +197,12 @@ return pending(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  String? stripeCustomerId,  bool isStripeCustomerCreated, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  rider,TResult Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  List<String> vehicleIds,  String? stripeAccountId, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  driver,TResult Function( String uid,  String email,  String username,  String? photoUrl,  Expertise expertise,  bool isEmailVerified,  bool isBanned,  String fcmToken,  String? selectedRoleIntent, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  pending,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  String? stripeCustomerId,  bool isStripeCustomerCreated, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  rider,TResult Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  List<String> vehicleIds,  String? stripeAccountId, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  driver,TResult Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  Expertise expertise,  bool isEmailVerified,  bool isBanned,  String fcmToken,  String? selectedRoleIntent, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  pending,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case RiderModel() when rider != null:
 return rider(_that.uid,_that.email,_that.username,_that.photoUrl,_that.phoneNumber,_that.dateOfBirth,_that.gender,_that.fcmToken,_that.address,_that.latitude,_that.longitude,_that.isEmailVerified,_that.isBanned,_that.isPremium,_that.blockedUsers,_that.rating,_that.gamification,_that.preferences,_that.expertise,_that.stripeCustomerId,_that.isStripeCustomerCreated,_that.createdAt,_that.updatedAt);case DriverModel() when driver != null:
 return driver(_that.uid,_that.email,_that.username,_that.photoUrl,_that.phoneNumber,_that.dateOfBirth,_that.gender,_that.fcmToken,_that.address,_that.latitude,_that.longitude,_that.isEmailVerified,_that.isBanned,_that.isPremium,_that.blockedUsers,_that.rating,_that.gamification,_that.preferences,_that.expertise,_that.vehicleIds,_that.stripeAccountId,_that.createdAt,_that.updatedAt);case PendingUserModel() when pending != null:
-return pending(_that.uid,_that.email,_that.username,_that.photoUrl,_that.expertise,_that.isEmailVerified,_that.isBanned,_that.fcmToken,_that.selectedRoleIntent,_that.createdAt,_that.updatedAt);case _:
+return pending(_that.uid,_that.email,_that.username,_that.photoUrl,_that.phoneNumber,_that.dateOfBirth,_that.expertise,_that.isEmailVerified,_that.isBanned,_that.fcmToken,_that.selectedRoleIntent,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -218,12 +220,12 @@ return pending(_that.uid,_that.email,_that.username,_that.photoUrl,_that.experti
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  String? stripeCustomerId,  bool isStripeCustomerCreated, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)  rider,required TResult Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  List<String> vehicleIds,  String? stripeAccountId, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)  driver,required TResult Function( String uid,  String email,  String username,  String? photoUrl,  Expertise expertise,  bool isEmailVerified,  bool isBanned,  String fcmToken,  String? selectedRoleIntent, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)  pending,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  String? stripeCustomerId,  bool isStripeCustomerCreated, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)  rider,required TResult Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  List<String> vehicleIds,  String? stripeAccountId, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)  driver,required TResult Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  Expertise expertise,  bool isEmailVerified,  bool isBanned,  String fcmToken,  String? selectedRoleIntent, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)  pending,}) {final _that = this;
 switch (_that) {
 case RiderModel():
 return rider(_that.uid,_that.email,_that.username,_that.photoUrl,_that.phoneNumber,_that.dateOfBirth,_that.gender,_that.fcmToken,_that.address,_that.latitude,_that.longitude,_that.isEmailVerified,_that.isBanned,_that.isPremium,_that.blockedUsers,_that.rating,_that.gamification,_that.preferences,_that.expertise,_that.stripeCustomerId,_that.isStripeCustomerCreated,_that.createdAt,_that.updatedAt);case DriverModel():
 return driver(_that.uid,_that.email,_that.username,_that.photoUrl,_that.phoneNumber,_that.dateOfBirth,_that.gender,_that.fcmToken,_that.address,_that.latitude,_that.longitude,_that.isEmailVerified,_that.isBanned,_that.isPremium,_that.blockedUsers,_that.rating,_that.gamification,_that.preferences,_that.expertise,_that.vehicleIds,_that.stripeAccountId,_that.createdAt,_that.updatedAt);case PendingUserModel():
-return pending(_that.uid,_that.email,_that.username,_that.photoUrl,_that.expertise,_that.isEmailVerified,_that.isBanned,_that.fcmToken,_that.selectedRoleIntent,_that.createdAt,_that.updatedAt);}
+return pending(_that.uid,_that.email,_that.username,_that.photoUrl,_that.phoneNumber,_that.dateOfBirth,_that.expertise,_that.isEmailVerified,_that.isBanned,_that.fcmToken,_that.selectedRoleIntent,_that.createdAt,_that.updatedAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -237,12 +239,12 @@ return pending(_that.uid,_that.email,_that.username,_that.photoUrl,_that.experti
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  String? stripeCustomerId,  bool isStripeCustomerCreated, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  rider,TResult? Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  List<String> vehicleIds,  String? stripeAccountId, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  driver,TResult? Function( String uid,  String email,  String username,  String? photoUrl,  Expertise expertise,  bool isEmailVerified,  bool isBanned,  String fcmToken,  String? selectedRoleIntent, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  pending,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  String? stripeCustomerId,  bool isStripeCustomerCreated, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  rider,TResult? Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  String? gender,  String fcmToken,  String? address,  double? latitude,  double? longitude,  bool isEmailVerified,  bool isBanned,  bool isPremium,  List<String> blockedUsers,  RatingBreakdown rating,  GamificationStats gamification,  UserPreferences preferences,  Expertise expertise,  List<String> vehicleIds,  String? stripeAccountId, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  driver,TResult? Function( String uid,  String email,  String username,  String? photoUrl,  String? phoneNumber, @TimestampConverter()  DateTime? dateOfBirth,  Expertise expertise,  bool isEmailVerified,  bool isBanned,  String fcmToken,  String? selectedRoleIntent, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  pending,}) {final _that = this;
 switch (_that) {
 case RiderModel() when rider != null:
 return rider(_that.uid,_that.email,_that.username,_that.photoUrl,_that.phoneNumber,_that.dateOfBirth,_that.gender,_that.fcmToken,_that.address,_that.latitude,_that.longitude,_that.isEmailVerified,_that.isBanned,_that.isPremium,_that.blockedUsers,_that.rating,_that.gamification,_that.preferences,_that.expertise,_that.stripeCustomerId,_that.isStripeCustomerCreated,_that.createdAt,_that.updatedAt);case DriverModel() when driver != null:
 return driver(_that.uid,_that.email,_that.username,_that.photoUrl,_that.phoneNumber,_that.dateOfBirth,_that.gender,_that.fcmToken,_that.address,_that.latitude,_that.longitude,_that.isEmailVerified,_that.isBanned,_that.isPremium,_that.blockedUsers,_that.rating,_that.gamification,_that.preferences,_that.expertise,_that.vehicleIds,_that.stripeAccountId,_that.createdAt,_that.updatedAt);case PendingUserModel() when pending != null:
-return pending(_that.uid,_that.email,_that.username,_that.photoUrl,_that.expertise,_that.isEmailVerified,_that.isBanned,_that.fcmToken,_that.selectedRoleIntent,_that.createdAt,_that.updatedAt);case _:
+return pending(_that.uid,_that.email,_that.username,_that.photoUrl,_that.phoneNumber,_that.dateOfBirth,_that.expertise,_that.isEmailVerified,_that.isBanned,_that.fcmToken,_that.selectedRoleIntent,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -261,8 +263,8 @@ class RiderModel extends UserModel {
 @override final  String email;
 @override final  String username;
 @override final  String? photoUrl;
- final  String? phoneNumber;
-@TimestampConverter() final  DateTime? dateOfBirth;
+@override final  String? phoneNumber;
+@override@TimestampConverter() final  DateTime? dateOfBirth;
  final  String? gender;
 @override@JsonKey() final  String fcmToken;
 // Address & location
@@ -420,8 +422,8 @@ class DriverModel extends UserModel {
 @override final  String email;
 @override final  String username;
 @override final  String? photoUrl;
- final  String? phoneNumber;
-@TimestampConverter() final  DateTime? dateOfBirth;
+@override final  String? phoneNumber;
+@override@TimestampConverter() final  DateTime? dateOfBirth;
  final  String? gender;
 @override@JsonKey() final  String fcmToken;
 // Address & location
@@ -581,13 +583,15 @@ $UserPreferencesCopyWith<$Res> get preferences {
 @JsonSerializable()
 
 class PendingUserModel extends UserModel {
-  const PendingUserModel({required this.uid, required this.email, required this.username, this.photoUrl, this.expertise = Expertise.rookie, this.isEmailVerified = false, this.isBanned = false, this.fcmToken = '', this.selectedRoleIntent, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt, final  String? $type}): $type = $type ?? 'pending',super._();
+  const PendingUserModel({required this.uid, required this.email, required this.username, this.photoUrl, this.phoneNumber, @TimestampConverter() this.dateOfBirth, this.expertise = Expertise.rookie, this.isEmailVerified = false, this.isBanned = false, this.fcmToken = '', this.selectedRoleIntent, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt, final  String? $type}): $type = $type ?? 'pending',super._();
   factory PendingUserModel.fromJson(Map<String, dynamic> json) => _$PendingUserModelFromJson(json);
 
 @override final  String uid;
 @override final  String email;
 @override final  String username;
 @override final  String? photoUrl;
+@override final  String? phoneNumber;
+@override@TimestampConverter() final  DateTime? dateOfBirth;
 @override@JsonKey() final  Expertise expertise;
 @override@JsonKey() final  bool isEmailVerified;
 @override@JsonKey() final  bool isBanned;
@@ -613,16 +617,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingUserModel&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.email, email) || other.email == email)&&(identical(other.username, username) || other.username == username)&&(identical(other.photoUrl, photoUrl) || other.photoUrl == photoUrl)&&(identical(other.expertise, expertise) || other.expertise == expertise)&&(identical(other.isEmailVerified, isEmailVerified) || other.isEmailVerified == isEmailVerified)&&(identical(other.isBanned, isBanned) || other.isBanned == isBanned)&&(identical(other.fcmToken, fcmToken) || other.fcmToken == fcmToken)&&(identical(other.selectedRoleIntent, selectedRoleIntent) || other.selectedRoleIntent == selectedRoleIntent)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingUserModel&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.email, email) || other.email == email)&&(identical(other.username, username) || other.username == username)&&(identical(other.photoUrl, photoUrl) || other.photoUrl == photoUrl)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&(identical(other.expertise, expertise) || other.expertise == expertise)&&(identical(other.isEmailVerified, isEmailVerified) || other.isEmailVerified == isEmailVerified)&&(identical(other.isBanned, isBanned) || other.isBanned == isBanned)&&(identical(other.fcmToken, fcmToken) || other.fcmToken == fcmToken)&&(identical(other.selectedRoleIntent, selectedRoleIntent) || other.selectedRoleIntent == selectedRoleIntent)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,uid,email,username,photoUrl,expertise,isEmailVerified,isBanned,fcmToken,selectedRoleIntent,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,uid,email,username,photoUrl,phoneNumber,dateOfBirth,expertise,isEmailVerified,isBanned,fcmToken,selectedRoleIntent,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'UserModel.pending(uid: $uid, email: $email, username: $username, photoUrl: $photoUrl, expertise: $expertise, isEmailVerified: $isEmailVerified, isBanned: $isBanned, fcmToken: $fcmToken, selectedRoleIntent: $selectedRoleIntent, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'UserModel.pending(uid: $uid, email: $email, username: $username, photoUrl: $photoUrl, phoneNumber: $phoneNumber, dateOfBirth: $dateOfBirth, expertise: $expertise, isEmailVerified: $isEmailVerified, isBanned: $isBanned, fcmToken: $fcmToken, selectedRoleIntent: $selectedRoleIntent, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -633,7 +637,7 @@ abstract mixin class $PendingUserModelCopyWith<$Res> implements $UserModelCopyWi
   factory $PendingUserModelCopyWith(PendingUserModel value, $Res Function(PendingUserModel) _then) = _$PendingUserModelCopyWithImpl;
 @override @useResult
 $Res call({
- String uid, String email, String username, String? photoUrl, Expertise expertise, bool isEmailVerified, bool isBanned, String fcmToken, String? selectedRoleIntent,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
+ String uid, String email, String username, String? photoUrl, String? phoneNumber,@TimestampConverter() DateTime? dateOfBirth, Expertise expertise, bool isEmailVerified, bool isBanned, String fcmToken, String? selectedRoleIntent,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
 });
 
 
@@ -650,13 +654,15 @@ class _$PendingUserModelCopyWithImpl<$Res>
 
 /// Create a copy of UserModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? uid = null,Object? email = null,Object? username = null,Object? photoUrl = freezed,Object? expertise = null,Object? isEmailVerified = null,Object? isBanned = null,Object? fcmToken = null,Object? selectedRoleIntent = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? uid = null,Object? email = null,Object? username = null,Object? photoUrl = freezed,Object? phoneNumber = freezed,Object? dateOfBirth = freezed,Object? expertise = null,Object? isEmailVerified = null,Object? isBanned = null,Object? fcmToken = null,Object? selectedRoleIntent = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(PendingUserModel(
 uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,photoUrl: freezed == photoUrl ? _self.photoUrl : photoUrl // ignore: cast_nullable_to_non_nullable
-as String?,expertise: null == expertise ? _self.expertise : expertise // ignore: cast_nullable_to_non_nullable
+as String?,phoneNumber: freezed == phoneNumber ? _self.phoneNumber : phoneNumber // ignore: cast_nullable_to_non_nullable
+as String?,dateOfBirth: freezed == dateOfBirth ? _self.dateOfBirth : dateOfBirth // ignore: cast_nullable_to_non_nullable
+as DateTime?,expertise: null == expertise ? _self.expertise : expertise // ignore: cast_nullable_to_non_nullable
 as Expertise,isEmailVerified: null == isEmailVerified ? _self.isEmailVerified : isEmailVerified // ignore: cast_nullable_to_non_nullable
 as bool,isBanned: null == isBanned ? _self.isBanned : isBanned // ignore: cast_nullable_to_non_nullable
 as bool,fcmToken: null == fcmToken ? _self.fcmToken : fcmToken // ignore: cast_nullable_to_non_nullable

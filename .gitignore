@@ -51,7 +51,6 @@ app.*.symbols
 app.*.map.json
 
 .mcp.json
-.claude-flow/
 .sisyphus/
 .claude
 .agents

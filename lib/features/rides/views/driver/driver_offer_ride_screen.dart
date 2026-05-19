@@ -430,59 +430,61 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
   Widget _buildRouteStep() {
     // Route preview is auto-triggered by view model when locations change
 
-    return ListView(
+    final routeItems = <Widget>[
+      Text(
+        AppLocalizations.of(context).whereAreYouGoing,
+        style: TextStyle(
+          fontSize: 20.sp,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+      ).animate().fadeIn().slideX(),
+      SizedBox(height: 20.h),
+      _buildRouteCard(),
+
+      // Keep this slot stable to avoid remounting sibling widgets and
+      // replaying entrance animations when destination is cleared/restored.
+      AnimatedSwitcher(
+        duration: 220.ms,
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        child: _fromLocation != null && _toLocation != null
+            ? Column(
+                key: const ValueKey('route-preview-visible'),
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(height: 14.h),
+                  _buildRoutePreview(),
+                  SizedBox(height: 14.h),
+                ],
+              )
+            : SizedBox(
+                key: const ValueKey('route-preview-hidden'),
+                height: 14.h,
+              ),
+      ),
+
+      _buildWaypointsSection(),
+      SizedBox(height: 20.h),
+      InlineEventSelector(
+        selected: _selectedEvent,
+        onChanged: (e) {
+          if (e == null) {
+            ref.read(driverOfferRideViewModelProvider.notifier).clearEvent();
+          } else {
+            ref.read(driverOfferRideViewModelProvider.notifier).setEvent(e);
+          }
+        },
+      ),
+      SizedBox(height: 20.h),
+      _buildDateTimeCard(),
+      SizedBox(height: 20.h),
+      _buildRecurringDaysSelector(),
+    ];
+    return ListView.builder(
       padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 20.h),
-      children: [
-        Text(
-          AppLocalizations.of(context).whereAreYouGoing,
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ).animate().fadeIn().slideX(),
-        SizedBox(height: 20.h),
-        _buildRouteCard(),
-
-        // Keep this slot stable to avoid remounting sibling widgets and
-        // replaying entrance animations when destination is cleared/restored.
-        AnimatedSwitcher(
-          duration: 220.ms,
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          child: _fromLocation != null && _toLocation != null
-              ? Column(
-                  key: const ValueKey('route-preview-visible'),
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(height: 14.h),
-                    _buildRoutePreview(),
-                    SizedBox(height: 14.h),
-                  ],
-                )
-              : SizedBox(
-                  key: const ValueKey('route-preview-hidden'),
-                  height: 14.h,
-                ),
-        ),
-
-        _buildWaypointsSection(),
-        SizedBox(height: 20.h),
-        InlineEventSelector(
-          selected: _selectedEvent,
-          onChanged: (e) {
-            if (e == null) {
-              ref.read(driverOfferRideViewModelProvider.notifier).clearEvent();
-            } else {
-              ref.read(driverOfferRideViewModelProvider.notifier).setEvent(e);
-            }
-          },
-        ),
-        SizedBox(height: 20.h),
-        _buildDateTimeCard(),
-        SizedBox(height: 20.h),
-        _buildRecurringDaysSelector(),
-      ],
+      itemCount: routeItems.length,
+      itemBuilder: (context, index) => routeItems[index],
     );
   }
 
@@ -1245,22 +1247,24 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
 
   // --- Step 2: Details ---
   Widget _buildDetailsStep(List<VehicleModel> vehicles) {
-    return ListView(
+    final detailItems = <Widget>[
+      Text(
+        AppLocalizations.of(context).rideDetailsTitle,
+        style: TextStyle(
+          fontSize: 20.sp,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+      ).animate().fadeIn().slideX(),
+      SizedBox(height: 20.h),
+      _buildVehicleSelector(vehicles),
+      SizedBox(height: 20.h),
+      _buildSeatsAndPriceWithVehicle(vehicles),
+    ];
+    return ListView.builder(
       padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 20.h),
-      children: [
-        Text(
-          AppLocalizations.of(context).rideDetailsTitle,
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ).animate().fadeIn().slideX(),
-        SizedBox(height: 20.h),
-        _buildVehicleSelector(vehicles),
-        SizedBox(height: 20.h),
-        _buildSeatsAndPriceWithVehicle(vehicles),
-      ],
+      itemCount: detailItems.length,
+      itemBuilder: (context, index) => detailItems[index],
     );
   }
 
@@ -1646,22 +1650,24 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
 
   // --- Step 3: Preferences ---
   Widget _buildPreferencesStep(List<VehicleModel> vehicles) {
-    return ListView(
+    final prefItems = <Widget>[
+      Text(
+        AppLocalizations.of(context).preferencesRulesTitle,
+        style: TextStyle(
+          fontSize: 20.sp,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+      ).animate().fadeIn().slideX(),
+      SizedBox(height: 20.h),
+      _buildRideSummaryCard(vehicles),
+      SizedBox(height: 16.h),
+      _buildPreferencesCard(),
+    ];
+    return ListView.builder(
       padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 20.h),
-      children: [
-        Text(
-          AppLocalizations.of(context).preferencesRulesTitle,
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ).animate().fadeIn().slideX(),
-        SizedBox(height: 20.h),
-        _buildRideSummaryCard(vehicles),
-        SizedBox(height: 16.h),
-        _buildPreferencesCard(),
-      ],
+      itemCount: prefItems.length,
+      itemBuilder: (context, index) => prefItems[index],
     );
   }
 

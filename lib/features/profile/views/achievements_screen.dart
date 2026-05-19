@@ -1128,21 +1128,30 @@ class _LeaderboardTab extends ConsumerWidget {
         final padding = adaptiveScreenPadding(context);
 
         return ResponsiveLayoutBuilder(
-          phone: (context) => ListView(
+          phone: (context) => ListView.builder(
             padding: EdgeInsets.fromLTRB(
               padding.left,
               16.h,
               padding.right,
               24.h,
             ),
-            children: [
-              _Podium(top3: top3, l10n: l10n),
-              SizedBox(height: 16.h),
-              ...rest.asMap().entries.map(
-                (e) =>
-                    _LeaderboardRow(entry: e.value, index: e.key, l10n: l10n),
-              ),
-            ],
+            itemCount: 1 + rest.length,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return Column(
+                  children: [
+                    _Podium(top3: top3, l10n: l10n),
+                    SizedBox(height: 16.h),
+                  ],
+                );
+              }
+              final entry = rest[index - 1];
+              return _LeaderboardRow(
+                entry: entry,
+                index: index - 1,
+                l10n: l10n,
+              );
+            },
           ),
           tablet: (context) => SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(

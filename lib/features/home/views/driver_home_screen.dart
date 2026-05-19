@@ -13,9 +13,11 @@ import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/services/location_service.dart';
 import 'package:sport_connect/core/services/push_notification_service.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/permission_dialog_helper.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
 import 'package:sport_connect/features/home/view_models/driver_location_view_model.dart';
@@ -80,8 +82,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       if (!accepted) return;
 
       await pns.requestPermission();
-    } catch (_) {
+    } on Exception catch (e, st) {
       // Permission prompts should never block the driver dashboard.
+      TalkerService.warning('Notification permission prompt failed: $e');
+      TalkerService.error('Notification permission flow error', e, st);
     }
   }
 
@@ -96,14 +100,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       await ref
           .read(driverLocationViewModelProvider.notifier)
           .requestPermission();
-      if (!mounted) return;
-
-      final locationState = ref.read(driverLocationViewModelProvider);
-      if (!locationState.locationGranted) {
-        await ref.read(locationServiceProvider).openLocationSettings();
-      }
-    } catch (_) {
+    } on Exception catch (e, st) {
       // Keep the home screen usable even if permission handling fails.
+      TalkerService.warning('Location permission flow failed: $e');
+      TalkerService.error('Location permission flow error', e, st);
     }
   }
 
@@ -112,6 +112,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     final (
       isLoadingLocation,
       locationGranted,
+      locationDenied,
       locationDeniedForever,
       servicesDisabled,
     ) = ref.watch(
@@ -119,6 +120,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         (state) => (
           state.isLoading,
           state.locationGranted,
+          state.locationDenied,
           state.locationDeniedForever,
           state.servicesDisabled,
         ),
@@ -146,11 +148,17 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       body: _DriverDashboard(
         isLoadingLocation: isLoadingLocation,
         locationGranted: locationGranted,
+        locationDenied: locationDenied,
         locationDeniedForever: locationDeniedForever,
         servicesDisabled: servicesDisabled,
         onRetryLocation: _requestLocationPermission,
         onOpenSettings: () {
-          ref.read(locationServiceProvider).openLocationSettings();
+          final service = ref.read(locationServiceProvider);
+          if (servicesDisabled) {
+            service.openLocationSettings();
+          } else {
+            service.openAppSettings();
+          }
         },
       ),
     );
@@ -222,6 +230,7 @@ class _DriverDashboard extends ConsumerWidget {
   const _DriverDashboard({
     required this.isLoadingLocation,
     required this.locationGranted,
+    required this.locationDenied,
     required this.locationDeniedForever,
     required this.servicesDisabled,
     required this.onRetryLocation,
@@ -230,6 +239,7 @@ class _DriverDashboard extends ConsumerWidget {
 
   final bool isLoadingLocation;
   final bool locationGranted;
+  final bool locationDenied;
   final bool locationDeniedForever;
   final bool servicesDisabled;
   final VoidCallback onRetryLocation;
@@ -460,7 +470,7 @@ class _DriverDashboard extends ConsumerWidget {
                       fontSize: 20.sp,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
-                      letterSpacing: -0.2,
+                      letterSpacing: 0,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -516,6 +526,11 @@ class _DriverDashboard extends ConsumerWidget {
 
   Widget _buildLocationBanner(AppLocalizations l10n) {
     final shouldOpenSettings = locationDeniedForever || servicesDisabled;
+    final shouldRequestPermission =
+        !locationDenied && !locationDeniedForever && !servicesDisabled;
+    final message = locationDenied
+        ? l10n.locationNotEnabledDescription
+        : l10n.enableLocationForBetterExperience;
 
     final banner = _SoftCard(
       padding: EdgeInsets.all(14.w),
@@ -542,7 +557,7 @@ class _DriverDashboard extends ConsumerWidget {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  l10n.enableLocationForBetterExperience,
+                  message,
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: AppColors.textSecondary,
@@ -552,16 +567,17 @@ class _DriverDashboard extends ConsumerWidget {
               ],
             ),
           ),
-          TextButton(
-            onPressed: shouldOpenSettings ? onOpenSettings : onRetryLocation,
-            child: Text(
-              shouldOpenSettings ? l10n.openSettings : l10n.enable,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
+          if (shouldOpenSettings || shouldRequestPermission)
+            TextButton(
+              onPressed: shouldOpenSettings ? onOpenSettings : onRetryLocation,
+              child: Text(
+                shouldOpenSettings ? l10n.openSettings : l10n.enable,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -669,7 +685,7 @@ class _DriverDashboard extends ConsumerWidget {
                         fontSize: 28.sp,
                         fontWeight: FontWeight.w900,
                         color: AppColors.textPrimary,
-                        letterSpacing: -0.7,
+                        letterSpacing: 0,
                       ),
                     ),
                   ],
@@ -902,23 +918,21 @@ class _HeaderIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final button = Material(
+    final button = AdaptiveTapSurface(
       color: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14.r),
         side: BorderSide(color: AppColors.border.withAlpha(100)),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14.r),
-        child: SizedBox(
-          width: 42.w,
-          height: 42.w,
-          child: Icon(
-            icon,
-            size: 21.sp,
-            color: AppColors.textPrimary,
-          ),
+      borderRadius: BorderRadius.circular(14.r),
+      onTap: onTap,
+      child: SizedBox(
+        width: 42.w,
+        height: 42.w,
+        child: Icon(
+          icon,
+          size: 21.sp,
+          color: AppColors.textPrimary,
         ),
       ),
     );
@@ -974,7 +988,7 @@ class _MainActionCard extends StatelessWidget {
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w900,
                         color: AppColors.textPrimary,
-                        letterSpacing: -0.35,
+                        letterSpacing: 0,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -1062,7 +1076,7 @@ class _ActiveRideCard extends StatelessWidget {
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w900,
                     color: AppColors.textPrimary,
-                    letterSpacing: -0.35,
+                    letterSpacing: 0,
                   ),
                 ),
                 SizedBox(height: 4.h),
@@ -1129,118 +1143,115 @@ class _NextRideCard extends StatelessWidget {
         ((ride.pricing.pricePerSeatInCents * ride.capacity.booked) / 100)
             .toStringAsFixed(2);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          unawaited(HapticFeedback.lightImpact());
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(20.r),
-        child: _SoftCard(
-          padding: EdgeInsets.all(isHero ? 18.w : 14.w),
-          child: Row(
-            children: [
-              _DateTile(date: departure, isLarge: isHero),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (isHero) ...[
+    return AdaptiveTapSurface(
+      borderRadius: BorderRadius.circular(20.r),
+      onTap: () {
+        unawaited(HapticFeedback.lightImpact());
+        onTap();
+      },
+      child: _SoftCard(
+        padding: EdgeInsets.all(isHero ? 18.w : 14.w),
+        child: Row(
+          children: [
+            _DateTile(date: departure, isLarge: isHero),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (isHero) ...[
+                    Text(
+                      AppLocalizations.of(context).next_ride,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                  ],
+                  Text(
+                    AppLocalizations.of(
+                      context,
+                    ).valueValue2(origin, destination),
+                    style: TextStyle(
+                      fontSize: isHero ? 17.sp : 15.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      letterSpacing: 0,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 6.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: 14.sp,
+                        color: AppColors.textTertiary,
+                      ),
+                      SizedBox(width: 4.w),
                       Text(
-                        AppLocalizations.of(context).next_ride,
+                        AppLocaleFormatters.formatTime(context, departure),
                         style: TextStyle(
                           fontSize: 12.sp,
-                          fontWeight: FontWeight.w700,
                           color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(width: 10.w),
+                      Icon(
+                        Icons.people_outline_rounded,
+                        size: 14.sp,
+                        color: AppColors.textTertiary,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        AppLocalizations.of(context).valueValue(
+                          ride.capacity.booked,
+                          ride.capacity.available,
+                        ),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
-                    Text(
-                      AppLocalizations.of(
-                        context,
-                      ).valueValue2(origin, destination),
-                      style: TextStyle(
-                        fontSize: isHero ? 17.sp : 15.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                        letterSpacing: -0.2,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 6.h),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.schedule_rounded,
-                          size: 14.sp,
-                          color: AppColors.textTertiary,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          AppLocaleFormatters.formatTime(context, departure),
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Icon(
-                          Icons.people_outline_rounded,
-                          size: 14.sp,
-                          color: AppColors.textTertiary,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          AppLocalizations.of(context).valueValue(
-                            ride.capacity.booked,
-                            ride.capacity.available,
-                          ),
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 10.w),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    AppLocalizations.of(context).value6(earned),
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.success,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    AppLocalizations.of(context).earned,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: AppColors.textTertiary,
-                    ),
                   ),
                 ],
               ),
-              SizedBox(width: 4.w),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textTertiary,
-                size: 22.sp,
-              ),
-            ],
-          ),
+            ),
+            SizedBox(width: 10.w),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  AppLocalizations.of(context).value6(earned),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.success,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  AppLocalizations.of(context).earned,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(width: 4.w),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textTertiary,
+              size: 22.sp,
+            ),
+          ],
         ),
       ),
     );
@@ -1778,7 +1789,7 @@ class _SectionHeader extends StatelessWidget {
               fontSize: 18.sp,
               fontWeight: FontWeight.w900,
               color: AppColors.textPrimary,
-              letterSpacing: -0.2,
+              letterSpacing: 0,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

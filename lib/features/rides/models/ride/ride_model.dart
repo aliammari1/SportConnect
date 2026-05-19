@@ -75,6 +75,8 @@ abstract class RideModel with _$RideModel {
   /// Destination location
   LocationPoint get destination => route.destination;
 
+  bool get hasRequiredEvent => eventId != null && eventId!.trim().isNotEmpty;
+
   /// Departure time
   DateTime get departureTime => schedule.departureTime;
 

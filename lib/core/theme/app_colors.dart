@@ -330,10 +330,7 @@ class AppColors {
   static const Color _blue200 = Color(0xFFB3CAFF);
   static const Color _amber200 = Color(0xFFFFDC82);
 
-  static const Color _neutral200 = Color(0xFFE5E7EB);
   static const Color _neutral300 = Color(0xFFD1D5DB);
-  static const Color _neutral400 = Color(0xFF9CA3AF);
-  static const Color _neutral600 = Color(0xFF4B5563);
   static const Color _neutral700 = Color(0xFF374151);
   static const Color _neutral900 = Color(0xFF111827);
 
@@ -341,13 +338,10 @@ class AppColors {
   static const Color _dark100 = Color(0xFF2C2C2E);
   static const Color _dark200 = Color(0xFF3A3A3C);
   static const Color _dark300 = Color(0xFF48484A);
-  static const Color _dark400 = Color(0xFF636366);
   static const Color _darkBg = Color(0xFF0D0D12);
 
   // Error: #FF6B6B on #0D0D12 = 5.94:1 ✓  (lighter than _red500 for dark legibility)
   static const Color _redDark = Color(0xFFFF6B6B);
-  static const Color _red500 = Color(0xFFEF4444);
-  static const Color _red100 = Color(0xFFFFE4E4);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SEMANTIC  —  LIGHT

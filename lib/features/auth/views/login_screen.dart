@@ -127,6 +127,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         }
       });
 
+    return AdaptiveScaffold(
+      body: context.isExpandedOrLarger
+          ? _buildTabletLoginBody(loginState, socialState, hasSocialOption)
+          : _buildPhoneLoginBody(loginState, socialState, hasSocialOption),
+    );
+  }
+
+  Widget _buildPhoneLoginBody(
+    AsyncValue<void> loginState,
+    SocialAuthState socialState,
+    bool hasSocialOption,
+  ) {
     final loginBody = SafeArea(
       child: FadeTransition(
         opacity: _fadeAnimation,
@@ -135,45 +147,176 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             padding: adaptiveScreenPadding(context).copyWith(
               bottom: MediaQuery.viewInsetsOf(context).bottom + AppSpacing.lg,
             ),
-            child: ReactiveForm(
-              formGroup: _form,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(height: 40.h),
-                  _buildLogoHeader(),
-                  SizedBox(height: 20.h),
-                  _buildWelcomeText(),
-                  SizedBox(height: 32.h),
-                  _buildEmailField(),
-                  SizedBox(height: 16.h),
-                  _buildPasswordField(),
-                  SizedBox(height: 14.h),
-                  _buildOptionsRow(),
-                  SizedBox(height: 12.h),
-                  _buildSignInButton(loginState, socialState),
-                  if (hasSocialOption) ...[
-                    SizedBox(height: 24.h),
-                    _buildDivider(),
-                    SizedBox(height: 16.h),
-                    _buildSocialButtons(socialState),
-                    SizedBox(height: 28.h),
-                  ] else
-                    SizedBox(height: 20.h),
-                  _buildSignUpLink(),
-                  SizedBox(height: 24.h),
-                  _buildLegalFooter(),
-                  SizedBox(height: 32.h),
-                ],
-              ),
+            child: _buildLoginForm(
+              loginState,
+              socialState,
+              hasSocialOption,
+              includeLogoHeader: true,
+              includeBottomSpacer: true,
             ),
           ),
         ),
       ),
     );
 
-    return AdaptiveScaffold(
-      body: MaxWidthContainer(maxWidth: kMaxWidthFormNarrow, child: loginBody),
+    return MaxWidthContainer(maxWidth: kMaxWidthFormNarrow, child: loginBody);
+  }
+
+  Widget _buildTabletLoginBody(
+    AsyncValue<void> loginState,
+    SocialAuthState socialState,
+    bool hasSocialOption,
+  ) {
+    return MaxWidthContainer(
+      maxWidth: 1180,
+      child: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Padding(
+                    padding: adaptiveScreenPadding(context).copyWith(
+                      top: AppSpacing.xxl,
+                      bottom:
+                          MediaQuery.viewInsetsOf(context).bottom +
+                          AppSpacing.xxl,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(child: _buildTabletBrandPane()),
+                        SizedBox(width: AppSpacing.massive),
+                        Expanded(
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: kMaxWidthFormNarrow,
+                              ),
+                              child: _buildLoginCard(
+                                loginState,
+                                socialState,
+                                hasSocialOption,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginCard(
+    AsyncValue<void> loginState,
+    SocialAuthState socialState,
+    bool hasSocialOption,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.xxxl),
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: AppSpacing.borderRadiusXl,
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: AppSpacing.shadowLg,
+      ),
+      child: _buildLoginForm(loginState, socialState, hasSocialOption),
+    );
+  }
+
+  Widget _buildLoginForm(
+    AsyncValue<void> loginState,
+    SocialAuthState socialState,
+    bool hasSocialOption, {
+    bool includeLogoHeader = false,
+    bool includeBottomSpacer = false,
+  }) {
+    return ReactiveForm(
+      formGroup: _form,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (includeLogoHeader) ...[
+            SizedBox(height: 40.h),
+            _buildLogoHeader(),
+            SizedBox(height: 20.h),
+          ],
+          _buildWelcomeText(),
+          SizedBox(height: 32.h),
+          _buildEmailField(),
+          SizedBox(height: 16.h),
+          _buildPasswordField(),
+          SizedBox(height: 14.h),
+          _buildOptionsRow(),
+          SizedBox(height: 12.h),
+          _buildSignInButton(loginState, socialState),
+          if (hasSocialOption) ...[
+            SizedBox(height: 24.h),
+            _buildDivider(),
+            SizedBox(height: 16.h),
+            _buildSocialButtons(socialState),
+            SizedBox(height: 28.h),
+          ] else
+            SizedBox(height: 20.h),
+          _buildSignUpLink(),
+          SizedBox(height: 24.h),
+          _buildLegalFooter(),
+          if (includeBottomSpacer) SizedBox(height: 32.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabletBrandPane() {
+    final l10n = AppLocalizations.of(context);
+
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.massive),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primarySurface, AppColors.secondarySurface],
+        ),
+        borderRadius: AppSpacing.borderRadiusFull,
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLogoHeader(),
+          SizedBox(height: AppSpacing.xxxl),
+          Text(
+            l10n.signInToContinueYour,
+            style: TextStyle(
+              fontSize: 34.sp,
+              height: 1.1,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: AppSpacing.xxl),
+          _LoginValueTile(
+            icon: Icons.directions_run_rounded,
+            title: l10n.wizardFindRides,
+            description: l10n.wizardFindRidesDesc,
+          ),
+          SizedBox(height: AppSpacing.lg),
+          _LoginValueTile(
+            icon: Icons.directions_car_filled_rounded,
+            title: l10n.wizardOfferRides,
+            description: l10n.wizardOfferRidesDesc,
+          ),
+        ],
+      ),
     );
   }
 
@@ -219,7 +362,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             fontSize: 28.sp,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
-            letterSpacing: -0.5,
+            letterSpacing: 0,
           ),
         ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
       ],
@@ -428,16 +571,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Widget _buildSignUpLink() {
     final l10n = AppLocalizations.of(context);
 
-    // ROOT CAUSE OF THE DOUBLE-READ BUG:
-    // Original code: Semantics(label: 'Sign up') wrapping a GestureDetector
-    // that contained Text('Sign up'). The SR tree had two nodes both
-    // contributing "Sign up" → announced twice.
-    //
-    // CORRECT FIX:
-    // • Remove the redundant label from the Semantics wrapper.
-    // • Keep Semantics(button: true) so SR knows the Text is activatable.
-    // • The Text widget is the single source of the label — no duplication.
-    // • GestureDetector's tap handler remains fully reachable.
+    // Keep the child text as the only accessible label to avoid duplicate
+    // screen-reader announcements for the sign-up action.
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -446,9 +581,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
         ),
         Semantics(
-          // button: true tells SR this is activatable.
-          // No `label` here — the child Text('Sign up') provides it,
-          // which is the single source of truth. This eliminates the duplicate.
           button: true,
           child: GestureDetector(
             onTap: () => context.push(AppRoutes.signupWizard.path),
@@ -582,6 +714,68 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       context,
       message: message,
       type: isError ? AdaptiveSnackBarType.error : AdaptiveSnackBarType.success,
+    );
+  }
+}
+
+class _LoginValueTile extends StatelessWidget {
+  const _LoginValueTile({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.72),
+        borderRadius: AppSpacing.borderRadiusLg,
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48.w,
+            height: 48.w,
+            decoration: const BoxDecoration(
+              color: AppColors.primarySurface,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 24.sp),
+          ),
+          SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: AppSpacing.xs),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    height: 1.35,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

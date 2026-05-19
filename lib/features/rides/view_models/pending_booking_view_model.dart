@@ -164,8 +164,9 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
               ) ??
               const <RideBooking>[]);
     final initialBooking = _latestBookingForRide(initialBookings, rideId);
-    final initialExpiresAt = initialBooking?.createdAt?.add(
-      const Duration(hours: 24),
+    final initialExpiresAt = _deadlineFor(
+      initialBooking,
+      initialRideState.ride.value,
     );
     final initialTimeRemaining = initialExpiresAt == null
         ? Duration.zero
@@ -193,7 +194,7 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
     if (initialBooking?.createdAt != null) {
       Future.microtask(() {
         if (!ref.mounted) return;
-        _syncCountdown(initialBooking!.createdAt);
+        _syncCountdown(initialBooking);
       });
     }
 
@@ -241,6 +242,7 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
     final ride = rideState.ride.value;
     if (ride != null) {
       unawaited(ensureOsrmRouteLoaded(ride));
+      _syncCountdown(state.booking);
     }
     _emitLifecycleEffects();
   }
@@ -249,7 +251,7 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
     final bookings = bookingsAsync.value;
     final matchingBooking = _latestBookingForRide(bookings, state.rideId);
 
-    final previousCreatedAt = state.booking?.createdAt;
+    final previousDeadline = _deadlineFor(state.booking, state.rideAsync.value);
     state = state.copyWith(
       bookingData: matchingBooking,
       lastError: bookingsAsync.hasError
@@ -257,8 +259,9 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
           : state.lastError,
     );
 
-    if (matchingBooking?.createdAt != previousCreatedAt) {
-      _syncCountdown(matchingBooking?.createdAt);
+    if (_deadlineFor(matchingBooking, state.rideAsync.value) !=
+        previousDeadline) {
+      _syncCountdown(matchingBooking);
     } else if (matchingBooking == null) {
       _stopCountdown();
     }
@@ -624,15 +627,43 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
     }
   }
 
-  void _syncCountdown(DateTime? createdAt) {
+  DateTime? _deadlineFor(RideBooking? booking, RideModel? ride) {
+    if (booking?.createdAt == null) return null;
+
+    if (booking!.status != BookingStatus.accepted || ride == null) {
+      return booking.createdAt!.add(const Duration(hours: 24));
+    }
+
+    final acceptedAt = booking.respondedAt ?? booking.createdAt!;
+    final remainingUntilDeparture = ride.departureTime.difference(acceptedAt);
+    final paymentWindow = switch (remainingUntilDeparture) {
+      final value when value > const Duration(hours: 24) => const Duration(
+        hours: 12,
+      ),
+      final value when value > const Duration(hours: 4) => const Duration(
+        hours: 2,
+      ),
+      final value when value > const Duration(hours: 1) => const Duration(
+        minutes: 30,
+      ),
+      _ => const Duration(minutes: 10),
+    };
+
+    final deadline = acceptedAt.add(paymentWindow);
+    final finalCutoff = ride.departureTime.subtract(const Duration(minutes: 5));
+    if (deadline.isAfter(finalCutoff)) return finalCutoff;
+    return deadline;
+  }
+
+  void _syncCountdown(RideBooking? booking) {
     _countdownTimer?.cancel();
 
-    if (createdAt == null) {
+    final expiresAt = _deadlineFor(booking, state.rideAsync.value);
+    if (expiresAt == null) {
       state = state.copyWith(expiresAt: null, timeRemaining: Duration.zero);
       return;
     }
 
-    final expiresAt = createdAt.add(const Duration(hours: 24));
     state = state.copyWith(expiresAt: expiresAt);
     _tickCountdown();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {

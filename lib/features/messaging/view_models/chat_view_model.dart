@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/utils/user_facing_error.dart';
 import 'package:sport_connect/features/messaging/models/message_model.dart';
 import 'package:sport_connect/features/messaging/repositories/chat_repository.dart';
@@ -347,8 +348,10 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
           messagePreview: preview,
         );
       }
-    } on Exception {
-      // Notification failure is non-fatal — swallow silently.
+    } on Exception catch (e, st) {
+      // Non-fatal: message send must still succeed if notification dispatch fails.
+      TalkerService.warning('Message notification dispatch failed: $e');
+      TalkerService.error('Message notification dispatch error', e, st);
     }
   }
 

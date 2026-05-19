@@ -163,6 +163,18 @@ class IntlPhoneInputState extends State<IntlPhoneInput> {
     return error;
   }
 
+  void setValue(String? value) {
+    final nextDigits = _extractInternationalNationalDigits(value);
+    final nextText = _formatInternationalNationalNumber(nextDigits);
+    if (_controller.text == nextText) return;
+
+    _controller.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(offset: nextText.length),
+    );
+    widget.onChanged?.call(phoneNumber);
+  }
+
   @override
   void initState() {
     super.initState();

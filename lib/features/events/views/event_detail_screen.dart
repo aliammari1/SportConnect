@@ -190,293 +190,297 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     bool isOwner,
     bool isJoined,
   ) {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        // ── Hero app bar ──
-        _buildSliverAppBar(event, isOwner),
+    return MaxWidthContainer(
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ── Hero app bar ──
+          _buildSliverAppBar(event, isOwner),
 
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 20.h),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.screenPadding,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 20.h),
 
-                // ── Title & type badge ──
-                _TitleSection(event: event)
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: 0.05, end: 0),
+                  // ── Title & type badge ──
+                  _TitleSection(event: event)
+                      .animate()
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.05, end: 0),
 
-                SizedBox(height: 20.h),
+                  SizedBox(height: 20.h),
 
-                // ── Date & venue info cards ──
-                _InfoRow(
-                  icon: Icons.calendar_today_rounded,
-                  label: _dateFormatter.format(event.startsAt),
-                  sublabel: event.endsAt != null
-                      ? AppLocalizations.of(
-                          context,
-                        ).eventUntilDate(_dateFormatter.format(event.endsAt!))
-                      : null,
-                ).animate().fadeIn(delay: 100.ms, duration: 350.ms),
+                  // ── Date & venue info cards ──
+                  _InfoRow(
+                    icon: Icons.calendar_today_rounded,
+                    label: _dateFormatter.format(event.startsAt),
+                    sublabel: event.endsAt != null
+                        ? AppLocalizations.of(
+                            context,
+                          ).eventUntilDate(_dateFormatter.format(event.endsAt!))
+                        : null,
+                  ).animate().fadeIn(delay: 100.ms, duration: 350.ms),
 
-                SizedBox(height: 12.h),
-
-                _OrganizerRow(
-                  creatorId: event.creatorId,
-                ).animate().fadeIn(delay: 200.ms, duration: 350.ms),
-                SizedBox(height: 12.h),
-
-                // ── Participants chip ──
-                _ParticipantChip(
-                  event: event,
-                ).animate().fadeIn(delay: 250.ms, duration: 350.ms),
-
-                SizedBox(height: 16.h),
-
-                // ── Status badge ──
-                _StatusBadge(
-                  isOwner: isOwner,
-                  isJoined: isJoined,
-                  event: event,
-                ).animate().fadeIn(delay: 275.ms, duration: 350.ms),
-
-                SizedBox(height: 24.h),
-
-                // ── Description ──
-                if (event.description != null &&
-                    event.description!.isNotEmpty) ...[
-                  Text(
-                    AppLocalizations.of(context).eventAbout,
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    event.description!,
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      height: 1.55,
-                      color: AppColors.textSecondary,
-                    ),
-                  ).animate().fadeIn(delay: 300.ms, duration: 350.ms),
-                  SizedBox(height: 24.h),
-                ],
-
-                // ── Participant list preview ──
-                if (event.participantIds.isNotEmpty) ...[
-                  Text(
-                    AppLocalizations.of(
-                      context,
-                    ).eventParticipantsCount(event.participantIds.length),
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
                   SizedBox(height: 12.h),
-                  GestureDetector(
-                    onTap: () => context.pushNamed(
-                      AppRoutes.eventAttendees.name,
-                      pathParameters: {'id': event.id},
-                    ),
-                    child: _ParticipantAvatars(
-                      participantIds: event.participantIds,
-                    ).animate().fadeIn(delay: 350.ms, duration: 350.ms),
-                  ),
-                  SizedBox(height: 6.h),
-                  GestureDetector(
-                    onTap: () => context.pushNamed(
-                      AppRoutes.eventAttendees.name,
-                      pathParameters: {'id': event.id},
-                    ),
-                    child: Text(
-                      AppLocalizations.of(context).view_all_attendees,
+
+                  _OrganizerRow(
+                    creatorId: event.creatorId,
+                  ).animate().fadeIn(delay: 200.ms, duration: 350.ms),
+                  SizedBox(height: 12.h),
+
+                  // ── Participants chip ──
+                  _ParticipantChip(
+                    event: event,
+                  ).animate().fadeIn(delay: 250.ms, duration: 350.ms),
+
+                  SizedBox(height: 16.h),
+
+                  // ── Status badge ──
+                  _StatusBadge(
+                    isOwner: isOwner,
+                    isJoined: isJoined,
+                    event: event,
+                  ).animate().fadeIn(delay: 275.ms, duration: 350.ms),
+
+                  SizedBox(height: 24.h),
+
+                  // ── Description ──
+                  if (event.description != null &&
+                      event.description!.isNotEmpty) ...[
+                    Text(
+                      AppLocalizations.of(context).eventAbout,
                       style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                  ),
-                  SizedBox(height: 18.h),
-                ],
+                    SizedBox(height: 8.h),
+                    Text(
+                      event.description!,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        height: 1.55,
+                        color: AppColors.textSecondary,
+                      ),
+                    ).animate().fadeIn(delay: 300.ms, duration: 350.ms),
+                    SizedBox(height: 24.h),
+                  ],
 
-                // ── Action button ──
-                if (!isOwner && event.isUpcoming)
-                  _buildJoinLeaveButton(
-                    event,
-                    userId,
-                    isJoined,
-                    detailState,
-                  ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
-
-                SizedBox(height: 24.h),
-
-                if (isOwner && event.isUpcoming)
-                  _buildOwnerActions(
-                    event,
-                    detailState,
-                  ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
-
-                // ── #27: Event Attendee Ride Counter ──
-                if (event.participantIds.isNotEmpty) ...[
-                  SizedBox(height: 16.h),
-                  _RideStatusCounter(
-                    event: event,
-                  ).animate().fadeIn(delay: 410.ms, duration: 350.ms),
-                ],
-
-                // ── #24: RSVP with Ride Status ──
-                if (!isOwner && isJoined && event.isUpcoming) ...[
-                  SizedBox(height: 16.h),
-                  _RideStatusSelector(
-                    event: event,
-                    userId: userId,
-                    onStatusSelected: (status) async {
-                      unawaited(HapticFeedback.selectionClick());
-                      await ref
-                          .read(
-                            eventDetailViewModelProvider(
-                              widget.eventId,
-                            ).notifier,
-                          )
-                          .setRideStatus(userId, status);
-                    },
-                  ).animate().fadeIn(delay: 420.ms, duration: 350.ms),
-                ],
-
-                // ── #22: Rides to This Event ──
-                if (event.isUpcoming || event.isOngoing) ...[
-                  SizedBox(height: 24.h),
-                  _EventRidesSection(
-                    eventId: widget.eventId,
-                    event: event,
-                  ).animate().fadeIn(delay: 430.ms, duration: 350.ms),
-                ],
-
-                // ── #28: Recurring Event Info ──
-                if (event.isRecurring) ...[
-                  SizedBox(height: 16.h),
-                  _RecurringEventBadge(
-                    event: event,
-                  ).animate().fadeIn(delay: 445.ms, duration: 350.ms),
-                ],
-
-                // ── #32: Cost Split Badge ──
-                if (event.costSplitEnabled) ...[
-                  SizedBox(height: 12.h),
-                  const _CostSplitBadge().animate().fadeIn(
-                    delay: 448.ms,
-                    duration: 350.ms,
-                  ),
-                ],
-
-                // ── #30: Post-Event Meetup Pin ──
-                if ((event.isOngoing || event.hasEnded) && isJoined) ...[
-                  SizedBox(height: 16.h),
-                  _MeetupPinSection(
-                    event: event,
-                    isOwner: isOwner,
-                    onSetPin: () => _setMeetupPin(event),
-                  ).animate().fadeIn(delay: 450.ms, duration: 350.ms),
-                ],
-
-                // ── #29: Event Chat Group ──
-                if (isJoined && event.participantIds.length >= 2) ...[
-                  SizedBox(height: 16.h),
-                  (isPremiumSubscriber
-                          ? _EventChatButton(
-                              event: event,
-                              onOpenChat: () => _openEventChat(event, userId),
-                            )
-                          : _EventChatPremiumLockedCard(
-                              onUpgradeTap: () =>
-                                  context.push(AppRoutes.settings.path),
-                            ))
-                      .animate()
-                      .fadeIn(delay: 455.ms, duration: 350.ms),
-                ],
-
-                // ── #23: Need Ride Home button ──
-                if ((event.isOngoing || event.hasEnded) && isJoined) ...[
-                  SizedBox(height: 16.h),
-                  PremiumButton(
-                    text: AppLocalizations.of(context).eventNeedRideHome,
-                    icon: Icons.home_rounded,
-                    style: PremiumButtonStyle.secondary,
-                    fullWidth: true,
-                    onPressed: () async {
-                      unawaited(HapticFeedback.lightImpact());
-                      await context.push(
-                        AppRoutes.searchRides.path,
-                        extra: {
-                          'originAddress': event.location.address,
-                          'originLat': event.location.latitude,
-                          'originLng': event.location.longitude,
-                        },
-                      );
-                    },
-                  ).animate().fadeIn(delay: 460.ms, duration: 350.ms),
-                ],
-
-                // ── Find Rides CTA (#26: Auto-Suggest Carpool) ──
-                if (event.isUpcoming) ...[
-                  SizedBox(height: 16.h),
-                  PremiumButton(
-                    text: AppLocalizations.of(context).eventFindRides,
-                    icon: Icons.directions_car_rounded,
-                    style: PremiumButtonStyle.secondary,
-                    fullWidth: true,
-                    onPressed: () => context.push(
-                      AppRoutes.searchRides.path,
-                      extra: {
-                        'destinationAddress': event.location.address,
-                        'destinationLat': event.location.latitude,
-                        'destinationLng': event.location.longitude,
-                      },
+                  // ── Participant list preview ──
+                  if (event.participantIds.isNotEmpty) ...[
+                    Text(
+                      AppLocalizations.of(
+                        context,
+                      ).eventParticipantsCount(event.participantIds.length),
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ).animate().fadeIn(delay: 470.ms, duration: 350.ms),
-                  SizedBox(height: 8.h),
-                  // #21: Offer a ride to this event (Event-Linked Carpool)
-                  if (isDriver)
+                    SizedBox(height: 12.h),
+                    GestureDetector(
+                      onTap: () => context.pushNamed(
+                        AppRoutes.eventAttendees.name,
+                        pathParameters: {'id': event.id},
+                      ),
+                      child: _ParticipantAvatars(
+                        participantIds: event.participantIds,
+                      ).animate().fadeIn(delay: 350.ms, duration: 350.ms),
+                    ),
+                    SizedBox(height: 6.h),
+                    GestureDetector(
+                      onTap: () => context.pushNamed(
+                        AppRoutes.eventAttendees.name,
+                        pathParameters: {'id': event.id},
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context).view_all_attendees,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 18.h),
+                  ],
+
+                  // ── Action button ──
+                  if (!isOwner && event.isUpcoming)
+                    _buildJoinLeaveButton(
+                      event,
+                      userId,
+                      isJoined,
+                      detailState,
+                    ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
+
+                  SizedBox(height: 24.h),
+
+                  if (isOwner && event.isUpcoming)
+                    _buildOwnerActions(
+                      event,
+                      detailState,
+                    ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
+
+                  // ── #27: Event Attendee Ride Counter ──
+                  if (event.participantIds.isNotEmpty) ...[
+                    SizedBox(height: 16.h),
+                    _RideStatusCounter(
+                      event: event,
+                    ).animate().fadeIn(delay: 410.ms, duration: 350.ms),
+                  ],
+
+                  // ── #24: RSVP with Ride Status ──
+                  if (!isOwner && isJoined && event.isUpcoming) ...[
+                    SizedBox(height: 16.h),
+                    _RideStatusSelector(
+                      event: event,
+                      userId: userId,
+                      onStatusSelected: (status) async {
+                        unawaited(HapticFeedback.selectionClick());
+                        await ref
+                            .read(
+                              eventDetailViewModelProvider(
+                                widget.eventId,
+                              ).notifier,
+                            )
+                            .setRideStatus(userId, status);
+                      },
+                    ).animate().fadeIn(delay: 420.ms, duration: 350.ms),
+                  ],
+
+                  // ── #22: Rides to This Event ──
+                  if (event.isUpcoming || event.isOngoing) ...[
+                    SizedBox(height: 24.h),
+                    _EventRidesSection(
+                      eventId: widget.eventId,
+                      event: event,
+                    ).animate().fadeIn(delay: 430.ms, duration: 350.ms),
+                  ],
+
+                  // ── #28: Recurring Event Info ──
+                  if (event.isRecurring) ...[
+                    SizedBox(height: 16.h),
+                    _RecurringEventBadge(
+                      event: event,
+                    ).animate().fadeIn(delay: 445.ms, duration: 350.ms),
+                  ],
+
+                  // ── #32: Cost Split Badge ──
+                  if (event.costSplitEnabled) ...[
+                    SizedBox(height: 12.h),
+                    const _CostSplitBadge().animate().fadeIn(
+                      delay: 448.ms,
+                      duration: 350.ms,
+                    ),
+                  ],
+
+                  // ── #30: Post-Event Meetup Pin ──
+                  if ((event.isOngoing || event.hasEnded) && isJoined) ...[
+                    SizedBox(height: 16.h),
+                    _MeetupPinSection(
+                      event: event,
+                      isOwner: isOwner,
+                      onSetPin: () => _setMeetupPin(event),
+                    ).animate().fadeIn(delay: 450.ms, duration: 350.ms),
+                  ],
+
+                  // ── #29: Event Chat Group ──
+                  if (isJoined && event.participantIds.length >= 2) ...[
+                    SizedBox(height: 16.h),
+                    (isPremiumSubscriber
+                            ? _EventChatButton(
+                                event: event,
+                                onOpenChat: () => _openEventChat(event, userId),
+                              )
+                            : _EventChatPremiumLockedCard(
+                                onUpgradeTap: () =>
+                                    context.push(AppRoutes.settings.path),
+                              ))
+                        .animate()
+                        .fadeIn(delay: 455.ms, duration: 350.ms),
+                  ],
+
+                  // ── #23: Need Ride Home button ──
+                  if ((event.isOngoing || event.hasEnded) && isJoined) ...[
+                    SizedBox(height: 16.h),
                     PremiumButton(
-                      text: AppLocalizations.of(context).eventOfferRide,
-                      icon: Icons.add_road_rounded,
-                      style: PremiumButtonStyle.ghost,
+                      text: AppLocalizations.of(context).eventNeedRideHome,
+                      icon: Icons.home_rounded,
+                      style: PremiumButtonStyle.secondary,
                       fullWidth: true,
                       onPressed: () async {
                         unawaited(HapticFeedback.lightImpact());
                         await context.push(
-                          AppRoutes.driverOfferRide.path,
-                          extra: DriverRidePrefill(
-                            eventId: event.id,
-                            eventName: event.title,
-                            destination: LocationPoint(
-                              latitude: event.location.latitude,
-                              longitude: event.location.longitude,
-                              address: event.location.address,
-                            ),
-                          ),
+                          AppRoutes.searchRides.path,
+                          extra: {
+                            'originAddress': event.location.address,
+                            'originLat': event.location.latitude,
+                            'originLng': event.location.longitude,
+                          },
                         );
                       },
-                    ).animate().fadeIn(delay: 480.ms, duration: 350.ms),
-                ],
+                    ).animate().fadeIn(delay: 460.ms, duration: 350.ms),
+                  ],
 
-                // Bottom safe-area padding
-                SizedBox(height: MediaQuery.paddingOf(context).bottom + 32.h),
-              ],
+                  // ── Find Rides CTA (#26: Auto-Suggest Carpool) ──
+                  if (event.isUpcoming) ...[
+                    SizedBox(height: 16.h),
+                    PremiumButton(
+                      text: AppLocalizations.of(context).eventFindRides,
+                      icon: Icons.directions_car_rounded,
+                      style: PremiumButtonStyle.secondary,
+                      fullWidth: true,
+                      onPressed: () => context.push(
+                        AppRoutes.searchRides.path,
+                        extra: {
+                          'destinationAddress': event.location.address,
+                          'destinationLat': event.location.latitude,
+                          'destinationLng': event.location.longitude,
+                        },
+                      ),
+                    ).animate().fadeIn(delay: 470.ms, duration: 350.ms),
+                    SizedBox(height: 8.h),
+                    // #21: Offer a ride to this event (Event-Linked Carpool)
+                    if (isDriver)
+                      PremiumButton(
+                        text: AppLocalizations.of(context).eventOfferRide,
+                        icon: Icons.add_road_rounded,
+                        style: PremiumButtonStyle.ghost,
+                        fullWidth: true,
+                        onPressed: () async {
+                          unawaited(HapticFeedback.lightImpact());
+                          await context.push(
+                            AppRoutes.driverOfferRide.path,
+                            extra: DriverRidePrefill(
+                              eventId: event.id,
+                              eventName: event.title,
+                              destination: LocationPoint(
+                                latitude: event.location.latitude,
+                                longitude: event.location.longitude,
+                                address: event.location.address,
+                              ),
+                            ),
+                          );
+                        },
+                      ).animate().fadeIn(delay: 480.ms, duration: 350.ms),
+                  ],
+
+                  // Bottom safe-area padding
+                  SizedBox(height: MediaQuery.paddingOf(context).bottom + 32.h),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

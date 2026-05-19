@@ -13,6 +13,9 @@
 		<string>applinks:sportaxitrip.com</string>
 		<string>applinks:www.sportaxitrip.com</string>
 	</array>
+	<!-- App Attest environment for Firebase App Check -->
+	<key>com.apple.developer.devicecheck.appattest-environment</key>
+	<string>production</string>
 	<!-- Push Notifications -->
 	<key>aps-environment</key>
 	<string>production</string>

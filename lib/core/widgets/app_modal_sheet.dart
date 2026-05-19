@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
@@ -369,78 +370,75 @@ class _AppModalActionTile extends StatelessWidget {
         ? AppColors.error
         : AppColors.textPrimary;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20.r),
-        onTap: () {
-          if (action.closeOnTap) {
-            Navigator.of(context).pop();
-          }
-          action.onTap();
-        },
-        child: Ink(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: AppColors.cardBg,
-            borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(
-              color: accent.withValues(
-                alpha: action.isDestructive ? 0.28 : 0.16,
-              ),
+    return AdaptiveTapSurface(
+      borderRadius: BorderRadius.circular(20.r),
+      onTap: () {
+        if (action.closeOnTap) {
+          Navigator.of(context).pop();
+        }
+        action.onTap();
+      },
+      child: Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: AppColors.cardBg,
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(
+            color: accent.withValues(
+              alpha: action.isDestructive ? 0.28 : 0.16,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 48.w,
-                height: 48.w,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-                child: Icon(action.icon, color: accent, size: 22.sp),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48.w,
+              height: 48.w,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16.r),
               ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: Icon(action.icon, color: accent, size: 22.sp),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    action.title,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                      color: foreground,
+                    ),
+                  ),
+                  if (action.subtitle != null) ...[
+                    SizedBox(height: 4.h),
                     Text(
-                      action.title,
+                      action.subtitle!,
                       style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w700,
-                        color: foreground,
+                        fontSize: 12.sp,
+                        height: 1.4,
+                        color: AppColors.textSecondary,
                       ),
                     ),
-                    if (action.subtitle != null) ...[
-                      SizedBox(height: 4.h),
-                      Text(
-                        action.subtitle!,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          height: 1.4,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
-              if (action.trailing != null) ...[
-                SizedBox(width: 12.w),
-                action.trailing!,
-              ],
+            ),
+            if (action.trailing != null) ...[
+              SizedBox(width: 12.w),
+              action.trailing!,
             ],
-          ),
+          ],
         ),
       ),
     );

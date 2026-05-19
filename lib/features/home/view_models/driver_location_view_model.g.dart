@@ -42,7 +42,7 @@ final class DriverLocationViewModelProvider
 }
 
 String _$driverLocationViewModelHash() =>
-    r'07c0090c30a429b266e71307f62d09f142faecd4';
+    r'377125e9c08d3980222139b271204abb84bd335f';
 
 abstract class _$DriverLocationViewModel
     extends $Notifier<DriverLocationState> {
