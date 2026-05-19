@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AppIDName</key>
+	<string>Social carpooling app for sports enthusiasts</string>
+	<key>ApplicationIdentifierPrefix</key>
+	<array>
+	<string>UN597DJZW7</string>
+	</array>
+	<key>CreationDate</key>
+	<date>2026-05-19T08:14:05Z</date>
+	<key>Platform</key>
+	<array>
+		<string>iOS</string>
+		<string>xrOS</string>
+		<string>visionOS</string>
+	</array>
+	<key>IsXcodeManaged</key>
+	<false/>
+	<key>DeveloperCertificates</key>
+	<array>
+		<data>MIIFyTCCBLGgAwIBAgIQf27tE0s+2rE0ua3Od0+QzDANBgkqhkiG9w0BAQsFADB1MUQwQgYDVQQDDDtBcHBsZSBXb3JsZHdpZGUgRGV2ZWxvcGVyIFJlbGF0aW9ucyBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTELMAkGA1UECwwCRzMxEzARBgNVBAoMCkFwcGxlIEluYy4xCzAJBgNVBAYTAlVTMB4XDTI2MDQyNjIwMzg0M1oXDTI3MDQyNjIwMzg0MlowgY8xGjAYBgoJkiaJk/IsZAEBDApVTjU5N0RKWlc3MTcwNQYDVQQDDC5BcHBsZSBEaXN0cmlidXRpb246IE1vdW5hIFNvdWlzc2kgKFVONTk3REpaVzcpMRMwEQYDVQQLDApVTjU5N0RKWlc3MRYwFAYDVQQKDA1Nb3VuYSBTb3Vpc3NpMQswCQYDVQQGEwJVUzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMTvTuWnbQ0ahWMKmXHpUceSZc0u2bCYL1iS1YaJI2jT/QY/CIMMNACPoUTl2Jclislwb+VdBFMohHTGlPY0t1vtOoDqOuUsMB+RL6a0ZleJ6sF3HlwMG3KroPtEsZfH3w5NhDRVJI5PwGUj83UgYuCaa6XhxaEliGP/C7DJRedCZqhKfPkYaUYHLRAbuQekVHGyUnrmU/D/vF504SalFk+oP0Vysga9sy7nhPsafIrEO3t4U41u4kmq5FMpkR4OEVOycNdsJRKEGcOVTR7NU5IRhlnL/xzHuS61W63wRkb0tcrFyENkx9MxyfiqGojCefRDDoHR4YXi3pCpV8NHAwsCAwEAAaOCAjgwggI0MAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUCf7AFZD5r2QKkhK5JihjDJfsp7IwcAYIKwYBBQUHAQEEZDBiMC0GCCsGAQUFBzAChiFodHRwOi8vY2VydHMuYXBwbGUuY29tL3d3ZHJnMy5kZXIwMQYIKwYBBQUHMAGGJWh0dHA6Ly9vY3NwLmFwcGxlLmNvbS9vY3NwMDMtd3dkcmczMDUwggEeBgNVHSAEggEVMIIBETCCAQ0GCSqGSIb3Y2QFATCB/zCBwwYIKwYBBQUHAgIwgbYMgbNSZWxpYW5jZSBvbiB0aGlzIGNlcnRpZmljYXRlIGJ5IGFueSBwYXJ0eSBhc3N1bWVzIGFjY2VwdGFuY2Ugb2YgdGhlIHRoZW4gYXBwbGljYWJsZSBzdGFuZGFyZCB0ZXJtcyBhbmQgY29uZGl0aW9ucyBvZiB1c2UsIGNlcnRpZmljYXRlIHBvbGljeSBhbmQgY2VydGlmaWNhdGlvbiBwcmFjdGljZSBzdGF0ZW1lbnRzLjA3BggrBgEFBQcCARYraHR0cHM6Ly93d3cuYXBwbGUuY29tL2NlcnRpZmljYXRlYXV0aG9yaXR5LzAWBgNVHSUBAf8EDDAKBggrBgEFBQcDAzAdBgNVHQ4EFgQUOvzXMZxAC61LGkoHL+LV5HG+WTowDgYDVR0PAQH/BAQDAgeAMBMGCiqGSIb3Y2QGAQcBAf8EAgUAMBMGCiqGSIb3Y2QGAQQBAf8EAgUAMA0GCSqGSIb3DQEBCwUAA4IBAQANEq2srPd5gqVyw4bwG1HkqneIy70/JHm+dGR76jhq4DV5rNEfDEgNJhS4Dni9Bd+AmuAohk194PZF0xLChdlJ1RWQixuFtrOyI2JVkQRYF1wYeclW7v1bDTuK/e/XXkATy7Sq/JL2f/6/7h3KuTPV39xLN0FFUrgZxwraHcIQYxHurInw6+uo3QAx1O9dq0ZwxH+EYL+zieEcmR0GZFjFngWQZyqgiexrmSPZbFOrCvxZd/5oMn1pbRmpU2yEMPGiXJFNrpu0BIW/e5wgc5cF1w0tv46DlPsaHV0K1TbZbqn+Jzlfe+X5uk1atJEGVvgnXJTeg0ppPi/ayZYlFg0N</data>
+	</array>
+
+	<key>DER-Encoded-Profile</key>
+	<data>MIIPoQYJKoZIhvcNAQcCoIIPkjCCD44CAQExDTALBglghkgBZQMEAgEwggVhBgkqhkiG9w0BBwGgggVSBIIFTjGCBUowDAwHVmVyc2lvbgIBATANDAhQUFFDaGVjawEBADAQDApUaW1lVG9MaXZlAgIBVjATDA5Jc1hjb2RlTWFuYWdlZAEBADAZDAhUZWFtTmFtZQwNTW91bmEgU291aXNzaTAdDAxDcmVhdGlvbkRhdGUXDTI2MDUxOTA4MTQwNVowHgwOVGVhbUlkZW50aWZpZXIwDAwKVU41OTdESlpXNzAfDA5FeHBpcmF0aW9uRGF0ZRcNMjcwNDI2MjAzODQyWjAgDBdQcm9maWxlRGlzdHJpYnV0aW9uVHlwZQwFU1RPUkUwIQwIUGxhdGZvcm0wFQwDaU9TDAR4ck9TDAh2aXNpb25PUzArDBtBcHBsaWNhdGlvbklkZW50aWZpZXJQcmVmaXgwDAwKVU41OTdESlpXNzAsDARVVUlEDCQ5YWQ0NmRjOC1kNTcxLTQ1MzgtOTIwOS0zOGM1ZTFiNDA0MTQwNAwETmFtZQwsU3BvcnRDb25uZWN0IFByb2R1Y3Rpb24gUHJvdmlzaW9uaW5nIFByb2ZpbGUwOQwJQXBwSUROYW1lDCxTb2NpYWwgY2FycG9vbGluZyBhcHAgZm9yIHNwb3J0cyBlbnRodXNpYXN0czA7DBVEZXZlbG9wZXJDZXJ0aWZpY2F0ZXMwIgQgBkkLMVYRpUsCsdi8gSLK3WVRrpq/7Ylwopovj5BQk3QwggM5DAxFbnRpdGxlbWVudHNwggMnAgEBsIIDIDBNDBZhcHBsaWNhdGlvbi1pZGVudGlmaWVyDDNVTjU5N0RKWlc3LmNvbS5zcG9ydGNvbm5lY3QuU3BvcnRDb25uZWN0QXBwbGljYXRpb24wHQwPYXBzLWVudmlyb25tZW50DApwcm9kdWN0aW9uMBgME2JldGEtcmVwb3J0cy1hY3RpdmUBAf8wLAwfY29tLmFwcGxlLmRldmVsb3Blci5hcHBsZXNpZ25pbjAJDAdEZWZhdWx0MCsMJmNvbS5hcHBsZS5kZXZlbG9wZXIuYXNzb2NpYXRlZC1kb21haW5zDAEqMFEMK2NvbS5hcHBsZS5kZXZlbG9wZXIuZGVmYXVsdC1kYXRhLXByb3RlY3Rpb24MIk5TRmlsZVByb3RlY3Rpb25Db21wbGV0ZVVubGVzc09wZW4wPQwxY29tLmFwcGxlLmRldmVsb3Blci5kZXZpY2VjaGVjay5hcHAtYXR0ZXN0LW9wdC1pbjAIDAZDRGhhc2gwUgw1Y29tLmFwcGxlLmRldmVsb3Blci5kZXZpY2VjaGVjay5hcHBhdHRlc3QtZW52aXJvbm1lbnQwGQwLZGV2ZWxvcG1lbnQMCnByb2R1Y3Rpb24wJwwjY29tLmFwcGxlLmRldmVsb3Blci5pbi1hcHAtcGF5bWVudHMwADA0DC9jb20uYXBwbGUuZGV2ZWxvcGVyLm1lc3NhZ2VzLmNyaXRpY2FsLW1lc3NhZ2luZwEB/zAxDCNjb20uYXBwbGUuZGV2ZWxvcGVyLnRlYW0taWRlbnRpZmllcgwKVU41OTdESlpXNzA4DDNjb20uYXBwbGUuZGV2ZWxvcGVyLnVzZXJub3RpZmljYXRpb25zLmNvbW11bmljYXRpb24BAf8wOQw0Y29tLmFwcGxlLmRldmVsb3Blci51c2Vybm90aWZpY2F0aW9ucy50aW1lLXNlbnNpdGl2ZQEB/zATDA5nZXQtdGFzay1hbGxvdwEBADA5DBZrZXljaGFpbi1hY2Nlc3MtZ3JvdXBzMB8MDFVONTk3REpaVzcuKgwPY29tLmFwcGxlLnRva2VuoIIIPTCCAkMwggHJoAMCAQICCC3F/IjSxUuVMAoGCCqGSM49BAMDMGcxGzAZBgNVBAMMEkFwcGxlIFJvb3QgQ0EgLSBHMzEmMCQGA1UECwwdQXBwbGUgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkxEzARBgNVBAoMCkFwcGxlIEluYy4xCzAJBgNVBAYTAlVTMB4XDTE0MDQzMDE4MTkwNloXDTM5MDQzMDE4MTkwNlowZzEbMBkGA1UEAwwSQXBwbGUgUm9vdCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UECgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAASY6S89QHKk7ZMicoETHN0QlfHFo05x3BQW2Q7lpgUqd2R7X04407scRLV/9R+2MmJdyemEW08wTxFaAP1YWAyl9Q8sTQdHE3Xa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</data>
+																																
+			<key>PPQCheck</key>
+	<false/>
+
+	<key>Entitlements</key>
+	<dict>
+		<key>beta-reports-active</key>
+		<true/>
+				
+				<key>com.apple.developer.messages.critical-messaging</key>
+		<true/>
+				
+				<key>com.apple.developer.in-app-payments</key>
+		<array></array>
+				
+				<key>com.apple.developer.associated-domains</key>
+		<string>*</string>
+				
+				<key>com.apple.developer.default-data-protection</key>
+		<string>NSFileProtectionCompleteUnlessOpen</string>
+				
+				<key>application-identifier</key>
+		<string>UN597DJZW7.com.sportconnect.SportConnectApplication</string>
+				
+				<key>keychain-access-groups</key>
+		<array>
+				<string>UN597DJZW7.*</string>
+				<string>com.apple.token</string>
+		</array>
+				
+				<key>get-task-allow</key>
+		<false/>
+				
+				<key>com.apple.developer.team-identifier</key>
+		<string>UN597DJZW7</string>
+				
+				<key>com.apple.developer.usernotifications.communication</key>
+		<true/>
+				
+				<key>com.apple.developer.usernotifications.time-sensitive</key>
+		<true/>
+				
+				<key>aps-environment</key>
+		<string>production</string>
+				
+				<key>com.apple.developer.devicecheck.app-attest-opt-in</key>
+		<array>
+				<string>CDhash</string>
+		</array>
+				
+				<key>com.apple.developer.devicecheck.appattest-environment</key>
+		<array>
+				<string>development</string>
+				<string>production</string>
+		</array>
+				
+				<key>com.apple.developer.applesignin</key>
+		<array>
+				<string>Default</string>
+		</array>
+		
+	</dict>
+	<key>ExpirationDate</key>
+	<date>2027-04-26T20:38:42Z</date>
+	<key>Name</key>
+	<string>SportConnect Production Provisioning Profile</string>
+	<key>TeamIdentifier</key>
+	<array>
+		<string>UN597DJZW7</string>
+	</array>
+	<key>TeamName</key>
+	<string>Mouna Souissi</string>
+	<key>TimeToLive</key>
+	<integer>342</integer>
+	<key>UUID</key>
+	<string>9ad46dc8-d571-4538-9209-38c5e1b40414</string>
+	<key>Version</key>
+	<integer>1</integer>
+</dict>
+</plist>

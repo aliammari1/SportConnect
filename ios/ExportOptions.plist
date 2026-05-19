@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Upload method: app-store, validation, ad-hoc, enterprise, or development -->
+    <key>method</key>
+    <string>app-store</string>
+
+    <!-- Provisioning profile mapping: bundle ID -> profile name or UUID -->
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.sportconnect.SportConnectApplication</key>
+        <string>SportConnect Production Provisioning Profile</string>
+    </dict>
+
+    <!-- Code signing identity for distribution -->
+    <key>signingCertificate</key>
+    <string>Apple Distribution</string>
+
+    <!-- Code signing style -->
+    <key>signingStyle</key>
+    <string>manual</string>
+
+    <!-- Team ID -->
+    <key>teamID</key>
+    <string>UN597DJZW7</string>
+
+    <!-- Strip Swift symbols to reduce app size -->
+    <key>stripSwiftSymbols</key>
+    <true/>
+
+    <!-- Upload symbols for crash reporting -->
+    <key>uploadSymbols</key>
+    <true/>
+
+    <!-- Upload bitcode (deprecated for iOS, but kept for compatibility) -->
+    <key>uploadBitcode</key>
+    <false/>
+</dict>
+</plist>

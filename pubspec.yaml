@@ -2,7 +2,7 @@ name: sport_connect
 description: "SportConnect - Social carpooling app for sports enthusiasts"
 publish_to: "none"
 
-version: 1.1.20
+version: 1.1.21
 
 environment:
   sdk: ^3.11.0
@@ -147,7 +147,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
-
+  config:
+    enable-swift-package-manager: false
   assets:
     - assets/images/
     - assets/icons/

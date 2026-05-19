@@ -25,6 +25,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Install provisioning profile
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp ios/provisioning/Mouna_Souissi_Distribution_Provisioning_Profile.mobileprovision \
+             ~/Library/MobileDevice/Provisioning\ Profiles/
+
       - name: Build for iOS Simulator (with development signing for entitlements)
         run: flutter build ios --simulator
         env:

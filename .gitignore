@@ -62,5 +62,15 @@ opencode.json
 /android/app/profile
 /android/app/release
 
+# iOS provisioning profiles (managed via Apple Developer Portal or CI)
+/ios/provisioning/*.mobileprovision
+
+# iOS certificates - NEVER commit private keys
+/ios/certs/*.key
+# Certificate files can be re-downloaded from Apple Developer Portal
+/ios/certs/*.cer
+# Certificate Requests can be re-downloaded from Apple Developer Portal
+/ios/certs/*.csr
+
 *.md
 *.txt
