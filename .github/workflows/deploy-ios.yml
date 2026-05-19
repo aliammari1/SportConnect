@@ -29,6 +29,8 @@ jobs:
       CERTIFICATE_PRIVATE_KEY:          ${{ secrets.CERTIFICATE_PRIVATE_KEY }}
       # ── 10-digit Apple ID of the app in App Store Connect ─────────────────
       APP_STORE_APPLE_ID:               ${{ secrets.APP_STORE_APP_ID }}
+      # ── Primary app bundle ID ─────────────────────────────────────────────
+      IOS_BUNDLE_ID:                    com.sportconnect.SportConnectApplication
 
     steps:
       # ── Source ──────────────────────────────────────────────────────────────
@@ -58,7 +60,7 @@ jobs:
       - name: Fetch certificate and provisioning profile from Apple
         run: |
           app-store-connect fetch-signing-files \
-            $(xcode-project detect-bundle-id) \
+            "$IOS_BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create
 

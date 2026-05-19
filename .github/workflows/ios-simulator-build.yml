@@ -25,8 +25,10 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build for iOS Simulator (no signing needed)
-        run: flutter build ios --simulator --no-codesign
+      - name: Build for iOS Simulator (with development signing for entitlements)
+        run: flutter build ios --simulator
+        env:
+          DEVELOPMENT_TEAM: UN597DJZW7
 
       - name: Zip .app bundle
         run: |
