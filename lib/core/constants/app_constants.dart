@@ -4,7 +4,7 @@ class AppConstants {
 
   // App Info
   static const String appName = 'SportConnect';
-  static const String appVersion = '1.1.21';
+  static const String appVersion = '1.1.22';
 
   // Firebase Collections
   static const String usersCollection = 'users';

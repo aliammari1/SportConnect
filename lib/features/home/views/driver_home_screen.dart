@@ -299,7 +299,7 @@ class _DriverDashboard extends ConsumerWidget {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(hPad, 4.h, hPad, 12.h),
-                      child: _buildLocationBanner(l10n),
+                      child: _buildLocationBanner(context, l10n),
                     ),
                   ),
                 if (isWideDashboard)
@@ -524,7 +524,7 @@ class _DriverDashboard extends ConsumerWidget {
     return l10n.goodEvening;
   }
 
-  Widget _buildLocationBanner(AppLocalizations l10n) {
+  Widget _buildLocationBanner(BuildContext context, AppLocalizations l10n) {
     final shouldOpenSettings = locationDeniedForever || servicesDisabled;
     final shouldRequestPermission =
         !locationDenied && !locationDeniedForever && !servicesDisabled;
@@ -567,11 +567,22 @@ class _DriverDashboard extends ConsumerWidget {
               ],
             ),
           ),
-          if (shouldOpenSettings || shouldRequestPermission)
+          if (shouldOpenSettings || shouldRequestPermission || locationDenied)
             TextButton(
-              onPressed: shouldOpenSettings ? onOpenSettings : onRetryLocation,
+              onPressed: shouldOpenSettings
+                  ? onOpenSettings
+                  : locationDenied
+                  ? () =>
+                        context.push(
+                          AppRoutes.searchRides.path,
+                        ) // non-coercive fallback — no retry of denied permission
+                  : onRetryLocation,
               child: Text(
-                shouldOpenSettings ? l10n.openSettings : l10n.enable,
+                shouldOpenSettings
+                    ? l10n.openSettings
+                    : locationDenied
+                    ? l10n.browseByCity
+                    : l10n.enable,
                 style: TextStyle(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w700,
