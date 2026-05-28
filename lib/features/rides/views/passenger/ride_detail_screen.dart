@@ -21,6 +21,7 @@ import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/utils/share_sheet_origin.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
 import 'package:sport_connect/core/widgets/map_location_picker.dart';
@@ -112,24 +113,26 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
       body: MaxWidthContainer(
         maxWidth: kMaxWidthWide,
         child: vmState.ride.when(
-        loading: _buildLoadingSkeleton,
-        error: (error, _) => _buildErrorState(error.toString()),
-        data: (ride) {
-          if (ride == null) {
-            return _buildErrorState(AppLocalizations.of(context).rideNotFound);
-          }
+          loading: _buildLoadingSkeleton,
+          error: (error, _) => _buildErrorState(error.toString()),
+          data: (ride) {
+            if (ride == null) {
+              return _buildErrorState(
+                AppLocalizations.of(context).rideNotFound,
+              );
+            }
 
-          // Load route once per ride — guard prevents re-firing on every rebuild
-          if (_loadedRouteRideId != ride.id) {
-            _loadedRouteRideId = ride.id;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _loadRoute(ride);
-            });
-          }
+            // Load route once per ride — guard prevents re-firing on every rebuild
+            if (_loadedRouteRideId != ride.id) {
+              _loadedRouteRideId = ride.id;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _loadRoute(ride);
+              });
+            }
 
-          return _buildContent(ride, bookings);
-        },
-      ),
+            return _buildContent(ride, bookings);
+          },
+        ),
       ),
     );
   }
@@ -464,6 +467,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                 ShareParams(
                   text: shareText,
                   subject: subject,
+                  sharePositionOrigin: shareSheetOrigin(context),
                 ),
               );
             } on Exception {
@@ -476,6 +480,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                     'https://${AppConstants.hostingDomain}/ride/${widget.rideId}',
                   ),
                   subject: subject,
+                  sharePositionOrigin: shareSheetOrigin(context),
                 ),
               );
             }
@@ -1177,7 +1182,6 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
     );
   }
 
-
   Widget _buildPassengers(
     RideModel ride, {
     required List<RideBooking> bookings,
@@ -1870,7 +1874,9 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
         child: GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: adaptiveScreenPadding(context).copyWith(bottom: 14.h, top: 14.h),
+            padding: adaptiveScreenPadding(
+              context,
+            ).copyWith(bottom: 14.h, top: 14.h),
             decoration: BoxDecoration(
               color: bgColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14.r),
@@ -2208,7 +2214,9 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                   SizedBox(height: 8.h),
                   BookingPriceRow(
                     label: AppLocalizations.of(context).numberOfSeats,
-                    value: AppLocalizations.of(context).value12(uiState.selectedSeats),
+                    value: AppLocalizations.of(
+                      context,
+                    ).value12(uiState.selectedSeats),
                   ),
                 ],
                 Padding(
@@ -2319,8 +2327,6 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
       ),
     );
   }
-
-
 
   /// Gets the currency symbol for display
   String _getCurrencySymbol() => '€';

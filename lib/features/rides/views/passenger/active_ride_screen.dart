@@ -1,10 +1,8 @@
 import 'dart:async';
 
-
-
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -19,6 +17,7 @@ import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/services/location_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/utils/share_sheet_origin.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/custom_button.dart';
 import 'package:sport_connect/core/widgets/misc_feature_widgets.dart';
@@ -137,7 +136,12 @@ class _PassengerActiveRideScreenState
       departure,
     );
 
-    await SharePlus.instance.share(ShareParams(text: msg));
+    await SharePlus.instance.share(
+      ShareParams(
+        text: msg,
+        sharePositionOrigin: shareSheetOrigin(context),
+      ),
+    );
   }
 
   // ==================== SECTION 7 PASSENGER HELPERS ====================
@@ -299,32 +303,32 @@ class _PassengerActiveRideScreenState
       body: MaxWidthContainer(
         maxWidth: kMaxWidthWide,
         child: rideAsync.when(
-        data: (ride) => ride == null
-            ? _buildRideNotFound()
-            : _buildActiveRideContent(context, ride),
-        loading: () => const SkeletonLoader(itemCount: 5),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 48.sp, color: AppColors.error),
-              SizedBox(height: 16.h),
-              Text(
-                AppLocalizations.of(context).failedToLoadRide,
-                style: TextStyle(fontSize: 16.sp),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                e.toString(),
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColors.textSecondary,
+          data: (ride) => ride == null
+              ? _buildRideNotFound()
+              : _buildActiveRideContent(context, ride),
+          loading: () => const SkeletonLoader(itemCount: 5),
+          error: (e, _) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 48.sp, color: AppColors.error),
+                SizedBox(height: 16.h),
+                Text(
+                  AppLocalizations.of(context).failedToLoadRide,
+                  style: TextStyle(fontSize: 16.sp),
                 ),
-              ),
-            ],
+                SizedBox(height: 8.h),
+                Text(
+                  e.toString(),
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -1123,176 +1127,532 @@ class _PassengerActiveRideScreenState
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Builder(builder: (context) {
-        final sheetItems = <Widget>[
-          // Drag handle
-          Center(
-            child: Container(
-              margin: EdgeInsets.symmetric(vertical: 10.h),
-              width: 44.w,
-              height: 5.h,
-              decoration: BoxDecoration(
-                color: AppColors.textSecondary.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(3.r),
+      child: Builder(
+        builder: (context) {
+          final sheetItems = <Widget>[
+            // Drag handle
+            Center(
+              child: Container(
+                margin: EdgeInsets.symmetric(vertical: 10.h),
+                width: 44.w,
+                height: 5.h,
+                decoration: BoxDecoration(
+                  color: AppColors.textSecondary.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(3.r),
+                ),
               ),
             ),
-          ),
 
-          // Connectivity indicator
-          if (!rideState.isConnected)
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 20.w,
-              ).copyWith(bottom: 8.h),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.wifi_off, size: 16.sp, color: AppColors.warning),
-                    SizedBox(width: 6.w),
-                    Expanded(
-                      child: Text(
-                        'Poor connection — updates may be delayed',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.warning,
+            // Connectivity indicator
+            if (!rideState.isConnected)
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 20.w,
+                ).copyWith(bottom: 8.h),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.wifi_off,
+                        size: 16.sp,
+                        color: AppColors.warning,
+                      ),
+                      SizedBox(width: 6.w),
+                      Expanded(
+                        child: Text(
+                          'Poor connection — updates may be delayed',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.warning,
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Delay banner
+            if (rideState.rideDelayMinutes >= 5)
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 20.w,
+                ).copyWith(bottom: 8.h),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.schedule, size: 16.sp, color: AppColors.error),
+                      SizedBox(width: 6.w),
+                      Expanded(
+                        child: Text(
+                          'Departure delayed by ${rideState.rideDelayMinutes} min',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Progress bar
+            TripProgressBar(ride: ride, rideState: rideState),
+            SizedBox(height: 20.h),
+
+            // ETA, distance and speed tiles
+            RepaintBoundary(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Row(
+                  children: [
+                    RideInfoTile(
+                      icon: Icons.access_time_rounded,
+                      label: l10n.eta,
+                      value: etaMinutes < 1
+                          ? 'Arriving'
+                          : '${etaMinutes}m · ${_formatArrivalTime(etaMinutes)}',
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(width: 12.w),
+                    RideInfoTile(
+                      icon: Icons.straighten_rounded,
+                      label: l10n.distance,
+                      value: distToDest < 1
+                          ? '${(distToDest * 1000).toInt()} m'
+                          : '${distToDest.toStringAsFixed(1)} km',
+                      color: AppColors.warning,
+                    ),
+                    SizedBox(width: 12.w),
+                    RideInfoTile(
+                      icon: Icons.speed_rounded,
+                      label: l10n.speed,
+                      value:
+                          '${rideState.currentSpeedKmh.toStringAsFixed(0)} km/h',
+                      color: AppColors.success,
                     ),
                   ],
                 ),
               ),
             ),
+            // Pickup queue position badge (7A)
+            if (rideState.phase == ActiveRidePhase.pickingUp &&
+                rideState.pickupOrder.isNotEmpty) ...[
+              SizedBox(height: 12.h),
+              Builder(
+                builder: (context) {
+                  final user = ref.read(currentUserProvider).value;
+                  final pos = user != null
+                      ? rideState.pickupOrder.indexOf(user.uid) + 1
+                      : 0;
+                  if (pos <= 0) return const SizedBox.shrink();
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 10.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.info.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14.r),
+                        border: Border.all(
+                          color: AppColors.info.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.people_alt,
+                            color: AppColors.info,
+                            size: 18.sp,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'You are #$pos in the pickup queue',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.info,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
 
-          // Delay banner
-          if (rideState.rideDelayMinutes >= 5)
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 20.w,
-              ).copyWith(bottom: 8.h),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.schedule, size: 16.sp, color: AppColors.error),
-                    SizedBox(width: 6.w),
-                    Expanded(
-                      child: Text(
-                        'Departure delayed by ${rideState.rideDelayMinutes} min',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w500,
+            // OTP card — full display during pickingUp; collapsible during enRoute
+            if (rideState.phase == ActiveRidePhase.pickingUp ||
+                rideState.phase == ActiveRidePhase.enRoute) ...[
+              SizedBox(height: 12.h),
+              Builder(
+                builder: (context) {
+                  final currentUser = ref.read(currentUserProvider).value;
+                  if (currentUser == null) return const SizedBox.shrink();
+                  final myBooking = rideState.bookings
+                      .where((b) => b.passengerId == currentUser.uid)
+                      .firstOrNull;
+                  final otp = myBooking?.pickupOtp;
+                  if (otp == null) return const SizedBox.shrink();
+
+                  final isPickingUp =
+                      rideState.phase == ActiveRidePhase.pickingUp;
+
+                  if (isPickingUp) {
+                    // Full OTP card during pickingUp
+                    return Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Container(
+                        padding: EdgeInsets.all(16.w),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primary,
+                              AppColors.primary.withValues(alpha: 0.8),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.35),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.pin_rounded,
+                                  color: Colors.white70,
+                                  size: 16.sp,
+                                ),
+                                SizedBox(width: 6.w),
+                                Text(
+                                  'Your Pickup Code',
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white70,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              otp,
+                              style: TextStyle(
+                                fontSize: 40.sp,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 16,
+                              ),
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              'Show this to your driver',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.white60,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  // AR-7: Collapsible "show again" row during enRoute phase
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Column(
+                      children: [
+                        InkWell(
+                          onTap: () => setState(() => _showOtp = !_showOtp),
+                          borderRadius: BorderRadius.circular(12.r),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 10.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.pin_rounded,
+                                  color: AppColors.primary,
+                                  size: 16.sp,
+                                ),
+                                SizedBox(width: 6.w),
+                                Text(
+                                  'Show my pickup code',
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(
+                                  _showOtp
+                                      ? Icons.keyboard_arrow_up
+                                      : Icons.keyboard_arrow_down,
+                                  color: AppColors.primary,
+                                  size: 18.sp,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (_showOtp) ...[
+                          SizedBox(height: 8.h),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(vertical: 14.h),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primary.withValues(alpha: 0.8),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  otp,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 40.sp,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: 16,
+                                  ),
+                                ),
+                                SizedBox(height: 2.h),
+                                Text(
+                                  'Your pickup confirmation code',
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: Colors.white60,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+
+            SizedBox(height: 16.h),
+
+            // AR-3: Overtime warning banner
+            if (rideState.rideTimeoutMinutes != null &&
+                !rideState.hasShownTimeoutWarning) ...[
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Container(
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.timer_off,
+                        size: 18.sp,
+                        color: AppColors.error,
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          'Trip is taking longer than expected — is everything okay?',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      GestureDetector(
+                        onTap: () => ref
+                            .read(
+                              activeRideViewModelProvider(
+                                widget.rideId,
+                              ).notifier,
+                            )
+                            .dismissTimeoutWarning(),
+                        child: Icon(
+                          Icons.close,
+                          size: 18.sp,
                           color: AppColors.error,
                         ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+            ],
+
+            // Driver info row
+            if (driver != null)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24.r,
+                      backgroundImage: driver.photoUrl != null
+                          ? CachedNetworkImageProvider(driver.photoUrl!)
+                          : null,
+                      child: driver.photoUrl == null
+                          ? Text(
+                              driver.username[0].toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  driver.username,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (driver.isEmailVerified) ...[
+                                SizedBox(width: 6.w),
+                                Icon(
+                                  Icons.verified,
+                                  size: 16.sp,
+                                  color: Colors.blue,
+                                ),
+                              ],
+                            ],
+                          ),
+                          SizedBox(height: 2.h),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.star,
+                                size: 14.sp,
+                                color: Colors.amber,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                driver.asDriver?.rating.average.toStringAsFixed(
+                                      1,
+                                    ) ??
+                                    '0.0',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              if ((driver.asDriver?.rating.total ?? 0) > 0) ...[
+                                Text(
+                                  ' (${driver.asDriver?.rating.total ?? 0})',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                              if ((driver.asDriver?.gamification.totalRides ??
+                                      0) >
+                                  0) ...[
+                                Text(
+                                  ' · ${driver.asDriver?.gamification.totalRides ?? 0} trips',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Call button
+                    MapCircleButton(
+                      icon: Icons.phone,
+                      onTap: () => _callDriver(driver.asDriver?.phoneNumber),
+                    ),
+                    SizedBox(width: 10.w),
+                    // Message button
+                    MapCircleButton(
+                      icon: Icons.message,
+                      onTap: () => _sendMessage(ride.driverId),
                     ),
                   ],
                 ),
               ),
-            ),
 
-          // Progress bar
-          TripProgressBar(ride: ride, rideState: rideState),
-          SizedBox(height: 20.h),
-
-          // ETA, distance and speed tiles
-          RepaintBoundary(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Row(
-                children: [
-                  RideInfoTile(
-                    icon: Icons.access_time_rounded,
-                    label: l10n.eta,
-                    value: etaMinutes < 1
-                        ? 'Arriving'
-                        : '${etaMinutes}m · ${_formatArrivalTime(etaMinutes)}',
-                    color: AppColors.primary,
-                  ),
-                  SizedBox(width: 12.w),
-                  RideInfoTile(
-                    icon: Icons.straighten_rounded,
-                    label: l10n.distance,
-                    value: distToDest < 1
-                        ? '${(distToDest * 1000).toInt()} m'
-                        : '${distToDest.toStringAsFixed(1)} km',
-                    color: AppColors.warning,
-                  ),
-                  SizedBox(width: 12.w),
-                  RideInfoTile(
-                    icon: Icons.speed_rounded,
-                    label: l10n.speed,
-                    value:
-                        '${rideState.currentSpeedKmh.toStringAsFixed(0)} km/h',
-                    color: AppColors.success,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Pickup queue position badge (7A)
-          if (rideState.phase == ActiveRidePhase.pickingUp &&
-              rideState.pickupOrder.isNotEmpty) ...[
-            SizedBox(height: 12.h),
-            Builder(
-              builder: (context) {
-                final user = ref.read(currentUserProvider).value;
-                final pos = user != null
-                    ? rideState.pickupOrder.indexOf(user.uid) + 1
-                    : 0;
-                if (pos <= 0) return const SizedBox.shrink();
-                return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 14.w,
-                      vertical: 10.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.info.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(14.r),
-                      border: Border.all(
-                        color: AppColors.info.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.people_alt,
-                          color: AppColors.info,
-                          size: 18.sp,
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          'You are #$pos in the pickup queue',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.info,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-
-          // OTP card — full display during pickingUp; collapsible during enRoute
-          if (rideState.phase == ActiveRidePhase.pickingUp ||
-              rideState.phase == ActiveRidePhase.enRoute) ...[
-            SizedBox(height: 12.h),
+            // Payment confirmation badge — derived from the passenger's own booking
             Builder(
               builder: (context) {
                 final currentUser = ref.read(currentUserProvider).value;
@@ -1300,619 +1660,287 @@ class _PassengerActiveRideScreenState
                 final myBooking = rideState.bookings
                     .where((b) => b.passengerId == currentUser.uid)
                     .firstOrNull;
-                final otp = myBooking?.pickupOtp;
-                if (otp == null) return const SizedBox.shrink();
+                if (myBooking == null) return const SizedBox.shrink();
 
-                final isPickingUp =
-                    rideState.phase == ActiveRidePhase.pickingUp;
-
-                if (isPickingUp) {
-                  // Full OTP card during pickingUp
-                  return Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: Container(
-                      padding: EdgeInsets.all(16.w),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.primary,
-                            AppColors.primary.withValues(alpha: 0.8),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16.r),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.35),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.pin_rounded,
-                                color: Colors.white70,
-                                size: 16.sp,
-                              ),
-                              SizedBox(width: 6.w),
-                              Text(
-                                'Your Pickup Code',
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white70,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8.h),
-                          Text(
-                            otp,
-                            style: TextStyle(
-                              fontSize: 40.sp,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 16,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            'Show this to your driver',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: Colors.white60,
-                            ),
-                          ),
-                        ],
+                final isPaid = myBooking.paidAt != null;
+                return Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w,
+                  ).copyWith(top: 12.h),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 10.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isPaid
+                          ? AppColors.success.withValues(alpha: 0.1)
+                          : AppColors.warning.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: isPaid
+                            ? AppColors.success.withValues(alpha: 0.3)
+                            : AppColors.warning.withValues(alpha: 0.3),
                       ),
                     ),
-                  );
-                }
-
-                // AR-7: Collapsible "show again" row during enRoute phase
-                return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Column(
-                    children: [
-                      InkWell(
-                        onTap: () => setState(() => _showOtp = !_showOtp),
-                        borderRadius: BorderRadius.circular(12.r),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 10.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                    child: Row(
+                      children: [
+                        Icon(
+                          isPaid
+                              ? Icons.check_circle_rounded
+                              : Icons.schedule_rounded,
+                          size: 18.sp,
+                          color: isPaid ? AppColors.success : AppColors.warning,
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.pin_rounded,
-                                color: AppColors.primary,
-                                size: 16.sp,
-                              ),
-                              SizedBox(width: 6.w),
                               Text(
-                                'Show my pickup code',
+                                isPaid
+                                    ? 'Payment Confirmed'
+                                    : 'Payment Pending',
                                 style: TextStyle(
                                   fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                  color: isPaid
+                                      ? AppColors.success
+                                      : AppColors.warning,
                                 ),
                               ),
-                              const Spacer(),
-                              Icon(
-                                _showOtp
-                                    ? Icons.keyboard_arrow_up
-                                    : Icons.keyboard_arrow_down,
-                                color: AppColors.primary,
-                                size: 18.sp,
-                              ),
+                              if (isPaid && myBooking.paidAt != null)
+                                Text(
+                                  'Paid on ${_formatPaidAt(myBooking.paidAt!)}',
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                )
+                              else
+                                Text(
+                                  'Complete payment to confirm your seat',
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
-                      ),
-                      if (_showOtp) ...[
-                        SizedBox(height: 8.h),
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 14.h),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.primary,
-                                AppColors.primary.withValues(alpha: 0.8),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                        if (isPaid)
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 4.h,
                             ),
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                otp,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 40.sp,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: 16,
-                                ),
+                            decoration: BoxDecoration(
+                              color: AppColors.success,
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Text(
+                              'PAID',
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
                               ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                'Your pickup confirmation code',
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: Colors.white60,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
                       ],
-                    ],
+                    ),
                   ),
                 );
               },
             ),
-          ],
 
-          SizedBox(height: 16.h),
+            SizedBox(height: 16.h),
 
-          // AR-3: Overtime warning banner
-          if (rideState.rideTimeoutMinutes != null &&
-              !rideState.hasShownTimeoutWarning) ...[
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Container(
-                padding: EdgeInsets.all(12.w),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(
-                    color: AppColors.error.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.timer_off, size: 18.sp, color: AppColors.error),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        'Trip is taking longer than expected — is everything okay?',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.error,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    GestureDetector(
-                      onTap: () => ref
-                          .read(
-                            activeRideViewModelProvider(widget.rideId).notifier,
-                          )
-                          .dismissTimeoutWarning(),
-                      child: Icon(
-                        Icons.close,
-                        size: 18.sp,
-                        color: AppColors.error,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-          ],
-
-          // Driver info row
-          if (driver != null)
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24.r,
-                    backgroundImage: driver.photoUrl != null
-                                ? CachedNetworkImageProvider(driver.photoUrl!)
-                        : null,
-                    child: driver.photoUrl == null
-                        ? Text(
-                            driver.username[0].toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.bold,
+            // Vehicle info for easy identification
+            if (ride.vehicleId != null || ride.vehicleInfo != null)
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 20.w,
+                ).copyWith(bottom: 8.h),
+                child: Builder(
+                  builder: (context) {
+                    if (ride.vehicleId != null) {
+                      final vehiclesAsync = ref.watch(
+                        userVehiclesStreamProvider(ride.driverId),
+                      );
+                      return vehiclesAsync.when(
+                        data: (vehicles) {
+                          final vehicle = vehicles
+                              .where((v) => v.id == ride.vehicleId)
+                              .firstOrNull;
+                          if (vehicle == null) return const SizedBox.shrink();
+                          return Container(
+                            padding: EdgeInsets.all(12.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(12.r),
                             ),
-                          )
-                        : null,
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                driver.username,
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.directions_car,
+                                  size: 20.sp,
+                                  color: AppColors.primary,
                                 ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                                SizedBox(width: 10.w),
+                                Expanded(
+                                  child: Text(
+                                    '${vehicle.color} ${vehicle.make} ${vehicle.model}',
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                if (vehicle.licensePlate.isNotEmpty)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w,
+                                      vertical: 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(6.r),
+                                    ),
+                                    child: Text(
+                                      vehicle.licensePlate,
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                            if (driver.isEmailVerified) ...[
-                              SizedBox(width: 6.w),
-                              Icon(
-                                Icons.verified,
-                                size: 16.sp,
-                                color: Colors.blue,
-                              ),
-                            ],
-                          ],
-                        ),
-                        SizedBox(height: 2.h),
-                        Row(
-                          children: [
-                            Icon(Icons.star, size: 14.sp, color: Colors.amber),
-                            SizedBox(width: 4.w),
-                            Text(
-                              driver.asDriver?.rating.average.toStringAsFixed(
-                                    1,
-                                  ) ??
-                                  '0.0',
+                          );
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, _) => const SizedBox.shrink(),
+                      );
+                    }
+                    // Fallback: parse from vehicleInfo string
+                    return Container(
+                      padding: EdgeInsets.all(12.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.directions_car,
+                            size: 20.sp,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Text(
+                              ride.vehicleInfo!,
                               style: TextStyle(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
                             ),
-                            if ((driver.asDriver?.rating.total ?? 0) > 0) ...[
-                              Text(
-                                ' (${driver.asDriver?.rating.total ?? 0})',
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                            if ((driver.asDriver?.gamification.totalRides ??
-                                    0) >
-                                0) ...[
-                              Text(
-                                ' · ${driver.asDriver?.gamification.totalRides ?? 0} trips',
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Call button
-                  MapCircleButton(
-                    icon: Icons.phone,
-                    onTap: () => _callDriver(driver.asDriver?.phoneNumber),
-                  ),
-                  SizedBox(width: 10.w),
-                  // Message button
-                  MapCircleButton(
-                    icon: Icons.message,
-                    onTap: () => _sendMessage(ride.driverId),
-                  ),
-                ],
-              ),
-            ),
-
-          // Payment confirmation badge — derived from the passenger's own booking
-          Builder(
-            builder: (context) {
-              final currentUser = ref.read(currentUserProvider).value;
-              if (currentUser == null) return const SizedBox.shrink();
-              final myBooking = rideState.bookings
-                  .where((b) => b.passengerId == currentUser.uid)
-                  .firstOrNull;
-              if (myBooking == null) return const SizedBox.shrink();
-
-              final isPaid = myBooking.paidAt != null;
-              return Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 20.w,
-                ).copyWith(top: 12.h),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 14.w,
-                    vertical: 10.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isPaid
-                        ? AppColors.success.withValues(alpha: 0.1)
-                        : AppColors.warning.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(
-                      color: isPaid
-                          ? AppColors.success.withValues(alpha: 0.3)
-                          : AppColors.warning.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isPaid
-                            ? Icons.check_circle_rounded
-                            : Icons.schedule_rounded,
-                        size: 18.sp,
-                        color: isPaid ? AppColors.success : AppColors.warning,
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isPaid ? 'Payment Confirmed' : 'Payment Pending',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w700,
-                                color: isPaid
-                                    ? AppColors.success
-                                    : AppColors.warning,
-                              ),
-                            ),
-                            if (isPaid && myBooking.paidAt != null)
-                              Text(
-                                'Paid on ${_formatPaidAt(myBooking.paidAt!)}',
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: AppColors.textSecondary,
-                                ),
-                              )
-                            else
-                              Text(
-                                'Complete payment to confirm your seat',
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (isPaid)
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 4.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.success,
-                            borderRadius: BorderRadius.circular(20.r),
-                          ),
-                          child: Text(
-                            'PAID',
-                            style: TextStyle(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
+              ),
 
-          SizedBox(height: 16.h),
+            // Quick message chips (7D)
+            if (ride.status == RideStatus.inProgress)
+              _buildPassengerQuickMessages(ride, rideState),
 
-          // Vehicle info for easy identification
-          if (ride.vehicleId != null || ride.vehicleInfo != null)
+            // Route itinerary (Compact)
             Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 20.w,
-              ).copyWith(bottom: 8.h),
-              child: Builder(
-                builder: (context) {
-                  if (ride.vehicleId != null) {
-                    final vehiclesAsync = ref.watch(
-                      userVehiclesStreamProvider(ride.driverId),
-                    );
-                    return vehiclesAsync.when(
-                      data: (vehicles) {
-                        final vehicle = vehicles
-                            .where((v) => v.id == ride.vehicleId)
-                            .firstOrNull;
-                        if (vehicle == null) return const SizedBox.shrink();
-                        return Container(
-                          padding: EdgeInsets.all(12.w),
-                          decoration: BoxDecoration(
-                            color: AppColors.background,
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.directions_car,
-                                size: 20.sp,
-                                color: AppColors.primary,
-                              ),
-                              SizedBox(width: 10.w),
-                              Expanded(
-                                child: Text(
-                                  '${vehicle.color} ${vehicle.make} ${vehicle.model}',
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              if (vehicle.licensePlate.isNotEmpty)
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 4.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(6.r),
-                                  ),
-                                  child: Text(
-                                    vehicle.licensePlate,
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primary,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        );
-                      },
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, _) => const SizedBox.shrink(),
-                    );
-                  }
-                  // Fallback: parse from vehicleInfo string
-                  return Container(
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(12.r),
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Container(
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Column(
+                  children: [
+                    MiniRouteRow(
+                      icon: Icons.trip_origin_rounded,
+                      color: AppColors.success,
+                      text: ride.origin.address,
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.directions_car,
-                          size: 20.sp,
-                          color: AppColors.primary,
+                    // Show intermediate waypoints
+                    for (final wp in ride.route.waypoints)
+                      Padding(
+                        padding: EdgeInsets.only(top: 8.h),
+                        child: MiniRouteRow(
+                          icon: Icons.circle,
+                          color: AppColors.warning,
+                          text: wp.location.address,
                         ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Text(
-                            ride.vehicleInfo!,
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
+                    SizedBox(height: 8.h),
+                    MiniRouteRow(
+                      icon: Icons.location_on_rounded,
+                      color: AppColors.error,
+                      text: ride.destination.address,
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
             ),
 
-          // Quick message chips (7D)
-          if (ride.status == RideStatus.inProgress)
-            _buildPassengerQuickMessages(ride, rideState),
+            SizedBox(height: 12.h),
 
-          // Route itinerary (Compact)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w),
-            child: Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Column(
+            // Share live trip + SOS row
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Row(
                 children: [
-                  MiniRouteRow(
-                    icon: Icons.trip_origin_rounded,
-                    color: AppColors.success,
-                    text: ride.origin.address,
-                  ),
-                  // Show intermediate waypoints
-                  for (final wp in ride.route.waypoints)
-                    Padding(
-                      padding: EdgeInsets.only(top: 8.h),
-                      child: MiniRouteRow(
-                        icon: Icons.circle,
-                        color: AppColors.warning,
-                        text: wp.location.address,
+                  // Share button
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _shareTrip(ride),
+                      icon: Icon(Icons.share_location, size: 18.sp),
+                      label: Text(l10n.shareRide),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: BorderSide(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
                       ),
                     ),
-                  SizedBox(height: 8.h),
-                  MiniRouteRow(
-                    icon: Icons.location_on_rounded,
-                    color: AppColors.error,
-                    text: ride.destination.address,
                   ),
                 ],
               ),
             ),
-          ),
 
-          SizedBox(height: 12.h),
-
-          // Share live trip + SOS row
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w),
-            child: Row(
-              children: [
-                // Share button
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _shareTrip(ride),
-                    icon: Icon(Icons.share_location, size: 18.sp),
-                    label: Text(l10n.shareRide),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: BorderSide(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                      ),
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 12.h + bottomPadding),
-        ];
-        return ListView.builder(
-          controller: scrollController,
-          padding: EdgeInsets.zero,
-          itemCount: sheetItems.length,
-          itemBuilder: (context, index) => sheetItems[index],
-        );
-      }),
+            SizedBox(height: 12.h + bottomPadding),
+          ];
+          return ListView.builder(
+            controller: scrollController,
+            padding: EdgeInsets.zero,
+            itemCount: sheetItems.length,
+            itemBuilder: (context, index) => sheetItems[index],
+          );
+        },
+      ),
     );
   }
 
@@ -2274,7 +2302,7 @@ class _PassengerActiveRideScreenState
           CircleAvatar(
             radius: 28.r,
             backgroundImage: driver.photoUrl != null
-                                                ? CachedNetworkImageProvider(driver.photoUrl!)
+                ? CachedNetworkImageProvider(driver.photoUrl!)
                 : null,
             child: driver.photoUrl == null
                 ? Text(
@@ -2758,7 +2786,7 @@ class _PassengerActiveRideScreenState
               CircleAvatar(
                 radius: 20.r,
                 backgroundImage: passenger.photoUrl != null
-                                      ? CachedNetworkImageProvider(passenger.photoUrl!)
+                    ? CachedNetworkImageProvider(passenger.photoUrl!)
                     : null,
                 child: passenger.photoUrl == null
                     ? Text(passenger.username[0].toUpperCase())

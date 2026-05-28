@@ -79,6 +79,7 @@ class DeepLinkService {
   ///
   /// HTTPS links work in WhatsApp, Messenger, and other messaging platforms.
   static const String hostingDomain = 'sportaxitrip.com';
+  static const String wwwHostingDomain = 'www.sportaxitrip.com';
 
   /// Supported schemes
   static const List<String> supportedSchemes = [primaryScheme, shortScheme];
@@ -166,6 +167,18 @@ class DeepLinkService {
       _RouteHandler(
         pattern: RegExp(r'^/ride/([a-zA-Z0-9_-]+)$'),
         routeName: AppRoutes.rideDetail.name,
+        paramKey: 'id',
+      ),
+      // Event detail: /events/detail/{id}
+      _RouteHandler(
+        pattern: RegExp(r'^/events/detail/([a-zA-Z0-9_-]+)$'),
+        routeName: AppRoutes.eventDetail.name,
+        paramKey: 'id',
+      ),
+      // Backward-compatible event share links: /events/{id}
+      _RouteHandler(
+        pattern: RegExp(r'^/events/([a-zA-Z0-9_-]+)$'),
+        routeName: AppRoutes.eventDetail.name,
         paramKey: 'id',
       ),
       // Chat detail: /chat/detail/{id}
@@ -280,6 +293,13 @@ class DeepLinkService {
             .get();
         return snap.exists;
       }
+      if (routeName == AppRoutes.eventDetail.name) {
+        final snap = await db
+            .collection(AppConstants.eventsCollection)
+            .doc(id)
+            .get();
+        return snap.exists;
+      }
       // For any other resource type, default to allowing navigation.
       return true;
     } on Exception catch (e) {
@@ -357,7 +377,8 @@ class DeepLinkService {
     final host = uri.host.toLowerCase();
 
     // Handle HTTPS App Links from Firebase Hosting
-    if (scheme == 'https' && host == hostingDomain) {
+    if (scheme == 'https' &&
+        (host == hostingDomain || host == wwwHostingDomain)) {
       return uri.path;
     }
 
@@ -372,7 +393,7 @@ class DeepLinkService {
 
     String path;
     if (host == 'open' || host.isEmpty) {
-      // sportconnect://open/ride/123 or sc://ride/123 (host empty)
+      // sportconnect://open/ride/123 or custom-scheme links with no host
       path = uri.path;
     } else {
       // sportconnect://ride/123
@@ -389,7 +410,7 @@ class DeepLinkService {
 
   /// Cleans up the link stream subscription.
   void dispose() {
-    _subscription?.cancel();
+    unawaited(_subscription?.cancel());
     _subscription = null;
   }
 }

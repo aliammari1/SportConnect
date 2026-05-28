@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' show Color, ThemeMode;
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/config/app_config.dart';
+import 'package:sport_connect/core/config/stripe_config.dart';
 import 'package:sport_connect/core/services/talker_service.dart';
 
 part 'stripe_service.g.dart';
@@ -33,7 +34,6 @@ class StripeService {
   Future<Map<String, dynamic>> getAccountStatus({
     required String accountId,
   }) async {
-    // ignore: inference_failure_on_function_invocation
     final result = await _functions
         .httpsCallable('getAccountStatus')
         .call<Map<String, dynamic>>(<String, dynamic>{
@@ -44,7 +44,6 @@ class StripeService {
   }
 
   Future<void> syncDriverBalance() async {
-    // ignore: inference_failure_on_function_invocation
     await _functions
         .httpsCallable('syncDriverBalance')
         .call<Map<String, dynamic>>();
@@ -63,6 +62,7 @@ class StripeService {
   /// Initialize Stripe with publishable key
   Future<void> initialize({required String publishableKey}) async {
     Stripe.publishableKey = publishableKey;
+    Stripe.urlScheme = StripeConfig.urlScheme;
     await Stripe.instance.applySettings();
 
     // Connect to emulator if in development mode
@@ -186,7 +186,7 @@ class StripeService {
             testEnv: kDebugMode,
             buttonType: PlatformButtonType.book,
           ),
-          returnURL: 'flutterstripe://redirect',
+          returnURL: '${StripeConfig.urlScheme}://redirect',
           billingDetailsCollectionConfiguration:
               const BillingDetailsCollectionConfiguration(
                 name: CollectionMode.automatic,
@@ -459,7 +459,7 @@ class StripeService {
         merchantDisplayName: 'SportConnect',
         customerId: customerId,
         customerEphemeralKeySecret: ephemeralKeySecret,
-        returnURL: 'flutterstripe://redirect',
+        returnURL: '${StripeConfig.urlScheme}://redirect',
         // Force light mode regardless of device system setting
         style: ThemeMode.light,
         billingDetailsCollectionConfiguration:

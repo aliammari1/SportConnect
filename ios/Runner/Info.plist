@@ -4,6 +4,8 @@
 	<dict>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<key>CFBundleAllowMixedLocalizations</key>
+		<true/>
 		<key>CFBundleDisplayName</key>
 		<string>SportConnect</string>
 		<key>CFBundleExecutable</key>
@@ -36,6 +38,7 @@
 		<!-- Push Notifications -->
 		<key>UIBackgroundModes</key>
 		<array>
+			<string>fetch</string>
 			<string>remote-notification</string>
 		</array>
 
@@ -76,6 +79,17 @@
 
 		<key>GIDClientID</key>
 		<string>$(GOOGLE_CLIENT_ID)</string>
+
+		<!-- Deep links are handled by the app_links plugin. -->
+		<key>FlutterDeepLinkingEnabled</key>
+		<false/>
+
+		<!-- External URL schemes actively queried by url_launcher/map_launcher. -->
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>tel</string>
+			<string>comgooglemaps</string>
+		</array>
 
 		<!-- Location permissions -->
 		<key>NSLocationWhenInUseUsageDescription</key>

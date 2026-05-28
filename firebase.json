@@ -16,7 +16,10 @@
         "headers": [{ "key": "Content-Type", "value": "application/json" }]
       }
     ],
-    "rewrites": [{ "source": "/ride/**", "destination": "/ride/index.html" }]
+    "rewrites": [
+      { "source": "/ride/**", "destination": "/ride/index.html" },
+      { "source": "/events/**", "destination": "/events/index.html" }
+    ]
   },
   "functions": [
     {

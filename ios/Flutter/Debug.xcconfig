@@ -7,3 +7,7 @@ GOOGLE_REVERSED_CLIENT_ID=com.googleusercontent.apps.950804897667-6n80c99rgha62m
 // iOS Google Sign-In client ID (from GoogleService-Info.plist CLIENT_ID).
 // Example: 1234567890-abcdefghijklmnopqrstuv.apps.googleusercontent.com
 GOOGLE_CLIENT_ID=950804897667-6n80c99rgha62msa59b5mcdos8p8pm67.apps.googleusercontent.com
+
+// Debug builds use development Apple service environments.
+APS_ENVIRONMENT=development
+APP_ATTEST_ENVIRONMENT=development

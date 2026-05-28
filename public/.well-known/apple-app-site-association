@@ -3,24 +3,37 @@
     "apps": [],
     "details": [
       {
-        "appID": "TEAM_ID_HERE.com.sportconnect.SportConnectApplication",
+        "appIDs": [
+          "UN597DJZW7.com.sportconnect.SportConnectApplication"
+        ],
         "paths": [
           "/ride/*",
+          "/events/*",
           "/chat/detail/*",
           "/chat/ride/*",
           "/chat/group/*",
           "/profile",
           "/edit-profile",
           "/driver/vehicles",
-          "/notifications",
-          "/events/*"
+          "/notifications"
+        ],
+        "components": [
+          { "/": "/ride/*" },
+          { "/": "/events/*" },
+          { "/": "/chat/detail/*" },
+          { "/": "/chat/ride/*" },
+          { "/": "/chat/group/*" },
+          { "/": "/profile" },
+          { "/": "/edit-profile" },
+          { "/": "/driver/vehicles" },
+          { "/": "/notifications" }
         ]
       }
     ]
   },
   "webcredentials": {
     "apps": [
-      "TEAM_ID_HERE.com.sportconnect.SportConnectApplication"
+      "UN597DJZW7.com.sportconnect.SportConnectApplication"
     ]
   }
 }

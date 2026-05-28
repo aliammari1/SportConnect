@@ -7,6 +7,7 @@ import 'package:sport_connect/core/models/user/user_model.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/services/pdf_receipt_service.dart';
 import 'package:sport_connect/core/services/routing_service.dart';
+import 'package:sport_connect/core/utils/share_sheet_origin.dart';
 import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 import 'package:sport_connect/features/rides/view_models/ride_view_model.dart';
@@ -183,7 +184,12 @@ ${'=' * 30}
 $rideIdLabel: ${ride.id}'''
                 .trimLeft();
 
-        await SharePlus.instance.share(ShareParams(text: receipt));
+        await SharePlus.instance.share(
+          ShareParams(
+            text: receipt,
+            sharePositionOrigin: shareSheetOrigin(),
+          ),
+        );
         if (!ref.mounted) return;
         state = state.copyWith(isGeneratingPdf: false);
       } on Exception catch (e) {

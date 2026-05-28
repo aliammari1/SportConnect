@@ -12,12 +12,14 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/config/routes/route_params.dart';
+import 'package:sport_connect/core/constants/app_constants.dart';
 import 'package:sport_connect/core/models/location/location_point.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/utils/share_sheet_origin.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/map_location_picker.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
@@ -660,8 +662,9 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                   AppLocalizations.of(context).running,
                   dateStr,
                   event.location.address,
-                  'https://sportconnect.app/events/${event.id}',
+                  'https://${AppConstants.hostingDomain}/events/detail/${event.id}',
                 ),
+                sharePositionOrigin: shareSheetOrigin(context),
               ),
             );
           },
@@ -950,10 +953,12 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       photoUrl: event.imageUrl,
     );
 
-    context.pushNamed(
-      AppRoutes.chatGroup.name,
-      pathParameters: {'id': chatId},
-      extra: receiver,
+    unawaited(
+      context.pushNamed(
+        AppRoutes.chatGroup.name,
+        pathParameters: {'id': chatId},
+        extra: receiver,
+      ),
     );
   }
 
@@ -1066,72 +1071,74 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   /// Show delete confirmation dialog before deleting event
   void _showDeleteConfirmation(EventModel event) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog.adaptive(
-        title: Text(AppLocalizations.of(context).eventDeleteConfirmTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(AppLocalizations.of(context).eventDeleteWarning),
-            if (event.isRecurring) ...[
-              SizedBox(height: 16.h),
-              Container(
-                padding: EdgeInsets.all(12.w),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  border: Border.all(color: AppColors.error),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).recurring_event,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.error,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      AppLocalizations.of(
-                        context,
-                      ).this_event_repeats_deleting_it_will_remove_all_occurrences_past_and_future,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text.rich(
-                      TextSpan(
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog.adaptive(
+          title: Text(AppLocalizations.of(context).eventDeleteConfirmTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(AppLocalizations.of(context).eventDeleteWarning),
+              if (event.isRecurring) ...[
+                SizedBox(height: 16.h),
+                Container(
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    border: Border.all(color: AppColors.error),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context).recurring_event,
                         style: const TextStyle(
-                          fontSize: 11,
-                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.error,
                         ),
-                        text:
-                            '${AppLocalizations.of(context).to_delete_only_specific_occurrences_use_google_calendar_tap_the_event}"${AppLocalizations.of(context).this_event}" (${AppLocalizations.of(context).not_label} "${AppLocalizations.of(context).all_events}").',
                       ),
-                    ),
-                  ],
+                      SizedBox(height: 8.h),
+                      Text(
+                        AppLocalizations.of(
+                          context,
+                        ).this_event_repeats_deleting_it_will_remove_all_occurrences_past_and_future,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text.rich(
+                        TextSpan(
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          text:
+                              '${AppLocalizations.of(context).to_delete_only_specific_occurrences_use_google_calendar_tap_the_event}"${AppLocalizations.of(context).this_event}" (${AppLocalizations.of(context).not_label} "${AppLocalizations.of(context).all_events}").',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(),
+              child: Text(AppLocalizations.of(context).actionCancel),
+            ),
+            TextButton(
+              onPressed: () {
+                context.pop(); // Close dialog
+                unawaited(_deleteEvent(event));
+              },
+              style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              child: Text(AppLocalizations.of(context).actionDelete),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: Text(AppLocalizations.of(context).actionCancel),
-          ),
-          TextButton(
-            onPressed: () {
-              context.pop(); // Close dialog
-              _deleteEvent(event);
-            },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: Text(AppLocalizations.of(context).actionDelete),
-          ),
-        ],
       ),
     );
   }

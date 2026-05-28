@@ -19,6 +19,7 @@ import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/utils/share_sheet_origin.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/passenger_info_widget.dart';
@@ -188,39 +189,39 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
       body: MaxWidthContainer(
         maxWidth: kMaxWidthWide,
         child: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            _buildSliverAppBar(ride, confirmedBookings, uiState),
-            SliverToBoxAdapter(
-              child: _buildStatsBar(
-                ride,
-                pendingBookings.length,
-                confirmedBookings,
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              _buildSliverAppBar(ride, confirmedBookings, uiState),
+              SliverToBoxAdapter(
+                child: _buildStatsBar(
+                  ride,
+                  pendingBookings.length,
+                  confirmedBookings,
+                ),
               ),
-            ),
-          ];
-        },
-        body: AdaptiveTabBarView(
-          tabs: [
-            AppLocalizations.of(context).details,
-            if (pendingBookings.isNotEmpty)
-              '${AppLocalizations.of(context).requests} (${pendingBookings.length})'
-            else
-              AppLocalizations.of(context).requests,
-            if (confirmedBookings.isNotEmpty)
-              '${AppLocalizations.of(context).passengers} (${confirmedBookings.length})'
-            else
-              AppLocalizations.of(context).passengers,
-          ],
-          selectedColor: Colors.white,
-          backgroundColor: AppColors.primary,
-          children: [
-            _buildDetailsTab(ride),
-            _buildRequestsTab(ride, pendingBookings),
-            _buildPassengersTab(ride, confirmedBookings),
-          ],
+            ];
+          },
+          body: AdaptiveTabBarView(
+            tabs: [
+              AppLocalizations.of(context).details,
+              if (pendingBookings.isNotEmpty)
+                '${AppLocalizations.of(context).requests} (${pendingBookings.length})'
+              else
+                AppLocalizations.of(context).requests,
+              if (confirmedBookings.isNotEmpty)
+                '${AppLocalizations.of(context).passengers} (${confirmedBookings.length})'
+              else
+                AppLocalizations.of(context).passengers,
+            ],
+            selectedColor: Colors.white,
+            backgroundColor: AppColors.primary,
+            children: [
+              _buildDetailsTab(ride),
+              _buildRequestsTab(ride, pendingBookings),
+              _buildPassengersTab(ride, confirmedBookings),
+            ],
+          ),
         ),
-      ),
       ),
       bottomNavigationBar: _buildBottomActions(ride),
     );
@@ -536,7 +537,6 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
       ),
     ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0);
   }
-
 
   Widget _buildDetailsTab(RideModel ride) {
     final details = <Widget>[
@@ -1849,6 +1849,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
         ShareParams(
           text: shareText,
           subject: l10n.rideShareSubject,
+          sharePositionOrigin: shareSheetOrigin(context),
         ),
       );
     } on Exception {
@@ -1865,6 +1866,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
             'https://${AppConstants.hostingDomain}/ride/${ride.id}',
           ),
           subject: l10n.rideShareSubject,
+          sharePositionOrigin: shareSheetOrigin(context),
         ),
       );
     }

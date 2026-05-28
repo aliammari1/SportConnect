@@ -16,6 +16,7 @@ import 'package:sport_connect/core/theme/platform_adaptive.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/payment_error_handler.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/utils/share_sheet_origin.dart';
 import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/analytics_payment_widgets.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
@@ -121,7 +122,14 @@ class DriverEarningsScreen extends ConsumerWidget {
       }
     }
 
-    SharePlus.instance.share(ShareParams(text: buffer.toString()));
+    unawaited(
+      SharePlus.instance.share(
+        ShareParams(
+          text: buffer.toString(),
+          sharePositionOrigin: shareSheetOrigin(context),
+        ),
+      ),
+    );
   }
 
   @override

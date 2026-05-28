@@ -30,6 +30,9 @@ class StripeConfig {
   /// Default currency for payments
   static const String defaultCurrency = 'eur';
 
+  /// Custom return URL scheme registered in ios/Runner/Info.plist.
+  static const String urlScheme = 'flutterstripe';
+
   /// Whether we're in test mode
   static bool get isTestMode => publishableKey.startsWith('pk_test_');
 

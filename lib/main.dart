@@ -169,6 +169,8 @@ class SportConnectApp extends ConsumerStatefulWidget {
 }
 
 class _SportConnectAppState extends ConsumerState<SportConnectApp> {
+  final Upgrader _upgrader = Upgrader(countryCode: 'FR');
+
   bool _deepLinksInitialized = false;
   bool _fcmTokenSaved = false;
   bool _postLaunchStartupStarted = false;
@@ -301,6 +303,7 @@ class _SportConnectAppState extends ConsumerState<SportConnectApp> {
 
               if (_isFirebaseInitialized && _showUpgradeAlert) {
                 wrappedChild = UpgradeAlert(
+                  upgrader: _upgrader,
                   navigatorKey: rootNavigatorKey,
                   dialogStyle: UpgradeDialogStyle.cupertino,
                   showIgnore: false,

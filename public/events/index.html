@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportConnect - Open Event</title>
+  <meta property="og:title" content="SportConnect Event">
+  <meta property="og:description" content="Open this event in SportConnect.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SportConnect">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1b2e24;
+      background: #f6faf7;
+    }
+    .card {
+      width: min(90%, 420px);
+      padding: 32px;
+      border: 1px solid #d8e0db;
+      border-radius: 18px;
+      background: #fff;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(27, 46, 36, 0.08);
+    }
+    .brand {
+      margin-bottom: 6px;
+      color: #40916c;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    h1 { margin-bottom: 10px; font-size: 24px; }
+    p { margin-bottom: 24px; color: #5c7266; line-height: 1.45; }
+    .btn {
+      display: inline-block;
+      padding: 13px 28px;
+      border-radius: 12px;
+      background: #40916c;
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">SportConnect</div>
+    <h1>Event</h1>
+    <p>Opening this event in the app...</p>
+    <a class="btn" id="openApp" href="#">Open in App</a>
+  </main>
+  <script>
+    (function() {
+      var parts = window.location.pathname.split('/').filter(Boolean);
+      var eventId = parts[1] === 'detail' ? parts[2] : parts[1];
+      var deepLink = 'sportconnect://events/detail/' + (eventId || '');
+      document.getElementById('openApp').href = deepLink;
+
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = deepLink;
+      document.body.appendChild(iframe);
+
+      setTimeout(function() {
+        if (iframe.parentNode) {
+          iframe.parentNode.removeChild(iframe);
+        }
+      }, 2000);
+    })();
+  </script>
+</body>
+</html>

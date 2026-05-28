@@ -217,7 +217,7 @@ class PushNotificationService {
                   SetOptions(merge: true),
                 );
             TalkerService.info('FCM token refreshed for user $userId');
-          } catch (e) {
+          } on Object catch (e) {
             TalkerService.warning('FCM token refresh save failed: $e');
           }
         },
@@ -406,7 +406,7 @@ class PushNotificationService {
             'redirecting to notifications.',
           );
           if (context.mounted) {
-            context.pushNamed(AppRoutes.notifications.name);
+            await context.pushNamed(AppRoutes.notifications.name);
           }
           return;
         }
@@ -419,23 +419,26 @@ class PushNotificationService {
         };
 
         if (context.mounted) {
-          context.pushNamed(
+          await context.pushNamed(
             routeName,
             pathParameters: {'id': referenceId},
             extra: receiver,
           );
         }
+        return;
       case 'ride_request':
       case 'ride_booking_request':
-        context.push(AppRoutes.driverRequests.path);
+        await context.push(AppRoutes.driverRequests.path);
+        return;
       case 'ride_booking_accepted':
         // Navigate to the pending screen so the rider can complete payment
-        context.push(
+        await context.push(
           AppRoutes.rideBookingPending.path.replaceFirst(
             ':rideId',
             referenceId,
           ),
         );
+        return;
       case 'ride_update':
       case 'ride_booking_rejected':
       case 'ride_booking_cancelled':
@@ -443,11 +446,12 @@ class PushNotificationService {
       case 'ride_started':
       case 'ride_completed':
       case 'ride_cancelled':
-        context.push(
+        await context.push(
           AppRoutes.rideDetail.path.replaceFirst(':id', referenceId),
         );
+        return;
       default:
-        context.push(AppRoutes.notifications.path);
+        await context.push(AppRoutes.notifications.path);
     }
   }
 

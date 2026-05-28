@@ -27,6 +27,50 @@ AuthRepository authRepository(Ref ref) {
   );
 }
 
+AuthException mapAppleAuthException(
+  FirebaseAuthException e, {
+  bool isReauthentication = false,
+}) {
+  switch (e.code) {
+    case 'invalid-credential':
+    case 'missing-or-invalid-nonce':
+      return AuthException(
+        code: isReauthentication
+            ? 'apple-reauth-invalid-credential'
+            : 'apple-sign-in-invalid-credential',
+        message: isReauthentication
+            ? 'Apple re-authentication could not be verified. Please try again.'
+            : 'Apple sign-in could not be verified. Please try again.',
+      );
+    case 'account-exists-with-different-credential':
+      return const AuthException(
+        code: 'account-exists-with-different-credential',
+        message:
+            'An account already exists with a different sign-in method. '
+            'Try signing in with email/password or the original provider.',
+      );
+    case 'network-request-failed':
+      return const AuthException(
+        code: 'network-request-failed',
+        message: 'Network error. Please check your internet connection.',
+      );
+    case 'too-many-requests':
+      return const AuthException(
+        code: 'too-many-requests',
+        message: 'Too many attempts. Please try again later',
+      );
+    default:
+      return AuthException(
+        code: e.code,
+        message:
+            e.message ??
+            (isReauthentication
+                ? 'Apple re-authentication failed. Please try again.'
+                : 'Apple sign-in failed. Please try again.'),
+      );
+  }
+}
+
 /// Repository for authentication operations - Firebase only
 class AuthRepository {
   /// Creates an [AuthRepository] with optional dependency injection.
@@ -526,9 +570,11 @@ class AuthRepository {
         );
       }
 
-      final oauthCredential = OAuthProvider('apple.com').credential(
+      final oauthCredential = _appleCredentialWithIdToken(
         idToken: idToken,
         rawNonce: rawNonce,
+        givenName: appleCredential.givenName,
+        familyName: appleCredential.familyName,
       );
 
       final userCredential = await _firebaseService.auth.signInWithCredential(
@@ -603,7 +649,7 @@ class AuthRepository {
       }
     } on FirebaseAuthException catch (e) {
       TalkerService.error('Apple sign in Firebase error: ${e.code}');
-      throw _handleAuthException(e);
+      throw mapAppleAuthException(e);
     } on Exception catch (e, st) {
       TalkerService.error('Apple sign in error', e, st);
       rethrow;
@@ -625,6 +671,22 @@ class AuthRepository {
     final bytes = utf8.encode(input);
     final digest = sha256.convert(bytes);
     return digest.toString();
+  }
+
+  OAuthCredential _appleCredentialWithIdToken({
+    required String idToken,
+    required String rawNonce,
+    String? givenName,
+    String? familyName,
+  }) {
+    return AppleAuthProvider.credentialWithIDToken(
+      idToken,
+      rawNonce,
+      AppleFullPersonName(
+        givenName: givenName,
+        familyName: familyName,
+      ),
+    );
   }
 
   /// Create or update user document in Firestore.
@@ -938,8 +1000,16 @@ class AuthRepository {
         nonce: nonce,
       );
 
-      final oauthCredential = OAuthProvider('apple.com').credential(
-        idToken: appleCredential.identityToken,
+      final idToken = appleCredential.identityToken;
+      if (idToken == null) {
+        throw const AuthException(
+          code: 'apple-sign-in-failed',
+          message: 'Apple did not return an identity token. Please try again.',
+        );
+      }
+
+      final oauthCredential = _appleCredentialWithIdToken(
+        idToken: idToken,
         rawNonce: rawNonce,
       );
       await user.reauthenticateWithCredential(oauthCredential);
@@ -966,7 +1036,7 @@ class AuthRepository {
         e,
         st,
       );
-      throw _handleAuthException(e);
+      throw mapAppleAuthException(e, isReauthentication: true);
     } on Exception catch (e, st) {
       TalkerService.error('Apple re-authentication error', e, st);
       rethrow;
