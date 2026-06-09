@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://codemagic.io/codemagic-schema.json
+
+workflows:
+  ios-app-preview:
+    name: iOS App Preview
+    labels:
+      - app-preview
+      - ios
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+
+    scripts:
+      - name: Install Flutter dependencies
+        script: |
+          flutter --version
+          xcodebuild -version
+          flutter pub get
+
+      - name: Generate build environment
+        script: |
+          if [ -n "${STRIPE_PUBLISHABLE_KEY:-}" ]; then
+            printf 'STRIPE_PUBLISHABLE_KEY=%s\n' "$STRIPE_PUBLISHABLE_KEY" > .env
+          else
+            cp .env.example .env
+          fi
+
+          dart run build_runner build \
+            --build-filter=lib/core/config/environment.g.dart
+
+      - name: Build iOS simulator app
+        script: |
+          flutter build ios --debug --simulator
+          test -d build/ios/iphonesimulator/Runner.app
+
+    artifacts:
+      - build/ios/iphonesimulator/Runner.app
+      - /tmp/xcodebuild_logs/*.log
