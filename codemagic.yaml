@@ -44,4 +44,4 @@ workflows:
 
     artifacts:
       - build/ios/iphonesimulator/Runner.app
-      -       -odebuild_logs/*.log
+      - /tmp/xcodebuild_logs/*.log
