@@ -6,6 +6,9 @@ workflows:
     labels:
       - app-preview
       - ios
+      - simulator
+      - flutter
+
     instance_type: mac_mini_m2
     max_build_duration: 60
 
@@ -13,35 +16,106 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      vars:
+        FLUTTER_BUILD_MODE: debug
 
     cache:
       cache_paths:
         - $HOME/.pub-cache
         - $HOME/Library/Caches/CocoaPods
+        - $HOME/Library/Developer/Xcode/DerivedData
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+      cancel_previous_builds: true
 
     scripts:
+      - name: Show build environment
+        script: |
+          set -euo pipefail
+
+          echo "Flutter:"
+          flutter --version
+
+          echo "Xcode:"
+          xcodebuild -version
+
+          echo "CocoaPods:"
+          pod --version || true
+
+          echo "Available simulators:"
+          xcrun simctl list devices available | head -80
+
       - name: Install Flutter dependencies
         script: |
-          flutter --version
-          xcodebuild -version
+          set -euo pipefail
           flutter pub get
 
-      - name: Generate build environment
+      - name: Generate local .env
         script: |
+          set -euo pipefail
+
           if [ -n "${STRIPE_PUBLISHABLE_KEY:-}" ]; then
             printf 'STRIPE_PUBLISHABLE_KEY=%s\n' "$STRIPE_PUBLISHABLE_KEY" > .env
-          else
+          elif [ -f .env.example ]; then
             cp .env.example .env
+          else
+            touch .env
           fi
 
+          ls -la .env
+
+      - name: Run code generation
+        script: |
+          set -euo pipefail
+
           dart run build_runner build \
+            --delete-conflicting-outputs \
             --build-filter=lib/core/config/environment.g.dart
+
+      - name: Install iOS pods
+        script: |
+          set -euo pipefail
+
+          cd ios
+          pod install
+          cd ..
 
       - name: Build iOS simulator app
         script: |
-          flutter build ios --debug --simulator
+          set -euo pipefail
+
+          flutter build ios \
+            --debug \
+            --simulator \
+            --no-codesign
+
           test -d build/ios/iphonesimulator/Runner.app
+
+          du -sh build/ios/iphonesimulator/Runner.app
+          find build/ios/iphonesimulator/Runner.app -maxdepth 2 -type f | head -40
+
+      - name: Verify app artifact
+        script: |
+          set -euo pipefail
+
+          APP_PATH="build/ios/iphonesimulator/Runner.app"
+          INFO_PLIST="$APP_PATH/Info.plist"
+
+          test -d "$APP_PATH"
+          test -f "$INFO_PLIST"
+
+          /usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" "$INFO_PLIST" || true
+          /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$INFO_PLIST" || true
+
+          echo "Artifact ready for Codemagic App Preview."
 
     artifacts:
       - build/ios/iphonesimulator/Runner.app
       - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
