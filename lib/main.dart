@@ -290,58 +290,88 @@ class _SportConnectAppState extends ConsumerState<SportConnectApp> {
     // at 428 logical pixels — the widest iPhone — using ResponsiveScaledBox.
     // The app renders in phone proportions and is centred on the tablet screen,
     // which is the standard approach used by most mobile-first apps on iPad.
+    //
+    // IMPORTANT: ScreenUtilInit reads MediaQueryData.fromView() internally and
+    // bypasses any MediaQuery widget in the tree.  On iPad it sees the real
+    // device width (820pt+) and scales every .sp/.w/.h by ~2×; the FittedBox
+    // then scales again by ~2×, producing ~4× the design size.  The fix is to
+    // re-call ScreenUtil.configure() inside the builder callback with the width
+    // clamped to 428pt — overriding the bad value before any child widget builds.
     return ResponsiveScaledBox(
       width: 428,
       child: ScreenUtilInit(
-      designSize: const Size(375, 812),
-      minTextAdapt: true,
-      splitScreenMode: true,
-      builder: (context, child) {
-        return ResponsiveBreakpoints.builder(
-          child: AdaptiveApp.router(
-            onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-            locale: locale,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: AppLocalizations.supportedLocales,
-            themeMode: ThemeMode.light,
-            materialLightTheme: AppMaterialTheme.lightTheme,
-            materialDarkTheme: AppMaterialTheme.darkTheme,
-            cupertinoLightTheme: AppCupertinoTheme.lightTheme,
-            cupertinoDarkTheme: AppCupertinoTheme.darkTheme,
-            routerConfig: router,
-            builder: (context, child) {
-              final appChild = child ?? const SizedBox.shrink();
+        designSize: const Size(375, 812),
+        minTextAdapt: false,
+        splitScreenMode: false,
+        builder: (context, child) {
+          // ScreenUtilInit always reads MediaQueryData.fromView() — it bypasses
+          // any MediaQuery widget in the tree and sees the real device size
+          // (e.g. 820×1180 on iPad).  ResponsiveScaledBox already handles the
+          // tablet→phone FittedBox transform, so ScreenUtil must only scale
+          // within phone dimensions.  Re-configure here with a capped 428-pt
+          // width so every .sp/.w/.h call uses the phone scale, not 2-4× iPad.
+          final view = View.maybeOf(context);
+          if (view != null) {
+            final real = MediaQueryData.fromView(view);
+            final cappedW = real.size.width.clamp(0.0, 428.0);
+            final cappedH = real.size.height * cappedW / real.size.width;
+            ScreenUtil.configure(
+              data: real.copyWith(size: Size(cappedW, cappedH)),
+              designSize: const Size(375, 812),
+              minTextAdapt: false,
+              splitScreenMode: false,
+            );
+          }
+                return ResponsiveBreakpoints.builder(
+                  child: AdaptiveApp.router(
+                    onGenerateTitle: (context) =>
+                        AppLocalizations.of(context).appTitle,
+                    locale: locale,
+                    localizationsDelegates: const [
+                      AppLocalizations.delegate,
+                      GlobalMaterialLocalizations.delegate,
+                      GlobalWidgetsLocalizations.delegate,
+                      GlobalCupertinoLocalizations.delegate,
+                    ],
+                    supportedLocales: AppLocalizations.supportedLocales,
+                    themeMode: ThemeMode.light,
+                    materialLightTheme: AppMaterialTheme.lightTheme,
+                    materialDarkTheme: AppMaterialTheme.darkTheme,
+                    cupertinoLightTheme: AppCupertinoTheme.lightTheme,
+                    cupertinoDarkTheme: AppCupertinoTheme.darkTheme,
+                    routerConfig: router,
+                    builder: (context, child) {
+                      final appChild = child ?? const SizedBox.shrink();
 
-              var wrappedChild = appChild;
+                      var wrappedChild = appChild;
 
-              if (_isFirebaseInitialized && _showUpgradeAlert) {
-                wrappedChild = UpgradeAlert(
-                  upgrader: _upgrader,
-                  navigatorKey: rootNavigatorKey,
-                  dialogStyle: UpgradeDialogStyle.cupertino,
-                  showIgnore: false,
-                  showReleaseNotes: false,
-                  child: appChild,
+                      if (_isFirebaseInitialized && _showUpgradeAlert) {
+                        wrappedChild = UpgradeAlert(
+                          upgrader: _upgrader,
+                          navigatorKey: rootNavigatorKey,
+                          dialogStyle: UpgradeDialogStyle.cupertino,
+                          showIgnore: false,
+                          showReleaseNotes: false,
+                          child: appChild,
+                        );
+                      }
+
+                      return _DismissKeyboardOnTap(child: wrappedChild);
+                    },
+                  ),
+                  breakpoints: [
+                    const Breakpoint(start: 0, end: 600, name: MOBILE),
+                    const Breakpoint(start: 601, end: 900, name: TABLET),
+                    const Breakpoint(start: 901, end: 1200, name: DESKTOP),
+                    const Breakpoint(
+                      start: 1201,
+                      end: double.infinity,
+                      name: '4K',
+                    ),
+                  ],
                 );
-              }
-
-              return _DismissKeyboardOnTap(child: wrappedChild);
-            },
-          ),
-          breakpoints: [
-            const Breakpoint(start: 0, end: 600, name: MOBILE),
-            const Breakpoint(start: 601, end: 900, name: TABLET),
-            const Breakpoint(start: 901, end: 1200, name: DESKTOP),
-            const Breakpoint(start: 1201, end: double.infinity, name: '4K'),
-          ],
-        );
-      },
-    ),
+        },
+      ),
     ); // ResponsiveScaledBox
   }
 }
