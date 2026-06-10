@@ -168,7 +168,7 @@ String? _handleRedirect(
     isFirestoreStillLoading: isFirestoreStillLoading,
     isConnectedAccountLoading: connectedAccountState.isLoading,
     needsRoleSelection: needsRoleSelection,
-    hasCompletedOnboarding: onboardingState.value ?? true,
+    hasCompletedOnboarding: onboardingState.value ?? false,
     isEmailVerified: isEmailVerified,
     hasVerifiableEmail: hasVerifiableEmail,
     selectedRoleIntent: selectedRoleIntent,

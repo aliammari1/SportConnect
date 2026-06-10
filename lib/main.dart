@@ -14,6 +14,7 @@ import 'package:responsive_framework/responsive_framework.dart';
 import 'package:riverpod_devtools_tracker/riverpod_devtools_tracker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Config & Services
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:sport_connect/core/config/app_router.dart';
 import 'package:sport_connect/core/config/stripe_config.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
@@ -28,6 +29,16 @@ import 'package:sport_connect/core/theme/material_app_theme.dart';
 import 'package:sport_connect/features/profile/view_models/settings_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 import 'package:upgrader/upgrader.dart';
+
+/// Top-level FCM handler for data-only push messages when the app is
+/// terminated or backgrounded.  Must be a top-level function annotated with
+/// @pragma('vm:entry-point') so the AOT compiler does not tree-shake it.
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Firebase must be initialized before any Firebase call.
+  await Firebase.initializeApp();
+  TalkerService.info('FCM background message: ${message.messageId}');
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -108,7 +119,7 @@ Future<void> _initializePushNotifications() async {
   if (kIsWeb) return;
 
   try {
-    // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     await PushNotificationService.instance.initialize().timeout(
       const Duration(seconds: 6),
@@ -274,7 +285,14 @@ class _SportConnectAppState extends ConsumerState<SportConnectApp> {
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(settingsViewModelProvider.select((s) => s.locale));
 
-    return ScreenUtilInit(
+    // On tablets ScreenUtil scales .w/.h values proportionally to the full
+    // iPad width (820dp+), causing buttons/text to overflow.  Cap the layout
+    // at 428 logical pixels — the widest iPhone — using ResponsiveScaledBox.
+    // The app renders in phone proportions and is centred on the tablet screen,
+    // which is the standard approach used by most mobile-first apps on iPad.
+    return ResponsiveScaledBox(
+      width: 428,
+      child: ScreenUtilInit(
       designSize: const Size(375, 812),
       minTextAdapt: true,
       splitScreenMode: true,
@@ -323,7 +341,8 @@ class _SportConnectAppState extends ConsumerState<SportConnectApp> {
           ],
         );
       },
-    );
+    ),
+    ); // ResponsiveScaledBox
   }
 }
 

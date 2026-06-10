@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' show min;
 
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/foundation.dart';
@@ -449,17 +450,19 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
             style: IconButton.styleFrom(
               backgroundColor: theme.accent.withOpacity(0.15),
               foregroundColor: theme.accent,
-              minimumSize: Size(48.w, 48.w),
+              // Cap at 48 logical pixels so the button doesn't over-scale on
+              // tablets and steal horizontal space from the title.
+              minimumSize: Size(min(48.w, 48), min(48.w, 48)),
               shape: const CircleBorder(),
             ),
             icon: Icon(
               wizardUiState.currentStep == 0
                   ? Icons.close_rounded
                   : Icons.adaptive.arrow_back_rounded,
-              size: 18.sp,
+              size: 18.sp.clamp(0.0, 20.0),
             ),
           ),
-          SizedBox(width: 10.w),
+          SizedBox(width: min(10.w, 10)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,9 +472,13 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                   child: Text(
                     stepLabels[wizardUiState.currentStep],
                     key: ValueKey(wizardUiState.currentStep),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: 'Syne',
-                      fontSize: 20.sp,
+                      // Clamp so on large tablets the title stays readable
+                      // without exceeding the available Row width.
+                      fontSize: 20.sp.clamp(0.0, 22.0),
                       fontWeight: FontWeight.w800,
                       color: theme.text,
                     ),
@@ -482,8 +489,10 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                     wizardUiState.currentStep + 1,
                     3,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12.sp,
+                    fontSize: 12.sp.clamp(0.0, 13.0),
                     color: theme.accent.withOpacity(0.8),
                   ),
                 ),
@@ -495,14 +504,16 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
               3,
               (i) => AnimatedContainer(
                 duration: 300.ms,
-                margin: EdgeInsets.only(left: 5.w),
-                width: i == wizardUiState.currentStep ? 20.w : 8.w,
-                height: 8.w,
+                // Fixed sizes prevent progress dots from ballooning on tablet
+                // and competing with the title for horizontal space.
+                margin: const EdgeInsets.only(left: 5),
+                width: i == wizardUiState.currentStep ? 20 : 8,
+                height: 8,
                 decoration: BoxDecoration(
                   color: i <= wizardUiState.currentStep
                       ? theme.accent
                       : theme.accent.withOpacity(0.25),
-                  borderRadius: BorderRadius.circular(4.r),
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
             ),
