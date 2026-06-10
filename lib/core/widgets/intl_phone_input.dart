@@ -346,6 +346,9 @@ class IntlPhoneInputState extends State<IntlPhoneInput> {
           ),
         ),
         SizedBox(height: 8.h),
+                Material(
+                  type: 
+child:
         AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
@@ -469,7 +472,7 @@ class IntlPhoneInputState extends State<IntlPhoneInput> {
               ),
             ],
           ),
-        ),
+        ),),
         SizedBox(height: 8.h),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 180),
