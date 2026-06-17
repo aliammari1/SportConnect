@@ -10,6 +10,7 @@ import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
+import 'package:sport_connect/core/widgets/app_segmented_tab_view.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
@@ -79,7 +80,9 @@ class _RidesContent extends StatefulWidget {
 class _RidesContentState extends State<_RidesContent> {
   String? _selectedRideId;
 
-  bool get _usesTwoPaneLayout => context.screenWidth >= Breakpoints.medium;
+  // Must match AdaptiveMasterDetailScaffold's threshold, else a tap selects a
+  // detail with no pane to render it (stuck on the list on iPad portrait).
+  bool get _usesTwoPaneLayout => context.screenWidth >= kTwoPaneMinWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +242,7 @@ class _SliverHeader extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 17.sp,
+            fontSize: 16.sp,
             fontWeight: FontWeight.w700,
             color: Colors.white,
             height: 1,
@@ -279,7 +282,7 @@ class _TabBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverFillRemaining(
-      child: AdaptiveTabBarView(
+      child: AppSegmentedTabView(
         tabs: [
           AppLocalizations.of(context).activeRide,
           AppLocalizations.of(context).upcoming,
@@ -357,13 +360,17 @@ class _ActiveRideCard extends StatelessWidget {
               children: [
                 _PulsingDot(),
                 SizedBox(width: 8.w),
-                Text(
-                  l10n.rideInProgress,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: 1.2,
+                Flexible(
+                  child: Text(
+                    l10n.rideInProgress,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const Spacer(),
@@ -404,7 +411,7 @@ class _ActiveRideCard extends StatelessWidget {
                   child: DriverNameWidget(
                     driverId: ride.driverId,
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
@@ -720,7 +727,7 @@ class _HistoryTab extends StatelessWidget {
               child: Text(
                 month,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textSecondary,
                   letterSpacing: 0.5,
@@ -799,7 +806,7 @@ class _HistoryTile extends StatelessWidget {
                   Text(
                     '${ride.origin.address} → ${ride.destination.address}',
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
@@ -906,7 +913,7 @@ class _RouteRow extends StatelessWidget {
               Text(
                 origin,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
                   color: primaryColor,
                 ),
@@ -917,7 +924,7 @@ class _RouteRow extends StatelessWidget {
               Text(
                 destination,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w500,
                   color: secondaryColor,
                 ),
@@ -979,7 +986,7 @@ class _EmptyState extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.textSecondary,
                       ),
                       textAlign: TextAlign.center,
@@ -1006,6 +1013,7 @@ class _RidesLoadingShell extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.myTrips,
       ),
       body: Padding(
@@ -1031,6 +1039,7 @@ class _RidesErrorShell extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.myTrips,
       ),
       body: Center(
@@ -1078,6 +1087,7 @@ class _SignInPromptShell extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.myTrips,
       ),
       body: Center(

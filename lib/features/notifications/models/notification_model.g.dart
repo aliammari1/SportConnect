@@ -20,6 +20,7 @@ _NotificationModel _$NotificationModelFromJson(Map json) => _NotificationModel(
   senderId: json['senderId'] as String?,
   senderName: json['senderName'] as String?,
   senderPhotoUrl: json['senderPhotoUrl'] as String?,
+  imageUrl: json['imageUrl'] as String?,
   actionUrl: json['actionUrl'] as String?,
   data:
       (json['data'] as Map?)?.map((k, e) => MapEntry(k as String, e)) ??
@@ -45,6 +46,7 @@ Map<String, dynamic> _$NotificationModelToJson(_NotificationModel instance) =>
       'senderId': instance.senderId,
       'senderName': instance.senderName,
       'senderPhotoUrl': instance.senderPhotoUrl,
+      'imageUrl': instance.imageUrl,
       'actionUrl': instance.actionUrl,
       'data': instance.data,
       'isRead': instance.isRead,

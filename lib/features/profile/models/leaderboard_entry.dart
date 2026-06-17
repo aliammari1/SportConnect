@@ -13,7 +13,10 @@ abstract class LeaderboardEntry with _$LeaderboardEntry {
     required int level,
     required int rank,
     String? photoUrl,
-    @Default(0) int ridesThisMonth,
+    // Lifetime total rides. Renamed from the former `ridesThisMonth`, which was
+    // mislabeled: it has always been fed from GamificationStats.totalRides (a
+    // lifetime counter) because no monthly ride bucket exists in the model.
+    @Default(0) int totalRides,
   }) = _LeaderboardEntry;
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json) =>

@@ -26,15 +26,18 @@ abstract class RideSummary with _$RideSummary {
 }
 
 /// Detailed ride state for detail view
-/// Aggregates data from multiple sources
-@freezed
+/// Aggregates data from multiple sources.
+///
+/// This is transient view-state (holds [isLoading]/[errorMessage] and runtime
+/// aggregates), not a persistable model, so JSON serialization is disabled.
+@Freezed(toJson: false, fromJson: false)
 abstract class RideDetailState with _$RideDetailState {
   const factory RideDetailState({
     required String id,
     String? driverId,
     LocationPoint? origin,
     LocationPoint? destination,
-    @TimestampConverter() DateTime? departureTime,
+    DateTime? departureTime,
     String? formattedPrice,
     int? seatsAvailable,
     @Default([]) List<RideBooking> activeBookings,
@@ -43,7 +46,4 @@ abstract class RideDetailState with _$RideDetailState {
     @Default(false) bool isLoading,
     String? errorMessage,
   }) = _RideDetailState;
-
-  factory RideDetailState.fromJson(Map<String, dynamic> json) =>
-      _$RideDetailStateFromJson(json);
 }

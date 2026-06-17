@@ -108,6 +108,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           tooltip: l10n.goBack,
           icon: Icon(Icons.adaptive.arrow_back_rounded),
@@ -224,7 +225,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             Text(
               l10n.changePasswordDesc,
               style: TextStyle(
-                fontSize: 15.sp,
+                fontSize: 14.sp,
                 color: AppColors.textSecondary,
                 height: 1.5,
               ),
@@ -359,7 +360,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         Text(
           l10n.changePasswordSuccess,
           style: TextStyle(
-            fontSize: 26.sp,
+            fontSize: 24.sp,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           ),
@@ -371,7 +372,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           l10n.changePasswordSuccessDesc,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 15.sp,
+            fontSize: 14.sp,
             color: AppColors.textSecondary,
             height: 1.5,
           ),
@@ -501,7 +502,7 @@ class _SecurityBullet extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 color: AppColors.textPrimary,
                 height: 1.4,
               ),

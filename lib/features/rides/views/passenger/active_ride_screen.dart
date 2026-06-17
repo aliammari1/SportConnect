@@ -587,9 +587,6 @@ class _PassengerActiveRideScreenState
     final driverLatLng = driverLoc != null
         ? LatLng(driverLoc.latitude, driverLoc.longitude)
         : originLatLng;
-    final etaMinutes =
-        rideState.remainingEtaMinutes ?? ride.durationMinutes ?? 30;
-    final distToDest = rideState.remainingDistanceKm ?? ride.distanceKm ?? 0;
 
     // Center on driver only once when the map is first shown,
     // then let the passenger pan freely. Use the recenter button to re-focus.
@@ -714,7 +711,7 @@ class _PassengerActiveRideScreenState
                               child: Text(
                                 '${etaMin}m',
                                 style: TextStyle(
-                                  fontSize: 9.sp,
+                                  fontSize: 10.sp,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
@@ -1359,7 +1356,7 @@ class _PassengerActiveRideScreenState
                                 Text(
                                   'Your Pickup Code',
                                   style: TextStyle(
-                                    fontSize: 13.sp,
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white70,
                                     letterSpacing: 0.5,
@@ -1423,7 +1420,7 @@ class _PassengerActiveRideScreenState
                                 Text(
                                   'Show my pickup code',
                                   style: TextStyle(
-                                    fontSize: 13.sp,
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.primary,
                                   ),
@@ -1515,7 +1512,7 @@ class _PassengerActiveRideScreenState
                         child: Text(
                           'Trip is taking longer than expected — is everything okay?',
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             fontWeight: FontWeight.w600,
                             color: AppColors.error,
                           ),
@@ -1607,7 +1604,7 @@ class _PassengerActiveRideScreenState
                                     ) ??
                                     '0.0',
                                 style: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: 12.sp,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
                                 ),
@@ -1702,7 +1699,7 @@ class _PassengerActiveRideScreenState
                                     ? 'Payment Confirmed'
                                     : 'Payment Pending',
                                 style: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: 12.sp,
                                   fontWeight: FontWeight.w700,
                                   color: isPaid
                                       ? AppColors.success
@@ -1793,7 +1790,7 @@ class _PassengerActiveRideScreenState
                                   child: Text(
                                     '${vehicle.color} ${vehicle.make} ${vehicle.model}',
                                     style: TextStyle(
-                                      fontSize: 13.sp,
+                                      fontSize: 12.sp,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.textPrimary,
                                     ),
@@ -1848,7 +1845,7 @@ class _PassengerActiveRideScreenState
                             child: Text(
                               ride.vehicleInfo!,
                               style: TextStyle(
-                                fontSize: 13.sp,
+                                fontSize: 12.sp,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),

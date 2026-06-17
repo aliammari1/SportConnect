@@ -72,8 +72,6 @@ class PushNotificationService {
 
   bool _isInitialized = false;
   StreamSubscription<String>? _tokenRefreshSub;
-  StreamSubscription<RemoteMessage>? _foregroundMessageSub;
-  StreamSubscription<RemoteMessage>? _notificationOpenedSub;
 
   Future<bool> hasPermission() async {
     final settings = await _firebaseService.messaging.getNotificationSettings();
@@ -104,15 +102,13 @@ class PushNotificationService {
           sound: true,
         );
 
-    // 4. Listen for foreground messages
-    _foregroundMessageSub = FirebaseMessaging.onMessage.listen(
-      _handleForegroundMessage,
-    );
-
-    // 5. Listen for notification taps (app was in background)
-    _notificationOpenedSub = FirebaseMessaging.onMessageOpenedApp.listen(
-      _handleNotificationTap,
-    );
+    // 4. Listen for foreground messages.
+    // 5. Listen for notification taps (app was in background).
+    // These are app-level streams registered once for the process lifetime and
+    // are intentionally never cancelled (see deleteFcmToken), so the
+    // subscriptions are not retained.
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
 
     // 6. Check for initial message (app opened from terminated state)
     final initialMessage = await _firebaseService.messaging.getInitialMessage();
@@ -150,12 +146,13 @@ class PushNotificationService {
   /// sign-out. Firebase does not remove stale tokens automatically.
   Future<void> deleteFcmToken(String userId) async {
     try {
+      // Only the token-refresh subscription is user-scoped. The
+      // onMessage/onMessageOpenedApp subscriptions are app-level streams
+      // registered once in initialize(); cancelling them here would
+      // permanently break foreground display and tap-navigation after a
+      // logout->login within the same process, so they must persist.
       await _tokenRefreshSub?.cancel();
       _tokenRefreshSub = null;
-      await _foregroundMessageSub?.cancel();
-      _foregroundMessageSub = null;
-      await _notificationOpenedSub?.cancel();
-      _notificationOpenedSub = null;
       await _firebaseService.messaging.deleteToken();
       await _firebaseService.firestore
           .collection(AppConstants.usersCollection)
@@ -190,18 +187,21 @@ class PushNotificationService {
         );
         return;
       }
-      var user = await _usersCollection
+
+      // Targeted merge: only touch the two token fields to avoid a
+      // read-then-write race that could overwrite concurrent profile updates.
+      // fcmTokenUpdatedAt uses a server timestamp so stale-token pruning jobs
+      // can reliably compare age regardless of device clock skew.
+      await _firebaseService.firestore
+          .collection(AppConstants.usersCollection)
           .doc(userId)
-          .get()
-          .then((snap) => snap.data());
-      if (user == null) {
-        TalkerService.warning(
-          'User document not found for user $userId — cannot save FCM token.',
-        );
-        return;
-      }
-      user = user.copyWith(fcmToken: token);
-      await _usersCollection.doc(userId).set(user, SetOptions(merge: true));
+          .set(
+            {
+              'fcmToken': token,
+              'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
 
       TalkerService.info('FCM token saved for user $userId');
 
@@ -210,10 +210,14 @@ class PushNotificationService {
       _tokenRefreshSub = _firebaseService.messaging.onTokenRefresh.listen(
         (newToken) async {
           try {
-            await _usersCollection
+            await _firebaseService.firestore
+                .collection(AppConstants.usersCollection)
                 .doc(userId)
                 .set(
-                  user!.copyWith(fcmToken: newToken),
+                  {
+                    'fcmToken': newToken,
+                    'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+                  },
                   SetOptions(merge: true),
                 );
             TalkerService.info('FCM token refreshed for user $userId');
@@ -371,20 +375,107 @@ class PushNotificationService {
             .where('isRead', isEqualTo: false)
             .limit(10)
             .get();
-        for (final doc in notifSnap.docs) {
-          unawaited(
-            doc.reference.update({
+        if (notifSnap.docs.isNotEmpty) {
+          final batch = _firebaseService.firestore.batch();
+          for (final doc in notifSnap.docs) {
+            batch.update(doc.reference, {
               'isRead': true,
               'readAt': FieldValue.serverTimestamp(),
-            }),
-          );
+            });
+          }
+          await batch.commit();
         }
-      } on Exception {
-        // Best-effort — navigation must not fail if this read fails.
+      } on Exception catch (e) {
+        // Best-effort — navigation must not fail if this read fails — but log
+        // so a missing composite index (FAILED_PRECONDITION) or other failure
+        // that silently prevents the unread badge from clearing is observable.
+        TalkerService.warning(
+          'Auto-mark-read query failed for referenceId=$referenceId: $e',
+        );
       }
     }
 
     if (!context.mounted) return;
+
+    // Optional discriminator the backend may attach to disambiguate what
+    // `referenceId` points at. See the contract notes on [_navigateForType].
+    final referenceType = data['referenceType'] as String?;
+    final status = data['status'] as String?;
+
+    await _navigateForType(
+      context: context,
+      type: type,
+      referenceId: referenceId,
+      referenceType: referenceType,
+      status: status,
+      data: data,
+    );
+  }
+
+  /// Maps an FCM `type` + `referenceId` to a destination route.
+  ///
+  /// FCM `type` → `referenceId` contract (mirrors functions/src/index.ts and
+  /// notifications_screen._handleNotificationTap — keep all three in sync):
+  ///
+  /// | type                  | referenceId points at | route                |
+  /// |-----------------------|-----------------------|----------------------|
+  /// | message               | chatId                | chat detail/group    |
+  /// | ride_request          | rideId/driverId       | driver requests      |
+  /// | ride_booking_accepted | rideId                | ride booking pending |
+  /// | ride_update           | rideId OR bookingId   | ride detail*         |
+  /// |                       | OR eventId            | (see note)           |
+  /// | ride_completed        | rideId                | ride detail          |
+  /// | event_created/joined/ | eventId               | event detail         |
+  /// |   full/cancelled      |                       |                      |
+  /// | payment/payment_failed| paymentIntentId/docId | payment history      |
+  /// | stripe                | driverId/userId       | driver earnings      |
+  ///
+  /// NOTE on `ride_update`: the backend overloads this single type with three
+  /// different `referenceId` semantics (rideId, bookingId, eventId). Until the
+  /// backend attaches an explicit `referenceType` discriminator, the client
+  /// cannot reliably tell a rideId from a bookingId/eventId, so a `ride_update`
+  /// whose referenceId is actually a bookingId/eventId would land the user on a
+  /// broken/empty ride screen. We disambiguate using the optional
+  /// [referenceType] (preferred) and fall back to routing event-scoped updates
+  /// to the event screen via [status] heuristics; otherwise we degrade to the
+  /// notifications list rather than a known-broken ride screen.
+  Future<void> _navigateForType({
+    required BuildContext context,
+    required String type,
+    required String referenceId,
+    required String? referenceType,
+    required String? status,
+    required Map<String, dynamic> data,
+  }) async {
+    // If the backend supplied an explicit discriminator, honour it first so
+    // overloaded `type` values route deterministically.
+    switch (referenceType) {
+      case 'event':
+        if (context.mounted) {
+          await context.pushNamed(
+            AppRoutes.eventDetail.name,
+            pathParameters: {'id': referenceId},
+          );
+        }
+        return;
+      case 'booking':
+        // A bookingId cannot resolve the rideDetail route; the booking-pending
+        // screen is keyed by rideId, not bookingId, so the safest deterministic
+        // destination is the notifications list.
+        if (context.mounted) {
+          await context.push(AppRoutes.notifications.path);
+        }
+        return;
+      case 'ride':
+        if (context.mounted) {
+          await context.push(
+            AppRoutes.rideDetail.path.replaceFirst(':id', referenceId),
+          );
+        }
+        return;
+      default:
+        break;
+    }
 
     switch (type) {
       case 'message':
@@ -439,16 +530,50 @@ class PushNotificationService {
           ),
         );
         return;
-      case 'ride_update':
       case 'ride_booking_rejected':
       case 'ride_booking_cancelled':
       case 'ride_starting_soon':
       case 'ride_started':
       case 'ride_completed':
       case 'ride_cancelled':
+        // These types reliably carry a rideId.
         await context.push(
           AppRoutes.rideDetail.path.replaceFirst(':id', referenceId),
         );
+        return;
+      case 'ride_update':
+        // Overloaded type: referenceId may be a rideId, bookingId or eventId.
+        // The explicit referenceType branch above already handled the
+        // disambiguated cases. Without a discriminator we cannot safely assume
+        // the referenceId is a rideId — sending a bookingId/eventId to
+        // rideDetail lands the user on a broken/empty ride screen. Route to the
+        // notifications list as a safe fallback. (Fix requires the backend to
+        // attach `referenceType`; see notes above.)
+        await context.push(AppRoutes.notifications.path);
+        return;
+      case 'event_created':
+      case 'event_joined':
+      case 'event_full':
+      case 'event_cancelled':
+        // referenceId is an eventId.
+        await context.pushNamed(
+          AppRoutes.eventDetail.name,
+          pathParameters: {'id': referenceId},
+        );
+        return;
+      case 'payment':
+      case 'payment_failed':
+        // referenceId is a paymentIntentId / payment doc id — not a route
+        // param. Surface the user's payment history so they can review status.
+        await context.push(AppRoutes.paymentHistory.path);
+        return;
+      case 'stripe':
+      case 'account_onboarding':
+      case 'express':
+      case 'individual':
+        // Driver Stripe/payout updates — take the driver to their earnings
+        // (payout) screen.
+        await context.push(AppRoutes.driverEarnings.path);
         return;
       default:
         await context.push(AppRoutes.notifications.path);

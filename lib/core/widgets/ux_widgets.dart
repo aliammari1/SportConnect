@@ -129,7 +129,7 @@ class SwipeActionTile extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -143,7 +143,7 @@ class SwipeActionTile extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
                 ),
               ),

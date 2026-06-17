@@ -56,7 +56,12 @@ class ReauthViewModel extends _$ReauthViewModel {
       if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,
-        errorCode: e is AuthException && e.code == 'wrong-password'
+        // Re-auth is not an email-enumeration surface (the account is already
+        // signed in), so the repository's generic 'invalid-credential' mapping
+        // here means the password was wrong.
+        errorCode:
+            e is AuthException &&
+                (e.code == 'wrong-password' || e.code == 'invalid-credential')
             ? 'wrong-password'
             : 'generic',
       );

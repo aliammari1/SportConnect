@@ -216,8 +216,8 @@ return $default(_that.id,_that.reviewerId,_that.reviewerName,_that.revieweeId,_t
 /// @nodoc
 @JsonSerializable()
 
-class _RideReviewModel implements RideReviewModel {
-  const _RideReviewModel({required this.id, required this.reviewerId, required this.reviewerName, required this.revieweeId, required this.rating, this.reviewerPhotoUrl, this.comment, final  List<String> tags = const [], @TimestampConverter() this.createdAt}): _tags = tags;
+class _RideReviewModel extends RideReviewModel {
+  const _RideReviewModel({required this.id, required this.reviewerId, required this.reviewerName, required this.revieweeId, required this.rating, this.reviewerPhotoUrl, this.comment, final  List<String> tags = const [], @TimestampConverter() this.createdAt}): _tags = tags,super._();
   factory _RideReviewModel.fromJson(Map<String, dynamic> json) => _$RideReviewModelFromJson(json);
 
 @override final  String id;

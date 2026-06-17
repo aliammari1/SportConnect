@@ -52,6 +52,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           tooltip: l10n.goBackTooltip,
           onPressed: () => context.pop(),
@@ -305,7 +306,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         Text(
           title,
           style: TextStyle(
-            fontSize: 13.sp,
+            fontSize: 12.sp,
             fontWeight: FontWeight.w700,
             color: color ?? AppColors.textSecondary,
             letterSpacing: 0.3,
@@ -457,7 +458,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 value: currentLocale.languageCode,
                 isDense: true,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textPrimary,
                 ),
@@ -501,7 +502,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         Text(
           l10n.appTitle,
           style: TextStyle(
-            fontSize: 15.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),
@@ -1126,6 +1127,7 @@ class _BlockedUsersScreenState extends ConsumerState<_BlockedUsersScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           tooltip: l10n.goBackTooltip,
           onPressed: () => context.pop(),
@@ -1176,7 +1178,7 @@ class _BlockedUsersScreenState extends ConsumerState<_BlockedUsersScreen> {
                       l10n.usersYouBlockWillAppear,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -1289,7 +1291,7 @@ class _BlockedUsersScreenState extends ConsumerState<_BlockedUsersScreen> {
                                         style: TextStyle(
                                           color: AppColors.primary,
                                           fontWeight: FontWeight.w700,
-                                          fontSize: 13.sp,
+                                          fontSize: 12.sp,
                                         ),
                                       ),
                                     ),

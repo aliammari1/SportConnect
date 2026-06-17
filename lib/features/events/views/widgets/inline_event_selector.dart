@@ -571,7 +571,7 @@ class _InlineEventSelectorState extends ConsumerState<InlineEventSelector> {
             icon: Icon(Icons.add_rounded, size: 18.sp),
             label: Text(
               AppLocalizations.of(context).createEventTitle,
-              style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
             ),
           ),
         ],

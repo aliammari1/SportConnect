@@ -20,6 +20,7 @@ class AboutScreen extends StatelessWidget {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.settingsAbout,
         leading: IconButton(
           tooltip: l10n.goBackTooltip,
@@ -64,7 +65,7 @@ class AboutScreen extends StatelessWidget {
                       Text(
                         l10n.appVersion(AppConfig.appVersion),
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           color: AppColors.textTertiary,
                         ),
                       ),

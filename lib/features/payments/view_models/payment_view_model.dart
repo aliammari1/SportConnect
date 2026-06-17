@@ -248,7 +248,11 @@ class PaymentViewModel extends _$PaymentViewModel {
       final stripeService = ref.read(stripeServiceProvider);
       final paymentRepo = ref.read(paymentRepositoryProvider);
 
-      const currency = 'EUR';
+      // Canonical stored currency ('EUR'). Stripe's API expects the lowercase
+      // ISO form, so the API call uses [kPaymentCurrencyApi] ('eur') while the
+      // record we build/return stores [kPaymentCurrency] ('EUR'). Both derive
+      // from the same constant so the two never drift in casing.
+      const currency = kPaymentCurrency;
 
       // Create Stripe Payment Intent via Firebase Cloud Function
       // This automatically handles:
@@ -263,7 +267,7 @@ class PaymentViewModel extends _$PaymentViewModel {
         driverId: ride.driverId,
         driverName: driverName,
         amountInCents: ride.pricing.pricePerSeatInCents * seatsBooked,
-        currency: currency,
+        currency: kPaymentCurrencyApi,
         customerId: customerId,
         driverStripeAccountId: driverStripeAccountId,
         description:
@@ -285,18 +289,45 @@ class PaymentViewModel extends _$PaymentViewModel {
           throw StateError('Payment intent response did not include an ID.');
         }
 
-        // Payment succeeded - get the updated payment record from Firestore
-        // (Firebase webhook will update it automatically)
-        final payment = await paymentRepo.getPaymentById(paymentIntentId);
-        if (payment == null) {
-          throw StateError('Payment record not found for $paymentIntentId.');
-        }
+        // Payment succeeded in Stripe. The Firestore payment record is written
+        // asynchronously by the Stripe webhook (Cloud Function), so it may not
+        // exist the instant the Payment Sheet returns. Poll briefly with
+        // backoff before giving up.
+        final payment = await _awaitPaymentRecord(paymentRepo, paymentIntentId);
 
         // Check if provider is still mounted after async operation
-        if (!ref.mounted) return payment;
+        if (!ref.mounted) {
+          return payment ??
+              _processingPaymentRecord(
+                ride: ride,
+                riderId: riderId,
+                riderName: riderName,
+                driverName: driverName,
+                seatsBooked: seatsBooked,
+                currency: currency,
+                customerId: customerId,
+                paymentIntentId: paymentIntentId,
+              );
+        }
 
         state = const AsyncValue.data(null);
-        return payment;
+
+        // The charge already succeeded in the Payment Sheet. If the webhook
+        // hasn't written the record yet, do NOT surface this as an error —
+        // return a synthetic "processing" transaction and let the webhook
+        // reconcile the persisted record shortly. The server idempotency key
+        // ('pi_{bookingId}_{amountInCents}') guards against any double charge.
+        return payment ??
+            _processingPaymentRecord(
+              ride: ride,
+              riderId: riderId,
+              riderName: riderName,
+              driverName: driverName,
+              seatsBooked: seatsBooked,
+              currency: currency,
+              customerId: customerId,
+              paymentIntentId: paymentIntentId,
+            );
       } else {
         throw Exception('Payment cancelled by user');
       }
@@ -309,6 +340,58 @@ class PaymentViewModel extends _$PaymentViewModel {
       }
       rethrow;
     }
+  }
+
+  /// Polls for the webhook-written payment record with backoff so a charge
+  /// that already succeeded in Stripe is not reported as a failure just
+  /// because the Cloud Function webhook hasn't finished writing it yet.
+  /// Total wait ≈ 7.5s across 6 attempts.
+  Future<PaymentTransaction?> _awaitPaymentRecord(
+    PaymentRepository paymentRepo,
+    String paymentIntentId,
+  ) async {
+    const delaysMs = [0, 500, 1000, 1500, 2000, 2500];
+    for (final delayMs in delaysMs) {
+      if (delayMs > 0) {
+        await Future<void>.delayed(Duration(milliseconds: delayMs));
+      }
+      if (!ref.mounted) return null;
+      final payment = await paymentRepo.getPaymentById(paymentIntentId);
+      if (payment != null) return payment;
+    }
+    return null;
+  }
+
+  /// Builds a synthetic "processing" transaction to return when the Stripe
+  /// charge already succeeded but the webhook-written Firestore record hasn't
+  /// landed yet. The authoritative record (with server-computed fees) is
+  /// reconciled by the webhook and keyed by [paymentIntentId].
+  PaymentTransaction _processingPaymentRecord({
+    required RideModel ride,
+    required String riderId,
+    required String riderName,
+    required String driverName,
+    required int seatsBooked,
+    required String currency,
+    required String customerId,
+    required String paymentIntentId,
+  }) {
+    return PaymentTransaction(
+      id: paymentIntentId,
+      rideId: ride.id,
+      riderId: riderId,
+      riderName: riderName,
+      driverId: ride.driverId,
+      driverName: driverName,
+      amountInCents: ride.pricing.pricePerSeatInCents * seatsBooked,
+      currency: currency,
+      status: PaymentStatus.processing,
+      platformFeeInCents: 0,
+      driverEarningsInCents: 0,
+      stripePaymentIntentId: paymentIntentId,
+      stripeCustomerId: customerId,
+      seatsBooked: seatsBooked,
+    );
   }
 
   /// Get or create Stripe customer for rider
@@ -726,6 +809,33 @@ class DriverPayoutViewModel extends _$DriverPayoutViewModel {
 
     try {
       final stripeService = ref.read(stripeServiceProvider);
+
+      // Re-read eligibility from the live Stripe status immediately before
+      // sending. The amount/eligibility passed in originate from a possibly
+      // stale autoDispose snapshot and a confirm dialog that awaits user input,
+      // so the balance may have changed in the meantime. Refusing here guards
+      // against over-withdrawal and duplicate/stale payouts if the Cloud
+      // Function trusts the client-supplied amount.
+      ref.invalidate(driverStripeStatusProvider);
+      final freshStatus = await ref.read(driverStripeStatusProvider.future);
+
+      if (!freshStatus.payoutsEnabled) {
+        throw Exception(
+          'Instant payouts are not currently enabled for this account.',
+        );
+      }
+      if (freshStatus.stripeAccountId != null &&
+          freshStatus.stripeAccountId != stripeAccountId) {
+        throw Exception(
+          'Stripe account changed; payout cancelled for safety.',
+        );
+      }
+      if (amountInCents <= 0 ||
+          amountInCents > freshStatus.availableBalanceInCents) {
+        throw Exception(
+          'Requested payout amount exceeds the available balance.',
+        );
+      }
 
       await stripeService.createInstantPayout(
         stripeAccountId: stripeAccountId,

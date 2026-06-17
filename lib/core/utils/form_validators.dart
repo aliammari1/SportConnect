@@ -227,7 +227,12 @@ class FormValidators {
   /// Validates minimum age from date of birth.
   static String? minimumAge(DateTime? dob, {int minAge = 18}) {
     if (dob == null) return 'Date of birth is required';
-    final age = DateTime.now().difference(dob).inDays ~/ 365;
+    final now = DateTime.now();
+    var age = now.year - dob.year;
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
     if (age < minAge) {
       return 'You must be at least $minAge years old';
     }

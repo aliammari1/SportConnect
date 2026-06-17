@@ -78,10 +78,17 @@ class RideRequestService extends _$RideRequestService {
       }
 
       if (!ref.mounted) return const Failure('Request was cancelled');
-      await bookingRepo.updateBookingStatus(
-        bookingId: bookingId,
-        newStatus: BookingStatus.rejected,
-      );
+      // F-08: Delegate to RideRepository.updateBookingStatus which uses a
+      // transaction and conditionally decrements capacity based on
+      // previousStatus — BookingRepository.updateBookingStatus is a plain
+      // .update() that does not adjust capacity atomically.
+      await ref
+          .read(rideRepositoryProvider)
+          .updateBookingStatus(
+            rideId: booking.rideId,
+            bookingId: bookingId,
+            newStatus: BookingStatus.rejected,
+          );
 
       if (!ref.mounted) {
         return Success(booking.copyWith(status: BookingStatus.rejected));

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
@@ -131,7 +132,7 @@ class PremiumCheckoutViewModel extends _$PremiumCheckoutViewModel {
           'premiumProductId': purchase?.productID,
           'premiumPurchaseStatus': purchase?.status.name,
           'premiumPurchaseVerificationRequired': true,
-          'premiumUpdatedAt': DateTime.now(),
+          'premiumUpdatedAt': FieldValue.serverTimestamp(),
 
           // Useful for debugging Google Play subscriptions with multiple
           // base plans under one subscription product.

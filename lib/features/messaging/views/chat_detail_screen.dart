@@ -881,7 +881,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
             Text(
               AppLocalizations.of(context).noMessagesYet,
               style: TextStyle(
-                fontSize: 19.sp,
+                fontSize: 18.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -951,49 +951,62 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
       children: [
         if (_receiver.photoUrl != null)
           CircleAvatar(
-            radius: 20.r,
+            radius: 16.r,
             backgroundImage: CachedNetworkImageProvider(_receiver.photoUrl!),
           )
         else
-          PremiumAvatar(name: _receiver.username, size: 40),
+          PremiumAvatar(name: _receiver.username, size: 32),
         SizedBox(width: 12.w),
         Expanded(
+          // mainAxisSize.min + tight line heights keep the name+status block
+          // within the fixed toolbar height once everything is 1.5×-scaled on
+          // tablets (was overflowing the app bar by ~7px).
           child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 _receiver.username,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 15.sp,
                   fontWeight: FontWeight.w700,
+                  // Tight line heights keep the name+status block within the
+                  // fixed CupertinoNavigationBar height once text is ~1.5×
+                  // scaled on tablets (previously overflowed by 6px).
+                  height: 1.05,
                   color: AppColors.textPrimary,
                 ),
               ),
-              Row(
-                children: [
-                  Container(
-                    width: 6.w,
-                    height: 6.w,
-                    margin: EdgeInsets.only(right: 6.w),
-                    decoration: BoxDecoration(
-                      color: chatState.typingUsers.isNotEmpty
-                          ? AppColors.success
-                          : AppColors.textTertiary,
-                      shape: BoxShape.circle,
+              // Only assert a status when we have a real signal (typing). There
+              // is no presence/online lookup wired here, so we deliberately
+              // avoid showing a permanent "Offline" label + grey dot, which
+              // would be misleading dead UI.
+              if (chatState.typingUsers.isNotEmpty)
+                Row(
+                  children: [
+                    Container(
+                      width: 5.w,
+                      height: 5.w,
+                      margin: EdgeInsets.only(right: 6.w),
+                      decoration: const BoxDecoration(
+                        color: AppColors.success,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  Text(
-                    chatState.typingUsers.isNotEmpty
-                        ? AppLocalizations.of(context).typing
-                        : AppLocalizations.of(context).offline,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
+                    Text(
+                      AppLocalizations.of(context).typing,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        height: 1.0,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
             ],
           ),
         ),
@@ -1192,7 +1205,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                         if (message.replyToContent != null)
                           ReplyIndicator(content: message.replyToContent!),
                         Container(
-                          constraints: BoxConstraints(maxWidth: 300.w),
+                          // Cap bubbles relative to the available column width
+                          // instead of a fixed 300.w. On phones this stays close
+                          // to the previous size; on iPad the column is up to
+                          // kMaxWidthWide (900) so bubbles can use ~72% of it and
+                          // no longer leave large empty gutters.
+                          constraints: BoxConstraints(
+                            maxWidth:
+                                (MediaQuery.sizeOf(
+                                          context,
+                                        ).width.clamp(0.0, kMaxWidthWide) *
+                                        0.72)
+                                    .clamp(280.w, kMaxWidthWide * 0.72),
+                          ),
                           padding: EdgeInsets.symmetric(
                             horizontal: 16.w,
                             vertical: 9.h,
@@ -1494,7 +1519,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                             hintText: AppLocalizations.of(context).typeAMessage,
                             hintStyle: TextStyle(
                               color: AppColors.textTertiary,
-                              fontSize: 15.sp,
+                              fontSize: 14.sp,
                             ),
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.fromLTRB(
@@ -1505,7 +1530,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                             ),
                           ),
                           style: TextStyle(
-                            fontSize: 15.sp,
+                            fontSize: 14.sp,
                             color: AppColors.textPrimary,
                             height: 1.4,
                           ),

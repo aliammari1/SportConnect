@@ -9,8 +9,7 @@ enum ReviewType {
   @JsonValue('driver')
   driver, // Review left for a driver
   @JsonValue('rider')
-  rider
-  ; // Review left for a rider/passenger
+  rider; // Review left for a rider/passenger
 
   String get displayName {
     switch (this) {
@@ -49,8 +48,7 @@ enum ReviewTag {
   @JsonValue('polite')
   polite('Polite', '😊', ReviewType.rider),
   @JsonValue('easy_communication')
-  easyCommunication('Easy Communication', '💬', ReviewType.rider)
-  ;
+  easyCommunication('Easy Communication', '💬', ReviewType.rider);
 
   final String label;
   final String emoji;
@@ -124,6 +122,27 @@ abstract class ReviewModel with _$ReviewModel {
 
   /// Check if review has a response
   bool get hasResponse => response != null && response!.isNotEmpty;
+
+  /// Check if review has a non-empty comment
+  bool get hasComment => comment != null && comment!.trim().isNotEmpty;
+
+  /// Rating expressed as an integer star count (1-5)
+  int get starRating => rating.round().clamp(1, 5);
+
+  /// Whether the review reflects positive sentiment (4-5 stars)
+  bool get isPositive => rating >= 4.0;
+
+  /// Whether the review reflects negative sentiment (1-2 stars)
+  bool get isNegative => rating <= 2.0;
+
+  /// Whether this review was written by the given user
+  bool isWrittenBy(String userId) => reviewerId == userId;
+
+  /// Whether this review is about the given user
+  bool isAbout(String userId) => revieweeId == userId;
+
+  /// Whether the review has been edited after creation
+  bool get isEdited => updatedAt != null && updatedAt!.isAfter(createdAt);
 
   /// Get time since review was created
   String get timeAgo {
@@ -215,7 +234,6 @@ abstract class RatingStats with _$RatingStats {
       oneStarCount: oneStar,
       tagCounts: tagCounts,
       lastReviewAt: sortedReviews.first.createdAt,
-      updatedAt: DateTime.now(),
     );
   }
   const RatingStats._();
@@ -246,6 +264,44 @@ abstract class RatingStats with _$RatingStats {
 
   /// Get formatted average (e.g., "4.5")
   String get formattedAverage => averageRating.toStringAsFixed(1);
+
+  /// Whether there is at least one review
+  bool get hasReviews => totalReviews > 0;
+
+  /// Indexed accessor for the per-star count (stars in 1..5)
+  int starCount(int stars) {
+    switch (stars) {
+      case 5:
+        return fiveStarCount;
+      case 4:
+        return fourStarCount;
+      case 3:
+        return threeStarCount;
+      case 2:
+        return twoStarCount;
+      case 1:
+        return oneStarCount;
+      default:
+        return 0;
+    }
+  }
+
+  /// Number of positive (4-5 star) reviews
+  int get positiveReviewCount => fiveStarCount + fourStarCount;
+
+  /// Percentage of reviews that are positive (4-5 stars)
+  double get positivePercentage =>
+      totalReviews == 0 ? 0 : (positiveReviewCount / totalReviews) * 100;
+
+  /// Human-readable qualitative band for the average rating
+  String get ratingLabel {
+    if (totalReviews == 0) return 'No ratings';
+    if (averageRating >= 4.5) return 'Excellent';
+    if (averageRating >= 4.0) return 'Very good';
+    if (averageRating >= 3.0) return 'Good';
+    if (averageRating >= 2.0) return 'Fair';
+    return 'Poor';
+  }
 }
 
 /// Review request - used when creating a new review
@@ -261,7 +317,18 @@ abstract class CreateReviewRequest with _$CreateReviewRequest {
     String? comment,
     @Default([]) List<String> tags,
   }) = _CreateReviewRequest;
+  const CreateReviewRequest._();
 
   factory CreateReviewRequest.fromJson(Map<String, dynamic> json) =>
       _$CreateReviewRequestFromJson(json);
+
+  /// Whether this request satisfies the submit-time validation rules
+  bool get isValid =>
+      rating >= 1.0 &&
+      rating <= 5.0 &&
+      revieweeId.isNotEmpty &&
+      rideId.isNotEmpty;
+
+  /// Whether the request includes a non-empty comment
+  bool get hasComment => comment != null && comment!.trim().isNotEmpty;
 }

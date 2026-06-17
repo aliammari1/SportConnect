@@ -98,6 +98,7 @@ _ChatParticipant _$ChatParticipantFromJson(Map json) => _ChatParticipant(
   photoUrl: json['photoUrl'] as String?,
   isAdmin: json['isAdmin'] as bool? ?? false,
   isMuted: json['isMuted'] as bool? ?? false,
+  role: $enumDecodeNullable(_$ParticipantRoleEnumMap, json['role']),
   lastSeenAt: const TimestampConverter().fromJson(json['lastSeenAt']),
   joinedAt: const TimestampConverter().fromJson(json['joinedAt']),
 );
@@ -109,9 +110,16 @@ Map<String, dynamic> _$ChatParticipantToJson(_ChatParticipant instance) =>
       'photoUrl': instance.photoUrl,
       'isAdmin': instance.isAdmin,
       'isMuted': instance.isMuted,
+      'role': _$ParticipantRoleEnumMap[instance.role],
       'lastSeenAt': const TimestampConverter().toJson(instance.lastSeenAt),
       'joinedAt': const TimestampConverter().toJson(instance.joinedAt),
     };
+
+const _$ParticipantRoleEnumMap = {
+  ParticipantRole.member: 'member',
+  ParticipantRole.admin: 'admin',
+  ParticipantRole.owner: 'owner',
+};
 
 _ChatModel _$ChatModelFromJson(Map json) => _ChatModel(
   id: json['id'] as String,

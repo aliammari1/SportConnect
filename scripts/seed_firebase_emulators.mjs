@@ -35,78 +35,111 @@ const totals = {
 const AUTH_ACCOUNTS_PER_ROLE = Number(process.env.SEED_AUTH_ACCOUNTS ?? 10);
 
 const firstNames = [
-  "Amina",
-  "Tunde",
-  "Chioma",
-  "Kemi",
-  "Malik",
-  "Sofia",
-  "David",
-  "Fatima",
-  "Noah",
-  "Zara",
-  "Ibrahim",
-  "Maya",
-  "Daniel",
-  "Nora",
-  "Ethan",
-  "Leila",
-  "Samuel",
-  "Amara",
-  "Omar",
-  "Grace",
+  "Emma",
+  "Lucas",
+  "Léa",
+  "Hugo",
+  "Chloé",
+  "Gabriel",
+  "Manon",
+  "Louis",
+  "Camille",
+  "Jules",
+  "Sarah",
+  "Nathan",
+  "Inès",
+  "Théo",
+  "Jade",
+  "Raphaël",
+  "Louise",
+  "Adam",
+  "Alice",
+  "Paul",
 ];
 
 const lastNames = [
-  "Okafor",
-  "Bello",
-  "Mensah",
-  "Adeyemi",
-  "Hassan",
-  "Johnson",
-  "Dubois",
-  "Moreau",
-  "Smith",
-  "Garcia",
-  "Diallo",
   "Martin",
+  "Bernard",
+  "Dubois",
+  "Thomas",
+  "Robert",
+  "Petit",
+  "Durand",
+  "Leroy",
+  "Moreau",
+  "Simon",
+  "Laurent",
+  "Lefèvre",
 ];
 
 const locations = [
   {
-    city: "Lagos",
-    country: "Nigeria",
-    latitude: 6.5244,
-    longitude: 3.3792,
+    city: "Paris",
+    country: "France",
+    latitude: 48.8566,
+    longitude: 2.3522,
     places: [
-      "National Stadium, Surulere, Lagos",
-      "Ikoyi Club 1938, Lagos",
-      "Muri Okunola Park, Victoria Island, Lagos",
-      "Teslim Balogun Stadium, Lagos",
-      "Lekki Conservation Centre, Lagos",
+      "Stade de France, Saint-Denis",
+      "Bois de Boulogne, Paris",
+      "Champ de Mars, Paris",
+      "Jardin du Luxembourg, Paris",
+      "Parc des Buttes-Chaumont, Paris",
     ],
   },
   {
-    city: "Abuja",
-    country: "Nigeria",
-    latitude: 9.0765,
-    longitude: 7.3986,
+    city: "Lyon",
+    country: "France",
+    latitude: 45.764,
+    longitude: 4.8357,
     places: [
-      "Moshood Abiola Stadium, Abuja",
-      "Millennium Park, Abuja",
-      "Jabi Lake Park, Abuja",
-      "Maitama Amusement Park, Abuja",
+      "Parc de la Tête d'Or, Lyon",
+      "Berges du Rhône, Lyon",
+      "Stade de Gerland, Lyon",
+      "Parc de Gerland, Lyon",
     ],
   },
   {
-    city: "Port Harcourt",
-    country: "Nigeria",
-    latitude: 4.8156,
-    longitude: 7.0498,
+    city: "Marseille",
+    country: "France",
+    latitude: 43.2965,
+    longitude: 5.3698,
     places: [
-      "Yakubu Gowon Stadium, Port Harcourt",
-      "Pleasure Park, Port Harcourt",
-      "Rumuola Sports Centre, Port Harcourt",
+      "Stade Vélodrome, Marseille",
+      "Parc Borély, Marseille",
+      "Plage du Prado, Marseille",
+    ],
+  },
+  {
+    city: "Bordeaux",
+    country: "France",
+    latitude: 44.8378,
+    longitude: -0.5792,
+    places: [
+      "Parc Bordelais, Bordeaux",
+      "Quais de la Garonne, Bordeaux",
+      "Jardin Public, Bordeaux",
+    ],
+  },
+  {
+    city: "Toulouse",
+    country: "France",
+    latitude: 43.6047,
+    longitude: 1.4442,
+    places: [
+      "Prairie des Filtres, Toulouse",
+      "Jardin des Plantes, Toulouse",
+      "Stadium de Toulouse",
+    ],
+  },
+  {
+    city: "Nice",
+    country: "France",
+    latitude: 43.7102,
+    longitude: 7.262,
+    places: [
+      "Promenade des Anglais, Nice",
+      "Parc de la Colline du Château, Nice",
+      "Stade Allianz Riviera, Nice",
     ],
   },
 ];
@@ -264,7 +297,7 @@ function baseUser(email, username, role, index) {
     email,
     username,
     photoUrl: `https://i.pravatar.cc/160?u=${encodeURIComponent(email)}`,
-    phoneNumber: `+23480${String(10000000 + index * 719).slice(0, 8)}`,
+    phoneNumber: `+336${String(10000000 + index * 719).slice(0, 8)}`,
     gender:
       index % 3 === 0 ? "female" : index % 3 === 1 ? "male" : "non_binary",
     fcmToken: "",
@@ -426,13 +459,13 @@ function buildEvents() {
     seed.events.push({
       id: `seed_event_${String(i + 1).padStart(3, "0")}`,
       creatorId: creator.uid,
-      title: `${pick(["Sunrise", "Tempo", "Community", "Weekend", "City"], i)} Running Meetup ${i + 1}`,
+      title: `${pick(["Marathon de", "Semi-Marathon de", "10K de", "Trail de", "Foulées de"], i)} ${loc.city}`,
       type: "running",
       location: loc,
       startsAt,
       endsAt: isoDays(1 + (i % 75), 8 + (i % 12), (i % 4) * 15),
       description:
-        "Seeded running event with realistic attendance, ride coordination, and enough volume to test picker/search UX.",
+        "Course communautaire avec point de rendez-vous, covoiturage organisé entre coureurs et ambiance conviviale.",
       organizerName: creator.username,
       imageUrl: `https://picsum.photos/seed/seed_event_${i + 1}/900/500`,
       participantIds,
@@ -490,8 +523,8 @@ function buildRidesAndBookings() {
         dropoffLocation: destination,
         note:
           status === "pending"
-            ? "Can I join from the main gate?"
-            : "Confirmed pickup at the marked location.",
+            ? "Je peux monter à l'entrée principale ?"
+            : "Rendez-vous confirmé au point indiqué.",
         createdAt: isoDays(-2 + (b % 3), 10 + b),
         respondedAt: status === "accepted" ? isoDays(-1, 11 + b) : undefined,
         pickupOtp: String(100000 + (((i + b) * 37) % 900000)),
@@ -520,10 +553,9 @@ function buildRidesAndBookings() {
       },
       capacity: { available, booked: acceptedBookings },
       pricing: {
-        pricePerSeatInCents: {
-          amountInCents: 500 + (i % 26) * 150,
-          currency: "EUR",
-        },
+        // RidePricing.pricePerSeatInCents is a flat int — must NOT be a nested
+        // {amountInCents, currency} object or the Dart model cast crashes.
+        pricePerSeatInCents: 500 + (i % 26) * 150,
       },
       preferences: {
         allowPets: i % 4 === 0,
@@ -575,11 +607,11 @@ function chatParticipant(user, isAdmin = false) {
 function addChat(chat, messageAuthors) {
   seed.chats.push(chat);
   const bodies = [
-    "I can meet there.",
-    "Thanks, see you soon.",
-    "Can you share the exact pickup point?",
-    "Running a few minutes late but still coming.",
-    "Confirmed.",
+    "Je peux venir au point de rendez-vous.",
+    "Merci, à très vite !",
+    "Tu peux partager le point de rendez-vous exact ?",
+    "J'ai quelques minutes de retard mais j'arrive.",
+    "C'est confirmé.",
   ];
   for (let i = 0; i < 5; i++) {
     const author = messageAuthors[i % messageAuthors.length];
@@ -648,7 +680,7 @@ function buildPaymentsAndStats() {
       const rider = seed.riders[(i * 11 + p * 7) % seed.riders.length];
       const seatsBooked = 1 + ((i + p) % 2);
       const amountInCents =
-        ride.pricing.pricePerSeatInCents.amountInCents * seatsBooked;
+        ride.pricing.pricePerSeatInCents * seatsBooked;
       const platformFeeInCents = Math.round(amountInCents * 0.12);
       const stripeFeeInCents = Math.round(amountInCents * 0.029) + 30;
       const driverEarningsInCents = Math.max(
@@ -793,7 +825,7 @@ function buildChatsReviewsStats() {
         type: "private",
         participants: [chatParticipant(driver), chatParticipant(rider)],
         participantIds: [driver.uid, rider.uid],
-        lastMessageContent: "Confirmed.",
+        lastMessageContent: "C'est confirmé.",
         lastMessageSenderId: rider.uid,
         lastMessageSenderName: rider.username,
         lastMessageType: "text",
@@ -828,7 +860,7 @@ function buildChatsReviewsStats() {
         groupName: event.title,
         description: "Seeded event group chat",
         eventId: event.id,
-        lastMessageContent: "Confirmed.",
+        lastMessageContent: "C'est confirmé.",
         lastMessageSenderId: participants[0]?.uid,
         lastMessageSenderName: participants[0]?.username,
         lastMessageType: "text",

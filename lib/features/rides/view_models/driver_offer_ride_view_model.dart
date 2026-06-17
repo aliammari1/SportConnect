@@ -132,7 +132,7 @@ class DriverOfferRideFormState {
     Object? routeDistanceKm = _sentinel,
     Object? routeDurationMinutes = _sentinel,
     bool? isSubmitting,
-    String? submissionError,
+    Object? submissionError = _sentinel,
     String? existingRideId,
   }) {
     return DriverOfferRideFormState(
@@ -174,7 +174,9 @@ class DriverOfferRideFormState {
           ? this.routeDurationMinutes
           : routeDurationMinutes as int?,
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      submissionError: submissionError,
+      submissionError: submissionError == _sentinel
+          ? this.submissionError
+          : submissionError as String?,
       existingRideId: existingRideId ?? this.existingRideId,
     );
   }
@@ -731,6 +733,6 @@ class DriverOfferRideViewModel extends _$DriverOfferRideViewModel {
 
   /// Clear submission error
   void clearSubmissionError() {
-    state = state.copyWith();
+    state = state.copyWith(submissionError: null);
   }
 }

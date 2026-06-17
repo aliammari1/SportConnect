@@ -78,20 +78,27 @@ class _POISearchSheetState extends ConsumerState<POISearchSheet> {
       _isLoading = true;
     });
 
+    final requestedRadius = _searchRadius;
     final results = await ref
         .read(mapServiceProvider)
         .searchPOI(
           center: widget.currentLocation,
-          radiusMeters: _searchRadius,
+          radiusMeters: requestedRadius,
           type: type,
         );
 
-    if (mounted) {
-      setState(() {
-        _results = results;
-        _isLoading = false;
-      });
+    // Discard stale responses: ignore if the selected category or radius
+    // changed (e.g. another tap/slider change) while this request was awaiting.
+    if (!mounted ||
+        _selectedType != type ||
+        _searchRadius != requestedRadius) {
+      return;
     }
+
+    setState(() {
+      _results = results;
+      _isLoading = false;
+    });
   }
 
   String _formatDistance(double meters) {
@@ -245,7 +252,7 @@ class _POISearchSheetState extends ConsumerState<POISearchSheet> {
               Text(
                 AppLocalizations.of(context).searchRadius,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                 ),
@@ -259,7 +266,7 @@ class _POISearchSheetState extends ConsumerState<POISearchSheet> {
                 child: Text(
                   _formatDistance(_searchRadius),
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
                   ),
@@ -414,7 +421,7 @@ class _POISearchSheetState extends ConsumerState<POISearchSheet> {
             Text(
               AppLocalizations.of(context).selectACategoryToSearch,
               style: TextStyle(
-                fontSize: 17.sp,
+                fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -422,7 +429,7 @@ class _POISearchSheetState extends ConsumerState<POISearchSheet> {
             SizedBox(height: 8.h),
             Text(
               AppLocalizations.of(context).tapOnAnyCategoryAbove,
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -451,7 +458,7 @@ class _POISearchSheetState extends ConsumerState<POISearchSheet> {
             Text(
               AppLocalizations.of(context).noResultsFound,
               style: TextStyle(
-                fontSize: 17.sp,
+                fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -459,7 +466,7 @@ class _POISearchSheetState extends ConsumerState<POISearchSheet> {
             SizedBox(height: 8.h),
             Text(
               AppLocalizations.of(context).tryIncreasingTheSearchRadius,
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textTertiary),
             ),
           ],
         ),
@@ -538,7 +545,7 @@ class _POISearchSheetState extends ConsumerState<POISearchSheet> {
                   Text(
                     poi.name ?? l10n.unknown,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),

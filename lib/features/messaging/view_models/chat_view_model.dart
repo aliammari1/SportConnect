@@ -219,9 +219,17 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     }
 
     ref.listen(chatMessagesProvider(chatId, currentUserId), (_, next) {
-      next.whenData((messages) {
+      next.whenData((liveMessages) {
         if (!ref.mounted) return;
-        state = state.copyWith(messages: messages, isLoading: false);
+        // MSG-D4: The live stream only carries the newest window (limit 50).
+        // Overwriting state.messages wholesale would discard any older pages
+        // fetched via loadMoreMessages. Instead, replace the head window with
+        // the fresh live snapshot and keep any previously loaded older pages,
+        // de-duplicating by id and re-sorting newest-first.
+        state = state.copyWith(
+          messages: _mergeLiveWindow(state.messages, liveMessages),
+          isLoading: false,
+        );
       });
     });
 
@@ -339,6 +347,10 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       final notificationRepo = ref.read(notificationRepositoryProvider);
       for (final participantId in chat.participantIds) {
         if (participantId == currentUserId) continue;
+        // Respect the recipient's per-chat mute setting (also covers blocked
+        // users, since blockUser implicitly mutes). Muted participants must
+        // not receive new-message notifications.
+        if (chat.isMutedBy(participantId)) continue;
         await notificationRepo.sendNewMessageNotification(
           toUserId: participantId,
           fromUserId: currentUserId,
@@ -410,6 +422,12 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
 
   Future<void> loadMoreMessages() async {
     if (state.isLoadingMore || state.messages.isEmpty) return;
+    // MSG-007: Guard against a null createdAt cursor that can occur while a
+    // locally-optimistic message is still pending its server timestamp. Using
+    // DateTime.now() as a fallback would cause the query to skip all messages
+    // older than now, silently dropping history.
+    final cursor = state.messages.last.createdAt;
+    if (cursor == null) return;
     state = state.copyWith(isLoadingMore: true, error: null);
     try {
       if (!ref.mounted) return;
@@ -418,11 +436,14 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
           .loadMoreMessagesForUser(
             chatId: chatId,
             userId: currentUserId,
-            beforeTimestamp: state.messages.last.createdAt ?? DateTime.now(),
+            beforeTimestamp: cursor,
           );
       if (!ref.mounted) return;
+      // MSG-D4: Merge the older page into the existing list, de-duplicating by
+      // id (the page may overlap the live window) and keeping newest-first order
+      // so the page survives subsequent live snapshots.
       state = state.copyWith(
-        messages: [...state.messages, ...messages],
+        messages: _mergeMessages(state.messages, messages),
         isLoadingMore: false,
         hasMoreMessages: hasMore,
       );
@@ -433,6 +454,55 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
         error: userFacingError(e),
       );
     }
+  }
+
+  // MSG-D4: Reconcile the live (head) window with previously loaded older
+  // pages. Messages are ordered newest-first (createdAt descending). The live
+  // snapshot is authoritative for the head: it reflects edits, deletions and
+  // new arrivals within its window. Anything strictly older than the live
+  // window's oldest message is a previously paged tail and is preserved.
+  List<MessageModel> _mergeLiveWindow(
+    List<MessageModel> current,
+    List<MessageModel> liveWindow,
+  ) {
+    if (liveWindow.isEmpty) return current;
+    final oldestLive = liveWindow.last.createdAt;
+    // Keep only the previously loaded tail (older than the live window). A null
+    // createdAt is a pending optimistic timestamp belonging to the head, so it
+    // is dropped here and re-supplied by the live snapshot.
+    final tail = oldestLive == null
+        ? const <MessageModel>[]
+        : current.where((m) {
+            final c = m.createdAt;
+            return c != null && c.isBefore(oldestLive);
+          });
+    return _mergeMessages(liveWindow.toList(), tail.toList());
+  }
+
+  // MSG-D4: Combine two message lists into a single id-keyed, de-duplicated,
+  // newest-first list. When ids collide the entry from [primary] wins.
+  List<MessageModel> _mergeMessages(
+    List<MessageModel> primary,
+    List<MessageModel> secondary,
+  ) {
+    final byId = <String, MessageModel>{};
+    for (final m in secondary) {
+      byId[m.id] = m;
+    }
+    for (final m in primary) {
+      byId[m.id] = m;
+    }
+    final merged = byId.values.toList()
+      ..sort((a, b) {
+        final ac = a.createdAt;
+        final bc = b.createdAt;
+        // Pending (null createdAt) messages are newest — keep them at the head.
+        if (ac == null && bc == null) return 0;
+        if (ac == null) return -1;
+        if (bc == null) return 1;
+        return bc.compareTo(ac);
+      });
+    return merged;
   }
 
   // ── Typing ──────────────────────────────────────────────────────────────
@@ -499,13 +569,19 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
 
   Future<void> editMessage(String messageId, String newContent) async {
     if (!ref.mounted) return;
-    await ref
-        .read(chatRepositoryProvider)
-        .editMessage(
-          chatId: chatId,
-          messageId: messageId,
-          newContent: newContent,
-        );
+    // MSG-008: Catch write failures and surface them via state.error, consistent
+    // with sendMessage and loadMoreMessages which both handle errors the same way.
+    try {
+      await ref
+          .read(chatRepositoryProvider)
+          .editMessage(
+            chatId: chatId,
+            messageId: messageId,
+            newContent: newContent,
+          );
+    } on Exception catch (e) {
+      if (ref.mounted) state = state.copyWith(error: userFacingError(e));
+    }
   }
 
   Future<void> addReaction(String messageId, String reaction) async {

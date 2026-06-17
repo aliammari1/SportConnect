@@ -137,6 +137,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).reportIssueTitle,
         leading: IconButton(
           tooltip: AppLocalizations.of(context).goBackTooltip,
@@ -185,7 +186,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                 Text(
                   l10n.rideInfoLabel(widget.rideId!),
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w500,
                     color: AppColors.primary,
                   ),
@@ -259,7 +260,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? sev.color.withValues(alpha: 0.15)
-                        : Colors.white,
+                        : AppColors.surface,
                     borderRadius: BorderRadius.circular(10.r),
                     border: Border.all(
                       color: isSelected ? sev.color : AppColors.border,
@@ -317,7 +318,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
             ),
             errorText: formState.descriptionError,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
               borderSide: const BorderSide(color: AppColors.border),
@@ -363,7 +364,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
           child: Container(
             padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(color: AppColors.border),
             ),
@@ -385,7 +386,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                           ReportIssueFormViewModel.maxAttachments,
                         ),
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: formState.attachedFiles.isEmpty
                         ? AppColors.textTertiary
                         : AppColors.textPrimary,
@@ -480,7 +481,9 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: isSelected ? type.color.withValues(alpha: 0.12) : Colors.white,
+          color: isSelected
+              ? type.color.withValues(alpha: 0.12)
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
             color: isSelected ? type.color : AppColors.border,
@@ -499,7 +502,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
             Text(
               type.localizedLabel(AppLocalizations.of(context)),
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: isSelected ? type.color : AppColors.textPrimary,
               ),
@@ -576,8 +579,7 @@ enum _ReportType {
   behavior('Behavior', Color(0xFF9C27B0)),
   technical('Technical', Color(0xFF2196F3)),
   discrimination('Discrimination', Color(0xFFE91E63)),
-  other('Other', Color(0xFF607D8B))
-  ;
+  other('Other', Color(0xFF607D8B));
 
   final String label;
   final Color color;
@@ -610,8 +612,7 @@ enum _Severity {
   low('Low', Icons.info_outline_rounded, Color(0xFF4CAF50)),
   medium('Medium', Icons.warning_amber_rounded, Color(0xFFFF9800)),
   high('High', Icons.error_outline_rounded, Color(0xFFF44336)),
-  critical('Critical', Icons.dangerous_rounded, Color(0xFF9C27B0))
-  ;
+  critical('Critical', Icons.dangerous_rounded, Color(0xFF9C27B0));
 
   final String label;
   final IconData icon;

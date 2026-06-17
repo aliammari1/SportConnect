@@ -244,8 +244,8 @@ return $default(_that.origin,_that.destination,_that.departureDate,_that.departu
 /// @nodoc
 @JsonSerializable()
 
-class _RideSearchFilters implements RideSearchFilters {
-  const _RideSearchFilters({this.origin, this.destination, @TimestampConverter() this.departureDate, @TimestampConverter() this.departureTimeFrom, @TimestampConverter() this.departureTimeTo, this.minSeats = 1, this.maxPrice, this.allowPets = false, this.allowSmoking = false, this.womenOnly = false, this.minDriverRating, this.sortBy = 'departure_time', this.sortAscending = true});
+class _RideSearchFilters extends RideSearchFilters {
+  const _RideSearchFilters({this.origin, this.destination, @TimestampConverter() this.departureDate, @TimestampConverter() this.departureTimeFrom, @TimestampConverter() this.departureTimeTo, this.minSeats = 1, this.maxPrice, this.allowPets = false, this.allowSmoking = false, this.womenOnly = false, this.minDriverRating, this.sortBy = 'departure_time', this.sortAscending = true}): super._();
   factory _RideSearchFilters.fromJson(Map<String, dynamic> json) => _$RideSearchFiltersFromJson(json);
 
 @override final  LocationPoint? origin;

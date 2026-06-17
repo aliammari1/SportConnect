@@ -51,7 +51,8 @@ class DefaultFirebaseOptions {
     appId: '1:950804897667:android:336cec4dff83493780e0b6',
     messagingSenderId: '950804897667',
     projectId: 'marathon-connect',
-    databaseURL: 'https://marathon-connect-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://marathon-connect-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'marathon-connect.firebasestorage.app',
   );
 
@@ -60,10 +61,13 @@ class DefaultFirebaseOptions {
     appId: '1:950804897667:ios:ee25c791f879565e80e0b6',
     messagingSenderId: '950804897667',
     projectId: 'marathon-connect',
-    databaseURL: 'https://marathon-connect-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://marathon-connect-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'marathon-connect.firebasestorage.app',
-    androidClientId: '950804897667-9b5maiqh6qla3t0qk2j28jtfd2ieoh9g.apps.googleusercontent.com',
-    iosClientId: '950804897667-6n80c99rgha62msa59b5mcdos8p8pm67.apps.googleusercontent.com',
+    androidClientId:
+        '950804897667-9b5maiqh6qla3t0qk2j28jtfd2ieoh9g.apps.googleusercontent.com',
+    iosClientId:
+        '950804897667-6n80c99rgha62msa59b5mcdos8p8pm67.apps.googleusercontent.com',
     iosBundleId: 'com.sportconnect.SportConnectApplication',
   );
 
@@ -73,9 +77,9 @@ class DefaultFirebaseOptions {
     messagingSenderId: '950804897667',
     projectId: 'marathon-connect',
     authDomain: 'marathon-connect.firebaseapp.com',
-    databaseURL: 'https://marathon-connect-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://marathon-connect-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'marathon-connect.firebasestorage.app',
     measurementId: 'G-29WZE5WH4S',
   );
-
 }

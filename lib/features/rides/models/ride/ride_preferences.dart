@@ -12,7 +12,15 @@ abstract class RidePreferences with _$RidePreferences {
     @Default(true) bool allowLuggage,
     @Default(false) bool isWomenOnly,
   }) = _RidePreferences;
+  const RidePreferences._();
 
   factory RidePreferences.fromJson(Map<String, dynamic> json) =>
       _$RidePreferencesFromJson(json);
+
+  /// Whether any preference restricts who can join or what they can bring.
+  bool get hasRestrictions =>
+      isWomenOnly || !allowLuggage || !allowPets || !allowSmoking;
+
+  /// Whether the ride has explicitly permissive allowances worth highlighting.
+  bool get isPetFriendly => allowPets;
 }

@@ -71,7 +71,7 @@ class SearchFilterSectionTitle extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        fontSize: 15.sp,
+        fontSize: 14.sp,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
@@ -126,7 +126,7 @@ class SearchToggleChip extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w500,
                   color: isSelected ? Colors.white : AppColors.textPrimary,
                 ),

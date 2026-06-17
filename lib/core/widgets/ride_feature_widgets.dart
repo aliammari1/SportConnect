@@ -148,7 +148,7 @@ class EstimatedWaitTime extends StatelessWidget {
                 ? AppLocalizations.of(context).driverArrivingIn(waitMinutes)
                 : AppLocalizations.of(context).estimatedWait(waitMinutes),
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -312,30 +312,13 @@ class VehicleQuickSwitchSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // Title and drag handle are provided by AppModalSheet's always-visible
+    // top bar (see VehicleQuickSwitchSheet.show), so they are not repeated here.
     return Padding(
-      padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
+      padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 32.h),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 40.w,
-            height: 4.h,
-            decoration: BoxDecoration(
-              color: AppColors.border,
-              borderRadius: BorderRadius.circular(2.r),
-            ),
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            'Switch Vehicle',
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          SizedBox(height: 16.h),
           ...vehicles.map((v) => _buildVehicleTile(context, v)),
         ],
       ),
@@ -416,7 +399,7 @@ class LadiesOnlyFilter extends StatelessWidget {
       label: Text(
         'Ladies Only',
         style: TextStyle(
-          fontSize: 13.sp,
+          fontSize: 12.sp,
           fontWeight: isEnabled ? FontWeight.w600 : FontWeight.w400,
           color: isEnabled ? Colors.pink : AppColors.textSecondary,
         ),
@@ -528,7 +511,7 @@ class VehiclePhotoMatchCard extends StatelessWidget {
                 Text(
                   '$vehicleMake $vehicleModel',
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.onSurface,
                   ),
@@ -549,7 +532,7 @@ class VehiclePhotoMatchCard extends StatelessWidget {
                     Text(
                       vehicleColor,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: theme.textTheme.bodySmall?.color,
                       ),
                     ),

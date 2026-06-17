@@ -11,6 +11,12 @@ abstract class UserPreferences with _$UserPreferences {
     @Default(AppLocale.french) AppLocale language,
   }) = _UserPreferences;
 
+  const UserPreferences._();
+
   factory UserPreferences.fromJson(Map<String, dynamic> json) =>
       _$UserPreferencesFromJson(json);
+
+  /// ISO language code (e.g. 'en', 'fr') decoupled from [AppLocale] so callers
+  /// don't need to reach into the enum.
+  String get languageCode => language.code;
 }

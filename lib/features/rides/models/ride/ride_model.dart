@@ -22,7 +22,7 @@ enum RideStatus { draft, active, full, inProgress, completed, cancelled }
 @freezed
 abstract class RideModel with _$RideModel {
   const factory RideModel({
-    required String id,
+    @JsonKey(includeToJson: false) required String id,
     required String driverId,
     // Composed sub-models
     required RideRoute route,
@@ -47,7 +47,9 @@ abstract class RideModel with _$RideModel {
     @Default([]) List<String> bookingIds,
 
     // Bookings list (populated by service layer when full booking data is needed)
-    @Default([]) List<RideBooking> bookings,
+    @JsonKey(includeToJson: false, includeFromJson: false)
+    @Default([])
+    List<RideBooking> bookings,
 
     // Reviews (count only - detailed reviews stored separately)
     @Default(0) int reviewCount,
@@ -61,6 +63,10 @@ abstract class RideModel with _$RideModel {
     @Default([]) List<String> tags,
     @TimestampConverter() DateTime? createdAt,
     @TimestampConverter() DateTime? updatedAt,
+    // Lifecycle stamps (optional — set as the ride moves through its states).
+    @TimestampConverter() DateTime? completedAt,
+    @TimestampConverter() DateTime? cancelledAt,
+    String? cancellationReason,
   }) = _RideModel;
   const RideModel._();
 
@@ -132,6 +138,38 @@ abstract class RideModel with _$RideModel {
 
   ///Is ride full
   bool get isFull => capacity.isFull;
+
+  /// Ride has been completed.
+  bool get isCompleted => status == RideStatus.completed;
+
+  /// Ride has been cancelled.
+  bool get isCancelled => status == RideStatus.cancelled;
+
+  /// Ride is currently underway.
+  bool get isInProgress => status == RideStatus.inProgress;
+
+  /// Ride is in an active, future-facing state (not finished or cancelled).
+  bool get isActive =>
+      status == RideStatus.active || status == RideStatus.full;
+
+  /// Whether the driver can still cancel the ride (not already finished).
+  bool get isCancellable =>
+      status != RideStatus.completed && status != RideStatus.cancelled;
+
+  /// Whether this ride has any reviews.
+  bool get hasReviews => reviewCount > 0;
+
+  /// Pending bookings awaiting a driver decision.
+  List<RideBooking> get pendingBookings =>
+      bookings.where((b) => b.status == BookingStatus.pending).toList();
+
+  /// Number of seats locked in by accepted bookings.
+  int get confirmedSeatsCount =>
+      acceptedBookings.fold(0, (sum, b) => sum + b.seatsBooked);
+
+  /// Total fare collectible if every available seat is booked.
+  int get maxPotentialEarningsInCents =>
+      pricing.totalForSeats(capacity.available);
 
   /// Is a premium ride (tagged by driver as premium)
   bool get isPremium => tags.contains('premium');

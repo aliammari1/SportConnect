@@ -24,11 +24,11 @@ class AppMapTileLayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tileProvider =
-        ref.watch(mapTileProviderProvider.select((a) => a.value));
+    final tileProvider = ref.watch(
+      mapTileProviderProvider.select((a) => a.value),
+    );
     return TileLayer(
-      urlTemplate:
-          urlTemplate ?? MapService.standardTileProvider.urlTemplate,
+      urlTemplate: urlTemplate ?? MapService.standardTileProvider.urlTemplate,
       subdomains: subdomains,
       userAgentPackageName: AppConstants.userAgent,
       tileProvider: tileProvider,

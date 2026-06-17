@@ -43,12 +43,16 @@ class VehicleState {
     String? userId,
     AsyncValue<List<VehicleModel>>? vehicles,
     bool clearAction = false,
+    bool clearSelectedVehicle = false,
+    bool clearError = false,
   }) {
     return VehicleState(
       isLoading: isLoading ?? this.isLoading,
       isSuccess: isSuccess ?? this.isSuccess,
-      errorMessage: errorMessage,
-      selectedVehicle: selectedVehicle ?? this.selectedVehicle,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      selectedVehicle: clearSelectedVehicle
+          ? null
+          : (selectedVehicle ?? this.selectedVehicle),
       actionType: clearAction ? null : (actionType ?? this.actionType),
       actionMessage: clearAction ? null : (actionMessage ?? this.actionMessage),
       userId: userId ?? this.userId,
@@ -92,6 +96,7 @@ class VehicleViewModel extends _$VehicleViewModel {
       isLoading: true,
       isSuccess: false,
       clearAction: true,
+      clearError: true,
     );
 
     try {
@@ -116,9 +121,8 @@ class VehicleViewModel extends _$VehicleViewModel {
         actionMessage: 'Vehicle added successfully',
       );
 
-      // Refresh user vehicles list
-      ref.invalidate(userVehiclesStreamProvider(userId));
-
+      // The live snapshot subscription (see build()) pushes the updated list;
+      // no manual invalidation needed.
       return true;
     } on Exception catch (e) {
       if (!ref.mounted) return false;
@@ -137,6 +141,7 @@ class VehicleViewModel extends _$VehicleViewModel {
       isLoading: true,
       isSuccess: false,
       clearAction: true,
+      clearError: true,
     );
 
     try {
@@ -158,9 +163,8 @@ class VehicleViewModel extends _$VehicleViewModel {
         actionMessage: 'Vehicle updated successfully',
       );
 
-      // Refresh user vehicles list
-      ref.invalidate(userVehiclesStreamProvider(userId));
-
+      // The live snapshot subscription (see build()) pushes the updated list;
+      // no manual invalidation needed.
       return true;
     } on Exception catch (e) {
       if (!ref.mounted) return false;
@@ -179,6 +183,7 @@ class VehicleViewModel extends _$VehicleViewModel {
       isLoading: true,
       isSuccess: false,
       clearAction: true,
+      clearError: true,
     );
 
     try {
@@ -213,9 +218,8 @@ class VehicleViewModel extends _$VehicleViewModel {
         actionMessage: 'Vehicle deleted successfully',
       );
 
-      // Refresh user vehicles list
-      ref.invalidate(userVehiclesStreamProvider(userId));
-
+      // The live snapshot subscription (see build()) pushes the updated list;
+      // no manual invalidation needed.
       return true;
     } on Exception catch (e) {
       if (!ref.mounted) return false;
@@ -234,6 +238,7 @@ class VehicleViewModel extends _$VehicleViewModel {
       isLoading: true,
       isSuccess: false,
       clearAction: true,
+      clearError: true,
     );
 
     try {
@@ -254,10 +259,8 @@ class VehicleViewModel extends _$VehicleViewModel {
         actionMessage: 'Vehicle set as active',
       );
 
-      // Refresh vehicle streams
-      ref.invalidate(userVehiclesStreamProvider(userId));
-      ref.invalidate(activeVehicleStreamProvider(userId));
-
+      // The live snapshot subscriptions (userVehiclesStream / activeVehicleStream)
+      // push the updated state; no manual invalidation needed.
       return true;
     } on Exception catch (e) {
       if (!ref.mounted) return false;
@@ -279,7 +282,7 @@ class VehicleViewModel extends _$VehicleViewModel {
     required String vehicleId,
     required File imageFile,
   }) async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, clearError: true);
 
     try {
       final repository = ref.read(vehicleRepositoryProvider);
@@ -306,6 +309,17 @@ class VehicleViewModel extends _$VehicleViewModel {
     }
   }
 
+  /// Best-effort delete of a superseded vehicle image (e.g. after the photo is
+  /// replaced) so the old Storage object is not orphaned.
+  Future<void> deleteVehicleImageByUrl(String url) async {
+    try {
+      final repository = ref.read(vehicleRepositoryProvider);
+      await repository.deleteVehicleImageByUrl(url);
+    } on Exception {
+      // Best-effort cleanup; ignore failures.
+    }
+  }
+
   /// Update vehicle stats after a ride
   Future<bool> updateVehicleStats({
     required String vehicleId,
@@ -320,12 +334,8 @@ class VehicleViewModel extends _$VehicleViewModel {
       );
 
       if (!ref.mounted) return true;
-      // Refresh vehicle if we have userId
-      final userId = _getCurrentUserId();
-      if (userId != null) {
-        ref.invalidate(userVehiclesStreamProvider(userId));
-      }
-
+      // The live snapshot subscription (see build()) pushes the updated stats;
+      // no manual invalidation needed.
       return true;
     } on Exception catch (e) {
       if (!ref.mounted) return false;
@@ -338,7 +348,7 @@ class VehicleViewModel extends _$VehicleViewModel {
 
   /// Clear any error messages
   void clearError() {
-    state = state.copyWith();
+    state = state.copyWith(clearError: true);
   }
 
   /// Clear success state
@@ -353,6 +363,6 @@ class VehicleViewModel extends _$VehicleViewModel {
 
   /// Clear selected vehicle
   void clearSelectedVehicle() {
-    state = state.copyWith();
+    state = state.copyWith(clearSelectedVehicle: true);
   }
 }

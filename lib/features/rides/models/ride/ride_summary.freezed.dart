@@ -295,19 +295,16 @@ as bool,
 
 }
 
-
 /// @nodoc
 mixin _$RideDetailState {
 
- String get id; String? get driverId; LocationPoint? get origin; LocationPoint? get destination;@TimestampConverter() DateTime? get departureTime; String? get formattedPrice; int? get seatsAvailable; List<RideBooking> get activeBookings; int get pendingRequestsCount; bool get canBook; bool get isLoading; String? get errorMessage;
+ String get id; String? get driverId; LocationPoint? get origin; LocationPoint? get destination; DateTime? get departureTime; String? get formattedPrice; int? get seatsAvailable; List<RideBooking> get activeBookings; int get pendingRequestsCount; bool get canBook; bool get isLoading; String? get errorMessage;
 /// Create a copy of RideDetailState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $RideDetailStateCopyWith<RideDetailState> get copyWith => _$RideDetailStateCopyWithImpl<RideDetailState>(this as RideDetailState, _$identity);
 
-  /// Serializes this RideDetailState to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -315,7 +312,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is RideDetailState&&(identical(other.id, id) || other.id == id)&&(identical(other.driverId, driverId) || other.driverId == driverId)&&(identical(other.origin, origin) || other.origin == origin)&&(identical(other.destination, destination) || other.destination == destination)&&(identical(other.departureTime, departureTime) || other.departureTime == departureTime)&&(identical(other.formattedPrice, formattedPrice) || other.formattedPrice == formattedPrice)&&(identical(other.seatsAvailable, seatsAvailable) || other.seatsAvailable == seatsAvailable)&&const DeepCollectionEquality().equals(other.activeBookings, activeBookings)&&(identical(other.pendingRequestsCount, pendingRequestsCount) || other.pendingRequestsCount == pendingRequestsCount)&&(identical(other.canBook, canBook) || other.canBook == canBook)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,driverId,origin,destination,departureTime,formattedPrice,seatsAvailable,const DeepCollectionEquality().hash(activeBookings),pendingRequestsCount,canBook,isLoading,errorMessage);
 
@@ -332,7 +329,7 @@ abstract mixin class $RideDetailStateCopyWith<$Res>  {
   factory $RideDetailStateCopyWith(RideDetailState value, $Res Function(RideDetailState) _then) = _$RideDetailStateCopyWithImpl;
 @useResult
 $Res call({
- String id, String? driverId, LocationPoint? origin, LocationPoint? destination,@TimestampConverter() DateTime? departureTime, String? formattedPrice, int? seatsAvailable, List<RideBooking> activeBookings, int pendingRequestsCount, bool canBook, bool isLoading, String? errorMessage
+ String id, String? driverId, LocationPoint? origin, LocationPoint? destination, DateTime? departureTime, String? formattedPrice, int? seatsAvailable, List<RideBooking> activeBookings, int pendingRequestsCount, bool canBook, bool isLoading, String? errorMessage
 });
 
 
@@ -472,7 +469,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? driverId,  LocationPoint? origin,  LocationPoint? destination, @TimestampConverter()  DateTime? departureTime,  String? formattedPrice,  int? seatsAvailable,  List<RideBooking> activeBookings,  int pendingRequestsCount,  bool canBook,  bool isLoading,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? driverId,  LocationPoint? origin,  LocationPoint? destination,  DateTime? departureTime,  String? formattedPrice,  int? seatsAvailable,  List<RideBooking> activeBookings,  int pendingRequestsCount,  bool canBook,  bool isLoading,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RideDetailState() when $default != null:
 return $default(_that.id,_that.driverId,_that.origin,_that.destination,_that.departureTime,_that.formattedPrice,_that.seatsAvailable,_that.activeBookings,_that.pendingRequestsCount,_that.canBook,_that.isLoading,_that.errorMessage);case _:
@@ -493,7 +490,7 @@ return $default(_that.id,_that.driverId,_that.origin,_that.destination,_that.dep
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? driverId,  LocationPoint? origin,  LocationPoint? destination, @TimestampConverter()  DateTime? departureTime,  String? formattedPrice,  int? seatsAvailable,  List<RideBooking> activeBookings,  int pendingRequestsCount,  bool canBook,  bool isLoading,  String? errorMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? driverId,  LocationPoint? origin,  LocationPoint? destination,  DateTime? departureTime,  String? formattedPrice,  int? seatsAvailable,  List<RideBooking> activeBookings,  int pendingRequestsCount,  bool canBook,  bool isLoading,  String? errorMessage)  $default,) {final _that = this;
 switch (_that) {
 case _RideDetailState():
 return $default(_that.id,_that.driverId,_that.origin,_that.destination,_that.departureTime,_that.formattedPrice,_that.seatsAvailable,_that.activeBookings,_that.pendingRequestsCount,_that.canBook,_that.isLoading,_that.errorMessage);case _:
@@ -513,7 +510,7 @@ return $default(_that.id,_that.driverId,_that.origin,_that.destination,_that.dep
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? driverId,  LocationPoint? origin,  LocationPoint? destination, @TimestampConverter()  DateTime? departureTime,  String? formattedPrice,  int? seatsAvailable,  List<RideBooking> activeBookings,  int pendingRequestsCount,  bool canBook,  bool isLoading,  String? errorMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? driverId,  LocationPoint? origin,  LocationPoint? destination,  DateTime? departureTime,  String? formattedPrice,  int? seatsAvailable,  List<RideBooking> activeBookings,  int pendingRequestsCount,  bool canBook,  bool isLoading,  String? errorMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _RideDetailState() when $default != null:
 return $default(_that.id,_that.driverId,_that.origin,_that.destination,_that.departureTime,_that.formattedPrice,_that.seatsAvailable,_that.activeBookings,_that.pendingRequestsCount,_that.canBook,_that.isLoading,_that.errorMessage);case _:
@@ -525,17 +522,17 @@ return $default(_that.id,_that.driverId,_that.origin,_that.destination,_that.dep
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _RideDetailState implements RideDetailState {
-  const _RideDetailState({required this.id, this.driverId, this.origin, this.destination, @TimestampConverter() this.departureTime, this.formattedPrice, this.seatsAvailable, final  List<RideBooking> activeBookings = const [], this.pendingRequestsCount = 0, this.canBook = false, this.isLoading = false, this.errorMessage}): _activeBookings = activeBookings;
-  factory _RideDetailState.fromJson(Map<String, dynamic> json) => _$RideDetailStateFromJson(json);
+  const _RideDetailState({required this.id, this.driverId, this.origin, this.destination, this.departureTime, this.formattedPrice, this.seatsAvailable, final  List<RideBooking> activeBookings = const [], this.pendingRequestsCount = 0, this.canBook = false, this.isLoading = false, this.errorMessage}): _activeBookings = activeBookings;
+  
 
 @override final  String id;
 @override final  String? driverId;
 @override final  LocationPoint? origin;
 @override final  LocationPoint? destination;
-@override@TimestampConverter() final  DateTime? departureTime;
+@override final  DateTime? departureTime;
 @override final  String? formattedPrice;
 @override final  int? seatsAvailable;
  final  List<RideBooking> _activeBookings;
@@ -556,17 +553,14 @@ class _RideDetailState implements RideDetailState {
 @pragma('vm:prefer-inline')
 _$RideDetailStateCopyWith<_RideDetailState> get copyWith => __$RideDetailStateCopyWithImpl<_RideDetailState>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$RideDetailStateToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _RideDetailState&&(identical(other.id, id) || other.id == id)&&(identical(other.driverId, driverId) || other.driverId == driverId)&&(identical(other.origin, origin) || other.origin == origin)&&(identical(other.destination, destination) || other.destination == destination)&&(identical(other.departureTime, departureTime) || other.departureTime == departureTime)&&(identical(other.formattedPrice, formattedPrice) || other.formattedPrice == formattedPrice)&&(identical(other.seatsAvailable, seatsAvailable) || other.seatsAvailable == seatsAvailable)&&const DeepCollectionEquality().equals(other._activeBookings, _activeBookings)&&(identical(other.pendingRequestsCount, pendingRequestsCount) || other.pendingRequestsCount == pendingRequestsCount)&&(identical(other.canBook, canBook) || other.canBook == canBook)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,driverId,origin,destination,departureTime,formattedPrice,seatsAvailable,const DeepCollectionEquality().hash(_activeBookings),pendingRequestsCount,canBook,isLoading,errorMessage);
 
@@ -583,7 +577,7 @@ abstract mixin class _$RideDetailStateCopyWith<$Res> implements $RideDetailState
   factory _$RideDetailStateCopyWith(_RideDetailState value, $Res Function(_RideDetailState) _then) = __$RideDetailStateCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? driverId, LocationPoint? origin, LocationPoint? destination,@TimestampConverter() DateTime? departureTime, String? formattedPrice, int? seatsAvailable, List<RideBooking> activeBookings, int pendingRequestsCount, bool canBook, bool isLoading, String? errorMessage
+ String id, String? driverId, LocationPoint? origin, LocationPoint? destination, DateTime? departureTime, String? formattedPrice, int? seatsAvailable, List<RideBooking> activeBookings, int pendingRequestsCount, bool canBook, bool isLoading, String? errorMessage
 });
 
 

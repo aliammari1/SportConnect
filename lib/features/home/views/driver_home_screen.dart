@@ -7,7 +7,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
@@ -20,8 +19,10 @@ import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/permission_dialog_helper.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
+import 'package:sport_connect/core/widgets/shimmer_card.dart';
 import 'package:sport_connect/features/home/view_models/driver_location_view_model.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_view_model.dart';
+import 'package:sport_connect/features/notifications/view_models/notification_view_model.dart';
 import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
 import 'package:sport_connect/features/profile/view_models/settings_view_model.dart';
 import 'package:sport_connect/features/rides/models/booking/ride_booking.dart';
@@ -293,7 +294,7 @@ class _DriverDashboard extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 SliverToBoxAdapter(
-                  child: _buildHeader(context, user, l10n, hPad),
+                  child: _buildHeader(context, ref, user, l10n, hPad),
                 ),
                 if (!locationGranted && !isLoadingLocation)
                   SliverToBoxAdapter(
@@ -422,11 +423,18 @@ class _DriverDashboard extends ConsumerWidget {
 
   Widget _buildHeader(
     BuildContext context,
+    WidgetRef ref,
     AsyncValue<_DriverHomeUserData?> user,
     AppLocalizations l10n,
     double hPad,
   ) {
     final topPad = MediaQuery.paddingOf(context).top;
+    final hasUnreadNotifications = ref
+        .watch(userNotificationsProvider)
+        .maybeWhen(
+          data: (notifications) => notifications.any((n) => !n.isRead),
+          orElse: () => false,
+        );
 
     final header = Container(
       padding: EdgeInsets.fromLTRB(hPad, topPad + 12.h, hPad, 10.h),
@@ -457,7 +465,7 @@ class _DriverDashboard extends ConsumerWidget {
                 Text(
                   _getGreeting(l10n),
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
@@ -498,7 +506,7 @@ class _DriverDashboard extends ConsumerWidget {
           _HeaderIconButton(
             tooltip: l10n.notificationsTooltip,
             icon: Icons.notifications_outlined,
-            showBadge: true,
+            showBadge: hasUnreadNotifications,
             onTap: () => context.push(AppRoutes.notifications.path),
           ),
           SizedBox(width: 6.w),
@@ -584,7 +592,7 @@ class _DriverDashboard extends ConsumerWidget {
                     ? l10n.browseByCity
                     : l10n.enable,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -648,7 +656,7 @@ class _DriverDashboard extends ConsumerWidget {
           onTap: () => context.push(AppRoutes.driverOfferRide.path),
         );
       },
-      loading: () => _buildShimmerCard(height: 128),
+      loading: () => const ShimmerCard(height: 128),
       error: (_, _) => _MainActionCard(
         icon: Icons.add_road_rounded,
         title: l10n.ready_for_your_next_trip,
@@ -684,7 +692,7 @@ class _DriverDashboard extends ConsumerWidget {
                     Text(
                       l10n.todaySEarnings,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textSecondary,
                       ),
@@ -736,7 +744,7 @@ class _DriverDashboard extends ConsumerWidget {
           (animation) => animation.fadeIn(duration: 300.ms, delay: 100.ms),
         );
       },
-      loading: () => _buildShimmerCard(height: 104),
+      loading: () => const ShimmerCard(height: 104),
       error: (_, _) => _buildErrorCard(l10n.failedToLoadEarnings),
     );
   }
@@ -807,7 +815,7 @@ class _DriverDashboard extends ConsumerWidget {
               ],
             );
           },
-          loading: () => _buildShimmerCard(height: 150),
+          loading: () => const ShimmerCard(height: 150),
           error: (_, _) => _buildErrorCard(l10n.failedToLoadRequests),
         ),
       ],
@@ -856,7 +864,7 @@ class _DriverDashboard extends ConsumerWidget {
               ],
             );
           },
-          loading: () => _buildShimmerCard(height: 108),
+          loading: () => const ShimmerCard(height: 108),
           error: (_, _) => _buildErrorCard(l10n.failedToLoadRides),
         ),
       ],
@@ -865,21 +873,6 @@ class _DriverDashboard extends ConsumerWidget {
     return _animateDriverHome(
       section,
       (animation) => animation.fadeIn(duration: 300.ms, delay: 200.ms),
-    );
-  }
-
-  Widget _buildShimmerCard({required double height}) {
-    final card = Container(
-      height: height.h,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18.r),
-      ),
-    );
-
-    return Skeletonizer(
-      containersColor: AppColors.surface,
-      child: card,
     );
   }
 
@@ -900,7 +893,7 @@ class _DriverDashboard extends ConsumerWidget {
             child: Text(
               message,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 color: AppColors.error,
                 fontWeight: FontWeight.w600,
               ),
@@ -1008,7 +1001,7 @@ class _MainActionCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.textSecondary,
                         height: 1.3,
                       ),
@@ -1062,8 +1055,12 @@ class _ActiveRideCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final origin = ride.origin.city ?? ride.origin.address;
-    final destination = ride.destination.city ?? ride.destination.address;
+    final origin = ride.origin.address.isNotEmpty
+        ? ride.origin.address
+        : ride.origin.city ?? ride.origin.address;
+    final destination = ride.destination.address.isNotEmpty
+        ? ride.destination.address
+        : ride.destination.city ?? ride.destination.address;
 
     final card = _SoftCard(
       padding: EdgeInsets.all(18.w),
@@ -1094,7 +1091,7 @@ class _ActiveRideCard extends StatelessWidget {
                 Text(
                   '$origin → $destination',
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: AppColors.textSecondary,
                     height: 1.3,
                   ),
@@ -1146,9 +1143,12 @@ class _NextRideCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final origin = ride.route.origin.city ?? ride.route.origin.address;
-    final destination =
-        ride.route.destination.city ?? ride.route.destination.address;
+    final origin = ride.route.origin.address.isNotEmpty
+        ? ride.route.origin.address
+        : ride.route.origin.city ?? ride.route.origin.address;
+    final destination = ride.route.destination.address.isNotEmpty
+        ? ride.route.destination.address
+        : ride.route.destination.city ?? ride.route.destination.address;
     final departure = ride.schedule.departureTime;
     final earned =
         ((ride.pricing.pricePerSeatInCents * ride.capacity.booked) / 100)
@@ -1315,7 +1315,7 @@ class _RequestCard extends ConsumerWidget {
                     Text(
                       passengerName,
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
@@ -1379,7 +1379,7 @@ class _RequestCard extends ConsumerWidget {
                       context,
                     ).value6((total / 100).toStringAsFixed(2)),
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w900,
                       color: AppColors.success,
                     ),
@@ -1621,7 +1621,7 @@ class _RoutePreview extends StatelessWidget {
                 Text(
                   pickupAddress,
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
@@ -1632,7 +1632,7 @@ class _RoutePreview extends StatelessWidget {
                 Text(
                   dropoffAddress,
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
@@ -1716,7 +1716,7 @@ class _MiniMetric extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontSize: 13.sp,
+            fontSize: 12.sp,
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w900,
           ),
@@ -1812,7 +1812,7 @@ class _SectionHeader extends StatelessWidget {
             child: Text(
               actionText!,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w800,
                 color: AppColors.primary,
               ),

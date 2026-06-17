@@ -224,8 +224,8 @@ return $default(_that.driverId,_that.rating,_that.totalRides,_that.ridesToday,_t
 /// @nodoc
 @JsonSerializable()
 
-class _DriverStats implements DriverStats {
-  const _DriverStats({this.driverId = '', this.rating = 0.0, this.totalRides = 0, this.ridesToday = 0, this.ridesThisWeek = 0, this.ridesThisMonth = 0, this.pendingRequests = 0, this.totalEarningsInCents = 0, this.earningsTodayInCents = 0, this.earningsThisWeekInCents = 0, this.earningsThisMonthInCents = 0, this.totalSpentInCents = 0, this.totalDistance = 0.0, @TimestampConverter() this.lastRideAt = null});
+class _DriverStats extends DriverStats {
+  const _DriverStats({this.driverId = '', this.rating = 0.0, this.totalRides = 0, this.ridesToday = 0, this.ridesThisWeek = 0, this.ridesThisMonth = 0, this.pendingRequests = 0, this.totalEarningsInCents = 0, this.earningsTodayInCents = 0, this.earningsThisWeekInCents = 0, this.earningsThisMonthInCents = 0, this.totalSpentInCents = 0, this.totalDistance = 0.0, @TimestampConverter() this.lastRideAt = null}): super._();
   factory _DriverStats.fromJson(Map<String, dynamic> json) => _$DriverStatsFromJson(json);
 
 @override@JsonKey() final  String driverId;
@@ -521,8 +521,8 @@ return $default(_that.id,_that.rideId,_that.amountInCents,_that.description,_tha
 /// @nodoc
 @JsonSerializable()
 
-class _EarningsTransaction implements EarningsTransaction {
-  const _EarningsTransaction({required this.id, required this.rideId, required this.amountInCents, required this.description, @RequiredTimestampConverter() required this.createdAt, this.type = EarningsTransactionType.ride});
+class _EarningsTransaction extends EarningsTransaction {
+  const _EarningsTransaction({required this.id, required this.rideId, required this.amountInCents, required this.description, @RequiredTimestampConverter() required this.createdAt, this.type = EarningsTransactionType.ride}): super._();
   factory _EarningsTransaction.fromJson(Map<String, dynamic> json) => _$EarningsTransactionFromJson(json);
 
 @override final  String id;

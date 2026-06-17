@@ -135,7 +135,7 @@ class _ExpertisePickerState extends State<ExpertisePicker>
                         Text(
                           widget.value?.displayName ?? widget.hint,
                           style: TextStyle(
-                            fontSize: 15.sp,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                             color: hasValue
                                 ? widget.textColor

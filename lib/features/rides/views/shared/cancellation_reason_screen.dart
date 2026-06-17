@@ -213,6 +213,7 @@ class CancellationReasonScreen extends ConsumerWidget {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.cancelRide2,
         leading: IconButton(
           tooltip: AppLocalizations.of(context).goBackTooltip,
@@ -253,7 +254,7 @@ class CancellationReasonScreen extends ConsumerWidget {
                           context,
                         ).cancellationReasonBannerMessage,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           color: AppColors.error.withValues(alpha: 0.8),
                           height: 1.4,
                         ),

@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$VehicleModel {
 
- String get id; String get ownerId; String get make; String get model; int get year; String get color; String get licensePlate; String get ownerName; String? get ownerPhotoUrl; int get capacity; String? get imageUrl; List<String> get imageUrls; bool get isActive; bool get isDefault;// Stats
+ String get id; String get ownerId; String get make; String get model; int get year; String get color; String get licensePlate; String get ownerName; String? get ownerPhotoUrl; int get capacity; String? get imageUrl; List<String> get imageUrls; bool get isActive; bool get isDefault;// Specs (optional; captured during onboarding / editing)
+ VehicleType get type; VehicleFuelType get fuelType; VehicleTransmission get transmission;// Verification
+ VehicleVerificationStatus get verificationStatus;@TimestampConverter() DateTime? get verifiedAt; String? get rejectionReason;// Stats
  int get totalRides; double get averageRating;// Timestamps
 @TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;
 /// Create a copy of VehicleModel
@@ -30,16 +32,16 @@ $VehicleModelCopyWith<VehicleModel> get copyWith => _$VehicleModelCopyWithImpl<V
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VehicleModel&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.make, make) || other.make == make)&&(identical(other.model, model) || other.model == model)&&(identical(other.year, year) || other.year == year)&&(identical(other.color, color) || other.color == color)&&(identical(other.licensePlate, licensePlate) || other.licensePlate == licensePlate)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.ownerPhotoUrl, ownerPhotoUrl) || other.ownerPhotoUrl == ownerPhotoUrl)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault)&&(identical(other.totalRides, totalRides) || other.totalRides == totalRides)&&(identical(other.averageRating, averageRating) || other.averageRating == averageRating)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VehicleModel&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.make, make) || other.make == make)&&(identical(other.model, model) || other.model == model)&&(identical(other.year, year) || other.year == year)&&(identical(other.color, color) || other.color == color)&&(identical(other.licensePlate, licensePlate) || other.licensePlate == licensePlate)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.ownerPhotoUrl, ownerPhotoUrl) || other.ownerPhotoUrl == ownerPhotoUrl)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other.imageUrls, imageUrls)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault)&&(identical(other.type, type) || other.type == type)&&(identical(other.fuelType, fuelType) || other.fuelType == fuelType)&&(identical(other.transmission, transmission) || other.transmission == transmission)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.verifiedAt, verifiedAt) || other.verifiedAt == verifiedAt)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.totalRides, totalRides) || other.totalRides == totalRides)&&(identical(other.averageRating, averageRating) || other.averageRating == averageRating)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,ownerId,make,model,year,color,licensePlate,ownerName,ownerPhotoUrl,capacity,imageUrl,const DeepCollectionEquality().hash(imageUrls),isActive,isDefault,totalRides,averageRating,createdAt,updatedAt);
+int get hashCode => Object.hashAll([runtimeType,id,ownerId,make,model,year,color,licensePlate,ownerName,ownerPhotoUrl,capacity,imageUrl,const DeepCollectionEquality().hash(imageUrls),isActive,isDefault,type,fuelType,transmission,verificationStatus,verifiedAt,rejectionReason,totalRides,averageRating,createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'VehicleModel(id: $id, ownerId: $ownerId, make: $make, model: $model, year: $year, color: $color, licensePlate: $licensePlate, ownerName: $ownerName, ownerPhotoUrl: $ownerPhotoUrl, capacity: $capacity, imageUrl: $imageUrl, imageUrls: $imageUrls, isActive: $isActive, isDefault: $isDefault, totalRides: $totalRides, averageRating: $averageRating, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'VehicleModel(id: $id, ownerId: $ownerId, make: $make, model: $model, year: $year, color: $color, licensePlate: $licensePlate, ownerName: $ownerName, ownerPhotoUrl: $ownerPhotoUrl, capacity: $capacity, imageUrl: $imageUrl, imageUrls: $imageUrls, isActive: $isActive, isDefault: $isDefault, type: $type, fuelType: $fuelType, transmission: $transmission, verificationStatus: $verificationStatus, verifiedAt: $verifiedAt, rejectionReason: $rejectionReason, totalRides: $totalRides, averageRating: $averageRating, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -50,7 +52,7 @@ abstract mixin class $VehicleModelCopyWith<$Res>  {
   factory $VehicleModelCopyWith(VehicleModel value, $Res Function(VehicleModel) _then) = _$VehicleModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String ownerId, String make, String model, int year, String color, String licensePlate, String ownerName, String? ownerPhotoUrl, int capacity, String? imageUrl, List<String> imageUrls, bool isActive, bool isDefault, int totalRides, double averageRating,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
+ String id, String ownerId, String make, String model, int year, String color, String licensePlate, String ownerName, String? ownerPhotoUrl, int capacity, String? imageUrl, List<String> imageUrls, bool isActive, bool isDefault, VehicleType type, VehicleFuelType fuelType, VehicleTransmission transmission, VehicleVerificationStatus verificationStatus,@TimestampConverter() DateTime? verifiedAt, String? rejectionReason, int totalRides, double averageRating,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
 });
 
 
@@ -67,7 +69,7 @@ class _$VehicleModelCopyWithImpl<$Res>
 
 /// Create a copy of VehicleModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ownerId = null,Object? make = null,Object? model = null,Object? year = null,Object? color = null,Object? licensePlate = null,Object? ownerName = null,Object? ownerPhotoUrl = freezed,Object? capacity = null,Object? imageUrl = freezed,Object? imageUrls = null,Object? isActive = null,Object? isDefault = null,Object? totalRides = null,Object? averageRating = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ownerId = null,Object? make = null,Object? model = null,Object? year = null,Object? color = null,Object? licensePlate = null,Object? ownerName = null,Object? ownerPhotoUrl = freezed,Object? capacity = null,Object? imageUrl = freezed,Object? imageUrls = null,Object? isActive = null,Object? isDefault = null,Object? type = null,Object? fuelType = null,Object? transmission = null,Object? verificationStatus = null,Object? verifiedAt = freezed,Object? rejectionReason = freezed,Object? totalRides = null,Object? averageRating = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,ownerId: null == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
@@ -83,7 +85,13 @@ as int,imageUrl: freezed == imageUrl ? _self.imageUrl : imageUrl // ignore: cast
 as String?,imageUrls: null == imageUrls ? _self.imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
 as List<String>,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,isDefault: null == isDefault ? _self.isDefault : isDefault // ignore: cast_nullable_to_non_nullable
-as bool,totalRides: null == totalRides ? _self.totalRides : totalRides // ignore: cast_nullable_to_non_nullable
+as bool,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as VehicleType,fuelType: null == fuelType ? _self.fuelType : fuelType // ignore: cast_nullable_to_non_nullable
+as VehicleFuelType,transmission: null == transmission ? _self.transmission : transmission // ignore: cast_nullable_to_non_nullable
+as VehicleTransmission,verificationStatus: null == verificationStatus ? _self.verificationStatus : verificationStatus // ignore: cast_nullable_to_non_nullable
+as VehicleVerificationStatus,verifiedAt: freezed == verifiedAt ? _self.verifiedAt : verifiedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,rejectionReason: freezed == rejectionReason ? _self.rejectionReason : rejectionReason // ignore: cast_nullable_to_non_nullable
+as String?,totalRides: null == totalRides ? _self.totalRides : totalRides // ignore: cast_nullable_to_non_nullable
 as int,averageRating: null == averageRating ? _self.averageRating : averageRating // ignore: cast_nullable_to_non_nullable
 as double,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -172,10 +180,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String ownerId,  String make,  String model,  int year,  String color,  String licensePlate,  String ownerName,  String? ownerPhotoUrl,  int capacity,  String? imageUrl,  List<String> imageUrls,  bool isActive,  bool isDefault,  int totalRides,  double averageRating, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String ownerId,  String make,  String model,  int year,  String color,  String licensePlate,  String ownerName,  String? ownerPhotoUrl,  int capacity,  String? imageUrl,  List<String> imageUrls,  bool isActive,  bool isDefault,  VehicleType type,  VehicleFuelType fuelType,  VehicleTransmission transmission,  VehicleVerificationStatus verificationStatus, @TimestampConverter()  DateTime? verifiedAt,  String? rejectionReason,  int totalRides,  double averageRating, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VehicleModel() when $default != null:
-return $default(_that.id,_that.ownerId,_that.make,_that.model,_that.year,_that.color,_that.licensePlate,_that.ownerName,_that.ownerPhotoUrl,_that.capacity,_that.imageUrl,_that.imageUrls,_that.isActive,_that.isDefault,_that.totalRides,_that.averageRating,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.ownerId,_that.make,_that.model,_that.year,_that.color,_that.licensePlate,_that.ownerName,_that.ownerPhotoUrl,_that.capacity,_that.imageUrl,_that.imageUrls,_that.isActive,_that.isDefault,_that.type,_that.fuelType,_that.transmission,_that.verificationStatus,_that.verifiedAt,_that.rejectionReason,_that.totalRides,_that.averageRating,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -193,10 +201,10 @@ return $default(_that.id,_that.ownerId,_that.make,_that.model,_that.year,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String ownerId,  String make,  String model,  int year,  String color,  String licensePlate,  String ownerName,  String? ownerPhotoUrl,  int capacity,  String? imageUrl,  List<String> imageUrls,  bool isActive,  bool isDefault,  int totalRides,  double averageRating, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String ownerId,  String make,  String model,  int year,  String color,  String licensePlate,  String ownerName,  String? ownerPhotoUrl,  int capacity,  String? imageUrl,  List<String> imageUrls,  bool isActive,  bool isDefault,  VehicleType type,  VehicleFuelType fuelType,  VehicleTransmission transmission,  VehicleVerificationStatus verificationStatus, @TimestampConverter()  DateTime? verifiedAt,  String? rejectionReason,  int totalRides,  double averageRating, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _VehicleModel():
-return $default(_that.id,_that.ownerId,_that.make,_that.model,_that.year,_that.color,_that.licensePlate,_that.ownerName,_that.ownerPhotoUrl,_that.capacity,_that.imageUrl,_that.imageUrls,_that.isActive,_that.isDefault,_that.totalRides,_that.averageRating,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.ownerId,_that.make,_that.model,_that.year,_that.color,_that.licensePlate,_that.ownerName,_that.ownerPhotoUrl,_that.capacity,_that.imageUrl,_that.imageUrls,_that.isActive,_that.isDefault,_that.type,_that.fuelType,_that.transmission,_that.verificationStatus,_that.verifiedAt,_that.rejectionReason,_that.totalRides,_that.averageRating,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -213,10 +221,10 @@ return $default(_that.id,_that.ownerId,_that.make,_that.model,_that.year,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String ownerId,  String make,  String model,  int year,  String color,  String licensePlate,  String ownerName,  String? ownerPhotoUrl,  int capacity,  String? imageUrl,  List<String> imageUrls,  bool isActive,  bool isDefault,  int totalRides,  double averageRating, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String ownerId,  String make,  String model,  int year,  String color,  String licensePlate,  String ownerName,  String? ownerPhotoUrl,  int capacity,  String? imageUrl,  List<String> imageUrls,  bool isActive,  bool isDefault,  VehicleType type,  VehicleFuelType fuelType,  VehicleTransmission transmission,  VehicleVerificationStatus verificationStatus, @TimestampConverter()  DateTime? verifiedAt,  String? rejectionReason,  int totalRides,  double averageRating, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _VehicleModel() when $default != null:
-return $default(_that.id,_that.ownerId,_that.make,_that.model,_that.year,_that.color,_that.licensePlate,_that.ownerName,_that.ownerPhotoUrl,_that.capacity,_that.imageUrl,_that.imageUrls,_that.isActive,_that.isDefault,_that.totalRides,_that.averageRating,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.ownerId,_that.make,_that.model,_that.year,_that.color,_that.licensePlate,_that.ownerName,_that.ownerPhotoUrl,_that.capacity,_that.imageUrl,_that.imageUrls,_that.isActive,_that.isDefault,_that.type,_that.fuelType,_that.transmission,_that.verificationStatus,_that.verifiedAt,_that.rejectionReason,_that.totalRides,_that.averageRating,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -228,7 +236,7 @@ return $default(_that.id,_that.ownerId,_that.make,_that.model,_that.year,_that.c
 @JsonSerializable()
 
 class _VehicleModel extends VehicleModel {
-  const _VehicleModel({required this.id, required this.ownerId, required this.make, required this.model, required this.year, required this.color, required this.licensePlate, this.ownerName = 'Unknown', this.ownerPhotoUrl, this.capacity = 4, this.imageUrl, final  List<String> imageUrls = const [], this.isActive = false, this.isDefault = false, this.totalRides = 0, this.averageRating = 0.0, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt}): _imageUrls = imageUrls,super._();
+  const _VehicleModel({required this.id, required this.ownerId, required this.make, required this.model, required this.year, required this.color, required this.licensePlate, this.ownerName = 'Unknown', this.ownerPhotoUrl, this.capacity = 4, this.imageUrl, final  List<String> imageUrls = const [], this.isActive = false, this.isDefault = false, this.type = VehicleType.unknown, this.fuelType = VehicleFuelType.unknown, this.transmission = VehicleTransmission.unknown, this.verificationStatus = VehicleVerificationStatus.unverified, @TimestampConverter() this.verifiedAt, this.rejectionReason, this.totalRides = 0, this.averageRating = 0.0, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt}): _imageUrls = imageUrls,super._();
   factory _VehicleModel.fromJson(Map<String, dynamic> json) => _$VehicleModelFromJson(json);
 
 @override final  String id;
@@ -251,6 +259,14 @@ class _VehicleModel extends VehicleModel {
 
 @override@JsonKey() final  bool isActive;
 @override@JsonKey() final  bool isDefault;
+// Specs (optional; captured during onboarding / editing)
+@override@JsonKey() final  VehicleType type;
+@override@JsonKey() final  VehicleFuelType fuelType;
+@override@JsonKey() final  VehicleTransmission transmission;
+// Verification
+@override@JsonKey() final  VehicleVerificationStatus verificationStatus;
+@override@TimestampConverter() final  DateTime? verifiedAt;
+@override final  String? rejectionReason;
 // Stats
 @override@JsonKey() final  int totalRides;
 @override@JsonKey() final  double averageRating;
@@ -271,16 +287,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VehicleModel&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.make, make) || other.make == make)&&(identical(other.model, model) || other.model == model)&&(identical(other.year, year) || other.year == year)&&(identical(other.color, color) || other.color == color)&&(identical(other.licensePlate, licensePlate) || other.licensePlate == licensePlate)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.ownerPhotoUrl, ownerPhotoUrl) || other.ownerPhotoUrl == ownerPhotoUrl)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault)&&(identical(other.totalRides, totalRides) || other.totalRides == totalRides)&&(identical(other.averageRating, averageRating) || other.averageRating == averageRating)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VehicleModel&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.make, make) || other.make == make)&&(identical(other.model, model) || other.model == model)&&(identical(other.year, year) || other.year == year)&&(identical(other.color, color) || other.color == color)&&(identical(other.licensePlate, licensePlate) || other.licensePlate == licensePlate)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.ownerPhotoUrl, ownerPhotoUrl) || other.ownerPhotoUrl == ownerPhotoUrl)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other._imageUrls, _imageUrls)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault)&&(identical(other.type, type) || other.type == type)&&(identical(other.fuelType, fuelType) || other.fuelType == fuelType)&&(identical(other.transmission, transmission) || other.transmission == transmission)&&(identical(other.verificationStatus, verificationStatus) || other.verificationStatus == verificationStatus)&&(identical(other.verifiedAt, verifiedAt) || other.verifiedAt == verifiedAt)&&(identical(other.rejectionReason, rejectionReason) || other.rejectionReason == rejectionReason)&&(identical(other.totalRides, totalRides) || other.totalRides == totalRides)&&(identical(other.averageRating, averageRating) || other.averageRating == averageRating)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,ownerId,make,model,year,color,licensePlate,ownerName,ownerPhotoUrl,capacity,imageUrl,const DeepCollectionEquality().hash(_imageUrls),isActive,isDefault,totalRides,averageRating,createdAt,updatedAt);
+int get hashCode => Object.hashAll([runtimeType,id,ownerId,make,model,year,color,licensePlate,ownerName,ownerPhotoUrl,capacity,imageUrl,const DeepCollectionEquality().hash(_imageUrls),isActive,isDefault,type,fuelType,transmission,verificationStatus,verifiedAt,rejectionReason,totalRides,averageRating,createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'VehicleModel(id: $id, ownerId: $ownerId, make: $make, model: $model, year: $year, color: $color, licensePlate: $licensePlate, ownerName: $ownerName, ownerPhotoUrl: $ownerPhotoUrl, capacity: $capacity, imageUrl: $imageUrl, imageUrls: $imageUrls, isActive: $isActive, isDefault: $isDefault, totalRides: $totalRides, averageRating: $averageRating, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'VehicleModel(id: $id, ownerId: $ownerId, make: $make, model: $model, year: $year, color: $color, licensePlate: $licensePlate, ownerName: $ownerName, ownerPhotoUrl: $ownerPhotoUrl, capacity: $capacity, imageUrl: $imageUrl, imageUrls: $imageUrls, isActive: $isActive, isDefault: $isDefault, type: $type, fuelType: $fuelType, transmission: $transmission, verificationStatus: $verificationStatus, verifiedAt: $verifiedAt, rejectionReason: $rejectionReason, totalRides: $totalRides, averageRating: $averageRating, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -291,7 +307,7 @@ abstract mixin class _$VehicleModelCopyWith<$Res> implements $VehicleModelCopyWi
   factory _$VehicleModelCopyWith(_VehicleModel value, $Res Function(_VehicleModel) _then) = __$VehicleModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String ownerId, String make, String model, int year, String color, String licensePlate, String ownerName, String? ownerPhotoUrl, int capacity, String? imageUrl, List<String> imageUrls, bool isActive, bool isDefault, int totalRides, double averageRating,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
+ String id, String ownerId, String make, String model, int year, String color, String licensePlate, String ownerName, String? ownerPhotoUrl, int capacity, String? imageUrl, List<String> imageUrls, bool isActive, bool isDefault, VehicleType type, VehicleFuelType fuelType, VehicleTransmission transmission, VehicleVerificationStatus verificationStatus,@TimestampConverter() DateTime? verifiedAt, String? rejectionReason, int totalRides, double averageRating,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
 });
 
 
@@ -308,7 +324,7 @@ class __$VehicleModelCopyWithImpl<$Res>
 
 /// Create a copy of VehicleModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? ownerId = null,Object? make = null,Object? model = null,Object? year = null,Object? color = null,Object? licensePlate = null,Object? ownerName = null,Object? ownerPhotoUrl = freezed,Object? capacity = null,Object? imageUrl = freezed,Object? imageUrls = null,Object? isActive = null,Object? isDefault = null,Object? totalRides = null,Object? averageRating = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? ownerId = null,Object? make = null,Object? model = null,Object? year = null,Object? color = null,Object? licensePlate = null,Object? ownerName = null,Object? ownerPhotoUrl = freezed,Object? capacity = null,Object? imageUrl = freezed,Object? imageUrls = null,Object? isActive = null,Object? isDefault = null,Object? type = null,Object? fuelType = null,Object? transmission = null,Object? verificationStatus = null,Object? verifiedAt = freezed,Object? rejectionReason = freezed,Object? totalRides = null,Object? averageRating = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_VehicleModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,ownerId: null == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
@@ -324,7 +340,13 @@ as int,imageUrl: freezed == imageUrl ? _self.imageUrl : imageUrl // ignore: cast
 as String?,imageUrls: null == imageUrls ? _self._imageUrls : imageUrls // ignore: cast_nullable_to_non_nullable
 as List<String>,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,isDefault: null == isDefault ? _self.isDefault : isDefault // ignore: cast_nullable_to_non_nullable
-as bool,totalRides: null == totalRides ? _self.totalRides : totalRides // ignore: cast_nullable_to_non_nullable
+as bool,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as VehicleType,fuelType: null == fuelType ? _self.fuelType : fuelType // ignore: cast_nullable_to_non_nullable
+as VehicleFuelType,transmission: null == transmission ? _self.transmission : transmission // ignore: cast_nullable_to_non_nullable
+as VehicleTransmission,verificationStatus: null == verificationStatus ? _self.verificationStatus : verificationStatus // ignore: cast_nullable_to_non_nullable
+as VehicleVerificationStatus,verifiedAt: freezed == verifiedAt ? _self.verifiedAt : verifiedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,rejectionReason: freezed == rejectionReason ? _self.rejectionReason : rejectionReason // ignore: cast_nullable_to_non_nullable
+as String?,totalRides: null == totalRides ? _self.totalRides : totalRides // ignore: cast_nullable_to_non_nullable
 as int,averageRating: null == averageRating ? _self.averageRating : averageRating // ignore: cast_nullable_to_non_nullable
 as double,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable

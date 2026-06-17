@@ -1,4 +1,4 @@
-appId: com.sportconnect.sport_connect
+appId: ${APP_ID}
 ---
 # ============================================
 # Auth Journey: Onboarding Flow

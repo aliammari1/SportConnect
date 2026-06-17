@@ -84,6 +84,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           icon: Icon(
             Icons.close_rounded,
@@ -288,7 +289,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                       Text(
                         l10n.eventTapToAddPhoto,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           color: AppColors.textSecondary,
                         ),
                       ),
@@ -519,7 +520,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                   Text(
                     value,
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                       color: muted
                           ? AppColors.textTertiary
@@ -641,7 +642,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                               )
                             : l10n.select_a_recurrence_pattern,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           color: createState.recurringPattern != null
                               ? AppColors.textPrimary
                               : AppColors.textTertiary,
@@ -685,7 +686,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                           )
                         : l10n.eventRepeatEndDate,
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       color: createState.recurringEndDate != null
                           ? AppColors.textPrimary
                           : AppColors.textTertiary,
@@ -794,7 +795,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                           Text(
                             _recurrenceLabel(l10n, pattern),
                             style: TextStyle(
-                              fontSize: 13.sp,
+                              fontSize: 12.sp,
                               fontWeight: selected
                                   ? FontWeight.w600
                                   : FontWeight.w500,
@@ -865,7 +866,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
   Widget _label(String text) => Text(
     text,
     style: TextStyle(
-      fontSize: 13.sp,
+      fontSize: 12.sp,
       fontWeight: FontWeight.w700,
       color: AppColors.textSecondary,
     ),

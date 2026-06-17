@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
-import 'package:device_preview/device_preview.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -18,6 +17,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:sport_connect/core/config/app_router.dart';
 import 'package:sport_connect/core/config/stripe_config.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
+import 'package:sport_connect/features/auth/repositories/auth_repository.dart';
 import 'package:sport_connect/core/repositories/settings_repository.dart';
 import 'package:sport_connect/core/services/deep_link_service.dart';
 import 'package:sport_connect/core/services/firebase_service.dart';
@@ -164,10 +164,7 @@ void _runApp(SharedPreferences prefs) {
           ),
         ],
       ],
-      child: DevicePreview(
-        enabled: kDebugMode,
-        builder: (context) => const SportConnectApp(), // Wrap your app
-      ),
+      child: const SportConnectApp(),
     ),
   );
 }
@@ -238,6 +235,10 @@ class _SportConnectAppState extends ConsumerState<SportConnectApp> {
 
     if (_isFirebaseInitialized) {
       _saveFcmTokenIfNeeded();
+      // Best practice: verify the user's Sign in with Apple credential is still
+      // valid on launch and sign out if it was revoked externally. Best-effort
+      // and a no-op on non-Apple platforms / the emulator.
+      unawaited(ref.read(authRepositoryProvider).verifyAppleCredentialState());
     }
 
     if (!mounted) return;
@@ -256,13 +257,18 @@ class _SportConnectAppState extends ConsumerState<SportConnectApp> {
 
     unawaited(ref.read(deepLinkServiceProvider).initialize(router));
 
-    final context = rootNavigatorKey.currentContext;
-
-    if (context != null && mounted) {
-      ref
-          .read(pushNotificationServiceProvider)
-          .handlePendingInitialMessage(context);
-    }
+    // The GoRouter navigator key context is null at this point because the
+    // router hasn't rendered its first route yet.  Schedule a second
+    // post-frame callback so navigation runs after the router is mounted.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx = rootNavigatorKey.currentContext;
+      if (ctx != null) {
+        ref
+            .read(pushNotificationServiceProvider)
+            .handlePendingInitialMessage(ctx);
+      }
+    });
   }
 
   void _saveFcmTokenIfNeeded() {
@@ -285,94 +291,130 @@ class _SportConnectAppState extends ConsumerState<SportConnectApp> {
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(settingsViewModelProvider.select((s) => s.locale));
 
-    // On tablets ScreenUtil scales .w/.h values proportionally to the full
-    // iPad width (820dp+), causing buttons/text to overflow.  Cap the layout
-    // at 428 logical pixels — the widest iPhone — using ResponsiveScaledBox.
-    // The app renders in phone proportions and is centred on the tablet screen,
-    // which is the standard approach used by most mobile-first apps on iPad.
+    // Tablet/iPad strategy — "true responsive", not a magnified phone.
     //
-    // IMPORTANT: ScreenUtilInit reads MediaQueryData.fromView() internally and
-    // bypasses any MediaQuery widget in the tree.  On iPad it sees the real
-    // device width (820pt+) and scales every .sp/.w/.h by ~2×; the FittedBox
-    // then scales again by ~2×, producing ~4× the design size.  The fix is to
-    // re-call ScreenUtil.configure() inside the builder callback with the width
-    // clamped to 428pt — overriding the bad value before any child widget builds.
-    return ResponsiveScaledBox(
-      width: 428,
-      child: ScreenUtilInit(
-        designSize: const Size(375, 812),
-        minTextAdapt: false,
-        splitScreenMode: false,
-        builder: (context, child) {
-          // ScreenUtilInit always reads MediaQueryData.fromView() — it bypasses
-          // any MediaQuery widget in the tree and sees the real device size
-          // (e.g. 820×1180 on iPad).  ResponsiveScaledBox already handles the
-          // tablet→phone FittedBox transform, so ScreenUtil must only scale
-          // within phone dimensions.  Re-configure here with a capped 428-pt
-          // width so every .sp/.w/.h call uses the phone scale, not 2-4× iPad.
-          final view = View.maybeOf(context);
-          if (view != null) {
-            final real = MediaQueryData.fromView(view);
-            final cappedW = real.size.width.clamp(0.0, 428.0);
-            final cappedH = real.size.height * cappedW / real.size.width;
-            ScreenUtil.configure(
-              data: real.copyWith(size: Size(cappedW, cappedH)),
-              designSize: const Size(375, 812),
-              minTextAdapt: false,
-              splitScreenMode: false,
-            );
+    // PHONES are unchanged: they keep the legacy ResponsiveScaledBox(width:428)
+    // fixed-width scaling, so iPhone rendering is byte-for-byte identical.
+    //
+    // TABLETS/iPads no longer get ResponsiveScaledBox. That wrapper made the
+    // whole app believe it was a 428-pt phone (so MediaQuery reported 428
+    // everywhere and every `isTablet` / MaxWidthContainer check was dead on
+    // iPad) and then FittedBox-scaled the result ~2.4× to fill the screen —
+    // which is exactly why text looked huge and inconsistent vs iPhone. On
+    // tablets we now let MediaQuery expose the REAL width so the existing
+    // responsive layouts (breakpoints, isTablet, MaxWidthContainer used by ~48
+    // screens) finally activate, while ScreenUtil is still capped at 428pt so
+    // .sp/.w/.h text stays phone-scaled (consistent typography) and each screen
+    // uses the extra width for real multi-column layouts.
+    final app = ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: false,
+      splitScreenMode: false,
+      builder: (context, child) {
+        // ScreenUtilInit reads MediaQueryData.fromView() and would otherwise
+        // scale .sp/.w/.h by realWidth/375 (~2.7× on a 13" iPad). Re-configure
+        // with the width clamped to a design cap. Phones (realWidth ≤ 430) are
+        // unaffected — the cap only bites on tablets, where we use 576pt so the
+        // whole UI scales up ~1.5× SHARPLY (real sizes, not the old blurry
+        // FittedBox) to fill the larger screen. MediaQuery still exposes the
+        // real device size, so responsive breakpoints/layouts keep working.
+        final view = View.maybeOf(context);
+        if (view != null) {
+          final real = MediaQueryData.fromView(view);
+          final cappedW = real.size.width.clamp(0.0, 576.0);
+          // Use the DESIGN aspect ratio (375:812), not the device's real
+          // aspect, so ScreenUtil's scaleHeight equals scaleWidth. Otherwise
+          // on iPad .sp/.w scale ~1.5× while .h only scales ~0.95× — the
+          // asymmetry makes 1.5× text overflow the 0.95× SizedBox/card heights
+          // that hold it (the carousel/card overflow stripes). Symmetric
+          // scaling keeps heights in step with text.
+          var designW = cappedW;
+          var designH = cappedW * (812.0 / 375.0);
+          // Landscape fix: the symmetric design height above is derived from the
+          // (capped) WIDTH, so in landscape — where the real screen is short and
+          // wide — it far exceeds the real height and every vertical layout
+          // overflows (the landscape overflow stripes). When that happens, clamp
+          // the scale to the real height instead, keeping width:height symmetric
+          // so .sp/.w/.h stay proportional and content fits. Portrait is
+          // unaffected (there the height-derived path is never shorter).
+          final isLandscape = real.size.width > real.size.height;
+          if (isLandscape && designH > real.size.height) {
+            final scale = real.size.height / 812.0;
+            designW = 375.0 * scale;
+            designH = 812.0 * scale;
           }
-                return ResponsiveBreakpoints.builder(
-                  child: AdaptiveApp.router(
-                    onGenerateTitle: (context) =>
-                        AppLocalizations.of(context).appTitle,
-                    locale: locale,
-                    localizationsDelegates: const [
-                      AppLocalizations.delegate,
-                      GlobalMaterialLocalizations.delegate,
-                      GlobalWidgetsLocalizations.delegate,
-                      GlobalCupertinoLocalizations.delegate,
-                    ],
-                    supportedLocales: AppLocalizations.supportedLocales,
-                    themeMode: ThemeMode.light,
-                    materialLightTheme: AppMaterialTheme.lightTheme,
-                    materialDarkTheme: AppMaterialTheme.darkTheme,
-                    cupertinoLightTheme: AppCupertinoTheme.lightTheme,
-                    cupertinoDarkTheme: AppCupertinoTheme.darkTheme,
-                    routerConfig: router,
-                    builder: (context, child) {
-                      final appChild = child ?? const SizedBox.shrink();
+          ScreenUtil.configure(
+            data: real.copyWith(size: Size(designW, designH)),
+            designSize: const Size(375, 812),
+            minTextAdapt: false,
+            splitScreenMode: false,
+          );
+        }
+        return ResponsiveBreakpoints.builder(
+          child: AdaptiveApp.router(
+            onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+            locale: locale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            themeMode: ThemeMode.light,
+            materialLightTheme: AppMaterialTheme.lightTheme,
+            materialDarkTheme: AppMaterialTheme.darkTheme,
+            cupertinoLightTheme: AppCupertinoTheme.lightTheme,
+            cupertinoDarkTheme: AppCupertinoTheme.darkTheme,
+            routerConfig: router,
+            builder: (context, child) {
+              final appChild = child ?? const SizedBox.shrink();
 
-                      var wrappedChild = appChild;
+              var wrappedChild = appChild;
 
-                      if (_isFirebaseInitialized && _showUpgradeAlert) {
-                        wrappedChild = UpgradeAlert(
-                          upgrader: _upgrader,
-                          navigatorKey: rootNavigatorKey,
-                          dialogStyle: UpgradeDialogStyle.cupertino,
-                          showIgnore: false,
-                          showReleaseNotes: false,
-                          child: appChild,
-                        );
-                      }
-
-                      return _DismissKeyboardOnTap(child: wrappedChild);
-                    },
-                  ),
-                  breakpoints: [
-                    const Breakpoint(start: 0, end: 600, name: MOBILE),
-                    const Breakpoint(start: 601, end: 900, name: TABLET),
-                    const Breakpoint(start: 901, end: 1200, name: DESKTOP),
-                    const Breakpoint(
-                      start: 1201,
-                      end: double.infinity,
-                      name: '4K',
-                    ),
-                  ],
+              if (_isFirebaseInitialized && _showUpgradeAlert) {
+                wrappedChild = UpgradeAlert(
+                  upgrader: _upgrader,
+                  navigatorKey: rootNavigatorKey,
+                  dialogStyle: UpgradeDialogStyle.cupertino,
+                  showIgnore: false,
+                  showReleaseNotes: false,
+                  child: appChild,
                 );
-        },
-      ),
-    ); // ResponsiveScaledBox
+              }
+
+              // Transparent root Material so Material widgets (InkWell,
+              // TextField, etc.) inside Cupertino-scaffold screens
+              // (AdaptiveScaffold renders CupertinoPageScaffold on iOS, which
+              // has no Material) always find a Material ancestor — fixes the
+              // "No Material widget found" crashes app-wide from one place.
+              return Material(
+                type: MaterialType.transparency,
+                child: _DismissKeyboardOnTap(child: wrappedChild),
+              );
+            },
+          ),
+          breakpoints: [
+            const Breakpoint(start: 0, end: 600, name: MOBILE),
+            const Breakpoint(start: 601, end: 900, name: TABLET),
+            const Breakpoint(start: 901, end: 1200, name: DESKTOP),
+            const Breakpoint(
+              start: 1201,
+              end: double.infinity,
+              name: '4K',
+            ),
+          ],
+        );
+      },
+    );
+
+    // Device class is rotation-invariant (shortestSide), so an iPhone in
+    // landscape is never mistaken for a tablet. Phones keep the legacy
+    // fixed-width scaling; tablets render responsively at real width.
+    final isTabletClass =
+        MediaQueryData.fromView(View.of(context)).size.shortestSide >= 600;
+
+    return isTabletClass ? app : ResponsiveScaledBox(width: 428, child: app);
   }
 }
 
@@ -389,6 +431,15 @@ class _DismissKeyboardOnTap extends StatelessWidget {
         final currentFocus = FocusManager.instance.primaryFocus;
 
         if (currentFocus == null || !currentFocus.hasFocus) return;
+
+        // If an EditableText (TextField/CupertinoTextField) currently holds
+        // focus, skip the unfocus here. The tap may land on another text field,
+        // which will claim focus itself. Each text field's onTapOutside callback
+        // handles dismissal when the user taps a non-input area. Calling
+        // unfocus() unconditionally on iPad (iPadOS 26+) triggers a
+        // keyboard-hide animation that races with the incoming focus request,
+        // causing the keyboard not to reappear for the new field.
+        if (currentFocus.context?.widget is EditableText) return;
 
         currentFocus.unfocus();
       },

@@ -1,8 +1,5 @@
-import 'dart:async';
-
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -20,7 +17,7 @@ import 'package:sport_connect/features/reviews/view_models/review_view_model.dar
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
 /// Screen to display a user's reviews and rating stats
-class ReviewsListScreen extends ConsumerWidget {
+class ReviewsListScreen extends ConsumerStatefulWidget {
   const ReviewsListScreen({
     required this.userId,
     required this.userName,
@@ -32,17 +29,46 @@ class ReviewsListScreen extends ConsumerWidget {
   final String? userPhotoUrl;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncState = ref.watch(reviewsListViewModelProvider(userId));
+  ConsumerState<ReviewsListScreen> createState() => _ReviewsListScreenState();
+}
+
+class _ReviewsListScreenState extends ConsumerState<ReviewsListScreen> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 300) {
+      ref.read(reviewsListViewModelProvider(widget.userId).notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final asyncState = ref.watch(reviewsListViewModelProvider(widget.userId));
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
-        title: AppLocalizations.of(context).valueSReviews(userName),
+        useNativeToolbar: false,
+        title: AppLocalizations.of(context).valueSReviews(widget.userName),
         actions: [
           AdaptiveAppBarAction(
             icon: Icons.refresh,
             onPressed: () {
-              ref.read(reviewsListViewModelProvider(userId).notifier).refresh();
+              ref
+                  .read(reviewsListViewModelProvider(widget.userId).notifier)
+                  .refresh();
             },
           ),
         ],
@@ -52,76 +78,100 @@ class ReviewsListScreen extends ConsumerWidget {
         child: RefreshIndicator.adaptive(
           color: AppColors.primary,
           onRefresh: () async {
-            ref.read(reviewsListViewModelProvider(userId).notifier).refresh();
+            ref
+                .read(reviewsListViewModelProvider(widget.userId).notifier)
+                .refresh();
           },
           child: asyncState.when(
             loading: () => const SkeletonLoader(
               type: SkeletonType.compactTile,
               itemCount: 5,
             ),
-            error: (error, _) =>
-                _buildErrorState(context, error.toString(), ref),
+            error: (error, _) => _buildErrorState(context, error.toString()),
             data: (state) => state.error != null
-                ? _buildErrorState(context, state.error!, ref)
-                : _buildContent(context, state, ref),
+                ? _buildErrorState(context, state.error!)
+                : _buildContent(context, state),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildErrorState(BuildContext context, String error, WidgetRef ref) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 64.r, color: AppColors.error),
-          SizedBox(height: 16.h),
-          Text(
-            error,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
-            textAlign: TextAlign.center,
+  Widget _buildErrorState(BuildContext context, String error) {
+    // Wrap in a scrollable so the parent RefreshIndicator.adaptive can arm and
+    // the user can pull-to-retry even when the content does not fill the height.
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64.r, color: AppColors.error),
+                SizedBox(height: 16.h),
+                Text(
+                  error,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14.sp,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16.h),
+                ElevatedButton(
+                  onPressed: () {
+                    ref
+                        .read(
+                          reviewsListViewModelProvider(widget.userId).notifier,
+                        )
+                        .refresh();
+                  },
+                  child: Text(AppLocalizations.of(context).retry),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 16.h),
-          ElevatedButton(
-            onPressed: () {
-              ref.read(reviewsListViewModelProvider(userId).notifier).refresh();
-            },
-            child: Text(AppLocalizations.of(context).retry),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildContent(
     BuildContext context,
     ReviewsListState state,
-    WidgetRef ref,
   ) {
     return CustomScrollView(
+      controller: _scrollController,
       slivers: [
         MultiSliver(
           children: [
             // Stats header
             SliverToBoxAdapter(child: _buildStatsCard(context, state)),
             // Rating breakdown by tag
-            if (state.stats?.distribution != null)
+            if (state.stats != null)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.r),
                   child: RatingBreakdownWidget(
                     averageRating: state.averageRating,
                     totalReviews: state.totalReviews,
+                    // RatingBreakdownWidget expects raw per-star counts, so read
+                    // the explicit *StarCount fields rather than the
+                    // `distribution` getter (which returns percentages).
                     distribution: {
-                      for (final entry in state.stats!.distribution.entries)
-                        entry.key: entry.value.toInt(),
+                      5: state.stats!.fiveStarCount,
+                      4: state.stats!.fourStarCount,
+                      3: state.stats!.threeStarCount,
+                      2: state.stats!.twoStarCount,
+                      1: state.stats!.oneStarCount,
                     },
                   ),
                 ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
               ),
             // Filter chips
-            SliverToBoxAdapter(child: _buildFilterChips(context, state, ref)),
+            SliverToBoxAdapter(child: _buildFilterChips(context, state)),
           ],
         ),
         // Reviews list
@@ -152,54 +202,12 @@ class ReviewsListScreen extends ConsumerWidget {
           SliverList(
             delegate: SliverChildBuilderDelegate((context, index) {
               final review = state.filteredReviews[index];
-              return Dismissible(
-                key: ValueKey('review_${review.id}'),
-                direction: DismissDirection.endToStart,
-                confirmDismiss: (_) async {
-                  unawaited(HapticFeedback.mediumImpact());
-                  context.push(
-                    AppRoutes.reportIssue.path,
-                    extra: {
-                      'reportType': 'review',
-                      'reviewId': review.id,
-                      'reviewerName': review.reviewerName,
-                    },
-                  );
-                  return false;
-                },
-                background: Container(
-                  margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.error,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  alignment: Alignment.centerRight,
-                  padding: EdgeInsets.only(right: 24.w),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.flag_outlined,
-                        color: Colors.white,
-                        size: 28.sp,
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        'Report',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                child: _ReviewCard(review: review)
-                    .animate()
-                    .fadeIn(delay: Duration(milliseconds: index * 50))
-                    .slideX(begin: 0.1, end: 0),
-              );
+              // Reporting is handled by the overflow menu inside _ReviewCard;
+              // the redundant swipe-to-report Dismissible was removed.
+              return _ReviewCard(review: review)
+                  .animate()
+                  .fadeIn(delay: Duration(milliseconds: index * 50))
+                  .slideX(begin: 0.1, end: 0);
             }, childCount: state.filteredReviews.length),
           ),
         SliverPadding(padding: EdgeInsets.only(bottom: 32.h)),
@@ -234,7 +242,7 @@ class ReviewsListScreen extends ConsumerWidget {
               Text(
                 state.averageRating.toStringAsFixed(1),
                 style: TextStyle(
-                  fontSize: 48.sp,
+                  fontSize: 40.sp,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -264,11 +272,19 @@ class ReviewsListScreen extends ConsumerWidget {
               ),
             ],
           ),
-          if (state.stats?.distribution != null) ...[
+          if (state.stats != null) ...[
             SizedBox(height: 20.h),
             ...List.generate(5, (index) {
               final star = 5 - index;
-              final count = state.stats!.distribution[star]?.toInt() ?? 0;
+              // Read raw per-star counts from the explicit *StarCount fields;
+              // the `distribution` getter returns percentages, not counts.
+              final count = switch (star) {
+                5 => state.stats!.fiveStarCount,
+                4 => state.stats!.fourStarCount,
+                3 => state.stats!.threeStarCount,
+                2 => state.stats!.twoStarCount,
+                _ => state.stats!.oneStarCount,
+              };
               final percentage = state.totalReviews > 0
                   ? count / state.totalReviews
                   : 0.0;
@@ -320,7 +336,6 @@ class ReviewsListScreen extends ConsumerWidget {
   Widget _buildFilterChips(
     BuildContext context,
     ReviewsListState state,
-    WidgetRef ref,
   ) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -332,7 +347,7 @@ class ReviewsListScreen extends ConsumerWidget {
             isSelected: state.filterType == null,
             onTap: () {
               ref
-                  .read(reviewsListViewModelProvider(userId).notifier)
+                  .read(reviewsListViewModelProvider(widget.userId).notifier)
                   .setFilterType(null);
             },
           ),
@@ -342,7 +357,7 @@ class ReviewsListScreen extends ConsumerWidget {
             isSelected: state.filterType == ReviewType.driver,
             onTap: () {
               ref
-                  .read(reviewsListViewModelProvider(userId).notifier)
+                  .read(reviewsListViewModelProvider(widget.userId).notifier)
                   .setFilterType(ReviewType.driver);
             },
           ),
@@ -352,7 +367,7 @@ class ReviewsListScreen extends ConsumerWidget {
             isSelected: state.filterType == ReviewType.rider,
             onTap: () {
               ref
-                  .read(reviewsListViewModelProvider(userId).notifier)
+                  .read(reviewsListViewModelProvider(widget.userId).notifier)
                   .setFilterType(ReviewType.rider);
             },
           ),
@@ -610,7 +625,7 @@ class _ReviewCard extends StatelessWidget {
                     review.response!,
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       height: 1.4,
                     ),
                   ),

@@ -6,8 +6,6 @@ import 'package:sport_connect/core/services/firebase_service.dart';
 import 'package:sport_connect/features/reviews/models/review_model.dart';
 import 'package:sport_connect/features/rides/models/booking/ride_booking.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
-import 'package:uuid/uuid.dart';
-
 part 'review_repository.g.dart';
 
 /// Firestore Collection Structure for Reviews:
@@ -71,13 +69,6 @@ Future<RatingStats> userRatingStats(Ref ref, String userId) async {
   return repo.getRatingStatsForUser(userId);
 }
 
-/// Provider to get reviews for a specific ride
-@riverpod
-Future<List<ReviewModel>> rideReviews(Ref ref, String rideId) async {
-  final repo = ref.watch(reviewRepositoryProvider);
-  return repo.getReviewsForRide(rideId);
-}
-
 /// Stream provider for real-time review updates for a user
 @riverpod
 Stream<List<ReviewModel>> userReviewsStream(Ref ref, String userId) {
@@ -88,7 +79,6 @@ Stream<List<ReviewModel>> userReviewsStream(Ref ref, String userId) {
 class ReviewRepository {
   ReviewRepository(this._firestore);
   final FirebaseFirestore _firestore;
-  final _uuid = const Uuid();
 
   CollectionReference<ReviewModel> get _reviewsCollection => _firestore
       .collection(AppConstants.reviewsCollection)
@@ -175,7 +165,10 @@ class ReviewRepository {
     }
 
     final now = DateTime.now();
-    final reviewId = _uuid.v4();
+    // Use a composite key to enforce uniqueness at the Firestore level,
+    // preventing duplicate reviews even under concurrent submission race conditions.
+    final reviewId =
+        '${request.rideId}_${currentUser.uid}_${request.revieweeId}';
 
     final review = ReviewModel(
       id: reviewId,
@@ -193,10 +186,40 @@ class ReviewRepository {
       createdAt: now,
     );
 
-    await _reviewsCollection.doc(reviewId).set(review);
+    // Write the new review and atomically update the reviewee's rating stats
+    // in a single transaction so a crash between the two writes cannot leave
+    // the aggregate permanently out of sync.
+    await _firestore.runTransaction((txn) async {
+      final reviewRef = _firestore
+          .collection(AppConstants.reviewsCollection)
+          .doc(reviewId);
+      final userRef = _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(request.revieweeId);
 
-    // Update the user's aggregated rating stats
-    await _updateUserRatingStats(request.revieweeId);
+      // Read the review doc inside the transaction so reviewRef is part of the
+      // read set. A concurrent duplicate (same deterministic composite key)
+      // will then fail/retry against an existing doc instead of double-applying
+      // the aggregate increment (R-D1).
+      final reviewSnap = await txn.get(reviewRef);
+      if (reviewSnap.exists) {
+        throw Exception('You have already reviewed this person for this ride');
+      }
+
+      final starKey = _starKey(request.rating.round());
+
+      // Override createdAt with a server timestamp so the stored value is
+      // authoritative and not subject to client clock skew (R-05).
+      final reviewData = review.toJson()
+        ..['createdAt'] = FieldValue.serverTimestamp();
+      txn.set(reviewRef, reviewData);
+      // Only increment the star buckets; total/average are derived getters on
+      // RatingBreakdown (single source of truth), so no read of the user doc is
+      // needed and the user doc stays out of the read set (R-D2, R-D3).
+      txn.update(userRef, {
+        starKey: FieldValue.increment(1),
+      });
+    });
 
     return review;
   }
@@ -281,6 +304,7 @@ class ReviewRepository {
   }) async {
     final snapshot = await _reviewsCollection
         .where('reviewerId', isEqualTo: userId)
+        .where('isVisible', isEqualTo: true)
         .orderBy('createdAt', descending: true)
         .limit(limit)
         .get();
@@ -293,6 +317,7 @@ class ReviewRepository {
   Future<List<ReviewModel>> getReviewsForRide(String rideId) async {
     final snapshot = await _reviewsCollection
         .where('rideId', isEqualTo: rideId)
+        .where('isVisible', isEqualTo: true)
         .orderBy('createdAt', descending: true)
         .limit(50)
         .get();
@@ -315,8 +340,31 @@ class ReviewRepository {
   /// Get rating stats for a user
 
   Future<RatingStats> getRatingStatsForUser(String userId) async {
-    final result = await getReviewsForUser(userId);
-    return RatingStats.fromReviews(result.reviews);
+    // Use the maintained per-user aggregate (star buckets) as the single source
+    // of truth rather than deriving stats from a single capped page of reviews,
+    // which would be truncated/incorrect for users with many reviews (R-D4).
+    final user = await _usersCollection
+        .doc(userId)
+        .get()
+        .then((doc) => doc.data());
+    if (user == null) {
+      return const RatingStats();
+    }
+
+    // `rating` lives on the rider/driver variants, not the base UserModel.
+    final breakdown =
+        user.asRider?.rating ??
+        user.asDriver?.rating ??
+        const RatingBreakdown();
+    return RatingStats(
+      totalReviews: breakdown.total,
+      averageRating: breakdown.average,
+      fiveStarCount: breakdown.fiveStars,
+      fourStarCount: breakdown.fourStars,
+      threeStarCount: breakdown.threeStars,
+      twoStarCount: breakdown.twoStars,
+      oneStarCount: breakdown.oneStars,
+    );
   }
 
   /// Add response to a review (by the reviewee)
@@ -345,10 +393,27 @@ class ReviewRepository {
       throw Exception('Only the reviewee can respond to this review');
     }
 
+    // R-D5: do not allow responding to a soft-deleted review.
+    if (!review.isVisible) {
+      throw StateError('Cannot respond to a deleted review');
+    }
+
+    // R-D5: validate the response text (non-empty, max 500 chars), mirroring the
+    // comment validation in createReview.
+    final trimmedResponse = response.trim();
+    if (trimmedResponse.isEmpty) {
+      throw ArgumentError('Response must not be empty.');
+    }
+    if (trimmedResponse.length > 500) {
+      throw ArgumentError(
+        'Response must not exceed 500 characters (got ${trimmedResponse.length}).',
+      );
+    }
+
     await _reviewsCollection.doc(reviewId).update({
-      'response': response,
-      'responseAt': DateTime.now(),
-      'updatedAt': DateTime.now(),
+      'response': trimmedResponse,
+      'responseAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -373,33 +438,53 @@ class ReviewRepository {
       throw Exception('Only the reviewer can delete this review');
     }
 
-    // Soft delete - just hide the review
-    await _reviewsCollection.doc(reviewId).update({
-      'isVisible': false,
-      'updatedAt': DateTime.now(),
-    });
+    // Soft-delete the review and update the reviewee's rating stats atomically
+    // so a crash between the two writes cannot leave the aggregate inflated.
+    await _firestore.runTransaction((txn) async {
+      final reviewRef = _firestore
+          .collection(AppConstants.reviewsCollection)
+          .doc(reviewId);
+      final userRef = _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(review.revieweeId);
 
-    // Update the user's aggregated rating stats
-    await _updateUserRatingStats(review.revieweeId);
+      // Read the review inside the transaction so the soft-delete is idempotent:
+      // if it is already hidden (concurrent/repeated delete) we must not apply
+      // the star-bucket decrement a second time (R-D7).
+      final reviewSnap = await txn.get(reviewRef);
+      if (!reviewSnap.exists) {
+        throw Exception('Review not found');
+      }
+      final currentlyVisible =
+          (reviewSnap.data()?['isVisible'] as bool?) ?? true;
+      if (!currentlyVisible) {
+        // Already soft-deleted; nothing to do.
+        return;
+      }
+
+      final starKey = _starKey(review.rating.round());
+
+      txn.update(reviewRef, {
+        'isVisible': false,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      // Only decrement the star bucket; total/average are derived getters on
+      // RatingBreakdown so they need no separate write (R-D2/R-D3).
+      txn.update(userRef, {
+        starKey: FieldValue.increment(-1),
+      });
+    });
   }
 
-  /// Update user's aggregated rating stats
-  Future<void> _updateUserRatingStats(String userId) async {
-    final result = await getReviewsForUser(userId);
-    final stats = RatingStats.fromReviews(result.reviews);
-
-    // Update the user document with new stats
-    await _usersCollection.doc(userId).update({
-      'rating': {
-        'total': stats.totalReviews,
-        'average': stats.averageRating,
-        'fiveStars': stats.fiveStarCount,
-        'fourStars': stats.fourStarCount,
-        'threeStars': stats.threeStarCount,
-        'twoStars': stats.twoStarCount,
-        'oneStars': stats.oneStarCount,
-      },
-    });
+  /// Returns the Firestore field name for a given star count (1-5).
+  String _starKey(int stars) {
+    return switch (stars) {
+      5 => 'rating.fiveStars',
+      4 => 'rating.fourStars',
+      3 => 'rating.threeStars',
+      2 => 'rating.twoStars',
+      _ => 'rating.oneStars',
+    };
   }
 
   /// Check if user can review another user for a specific ride
@@ -442,69 +527,123 @@ class ReviewRepository {
         .limit(20)
         .get();
 
-    final pending = <Map<String, dynamic>>[];
+    // First pass: gather every candidate (rideId, revieweeId, type) pair
+    // locally without any per-iteration Firestore reads. We then resolve the
+    // "already reviewed" set and the reviewee user docs in a small number of
+    // batched queries instead of the previous O(rides * passengers) N+1 loop.
+    final candidates = <_PendingCandidate>[];
+    final rideIds = <String>{};
+    final revieweeIds = <String>{};
 
     for (final rideDoc in completedRides.docs) {
       final rideData = rideDoc.data();
       final rideId = rideDoc.id;
       final driverId = rideData.driverId;
-
-      // Check if user is the driver or a passenger
       final isDriver = driverId == currentUser.uid;
 
       if (isDriver) {
         // Driver can review passengers
-        final bookings = rideData.bookings;
-        for (final booking in bookings) {
+        for (final booking in rideData.bookings) {
           final passengerId = booking.passengerId;
-          final canReviewPassenger = await canReview(
-            userId,
-            rideId: rideId,
-            revieweeId: passengerId,
+          candidates.add(
+            _PendingCandidate(
+              rideId: rideId,
+              rideData: rideData,
+              revieweeId: passengerId,
+              type: ReviewType.rider,
+            ),
           );
-          final passenger = await _usersCollection
-              .doc(passengerId)
-              .get()
-              .then((doc) => doc.data());
-          if (canReviewPassenger) {
-            pending.add({
-              'rideId': rideId,
-              'revieweeId': passengerId,
-              'revieweeName': passenger?.username ?? 'Passenger',
-              'revieweePhotoUrl': passenger?.photoUrl ?? '',
-              'type': ReviewType.rider,
-              'rideDate': rideData.departureTime,
-              'origin': rideData.origin,
-              'destination': rideData.destination,
-            });
-          }
+          rideIds.add(rideId);
+          revieweeIds.add(passengerId);
         }
       } else {
         // Passenger can review driver
-        final canReviewDriver = await canReview(
-          userId,
-          rideId: rideId,
-          revieweeId: driverId,
+        candidates.add(
+          _PendingCandidate(
+            rideId: rideId,
+            rideData: rideData,
+            revieweeId: driverId,
+            type: ReviewType.driver,
+          ),
         );
-        final driver = await _usersCollection
-            .doc(driverId)
-            .get()
-            .then((doc) => doc.data());
-        if (canReviewDriver) {
-          pending.add({
-            'rideId': rideId,
-            'revieweeId': driverId,
-            'revieweeName': driver?.username ?? 'Driver',
-            'revieweePhotoUrl': driver?.photoUrl ?? '',
-            'type': ReviewType.driver,
-            'rideDate': rideData.departureTime,
-            'origin': rideData.origin,
-            'destination': rideData.destination,
-          });
-        }
+        rideIds.add(rideId);
+        revieweeIds.add(driverId);
       }
+    }
+
+    if (candidates.isEmpty) return [];
+
+    // Batch: fetch the reviews this user has already written for these rides in
+    // chunked whereIn queries, building a set of already-reviewed
+    // "rideId|revieweeId" keys locally (replaces per-candidate canReview()).
+    final reviewedKeys = <String>{};
+    for (final chunk in _chunk(rideIds.toList(), 30)) {
+      final snap = await _reviewsCollection
+          .where('reviewerId', isEqualTo: currentUser.uid)
+          .where('rideId', whereIn: chunk)
+          .get();
+      for (final doc in snap.docs) {
+        final r = doc.data();
+        reviewedKeys.add('${r.rideId}|${r.revieweeId}');
+      }
+    }
+
+    // Batch: fetch all reviewee user docs in chunked documentId whereIn queries
+    // (replaces the per-candidate _usersCollection.doc(...).get()).
+    final userById = <String, UserModel>{};
+    for (final chunk in _chunk(revieweeIds.toList(), 30)) {
+      final snap = await _usersCollection
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      for (final doc in snap.docs) {
+        userById[doc.id] = doc.data();
+      }
+    }
+
+    final pending = <Map<String, dynamic>>[];
+    for (final c in candidates) {
+      if (reviewedKeys.contains('${c.rideId}|${c.revieweeId}')) continue;
+      final user = userById[c.revieweeId];
+      final isRiderReview = c.type == ReviewType.rider;
+      pending.add({
+        'rideId': c.rideId,
+        'revieweeId': c.revieweeId,
+        'revieweeName':
+            user?.username ?? (isRiderReview ? 'Passenger' : 'Driver'),
+        'revieweePhotoUrl': user?.photoUrl ?? '',
+        'type': c.type,
+        'rideDate': c.rideData.departureTime,
+        'origin': c.rideData.origin,
+        'destination': c.rideData.destination,
+      });
     }
 
     return pending;
   }
+
+  /// Splits [items] into sublists of at most [size] elements, for use with
+  /// Firestore `whereIn` queries (which accept at most 30 values).
+  List<List<T>> _chunk<T>(List<T> items, int size) {
+    final chunks = <List<T>>[];
+    for (var i = 0; i < items.length; i += size) {
+      chunks.add(
+        items.sublist(i, i + size > items.length ? items.length : i + size),
+      );
+    }
+    return chunks;
+  }
+}
+
+/// Internal holder for a pending-review candidate gathered before batched reads.
+class _PendingCandidate {
+  const _PendingCandidate({
+    required this.rideId,
+    required this.rideData,
+    required this.revieweeId,
+    required this.type,
+  });
+  final String rideId;
+  final RideModel rideData;
+  final String revieweeId;
+  final ReviewType type;
 }

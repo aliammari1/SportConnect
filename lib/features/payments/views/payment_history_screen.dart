@@ -15,6 +15,7 @@ import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/payment_error_handler.dart';
 import 'package:sport_connect/core/widgets/analytics_payment_widgets.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
+import 'package:sport_connect/core/widgets/key_value_row.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/payments/models/payment_model.dart';
 import 'package:sport_connect/features/payments/view_models/payment_view_model.dart';
@@ -118,26 +119,32 @@ class PaymentHistoryScreen extends ConsumerWidget {
                           );
                         }
 
-                        return MultiSliver(
-                          children: [
-                            SliverToBoxAdapter(
-                              child: _buildOverviewSection(
-                                context,
-                                payments,
-                              ),
-                            ),
-                            SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) => _buildPaymentCard(
+                        // Constrain + center the overview and transaction
+                        // cards so they don't stretch edge-to-edge as a single
+                        // wide column on iPad / large screens.
+                        return SliverCrossAxisConstrained(
+                          maxCrossAxisExtent: kMaxWidthContent.w,
+                          child: MultiSliver(
+                            children: [
+                              SliverToBoxAdapter(
+                                child: _buildOverviewSection(
                                   context,
-                                  ref,
-                                  filteredPayments[index],
-                                  index,
+                                  payments,
                                 ),
-                                childCount: filteredPayments.length,
                               ),
-                            ),
-                          ],
+                              SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) => _buildPaymentCard(
+                                    context,
+                                    ref,
+                                    filteredPayments[index],
+                                    index,
+                                  ),
+                                  childCount: filteredPayments.length,
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       },
                       loading: _buildLoadingSliver,
@@ -369,7 +376,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                     totalInCents,
                   ),
                   style: TextStyle(
-                    fontSize: 26.sp,
+                    fontSize: 24.sp,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                     letterSpacing: 0,
@@ -398,7 +405,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
               Text(
                 '${completedPayments.length}',
                 style: TextStyle(
-                  fontSize: 26.sp,
+                  fontSize: 24.sp,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                 ),
@@ -452,7 +459,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
           Text(
             AppLocalizations.of(context).yourTransactions,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               color: AppColors.textSecondary,
             ),
           ),
@@ -575,7 +582,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
               PaymentErrorHandler.humanize(error),
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.sp,
+                fontSize: 14.sp,
                 color: AppColors.textSecondary,
                 height: 1.5,
               ),
@@ -953,7 +960,10 @@ class PaymentHistoryScreen extends ConsumerWidget {
                         ? payment.riderName
                         : AppLocalizations.of(context).rider,
                     driverName: payment.driverName,
-                    origin: payment.rideId,
+                    // PaymentTransaction has no human-facing trip
+                    // origin/destination (rideId is an opaque doc id), so leave
+                    // both blank rather than printing the raw id as the origin.
+                    origin: '',
                     destination: '',
                     rideDate: payment.createdAt ?? DateTime.now(),
                     baseFare:
@@ -1155,32 +1165,13 @@ class PaymentHistoryScreen extends ConsumerWidget {
     bool bold = false,
     Color? valueColor,
   }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: bold ? AppColors.textPrimary : AppColors.textSecondary,
-              fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
-                color: valueColor ?? AppColors.textPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return KeyValueRow(
+      label: label,
+      value: value,
+      bold: bold,
+      valueColor: valueColor,
+      horizontalPadding: 16.w,
+      verticalPadding: 12.h,
     );
   }
 }

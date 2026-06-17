@@ -340,139 +340,141 @@ class IntlPhoneInputState extends State<IntlPhoneInput> {
         Text(
           title,
           style: TextStyle(
-            fontSize: 12.5.sp,
+            fontSize: 12.sp,
             fontWeight: FontWeight.w800,
             color: hasError ? AppColors.error : AppColors.textPrimary,
           ),
         ),
         SizedBox(height: 8.h),
-                Material(
-                  type: MaterialType.transparency,
-child:
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            color: fieldBackground,
-            borderRadius: BorderRadius.circular(18.r),
-            border: Border.all(
-              color: borderColor,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(
-                  alpha: isFocused ? 0.04 : 0.022,
+        Material(
+          type: MaterialType.transparency,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              color: fieldBackground,
+              borderRadius: BorderRadius.circular(18.r),
+              border: Border.all(
+                color: borderColor,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(
+                    alpha: isFocused ? 0.04 : 0.022,
+                  ),
+                  blurRadius: isFocused ? 18 : 10,
+                  offset: Offset(0, isFocused ? 7.h : 4.h),
                 ),
-                blurRadius: isFocused ? 18 : 10,
-                offset: Offset(0, isFocused ? 7.h : 4.h),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              SizedBox(width: 12.w),
-              _InternationalPrefixBlock(
-                accent: accent,
-                enabled: widget.enabled,
-              ),
-              SizedBox(width: 12.w),
-              Container(
-                width: 1,
-                height: 30.h,
-                color: AppColors.border.withValues(alpha: 0.32),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Semantics(
-                  label: title,
-                  textField: true,
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    enabled: widget.enabled,
-                    autofocus: widget.autofocus,
-                    keyboardType: TextInputType.phone,
-                    textInputAction: TextInputAction.done,
-                    autofillHints: const [
-                      AutofillHints.telephoneNumber,
-                    ],
-                    enableSuggestions: false,
-                    autocorrect: false,
-                    cursorColor: accent,
-                    inputFormatters: const [
-                      _InternationalFrenchPhoneFormatter(),
-                    ],
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      letterSpacing: 0.1,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: widget.hint ?? l10n.phoneNumberHint,
-                      hintStyle: TextStyle(
-                        fontSize: 14.5.sp,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textTertiary,
+              ],
+            ),
+            child: Row(
+              children: [
+                SizedBox(width: 12.w),
+                _InternationalPrefixBlock(
+                  accent: accent,
+                  enabled: widget.enabled,
+                ),
+                SizedBox(width: 12.w),
+                Container(
+                  width: 1,
+                  height: 30.h,
+                  color: AppColors.border.withValues(alpha: 0.32),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Semantics(
+                    label: title,
+                    textField: true,
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      enabled: widget.enabled,
+                      autofocus: widget.autofocus,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [
+                        AutofillHints.telephoneNumber,
+                      ],
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      cursorColor: accent,
+                      inputFormatters: const [
+                        _InternationalFrenchPhoneFormatter(),
+                      ],
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: 0.1,
                       ),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      focusedErrorBorder: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 17.h),
+                      decoration: InputDecoration(
+                        hintText: widget.hint ?? l10n.phoneNumberHint,
+                        hintStyle: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textTertiary,
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 17.h),
+                      ),
+                      onChanged: _handleChanged,
+                      onTapOutside: (_) =>
+                          FocusManager.instance.primaryFocus?.unfocus(),
                     ),
-                    onChanged: _handleChanged,
                   ),
                 ),
-              ),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 160),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                child: showValid
-                    ? Padding(
-                        key: const ValueKey('phone-valid-icon'),
-                        padding: EdgeInsets.only(right: 14.w),
-                        child:
-                            Icon(
-                              Icons.check_circle_rounded,
-                              color: accent,
-                              size: 20.sp,
-                            ).animate().scale(
-                              duration: 180.ms,
-                              curve: Curves.easeOutBack,
-                            ),
-                      )
-                    : showClear
-                    ? IconButton(
-                        key: const ValueKey('phone-clear-button'),
-                        tooltip: AppLocalizations.of(
-                          context,
-                        ).clearPhoneNumber,
-                        onPressed: _clear,
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints(
-                          minWidth: 42.w,
-                          minHeight: 48.h,
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 160),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: showValid
+                      ? Padding(
+                          key: const ValueKey('phone-valid-icon'),
+                          padding: EdgeInsets.only(right: 14.w),
+                          child:
+                              Icon(
+                                Icons.check_circle_rounded,
+                                color: accent,
+                                size: 20.sp,
+                              ).animate().scale(
+                                duration: 180.ms,
+                                curve: Curves.easeOutBack,
+                              ),
+                        )
+                      : showClear
+                      ? IconButton(
+                          key: const ValueKey('phone-clear-button'),
+                          tooltip: AppLocalizations.of(
+                            context,
+                          ).clearPhoneNumber,
+                          onPressed: _clear,
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(
+                            minWidth: 42.w,
+                            minHeight: 48.h,
+                          ),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textSecondary,
+                            size: 18.sp,
+                          ),
+                        )
+                      : SizedBox(
+                          key: const ValueKey('phone-empty-trailing'),
+                          width: 14.w,
                         ),
-                        icon: Icon(
-                          Icons.close_rounded,
-                          color: AppColors.textSecondary,
-                          size: 18.sp,
-                        ),
-                      )
-                    : SizedBox(
-                        key: const ValueKey('phone-empty-trailing'),
-                        width: 14.w,
-                      ),
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),),
+        ),
         SizedBox(height: 8.h),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 180),
@@ -505,7 +507,7 @@ child:
                     showValid: showValid,
                   ),
                   style: TextStyle(
-                    fontSize: 11.5.sp,
+                    fontSize: 11.sp,
                     height: 1.25,
                     fontWeight: FontWeight.w600,
                     color: supportColor,
@@ -555,7 +557,7 @@ class _InternationalPrefixBlock extends StatelessWidget {
           Text(
             '+${france.dialCode}',
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               height: 1,
               fontWeight: FontWeight.w900,
               color: secondary,

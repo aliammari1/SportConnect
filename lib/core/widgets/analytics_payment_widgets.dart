@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
@@ -66,7 +67,7 @@ class MonthlyRideSummary extends StatelessWidget {
                 child: Text(
                   '$totalRides ${l10n.rides}',
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
@@ -105,7 +106,7 @@ class MonthlyRideSummary extends StatelessWidget {
                 Text(
                   l10n.distanceKmValue(totalDistance.toStringAsFixed(1)),
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w500,
                     color: Colors.white,
                   ),
@@ -136,7 +137,7 @@ class MonthlyRideSummary extends StatelessWidget {
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
@@ -393,7 +394,8 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
         ),
       );
       // caller handles navigation on success
-    } on Exception {
+    } catch (e, st) {
+      TalkerService.error('Refund request submission failed', e, st);
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
@@ -461,7 +463,7 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
                       Text(
                         amountText,
                         style: TextStyle(
-                          fontSize: 22.sp,
+                          fontSize: 20.sp,
                           fontWeight: FontWeight.w800,
                           color: theme.colorScheme.onSurface,
                           letterSpacing: -0.5,
@@ -616,7 +618,7 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
                     child: Text(
                       _errorMessage!,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.error,
                       ),
                     ),
@@ -657,7 +659,7 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
                   : Text(
                       AppLocalizations.of(context).submitRefundRequest,
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

@@ -19,7 +19,9 @@ import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/utils/share_sheet_origin.dart';
 import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/analytics_payment_widgets.dart';
+import 'package:sport_connect/core/widgets/icon_stat_card.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
+import 'package:sport_connect/core/widgets/shimmer_card.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/payments/models/payment_model.dart'
     show DriverConnectedAccount;
@@ -193,74 +195,87 @@ class DriverEarningsScreen extends ConsumerWidget {
             ),
 
             // ── Stats overview group ──────────────────────────
-            MultiSliver(
-              children: [
-                SliverToBoxAdapter(
-                  child: _SectionHeader(
-                    title: AppLocalizations.of(context).earningsOverview,
+            // Constrain + center the scroll content so cards and label→value
+            // rows don't stretch edge-to-edge on iPad / wide screens. The
+            // SliverAppBar header stays full-width (edge-to-edge gradient).
+            SliverCrossAxisConstrained(
+              maxCrossAxisExtent: kMaxWidthContent.w,
+              child: MultiSliver(
+                children: [
+                  SliverToBoxAdapter(
+                    child: _SectionHeader(
+                      title: AppLocalizations.of(context).earningsOverview,
+                    ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: _buildPeriodSelector(context, ref, selectedPeriod),
-                ),
-                SliverToBoxAdapter(
-                  child: _buildStatsGrid(
-                    context,
-                    ref,
-                    driverStats,
-                    selectedPeriod,
+                  SliverToBoxAdapter(
+                    child: _buildPeriodSelector(context, ref, selectedPeriod),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: driverStats.when(
-                    data: (stats) => Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20.w,
-                        vertical: 8.h,
-                      ),
-                      child: MonthlyRideSummary(
-                        totalRides: stats.totalRides,
-                        totalSpent: stats.totalSpentInCents / 100,
-                        totalEarned: stats.totalEarningsInCents / 100,
-                        totalDistance: stats.totalDistance,
-                        month: AppLocaleFormatters.formatMonthYear(
-                          context,
-                          DateTime.now(),
+                  SliverToBoxAdapter(
+                    child: _buildStatsGrid(
+                      context,
+                      ref,
+                      driverStats,
+                      selectedPeriod,
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: driverStats.when(
+                      data: (stats) => Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20.w,
+                          vertical: 8.h,
+                        ),
+                        child: MonthlyRideSummary(
+                          totalRides: stats.totalRides,
+                          totalSpent: stats.totalSpentInCents / 100,
+                          totalEarned: stats.totalEarningsInCents / 100,
+                          totalDistance: stats.totalDistance,
+                          month: AppLocaleFormatters.formatMonthYear(
+                            context,
+                            DateTime.now(),
+                          ),
                         ),
                       ),
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
                     ),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, _) => const SizedBox.shrink(),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: _buildEarningsChart(
-                    context,
-                    driverStats,
-                    selectedPeriod,
+                  SliverToBoxAdapter(
+                    child: _buildEarningsChart(
+                      context,
+                      driverStats,
+                      selectedPeriod,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
 
             // ── Payout + Transactions group ───────────────────
-            MultiSliver(
-              children: [
-                SliverToBoxAdapter(
-                  child: _SectionHeader(
-                    title: AppLocalizations.of(context).setUpPayouts,
+            SliverCrossAxisConstrained(
+              maxCrossAxisExtent: kMaxWidthContent.w,
+              child: MultiSliver(
+                children: [
+                  SliverToBoxAdapter(
+                    child: _SectionHeader(
+                      title: AppLocalizations.of(context).setUpPayouts,
+                    ),
                   ),
-                ),
-                SliverToBoxAdapter(child: _buildPayoutSection(context, ref)),
-                SliverToBoxAdapter(
-                  child: _SectionHeader(
-                    title: AppLocalizations.of(context).recentTransactions,
+                  SliverToBoxAdapter(child: _buildPayoutSection(context, ref)),
+                  SliverToBoxAdapter(
+                    child: _SectionHeader(
+                      title: AppLocalizations.of(context).recentTransactions,
+                    ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: _buildRecentTransactions(context, ref, transactions),
-                ),
-              ],
+                  SliverToBoxAdapter(
+                    child: _buildRecentTransactions(
+                      context,
+                      ref,
+                      transactions,
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             SliverToBoxAdapter(child: SizedBox(height: 100.h)),
@@ -298,7 +313,7 @@ class DriverEarningsScreen extends ConsumerWidget {
                 Text(
                   _periodLabel(context, selectedPeriod),
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: Colors.white.withValues(alpha: 0.75),
                     letterSpacing: 0.5,
                   ),
@@ -337,7 +352,7 @@ class DriverEarningsScreen extends ConsumerWidget {
                     return '$rides ${AppLocalizations.of(context).totalRides.toLowerCase()}';
                   }(),
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: Colors.white.withValues(alpha: 0.75),
                   ),
                 ),
@@ -358,8 +373,10 @@ class DriverEarningsScreen extends ConsumerWidget {
             ],
           ),
         ),
-        child: const Center(
-          child: SkeletonLoader(type: SkeletonType.compactTile, itemCount: 1),
+        child: const SafeArea(
+          child: Center(
+            child: SkeletonLoader(type: SkeletonType.compactTile, itemCount: 1),
+          ),
         ),
       ),
       error: (_, _) => Container(
@@ -374,27 +391,29 @@ class DriverEarningsScreen extends ConsumerWidget {
             ],
           ),
         ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                AppLocalizations.of(context).failedToLoadEarnings,
-                style: TextStyle(color: Colors.white, fontSize: 16.sp),
-              ),
-              SizedBox(height: 12.h),
-              TextButton.icon(
-                onPressed: () {
-                  ref.invalidate(driverStatsProvider);
-                  ref.invalidate(earningsTransactionsProvider);
-                },
-                icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-                label: Text(
-                  AppLocalizations.of(context).tryAgain,
-                  style: const TextStyle(color: Colors.white),
+        child: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  AppLocalizations.of(context).failedToLoadEarnings,
+                  style: TextStyle(color: Colors.white, fontSize: 16.sp),
                 ),
-              ),
-            ],
+                SizedBox(height: 12.h),
+                TextButton.icon(
+                  onPressed: () {
+                    ref.invalidate(driverStatsProvider);
+                    ref.invalidate(earningsTransactionsProvider);
+                  },
+                  icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                  label: Text(
+                    AppLocalizations.of(context).tryAgain,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -435,7 +454,7 @@ class DriverEarningsScreen extends ConsumerWidget {
               maxLines: 2,
               softWrap: true,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
                 color: isSelected ? Colors.white : AppColors.textSecondary,
               ),
@@ -500,32 +519,32 @@ class DriverEarningsScreen extends ConsumerWidget {
             : '—';
 
         final cards = [
-          _StatCard(
+          IconStatCard.elevated(
             icon: Icons.directions_car_rounded,
-            iconColor: AppColors.primary,
-            title: AppLocalizations.of(context).statRides,
+            color: AppColors.primary,
+            label: AppLocalizations.of(context).statRides,
             value: displayRides.toString(),
           ),
-          _StatCard(
+          IconStatCard.elevated(
             icon: Icons.euro_rounded,
-            iconColor: AppColors.success,
-            title: AppLocalizations.of(context).statEarnings,
+            color: AppColors.success,
+            label: AppLocalizations.of(context).statEarnings,
             value: AppLocaleFormatters.formatCurrency(
               context,
               displayEarnings,
               decimalDigits: 0,
             ),
           ),
-          _StatCard(
+          IconStatCard.elevated(
             icon: Icons.star_rounded,
-            iconColor: AppColors.starFilled,
-            title: AppLocalizations.of(context).statAvgRating,
+            color: AppColors.starFilled,
+            label: AppLocalizations.of(context).statAvgRating,
             value: stats.rating > 0 ? stats.rating.toStringAsFixed(2) : '—',
           ),
-          _StatCard(
+          IconStatCard.elevated(
             icon: Icons.trending_up_rounded,
-            iconColor: AppColors.secondary,
-            title: AppLocalizations.of(context).avgPerRide,
+            color: AppColors.secondary,
+            label: AppLocalizations.of(context).avgPerRide,
             value: avgPerRide,
           ),
         ];
@@ -542,7 +561,10 @@ class DriverEarningsScreen extends ConsumerWidget {
         padding: EdgeInsets.symmetric(horizontal: 20.w),
         child: _buildStatCardsGrid(
           context: context,
-          cards: List<Widget>.generate(4, (_) => _buildLoadingStatCard()),
+          cards: List<Widget>.generate(
+            4,
+            (_) => const ShimmerCard(height: 90),
+          ),
         ),
       ),
       error: (_, _) => _buildErrorPlaceholder(context),
@@ -566,22 +588,11 @@ class DriverEarningsScreen extends ConsumerWidget {
           Expanded(
             child: Text(
               AppLocalizations.of(context).unableToLoadData,
-              style: TextStyle(fontSize: 13.sp, color: AppColors.error),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.error),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildLoadingStatCard() {
-    return Container(
-      height: 90.h,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: const SkeletonLoader(type: SkeletonType.compactTile, itemCount: 1),
     );
   }
 
@@ -963,7 +974,7 @@ class DriverEarningsScreen extends ConsumerWidget {
                                   ).completeVerification)
                           : AppLocalizations.of(context).connectYourBankAccount,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -1023,7 +1034,7 @@ class DriverEarningsScreen extends ConsumerWidget {
                                 Text(
                                   AppLocalizations.of(context).availableBalance,
                                   style: TextStyle(
-                                    fontSize: 13.sp,
+                                    fontSize: 12.sp,
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
@@ -1072,7 +1083,7 @@ class DriverEarningsScreen extends ConsumerWidget {
                                     .toStringAsFixed(2),
                               ),
                               style: TextStyle(
-                                fontSize: 22.sp,
+                                fontSize: 20.sp,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
                               ),
@@ -1482,67 +1493,6 @@ class _SectionHeader extends StatelessWidget {
               fontWeight: FontWeight.w700,
               color: AppColors.textTertiary,
               letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.value,
-  });
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: AppSpacing.shadowSm,
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(10.w),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Icon(icon, color: iconColor, size: 22.sp),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
             ),
           ),
         ],

@@ -15,7 +15,6 @@ import 'package:sport_connect/core/models/location/location_point.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
-import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
 import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/custom_button.dart';
@@ -47,7 +46,6 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
       ref.read(rideSearchResultsProvider);
 
   final _scrollController = ScrollController();
-  String? _selectedRideId;
 
   @override
   void initState() {
@@ -430,7 +428,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   color: address.isEmpty
                       ? AppColors.textTertiary
                       : AppColors.textPrimary,
@@ -521,7 +519,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textPrimary,
                 ),
@@ -754,7 +752,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
                           color: isSelected
                               ? Colors.white
@@ -1368,7 +1366,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                               Text(
                                 AppLocalizations.of(context).text52,
                                 style: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: 12.sp,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
@@ -1400,7 +1398,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                               Text(
                                 AppLocalizations.of(context).text100,
                                 style: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: 12.sp,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
@@ -1489,7 +1487,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          fontSize: 13.sp,
+                                          fontSize: 12.sp,
                                           fontWeight: FontWeight.w500,
                                           color: isSelected
                                               ? Colors.white
@@ -1936,7 +1934,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                                   child: Text(
                                     ride.origin.address,
                                     style: TextStyle(
-                                      fontSize: 13.sp,
+                                      fontSize: 12.sp,
                                       color: AppColors.textPrimary,
                                     ),
                                     maxLines: 1,
@@ -1958,7 +1956,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                                   child: Text(
                                     ride.destination.address,
                                     style: TextStyle(
-                                      fontSize: 13.sp,
+                                      fontSize: 12.sp,
                                       color: AppColors.textPrimary,
                                     ),
                                     maxLines: 1,
@@ -2218,7 +2216,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontSize: 15.sp,
+          fontSize: 14.sp,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),

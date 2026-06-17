@@ -356,7 +356,7 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
         child: Text(
           initials,
           style: TextStyle(
-            fontSize: 15.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w800,
             color: Colors.white,
           ),
@@ -681,6 +681,7 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
       onPopInvokedWithResult: (_, _) => _handleBack(),
       child: AdaptiveScaffold(
         appBar: AdaptiveAppBar(
+          useNativeToolbar: false,
           leading: IconButton(
             tooltip: l10n.goBackTooltip,
             onPressed: _handleBack,
@@ -722,7 +723,7 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
                               ),
                             ),
                             Text(
-                              l10n.step_2_of_2,
+                              l10n.stepOf(2, 2),
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: AppColors.primary,
@@ -970,32 +971,37 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
                                   ),
                                 ),
                               ),
-                              child: ReactiveCheckboxListTile(
-                                formControlName: _FormFields.terms,
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                activeColor: AppColors.primary,
-                                title: Text.rich(
-                                  TextSpan(
-                                    text: l10n.iAgreeToThe,
-                                    style: TextStyle(
-                                      fontSize: 13.sp,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                        text: l10n.terms_conditions,
-                                        recognizer: TapGestureRecognizer()
-                                          ..onTap = () => context.push(
-                                            AppRoutes.terms.path,
-                                          ),
-                                        style: const TextStyle(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w600,
-                                          decoration: TextDecoration.underline,
-                                        ),
+                              clipBehavior: Clip.antiAlias,
+                              child: Material(
+                                type: MaterialType.transparency,
+                                child: ReactiveCheckboxListTile(
+                                  formControlName: _FormFields.terms,
+                                  controlAffinity:
+                                      ListTileControlAffinity.leading,
+                                  activeColor: AppColors.primary,
+                                  title: Text.rich(
+                                    TextSpan(
+                                      text: l10n.iAgreeToThe,
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: AppColors.textSecondary,
                                       ),
-                                    ],
+                                      children: [
+                                        TextSpan(
+                                          text: l10n.terms_conditions,
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () => context.push(
+                                              AppRoutes.terms.path,
+                                            ),
+                                          style: const TextStyle(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w600,
+                                            decoration:
+                                                TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),

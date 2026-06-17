@@ -254,7 +254,7 @@ class AppModalSheet {
               Text(
                 description,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   height: 1.4,
                   color: AppColors.textSecondary,
                 ),
@@ -330,7 +330,12 @@ class AppModalSheet {
     if (width < Breakpoints.medium) {
       return WoltModalType.dialog();
     }
-    return WoltModalType.sideSheet();
+    // On tablets and larger screens (iPad, desktop) use a full-width bottom
+    // sheet instead of a side sheet. WoltSideSheetType caps its width at ~524pt
+    // and anchors to the right edge, which leaves the left half of the screen
+    // uncovered on large iPads — producing a broken half-screen layout.
+    // A bottom sheet spans the full available width on all screen sizes.
+    return WoltModalType.bottomSheet();
   }
 }
 
@@ -415,7 +420,7 @@ class _AppModalActionTile extends StatelessWidget {
                   Text(
                     action.title,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
                       color: foreground,
                     ),

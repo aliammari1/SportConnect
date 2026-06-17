@@ -1,8 +1,24 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:sport_connect/core/converters/timestamp_converter.dart';
+import 'package:sport_connect/core/utils/currency_formatter.dart';
 
 part 'payment_model.freezed.dart';
 part 'payment_model.g.dart';
+
+/// Canonical currency for all payment records, earnings, and payouts.
+///
+/// This is the single source of truth for the currency casing the app stores
+/// and compares against (`PaymentTransaction.currency`, `EarningsSummary`, and
+/// `DriverConnectedAccount.defaultCurrency` are all normalized to this value).
+///
+/// Stripe's API accepts lowercase ISO codes; use [kPaymentCurrencyApi] when
+/// calling the Stripe service so the stored record and the API call never drift
+/// in casing.
+const String kPaymentCurrency = 'EUR';
+
+/// Lowercase ISO form of [kPaymentCurrency] for Stripe API calls (Stripe
+/// expects lowercase currency codes such as `eur`).
+const String kPaymentCurrencyApi = 'eur';
 
 /// Payment status enum
 enum PaymentStatus {
@@ -114,6 +130,7 @@ abstract class PaymentTransaction with _$PaymentTransaction {
     @TimestampConverter() DateTime? refundedAt,
     String? failureReason,
     String? refundReason,
+    int? refundedAmountInCents,
     @Default({}) Map<String, dynamic> metadata,
   }) = _PaymentTransaction;
 
@@ -123,13 +140,32 @@ abstract class PaymentTransaction with _$PaymentTransaction {
       _$PaymentTransactionFromJson(json);
 
   // Display helpers convert from cents
-  String get formattedAmount => '€${(amountInCents / 100).toStringAsFixed(2)}';
+  String get formattedAmount => CurrencyFormatter.fromCents(amountInCents);
   String get formattedPlatformFee =>
-      '€${(platformFeeInCents / 100).toStringAsFixed(2)}';
+      CurrencyFormatter.fromCents(platformFeeInCents);
   String get formattedDriverEarnings =>
-      '€${(driverEarningsInCents / 100).toStringAsFixed(2)}';
+      CurrencyFormatter.fromCents(driverEarningsInCents);
+  String get formattedStripeFee =>
+      CurrencyFormatter.fromCents(stripeFeeInCents);
+
+  /// Net amount actually settled: gross charge minus platform and Stripe fees.
+  int get netAmountInCents =>
+      amountInCents - platformFeeInCents - stripeFeeInCents;
 
   bool get isSuccessful => status == PaymentStatus.succeeded;
+  bool get isRefunded => status == PaymentStatus.refunded;
+  bool get isPartiallyRefunded => status == PaymentStatus.partiallyRefunded;
+  bool get isFullyRefunded =>
+      refundedAmountInCents != null &&
+      refundedAmountInCents! >= amountInCents;
+
+  /// Whether the payment has reached a final state and no longer needs polling.
+  bool get isTerminal => const {
+    PaymentStatus.succeeded,
+    PaymentStatus.failed,
+    PaymentStatus.cancelled,
+    PaymentStatus.refunded,
+  }.contains(status);
 
   bool get canRequestRefund =>
       (status == PaymentStatus.succeeded ||
@@ -182,9 +218,18 @@ abstract class DriverPayout with _$DriverPayout {
   bool get isCompleted => status == PayoutStatus.paid;
   bool get isPending => status == PayoutStatus.pending;
   bool get hasFailed => status == PayoutStatus.failed;
+  bool get isInTransit => status == PayoutStatus.inTransit;
+  bool get isCancelled => status == PayoutStatus.cancelled;
   bool get isInstantPayout => method == PayoutMethod.instant;
 
-  String get formattedAmount => '€${(amountInCents / 100).toStringAsFixed(2)}';
+  /// Whether the payout has reached a final state and no longer needs polling.
+  bool get isTerminal => const {
+    PayoutStatus.paid,
+    PayoutStatus.failed,
+    PayoutStatus.cancelled,
+  }.contains(status);
+
+  String get formattedAmount => CurrencyFormatter.fromCents(amountInCents);
 }
 
 class ConnectedAccountCreationResult {
@@ -246,8 +291,23 @@ abstract class DriverConnectedAccount with _$DriverConnectedAccount {
 
   bool get hasPendingRequirements => requirements.currentlyDue.isNotEmpty;
 
+  bool get hasFutureRequirements =>
+      futureRequirements.currentlyDue.isNotEmpty ||
+      futureRequirements.pastDue.isNotEmpty;
+
+  bool get canReceivePayouts => payoutsEnabled && availableBalanceInCents > 0;
+
+  int get totalBalanceInCents =>
+      availableBalanceInCents + pendingBalanceInCents;
+
   String get formattedAvailableBalance =>
-      '€${(availableBalanceInCents / 100).toStringAsFixed(2)}';
+      CurrencyFormatter.fromCents(availableBalanceInCents);
+  String get formattedPendingBalance =>
+      CurrencyFormatter.fromCents(pendingBalanceInCents);
+  String get formattedTotalBalance =>
+      CurrencyFormatter.fromCents(totalBalanceInCents);
+  String get formattedTotalEarnings =>
+      CurrencyFormatter.fromCents(totalEarningsInCents);
 }
 
 /// Rider Payment Method Model
@@ -283,6 +343,15 @@ abstract class RiderPaymentMethod with _$RiderPaymentMethod {
     final now = DateTime.now();
     final expDate = DateTime(exYear, exMonth + 1, 0);
     return now.isAfter(expDate);
+  }
+
+  /// Whether the card expires within the next two months (and is not already
+  /// expired), to power a proactive "card expiring soon" prompt.
+  bool get expiresSoon {
+    final now = DateTime.now();
+    final twoMonthsOut = DateTime(now.year, now.month + 2, 1);
+    final exp = DateTime(exYear, exMonth + 1, 0);
+    return !isExpired && exp.isBefore(twoMonthsOut);
   }
 
   /// Get expiration display
@@ -330,4 +399,18 @@ abstract class EarningsSummary with _$EarningsSummary {
   double get averagePerRide => totalRidesCompleted > 0
       ? totalEarningsInCents / totalRidesCompleted / 100
       : 0.0;
+
+  /// Net earnings after platform and Stripe fees.
+  int get netEarningsInCents =>
+      totalEarningsInCents - totalPlatformFeesInCents - totalStripeFeesInCents;
+
+  int get totalBalanceInCents =>
+      availableBalanceInCents + pendingBalanceInCents;
+
+  String get formattedTotalEarnings =>
+      CurrencyFormatter.fromCents(totalEarningsInCents);
+  String get formattedAvailableBalance =>
+      CurrencyFormatter.fromCents(availableBalanceInCents);
+  String get formattedPendingBalance =>
+      CurrencyFormatter.fromCents(pendingBalanceInCents);
 }

@@ -46,14 +46,34 @@ class EmailVerificationViewModel extends _$EmailVerificationViewModel {
   Timer? _pollTimer;
   Timer? _cooldownTimer;
   var _isCheckingVerification = false;
+  var _started = false;
+  // Exponential backoff state: starts at 3 s, doubles up to 30 s.
+  static const _minPollSeconds = 3;
+  static const _maxPollSeconds = 30;
+  var _currentPollSeconds = _minPollSeconds;
 
   @override
   EmailVerificationState build() {
+    // Keep build() pure: only register disposal and read the initial email.
+    // Polling and the initial verification check are started lazily via
+    // start() from the screen, to avoid self-scheduling side effects during
+    // build that can re-run on rebuild.
     ref.onDispose(_cancelTimers);
 
     final userEmail =
         ref.read(authActionsViewModelProvider.notifier).currentUser?.email ??
         '';
+
+    return EmailVerificationState(userEmail: userEmail);
+  }
+
+  /// Start polling and run the initial verification check.
+  ///
+  /// Idempotent: safe to call from the screen on every rebuild; the work only
+  /// runs once per notifier lifetime.
+  void start() {
+    if (_started) return;
+    _started = true;
 
     _startPolling();
 
@@ -62,8 +82,6 @@ class EmailVerificationViewModel extends _$EmailVerificationViewModel {
         unawaited(checkEmailVerified());
       }
     });
-
-    return EmailVerificationState(userEmail: userEmail);
   }
 
   void _cancelTimers() {
@@ -76,10 +94,23 @@ class EmailVerificationViewModel extends _$EmailVerificationViewModel {
 
   void _startPolling() {
     _pollTimer?.cancel();
+    _currentPollSeconds = _minPollSeconds;
+    _scheduleNextPoll();
+  }
 
-    _pollTimer = Timer.periodic(
-      const Duration(seconds: 3),
-      (_) => unawaited(checkEmailVerified()),
+  void _scheduleNextPoll() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer(
+      Duration(seconds: _currentPollSeconds),
+      () async {
+        await checkEmailVerified();
+        if (ref.mounted && !state.isEmailVerified) {
+          // Double the interval, capped at the max, for exponential backoff.
+          _currentPollSeconds =
+              (_currentPollSeconds * 2).clamp(_minPollSeconds, _maxPollSeconds);
+          _scheduleNextPoll();
+        }
+      },
     );
   }
 
@@ -92,7 +123,13 @@ class EmailVerificationViewModel extends _$EmailVerificationViewModel {
       final authActions = ref.read(authActionsViewModelProvider.notifier);
       final user = authActions.currentUser;
 
-      if (user == null) return;
+      if (user == null) {
+        // No signed-in user (e.g. token revoked / signed out elsewhere). Stop
+        // the poll timer so it does not reschedule forever doing useless work.
+        _pollTimer?.cancel();
+        _pollTimer = null;
+        return;
+      }
 
       await authActions.reloadUser();
       if (!ref.mounted) return;

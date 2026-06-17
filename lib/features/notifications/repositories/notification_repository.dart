@@ -19,6 +19,12 @@ class NotificationRepository {
   final FirebaseFirestore _firestore;
   final AppLocalizationsEn _l10n = AppLocalizationsEn();
 
+  /// Upper bound for bulk mark-as-read / archive operations so they never read
+  /// and rewrite an unbounded notification history. Comfortably exceeds the
+  /// windows the UI exposes (list limit 50, unread badge cap 100) while keeping
+  /// read cost and latency predictable.
+  static const int _bulkOpLimit = 500;
+
   CollectionReference<NotificationModel> get _notificationsCollection =>
       _firestore
           .collection(AppConstants.notificationsCollection)
@@ -34,11 +40,16 @@ class NotificationRepository {
 
   Future<String> createNotification(NotificationModel notification) async {
     final docRef = _notificationsCollection.doc();
-    final notificationWithId = notification.copyWith(
-      id: docRef.id,
-      createdAt: DateTime.now(),
-    );
-    await docRef.set(notificationWithId);
+    // Use a raw-map write so FieldValue.serverTimestamp() is preserved;
+    // the typed converter would reject a FieldValue in place of DateTime.
+    final Map<String, dynamic> data = notification
+        .copyWith(id: docRef.id)
+        .toJson()
+      ..['createdAt'] = FieldValue.serverTimestamp();
+    await _firestore
+        .collection(AppConstants.notificationsCollection)
+        .doc(docRef.id)
+        .set(data);
     return docRef.id;
   }
 
@@ -69,7 +80,10 @@ class NotificationRepository {
         .where('userId', isEqualTo: userId)
         .where('isRead', isEqualTo: false)
         .where('isArchived', isEqualTo: false)
-        .limit(99)
+        // Cap at 100 (not 99) so a count of exactly 100 signals ">99 unread"
+        // and the badge can render the "99+" label; limiting to 99 would
+        // saturate at 99 and make the "99+" branch unreachable.
+        .limit(100)
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
   }
@@ -100,26 +114,37 @@ class NotificationRepository {
   Future<void> markAsRead(String notificationId) async {
     await _notificationsCollection.doc(notificationId).update({
       'isRead': true,
-      'readAt': DateTime.now(),
+      // Server timestamp avoids client-clock skew corrupting read ordering.
+      'readAt': FieldValue.serverTimestamp(),
     });
   }
 
   /// Mark all user notifications as read.
   /// Chunks into batches of 499 to stay within Firestore's 500-op limit.
+  /// Bounded to [_bulkOpLimit] documents so cost/latency stay predictable and
+  /// consistent with the windows the UI surfaces (the unread badge caps at 100,
+  /// the list at 50); without this cap a long-lived user triggers an unbounded
+  /// read+rewrite of their entire notification history.
 
   Future<void> markAllAsRead(String userId) async {
     final snapshot = await _notificationsCollection
         .where('userId', isEqualTo: userId)
         .where('isRead', isEqualTo: false)
+        .where('isArchived', isEqualTo: false)
+        .limit(_bulkOpLimit)
         .get();
 
     final docs = snapshot.docs;
-    final now = DateTime.now();
     for (var i = 0; i < docs.length; i += 499) {
       final chunk = docs.sublist(i, (i + 499).clamp(0, docs.length));
       final batch = _firestore.batch();
       for (final doc in chunk) {
-        batch.update(doc.reference, {'isRead': true, 'readAt': now});
+        batch.update(doc.reference, {
+          'isRead': true,
+          // Server timestamp keeps read ordering consistent regardless of the
+          // device clock, and avoids a single client `now` across batches.
+          'readAt': FieldValue.serverTimestamp(),
+        });
       }
       await batch.commit();
     }
@@ -135,11 +160,14 @@ class NotificationRepository {
 
   /// Archive all user notifications.
   /// Chunks into batches of 499 to stay within Firestore's 500-op limit.
+  /// Bounded to [_bulkOpLimit] documents (see [markAllAsRead]) so this never
+  /// reads+rewrites an unbounded notification history.
 
   Future<void> archiveAll(String userId) async {
     final snapshot = await _notificationsCollection
         .where('userId', isEqualTo: userId)
         .where('isArchived', isEqualTo: false)
+        .limit(_bulkOpLimit)
         .get();
 
     final docs = snapshot.docs;
@@ -148,6 +176,25 @@ class NotificationRepository {
       final batch = _firestore.batch();
       for (final doc in chunk) {
         batch.update(doc.reference, {'isArchived': true});
+      }
+      await batch.commit();
+    }
+  }
+
+  /// Archive a batch of notifications by ID atomically.
+  /// Chunks into batches of 499 to stay within Firestore's 500-op limit.
+
+  Future<void> archiveSelected(List<String> ids) async {
+    for (var i = 0; i < ids.length; i += 499) {
+      final chunk = ids.sublist(i, (i + 499).clamp(0, ids.length));
+      final batch = _firestore.batch();
+      for (final id in chunk) {
+        batch.update(
+          _firestore
+              .collection(AppConstants.notificationsCollection)
+              .doc(id),
+          {'isArchived': true},
+        );
       }
       await batch.commit();
     }
@@ -361,7 +408,9 @@ class NotificationRepository {
         title: _l10n.driver_has_arrived,
         body: _l10n.notificationDriverArrivedBody(driverName, rideName),
         priority: NotificationPriority.high,
-        data: {'rideId': rideId, 'driverPhoto': driverPhoto},
+        referenceId: rideId,
+        referenceType: 'ride',
+        data: {'driverPhoto': driverPhoto},
       ),
     );
   }
@@ -383,7 +432,8 @@ class NotificationRepository {
           rideName,
         ),
         priority: NotificationPriority.high,
-        data: {'rideId': rideId},
+        referenceId: rideId,
+        referenceType: 'ride',
       ),
     );
   }
@@ -421,21 +471,4 @@ class NotificationRepository {
       ),
     );
   }
-}
-
-/// Provider for streaming user notifications
-@riverpod
-Stream<List<NotificationModel>> userNotificationsStream(
-  Ref ref,
-  String userId,
-) {
-  final repository = ref.watch(notificationRepositoryProvider);
-  return repository.streamUserNotifications(userId);
-}
-
-/// Provider for streaming unread count
-@riverpod
-Stream<int> unreadNotificationCount(Ref ref, String userId) {
-  final repository = ref.watch(notificationRepositoryProvider);
-  return repository.streamUnreadCount(userId);
 }

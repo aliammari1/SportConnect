@@ -18,7 +18,18 @@ abstract class RideReviewModel with _$RideReviewModel {
     @Default([]) List<String> tags,
     @TimestampConverter() DateTime? createdAt,
   }) = _RideReviewModel;
+  const RideReviewModel._();
 
   factory RideReviewModel.fromJson(Map<String, dynamic> json) =>
       _$RideReviewModelFromJson(json);
+
+  /// Whether the reviewer left written feedback.
+  bool get hasComment => comment != null && comment!.trim().isNotEmpty;
+
+  /// Whether the reviewer attached a profile photo.
+  bool get hasReviewerPhoto =>
+      reviewerPhotoUrl != null && reviewerPhotoUrl!.trim().isNotEmpty;
+
+  /// A 4-or-5 star review.
+  bool get isPositive => rating >= 4.0;
 }

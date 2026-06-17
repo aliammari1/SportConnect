@@ -28,13 +28,9 @@ class ActiveTripBanner extends ConsumerWidget {
       ).select((a) => a.value ?? const <RideBooking>[]),
     );
 
-    final accepted =
-        bookings.where((b) => b.status == BookingStatus.accepted).toList()
-          ..sort(
-            (a, b) => (a.createdAt ?? DateTime(0)).compareTo(
-              b.createdAt ?? DateTime(0),
-            ),
-          );
+    final accepted = bookings
+        .where((b) => b.status == BookingStatus.accepted)
+        .toList();
     final pending = bookings
         .where((b) => b.status == BookingStatus.pending)
         .toList();
@@ -42,17 +38,34 @@ class ActiveTripBanner extends ConsumerWidget {
     if (accepted.isEmpty && pending.isEmpty) return const SizedBox.shrink();
 
     if (accepted.isNotEmpty) {
-      final booking = accepted.first;
-      final ride = ref.watch(
-        rideStreamProvider(booking.rideId).select((a) => a.value),
-      );
-
-      if (ride != null &&
-          (ride.status == RideStatus.completed ||
-              ride.status == RideStatus.cancelled)) {
-        return _pendingChip(context, pending);
+      // Resolve each accepted booking's ride so we can choose the genuinely
+      // active trip: an in-progress ride wins, otherwise the soonest future
+      // departure. Bookings whose ride is completed/cancelled are ignored.
+      // Sorting on booking.createdAt (the previous behaviour) could surface a
+      // far-future ride while hiding an imminent or in-progress one.
+      final candidates = <(RideBooking, RideModel)>[];
+      for (final booking in accepted) {
+        final ride = ref.watch(
+          rideStreamProvider(booking.rideId).select((a) => a.value),
+        );
+        if (ride == null) continue;
+        if (ride.status == RideStatus.completed ||
+            ride.status == RideStatus.cancelled) {
+          continue;
+        }
+        candidates.add((booking, ride));
       }
-      return _acceptedBanner(context, booking, ride);
+
+      if (candidates.isNotEmpty) {
+        candidates.sort((a, b) {
+          final aInProgress = a.$2.status == RideStatus.inProgress;
+          final bInProgress = b.$2.status == RideStatus.inProgress;
+          if (aInProgress != bInProgress) return aInProgress ? -1 : 1;
+          return a.$2.departureTime.compareTo(b.$2.departureTime);
+        });
+        final (booking, ride) = candidates.first;
+        return _acceptedBanner(context, booking, ride);
+      }
     }
 
     return _pendingChip(context, pending);
@@ -65,7 +78,14 @@ class ActiveTripBanner extends ConsumerWidget {
   ) {
     final l10n = AppLocalizations.of(context);
     final isInProgress = ride?.status == RideStatus.inProgress;
-    final needsPayment = !isInProgress && booking.paymentIntentId == null;
+    // Use paidAt (the explicit payment-completion timestamp) as the source of
+    // truth for paid state, matching rider_home_feed.dart. Free rides
+    // (pricePerSeatInCents == 0) never get a paidAt and must not be routed to
+    // the payment screen, so they only count as needing payment when priced.
+    final needsPayment =
+        !isInProgress &&
+        booking.paidAt == null &&
+        (ride?.pricePerSeatInCents ?? 0) > 0;
 
     final IconData icon;
     final String title;
@@ -77,7 +97,7 @@ class ActiveTripBanner extends ConsumerWidget {
       icon = Icons.navigation_rounded;
       title = l10n.rideInProgress;
       subtitle = ride != null
-          ? '${ride.origin.city ?? ride.origin.address} → ${ride.destination.city ?? ride.destination.address}'
+          ? '${ride.origin.address.isNotEmpty ? ride.origin.address : ride.origin.city ?? ride.origin.address} → ${ride.destination.address.isNotEmpty ? ride.destination.address : ride.destination.city ?? ride.destination.address}'
           : l10n.tapToOpenNavigation;
       onTap = () => context.push(
         '${AppRoutes.riderActiveRide.path}?rideId=${booking.rideId}',
@@ -107,67 +127,68 @@ class ActiveTripBanner extends ConsumerWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(16.r),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.45),
-                  blurRadius: 18,
-                  offset: const Offset(0, 5),
+      child:
+          Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.45),
+                      blurRadius: 18,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(9.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.22),
-                    borderRadius: BorderRadius.circular(11.r),
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 22.sp),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(9.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(11.r),
                       ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.87),
-                          fontSize: 12.sp,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      child: Icon(icon, color: Colors.white, size: 22.sp),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.87),
+                              fontSize: 12.sp,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.white,
+                      size: 26.sp,
+                    ),
+                  ],
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.white,
-                  size: 26.sp,
-                ),
-              ],
-            ),
-          )
-          .animate()
-          .fadeIn(delay: 300.ms, duration: 400.ms)
-          .slideY(begin: 0.25, curve: Curves.easeOutCubic),
+              )
+              .animate()
+              .fadeIn(delay: 300.ms, duration: 400.ms)
+              .slideY(begin: 0.25, curve: Curves.easeOutCubic),
     );
   }
 

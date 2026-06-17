@@ -82,67 +82,67 @@ class _ReauthBottomSheetState extends ConsumerState<_ReauthBottomSheet> {
             ),
           ),
           padding: EdgeInsets.all(AppSpacing.xl),
-        child: ReactiveForm(
-          formGroup: _form,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2.r),
+          child: ReactiveForm(
+            formGroup: _form,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
                   ),
                 ),
-              ),
 
-              SizedBox(height: 24.h),
+                SizedBox(height: 24.h),
 
-              // Icon
-              Container(
-                padding: EdgeInsets.all(14.w),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14.r),
+                // Icon
+                Container(
+                  padding: EdgeInsets.all(14.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  child: Icon(
+                    Icons.shield_outlined,
+                    size: 28.sp,
+                    color: AppColors.warning,
+                  ),
                 ),
-                child: Icon(
-                  Icons.shield_outlined,
-                  size: 28.sp,
-                  color: AppColors.warning,
+
+                SizedBox(height: 20.h),
+
+                Text(
+                  l10n.reauthTitle,
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
 
-              SizedBox(height: 20.h),
+                SizedBox(height: 8.h),
 
-              Text(
-                l10n.reauthTitle,
-                style: TextStyle(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                Text(
+                  l10n.reauthSubtitle,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
                 ),
-              ),
 
-              SizedBox(height: 8.h),
+                SizedBox(height: 24.h),
 
-              Text(
-                l10n.reauthSubtitle,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-
-              SizedBox(height: 24.h),
-
-              // Password field
-              AdaptiveReactiveTextField(
-                formControlName: 'password',
+                // Password field
+                AdaptiveReactiveTextField(
+                  formControlName: 'password',
                   labelText: l10n.reauthPassword,
                   hintText: l10n.reauthPasswordHint,
                   prefixIcon: const Icon(Icons.lock_outline_rounded),
@@ -158,101 +158,101 @@ class _ReauthBottomSheetState extends ConsumerState<_ReauthBottomSheet> {
                     ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
-                obscureText: _obscure,
-                validationMessages: {
-                  ValidationMessage.required: (_) =>
-                      l10n.reauthPasswordRequired,
-                },
-              ),
-
-              if (errorText != null) ...[
-                SizedBox(height: 8.h),
-                Text(
-                  errorText,
-                  style: TextStyle(fontSize: 13.sp, color: AppColors.error),
+                  obscureText: _obscure,
+                  validationMessages: {
+                    ValidationMessage.required: (_) =>
+                        l10n.reauthPasswordRequired,
+                  },
                 ),
-              ],
 
-              SizedBox(height: 24.h),
+                if (errorText != null) ...[
+                  SizedBox(height: 8.h),
+                  Text(
+                    errorText,
+                    style: TextStyle(fontSize: 12.sp, color: AppColors.error),
+                  ),
+                ],
 
-              // Confirm button
-              SizedBox(
-                width: double.infinity,
-                child: PremiumButton(
-                  text: l10n.reauthConfirm,
-                  onPressed: vmState.isLoading
-                      ? null
-                      : () {
-                          _form.markAllAsTouched();
-                          if (!_form.valid) return;
-                          ref
-                              .read(reauthViewModelProvider.notifier)
-                              .reauthWithPassword(
-                                _form.control('password').value as String,
-                              );
-                        },
-                  isLoading: vmState.isLoading,
-                  icon: Icons.check_rounded,
-                ),
-              ),
+                SizedBox(height: 24.h),
 
-              SizedBox(height: 12.h),
-
-              // Google re-auth option
-              SizedBox(
-                width: double.infinity,
-                child: PremiumButton(
-                  text: l10n.reauthWithGoogle,
-                  onPressed: vmState.isLoading
-                      ? null
-                      : () => ref
-                            .read(reauthViewModelProvider.notifier)
-                            .reauthWithGoogle(),
-                  style: PremiumButtonStyle.secondary,
-                  icon: Icons.g_mobiledata_rounded,
-                ),
-              ),
-
-              if (Platform.isIOS || Platform.isMacOS) ...[
-                SizedBox(height: 12.h),
-
-                // Apple re-auth option
+                // Confirm button
                 SizedBox(
                   width: double.infinity,
                   child: PremiumButton(
-                    text: l10n.continueWithApple,
+                    text: l10n.reauthConfirm,
+                    onPressed: vmState.isLoading
+                        ? null
+                        : () {
+                            _form.markAllAsTouched();
+                            if (!_form.valid) return;
+                            ref
+                                .read(reauthViewModelProvider.notifier)
+                                .reauthWithPassword(
+                                  _form.control('password').value as String,
+                                );
+                          },
+                    isLoading: vmState.isLoading,
+                    icon: Icons.check_rounded,
+                  ),
+                ),
+
+                SizedBox(height: 12.h),
+
+                // Google re-auth option
+                SizedBox(
+                  width: double.infinity,
+                  child: PremiumButton(
+                    text: l10n.reauthWithGoogle,
                     onPressed: vmState.isLoading
                         ? null
                         : () => ref
                               .read(reauthViewModelProvider.notifier)
-                              .reauthWithApple(),
+                              .reauthWithGoogle(),
                     style: PremiumButtonStyle.secondary,
-                    icon: Icons.apple_rounded,
+                    icon: Icons.g_mobiledata_rounded,
                   ),
                 ),
-              ],
 
-              SizedBox(height: 8.h),
+                if (Platform.isIOS || Platform.isMacOS) ...[
+                  SizedBox(height: 12.h),
 
-              // Cancel
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: Text(
-                    l10n.reauthCancel,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: AppColors.textSecondary,
+                  // Apple re-auth option
+                  SizedBox(
+                    width: double.infinity,
+                    child: PremiumButton(
+                      text: l10n.continueWithApple,
+                      onPressed: vmState.isLoading
+                          ? null
+                          : () => ref
+                                .read(reauthViewModelProvider.notifier)
+                                .reauthWithApple(),
+                      style: PremiumButtonStyle.secondary,
+                      icon: Icons.apple_rounded,
+                    ),
+                  ),
+                ],
+
+                SizedBox(height: 8.h),
+
+                // Cancel
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(
+                      l10n.reauthCancel,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              SizedBox(height: 8.h),
-            ],
+                SizedBox(height: 8.h),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

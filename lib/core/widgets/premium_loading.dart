@@ -182,7 +182,7 @@ class PremiumLoadingOverlay extends StatelessWidget {
                 Text(
                   message!,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
                   ),

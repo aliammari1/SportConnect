@@ -16,6 +16,9 @@ import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/custom_button.dart';
+import 'package:sport_connect/core/widgets/form_card.dart';
+import 'package:sport_connect/core/widgets/form_section_header.dart';
+import 'package:sport_connect/core/widgets/key_value_row.dart';
 import 'package:sport_connect/core/widgets/permission_dialog_helper.dart';
 import 'package:sport_connect/core/widgets/reactive_adaptive_text_field.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
@@ -33,6 +36,19 @@ class VehicleManagementScreen extends ConsumerWidget {
     final state = ref.watch(vehicleViewModelProvider);
 
     ref.listen(vehicleViewModelProvider, (prev, next) {
+      // Surface mutation failures: every create/update/delete/setActive/upload
+      // failure sets errorMessage, which would otherwise never reach the UI.
+      if (next.errorMessage != null &&
+          next.errorMessage != prev?.errorMessage) {
+        AdaptiveSnackBar.show(
+          context,
+          message: next.errorMessage!,
+          type: AdaptiveSnackBarType.error,
+        );
+        ref.read(vehicleViewModelProvider.notifier).clearError();
+        return;
+      }
+
       if (next.actionType == null || next.actionType == prev?.actionType) {
         return;
       }
@@ -49,6 +65,7 @@ class VehicleManagementScreen extends ConsumerWidget {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           tooltip: l10n.goBackTooltip,
           onPressed: () => context.pop(),
@@ -97,67 +114,71 @@ class _VehicleListView extends ConsumerWidget {
       orElse: () => sorted.first,
     );
 
-    return Stack(
-      children: [
-        MaxWidthContainer(
-          maxWidth: context.isTablet ? kMaxWidthWide : kMaxWidthContent,
-          child: ListView.builder(
-            physics: const BouncingScrollPhysics(),
-            padding: adaptiveScreenPadding(context).copyWith(bottom: 120.h),
-            itemCount: 3 + (context.isTablet ? 1 : sorted.length),
-            itemBuilder: (context, index) {
-              switch (index) {
-                case 0:
-                  return _StatsHero(
-                    total: sorted.length,
-                    activeName: active.isActive ? active.displayName : null,
-                  ).animate().fadeIn(duration: 320.ms).slideY(begin: 0.05, end: 0);
-                case 1:
-                  return _AddVehicleBanner(onTap: () => _openAddSheet(context, ref))
-                      .animate(delay: 80.ms)
-                      .fadeIn(duration: 320.ms)
-                      .slideY(begin: 0.05, end: 0);
-                case 2:
-                  return SizedBox(height: 20.h);
-                default:
-                  final vehicleIndex = index - 3;
-                  if (context.isTablet) {
-                    // Tablet uses a single GridView item
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: sorted.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: context.isExpandedOrLarger ? 3 : 2,
-                        mainAxisSpacing: 16.h,
-                        crossAxisSpacing: 16.w,
-                        childAspectRatio: context.isExpandedOrLarger ? 1.18 : 0.96,
-                      ),
-                      itemBuilder: (context, vi) {
-                        final vehicle = sorted[vi];
-                        return _VehicleCard(
-                              vehicle: vehicle,
-                              onSetActive: vehicle.isActive
-                                  ? null
-                                  : () => ref
-                                        .read(vehicleViewModelProvider.notifier)
-                                        .setActiveVehicle(vehicle.id),
-                              onEdit: () => _openEditSheet(context, ref, vehicle),
-                              onDelete: () => _confirmDelete(context, ref, vehicle),
-                              onTap: () => _openDetailsSheet(context, ref, vehicle),
-                            )
-                            .animate(
-                              delay: Duration(milliseconds: 120 + vi * 60),
-                            )
-                            .fadeIn(duration: 320.ms)
-                            .slideY(begin: 0.06, end: 0);
-                      },
-                    );
-                  }
-                  final v = sorted[vehicleIndex];
-                  return Padding(
-                    padding: EdgeInsets.only(bottom: 16.h),
-                    child: _VehicleCard(
+    return MaxWidthContainer(
+      maxWidth: context.isTablet ? kMaxWidthWide : kMaxWidthContent,
+      child: ListView.builder(
+        physics: const BouncingScrollPhysics(),
+        padding: adaptiveScreenPadding(context).copyWith(bottom: 32.h),
+        itemCount: 3 + (context.isTablet ? 1 : sorted.length),
+        itemBuilder: (context, index) {
+          switch (index) {
+            case 0:
+              return _StatsHero(
+                total: sorted.length,
+                activeName: active.isActive ? active.displayName : null,
+              ).animate().fadeIn(duration: 320.ms).slideY(begin: 0.05, end: 0);
+            case 1:
+              return _AddVehicleBanner(
+                    onTap: () => _openAddSheet(context, ref),
+                  )
+                  .animate(delay: 80.ms)
+                  .fadeIn(duration: 320.ms)
+                  .slideY(begin: 0.05, end: 0);
+            case 2:
+              return SizedBox(height: 20.h);
+            default:
+              final vehicleIndex = index - 3;
+              if (context.isTablet) {
+                // Tablet uses a single GridView item
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: sorted.length,
+                  // Width-driven columns so the grid adapts to the actual
+                  // window width (iPad split-view / Slide Over) rather than
+                  // the device class.
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 320.w,
+                    mainAxisSpacing: 16.h,
+                    crossAxisSpacing: 16.w,
+                    childAspectRatio: context.isExpandedOrLarger ? 1.18 : 0.96,
+                  ),
+                  itemBuilder: (context, vi) {
+                    final vehicle = sorted[vi];
+                    return _VehicleCard(
+                          vehicle: vehicle,
+                          onSetActive: vehicle.isActive
+                              ? null
+                              : () => ref
+                                    .read(vehicleViewModelProvider.notifier)
+                                    .setActiveVehicle(vehicle.id),
+                          onEdit: () => _openEditSheet(context, ref, vehicle),
+                          onDelete: () => _confirmDelete(context, ref, vehicle),
+                          onTap: () => _openDetailsSheet(context, ref, vehicle),
+                        )
+                        .animate(
+                          delay: Duration(milliseconds: 120 + vi * 60),
+                        )
+                        .fadeIn(duration: 320.ms)
+                        .slideY(begin: 0.06, end: 0);
+                  },
+                );
+              }
+              final v = sorted[vehicleIndex];
+              return Padding(
+                padding: EdgeInsets.only(bottom: 16.h),
+                child:
+                    _VehicleCard(
                           vehicle: v,
                           onSetActive: v.isActive
                               ? null
@@ -169,28 +190,16 @@ class _VehicleListView extends ConsumerWidget {
                           onTap: () => _openDetailsSheet(context, ref, v),
                         )
                         .animate(
-                          delay: Duration(milliseconds: 120 + vehicleIndex * 80),
+                          delay: Duration(
+                            milliseconds: 120 + vehicleIndex * 80,
+                          ),
                         )
                         .fadeIn(duration: 320.ms)
                         .slideY(begin: 0.06, end: 0),
-                  );
-              }
-            },
-          ),
-        ),
-        if (!context.isTablet)
-          Positioned(
-            left: 20.w,
-            right: 20.w,
-            bottom: 24.h,
-            child: SafeArea(
-              top: false,
-              child: _FloatingAddButton(
-                onPressed: () => _openAddSheet(context, ref),
-              ).animate(delay: 200.ms).fadeIn().slideY(begin: 0.3, end: 0),
-            ),
-          ),
-      ],
+              );
+          }
+        },
+      ),
     );
   }
 
@@ -203,11 +212,40 @@ class _VehicleListView extends ConsumerWidget {
         forceMaxHeight: true,
         maxHeightFactor: 0.92,
         child: _VehicleFormSheet(
-          onSave: (vehicle) async {
-            final ok = await ref
-                .read(vehicleViewModelProvider.notifier)
-                .createVehicle(vehicle.copyWith(ownerId: userId));
-            if (ok && context.mounted) context.pop();
+          onSave: (vehicle, imageFile) async {
+            final notifier = ref.read(vehicleViewModelProvider.notifier);
+            final ok = await notifier.createVehicle(
+              vehicle.copyWith(ownerId: userId),
+            );
+            if (!ok) return false;
+
+            // The vehicle id is only known after creation, so upload the
+            // picked image now and persist its URL with a follow-up update.
+            if (imageFile != null) {
+              final newId = ref
+                  .read(vehicleViewModelProvider)
+                  .selectedVehicle
+                  ?.id;
+              if (newId != null && newId.isNotEmpty) {
+                final imageUrl = await notifier.uploadVehicleImage(
+                  vehicleId: newId,
+                  imageFile: imageFile,
+                );
+                if (imageUrl != null) {
+                  final created = ref
+                      .read(vehicleViewModelProvider)
+                      .selectedVehicle;
+                  if (created != null) {
+                    await notifier.updateVehicle(
+                      created.copyWith(imageUrl: imageUrl),
+                    );
+                  }
+                }
+              }
+            }
+
+            if (context.mounted) context.pop();
+            return true;
           },
         ),
       ),
@@ -228,11 +266,14 @@ class _VehicleListView extends ConsumerWidget {
         maxHeightFactor: 0.92,
         child: _VehicleFormSheet(
           vehicle: vehicle,
-          onSave: (updated) async {
+          onSave: (updated, _) async {
+            // imageFile is unused here: the edit flow uploads the picked image
+            // inside _save and folds the resulting URL into `updated.imageUrl`.
             final ok = await ref
                 .read(vehicleViewModelProvider.notifier)
                 .updateVehicle(updated);
             if (ok && context.mounted) context.pop();
+            return ok;
           },
         ),
       ),
@@ -426,7 +467,7 @@ class _HeroStat extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontSize: 22.sp,
+            fontSize: 20.sp,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),
@@ -502,7 +543,7 @@ class _AddVehicleBanner extends StatelessWidget {
                   Text(
                     AppLocalizations.of(context).addVehicle,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
@@ -597,7 +638,7 @@ class _VehicleCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 17.sp,
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
                               ),
@@ -628,7 +669,7 @@ class _VehicleCard extends StatelessWidget {
                       if (vehicle.totalRides > 0)
                         _MetaPill(
                           icon: Icons.route_rounded,
-                          label: '${vehicle.totalRides} rides',
+                          label: l10n.valueRides(vehicle.totalRides),
                           color: AppColors.warning,
                         ),
                       if (vehicle.averageRating > 0)
@@ -924,60 +965,13 @@ class _SetActiveButton extends StatelessWidget {
       icon: Icon(Icons.check_circle_outline_rounded, size: 16.sp),
       label: Text(
         AppLocalizations.of(context).setActive,
-        style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
+        style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
       ),
       style: TextButton.styleFrom(
         foregroundColor: AppColors.primary,
         padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-    );
-  }
-}
-
-// ─── Floating add button ─────────────────────────────────────────────────────
-
-class _FloatingAddButton extends StatelessWidget {
-  const _FloatingAddButton({required this.onPressed});
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return AdaptiveTapSurface(
-      borderRadius: BorderRadius.circular(16.r),
-      onTap: () {
-        unawaited(HapticFeedback.lightImpact());
-        onPressed();
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.18),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_rounded, color: Colors.white, size: 22.sp),
-            SizedBox(width: 8.w),
-            Text(
-              AppLocalizations.of(context).addVehicle,
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -1020,7 +1014,7 @@ class _EmptyState extends StatelessWidget {
             Text(
               l10n.noVehiclesAdded,
               style: TextStyle(
-                fontSize: 22.sp,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -1108,7 +1102,14 @@ class _VehicleFormSheet extends ConsumerStatefulWidget {
   const _VehicleFormSheet({required this.onSave, this.vehicle});
 
   final VehicleModel? vehicle;
-  final Future<void> Function(VehicleModel) onSave;
+
+  /// Called with the assembled vehicle and the user-picked image file (if any).
+  /// The add flow needs [imageFile] because the vehicle id is unknown until the
+  /// document is created, so the image upload happens after creation.
+  ///
+  /// Returns true when the save (Firestore write) succeeded. The form uses this
+  /// to avoid deleting the previous image when the document update failed.
+  final Future<bool> Function(VehicleModel vehicle, File? imageFile) onSave;
 
   @override
   ConsumerState<_VehicleFormSheet> createState() => _VehicleFormSheetState();
@@ -1208,6 +1209,25 @@ class _VehicleFormSheetState extends ConsumerState<_VehicleFormSheet> {
     notifier.setLoading(true);
 
     final values = _form.value;
+
+    // Upload picked image for existing vehicles (edit flow) before saving.
+    // For new vehicles the ID is not yet known, so the caller's onSave
+    // callback is responsible for uploading and updating imageUrl after
+    // the document is created.
+    final previousImageUrl = widget.vehicle?.imageUrl;
+    String? resolvedImageUrl = previousImageUrl;
+    final existingVehicleId = widget.vehicle?.id;
+    if (ui.imageFile != null &&
+        existingVehicleId != null &&
+        existingVehicleId.isNotEmpty) {
+      resolvedImageUrl = await ref
+          .read(vehicleViewModelProvider.notifier)
+          .uploadVehicleImage(
+            vehicleId: existingVehicleId,
+            imageFile: ui.imageFile!,
+          );
+    }
+
     final vehicle = VehicleModel(
       id: widget.vehicle?.id ?? '',
       ownerId: widget.vehicle?.ownerId ?? '',
@@ -1217,12 +1237,38 @@ class _VehicleFormSheetState extends ConsumerState<_VehicleFormSheet> {
       color: (values['color']! as String).trim(),
       licensePlate: (values['license_plate']! as String).trim().toUpperCase(),
       capacity: ui.capacity,
-      imageUrl: widget.vehicle?.imageUrl,
+      imageUrl: resolvedImageUrl,
       isActive: widget.vehicle?.isActive ?? false,
     );
 
     unawaited(HapticFeedback.mediumImpact());
-    await widget.onSave(vehicle);
+    // For the edit flow the image was already uploaded above and folded into
+    // resolvedImageUrl, so no file needs to be threaded through. For the add
+    // flow the id is not yet known, so hand the picked file to onSave which
+    // uploads it after the document is created.
+    final fileForOnSave =
+        (existingVehicleId == null || existingVehicleId.isEmpty)
+        ? ui.imageFile
+        : null;
+    final saved = await widget.onSave(vehicle, fileForOnSave);
+
+    // VEH-5: after a SUCCESSFUL edit that replaced the photo, delete the
+    // superseded Storage object (best-effort) so it is not orphaned. Uploads
+    // use a fresh timestamped name, so the old URL would otherwise leak.
+    // Guard on `saved`: if the Firestore update failed the document still
+    // references previousImageUrl, so it must NOT be deleted.
+    if (saved &&
+        existingVehicleId != null &&
+        existingVehicleId.isNotEmpty &&
+        previousImageUrl != null &&
+        previousImageUrl.isNotEmpty &&
+        resolvedImageUrl != null &&
+        resolvedImageUrl != previousImageUrl) {
+      await ref
+          .read(vehicleViewModelProvider.notifier)
+          .deleteVehicleImageByUrl(previousImageUrl);
+    }
+
     if (mounted) notifier.setLoading(false);
   }
 
@@ -1249,12 +1295,16 @@ class _VehicleFormSheetState extends ConsumerState<_VehicleFormSheet> {
                   ),
                   SizedBox(height: 20.h),
 
-                  _FormSectionHeader(
+                  FormSectionHeader(
                     icon: Icons.info_outline_rounded,
                     title: l10n.vehicle_details,
                   ),
                   SizedBox(height: 12.h),
-                  _FormCard(
+                  FormCard(
+                    padding: EdgeInsets.all(14.w),
+                    radius: 14,
+                    borderAlpha: 0.7,
+                    boxShadow: const [],
                     children: [
                       _formField(
                         name: 'make',
@@ -1318,7 +1368,7 @@ class _VehicleFormSheetState extends ConsumerState<_VehicleFormSheet> {
                   ),
 
                   SizedBox(height: 20.h),
-                  _FormSectionHeader(
+                  FormSectionHeader(
                     icon: Icons.airline_seat_recline_normal_rounded,
                     title: l10n.passengerCapacity,
                   ),
@@ -1492,7 +1542,7 @@ class _ImagePickerHero extends StatelessWidget {
           Text(
             AppLocalizations.of(context).addPhoto,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w700,
               color: AppColors.primary,
             ),
@@ -1506,52 +1556,6 @@ class _ImagePickerHero extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _FormSectionHeader extends StatelessWidget {
-  const _FormSectionHeader({required this.icon, required this.title});
-  final IconData icon;
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 16.sp, color: AppColors.primary),
-        SizedBox(width: 8.w),
-        Text(
-          title.toUpperCase(),
-          style: TextStyle(
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.1,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FormCard extends StatelessWidget {
-  const _FormCard({required this.children});
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.7)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
       ),
     );
   }
@@ -1650,33 +1654,65 @@ class _VehicleDetailsSheet extends StatelessWidget {
                         color: AppColors.primary,
                       ),
                     ),
-                    SizedBox(width: 10.w),
-                    Expanded(
-                      child: _DetailMetric(
-                        icon: Icons.route_rounded,
-                        label: l10n.totalRides,
-                        value: '${vehicle.totalRides}',
-                        color: AppColors.warning,
+                    // VE-1: only surface the rides metric once it is non-zero.
+                    // Vehicle stats are not yet wired (updateVehicleStats has no
+                    // caller — that wiring lives in the rides feature), so a
+                    // zero here would advertise a permanently-empty number.
+                    if (vehicle.totalRides > 0) ...[
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: _DetailMetric(
+                          icon: Icons.route_rounded,
+                          label: l10n.totalRides,
+                          value: '${vehicle.totalRides}',
+                          color: AppColors.warning,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 SizedBox(height: 18.h),
-                _FormCard(
+                FormCard(
+                  padding: EdgeInsets.all(14.w),
+                  radius: 14,
+                  borderAlpha: 0.7,
+                  boxShadow: const [],
                   children: [
-                    _DetailRow(label: l10n.color, value: vehicle.color),
+                    KeyValueRow(
+                      label: l10n.color,
+                      value: vehicle.color,
+                      labelFontSize: 12.sp,
+                      verticalPadding: 10.h,
+                      valueFontWeight: FontWeight.w700,
+                      expandLabel: true,
+                    ),
                     _Separator(),
-                    _DetailRow(label: l10n.year, value: '${vehicle.year}'),
+                    KeyValueRow(
+                      label: l10n.year,
+                      value: '${vehicle.year}',
+                      labelFontSize: 12.sp,
+                      verticalPadding: 10.h,
+                      valueFontWeight: FontWeight.w700,
+                      expandLabel: true,
+                    ),
                     _Separator(),
-                    _DetailRow(
+                    KeyValueRow(
                       label: l10n.licensePlate,
                       value: vehicle.licensePlate.toUpperCase(),
+                      labelFontSize: 12.sp,
+                      verticalPadding: 10.h,
+                      valueFontWeight: FontWeight.w700,
+                      expandLabel: true,
                     ),
                     if (vehicle.averageRating > 0) ...[
                       _Separator(),
-                      _DetailRow(
+                      KeyValueRow(
                         label: l10n.rating,
                         value: vehicle.averageRating.toStringAsFixed(1),
+                        labelFontSize: 12.sp,
+                        verticalPadding: 10.h,
+                        valueFontWeight: FontWeight.w700,
+                        expandLabel: true,
                       ),
                     ],
                   ],
@@ -1795,7 +1831,7 @@ class _DetailsHero extends StatelessWidget {
             child: Text(
               vehicle.licensePlate.toUpperCase(),
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
                 letterSpacing: 1.2,
@@ -1890,7 +1926,7 @@ class _DetailMetric extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 15.sp,
+              fontSize: 14.sp,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
             ),
@@ -1903,44 +1939,6 @@ class _DetailMetric extends StatelessWidget {
             style: TextStyle(
               fontSize: 11.sp,
               color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 10.h),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          SizedBox(width: 12.w),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
             ),
           ),
         ],

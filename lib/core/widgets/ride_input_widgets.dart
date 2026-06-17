@@ -51,7 +51,7 @@ class SeatsStepper extends StatelessWidget {
           Text(
             label!,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w600,
               color: accent.withValues(alpha: 0.8),
             ),
@@ -97,7 +97,7 @@ class SeatsStepper extends StatelessWidget {
                       Text(
                         '$value',
                         style: TextStyle(
-                          fontSize: 22.sp,
+                          fontSize: 20.sp,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
                         ),
@@ -277,7 +277,7 @@ class PriceInputState extends State<PriceInput> {
           Text(
             widget.label ?? l10n.priceSummaryLabel,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w600,
               color: hasError ? AppColors.error : accent.withValues(alpha: 0.8),
             ),
@@ -448,7 +448,7 @@ class DateTimePickerField extends StatelessWidget {
           Text(
             label!,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w600,
               color: hasError ? AppColors.error : accent.withValues(alpha: 0.8),
             ),
@@ -559,7 +559,8 @@ class _DateTimeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final placeholder = text == AppLocalizations.of(context).selectDatePlaceholder ||
+    final placeholder =
+        text == AppLocalizations.of(context).selectDatePlaceholder ||
         text == AppLocalizations.of(context).selectTimePlaceholder;
 
     return AdaptiveTapSurface(
@@ -582,7 +583,7 @@ class _DateTimeChip extends StatelessWidget {
               child: Text(
                 text,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w500,
                   color: placeholder
                       ? AppColors.textTertiary
@@ -656,7 +657,7 @@ class PreferenceToggle extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: value ? FontWeight.w600 : FontWeight.w500,
                   color: value ? accent : AppColors.textSecondary,
                 ),

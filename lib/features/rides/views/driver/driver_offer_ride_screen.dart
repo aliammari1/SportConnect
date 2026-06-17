@@ -18,6 +18,7 @@ import 'package:sport_connect/core/models/user/user_enums.dart';
 import 'package:sport_connect/core/models/user/user_model.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/utils/currency_formatter.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/map_location_picker.dart';
@@ -227,6 +228,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
   Widget _buildNotDriverState(BuildContext context) {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           tooltip: AppLocalizations.of(context).goBackTooltip,
           icon: Icon(Icons.adaptive.arrow_back_rounded, size: 20),
@@ -294,6 +296,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
   Widget _buildErrorState(BuildContext context, String error) {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           tooltip: AppLocalizations.of(context).goBackTooltip,
           icon: Icon(Icons.adaptive.arrow_back_rounded, size: 20),
@@ -325,7 +328,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                 error,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   color: AppColors.textSecondary,
                 ),
               ),
@@ -741,7 +744,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                           ? AppColors.textPrimary
                           : AppColors.textTertiary,
                       fontWeight: FontWeight.w600,
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -781,7 +784,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
           Text(
             AppLocalizations.of(context).departureTimeLabel,
             style: TextStyle(
-              fontSize: 15.sp,
+              fontSize: 14.sp,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
@@ -895,7 +898,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
               Text(
                 l10n.recurringRideTitle,
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
@@ -1059,7 +1062,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
               Text(
                 AppLocalizations.of(context).intermediateStopsLabel,
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
@@ -1072,7 +1075,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                   label: Text(
                     AppLocalizations.of(context).addStopButton,
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1090,7 +1093,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                 AppLocalizations.of(context).addStopsHint,
                 style: TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                 ),
               ),
             )
@@ -1174,7 +1177,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                       : AppLocalizations.of(context).tapToSetLocation,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: AppColors.textPrimary,
                   ),
                   maxLines: 1,
@@ -1297,7 +1300,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
             Text(
               AppLocalizations.of(context).vehicleLabel,
               style: TextStyle(
-                fontSize: 15.sp,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -1414,7 +1417,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                         '${vehicle.make} ${vehicle.model}',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           color: AppColors.textPrimary,
                         ),
                         maxLines: 1,
@@ -1491,7 +1494,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                     l10n.pricePerSeatLabel,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -1544,11 +1547,11 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                     SizedBox(
                       width: 72.w,
                       child: Text(
-                        '€${pricePerSeat.toStringAsFixed(2)}',
+                        CurrencyFormatter.fromAmount(pricePerSeat),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 17.sp,
+                          fontSize: 16.sp,
                           color: _pricePerSeatInCents < 1
                               ? AppColors.error
                               : AppColors.textPrimary,
@@ -1590,7 +1593,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
           l10n.availableSeatsLabel,
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: 15.sp,
+            fontSize: 14.sp,
             color: AppColors.textPrimary,
           ),
         ),
@@ -1635,7 +1638,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                               ? Colors.white
                               : AppColors.textSecondary,
                           fontWeight: FontWeight.w700,
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                         ),
                       ),
                     ),
@@ -1706,7 +1709,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
               Text(
                 l10n.rideSummaryLabel,
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primary,
                 ),
@@ -1815,6 +1818,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
   Widget _buildPreferencesCard() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16.r),
@@ -1827,48 +1831,54 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          OfferPreferenceSwitch(
-            title: AppLocalizations.of(context).allowPetsToggle,
-            subtitle: AppLocalizations.of(context).allowPetsSubtitle,
-            icon: Icons.pets_rounded,
-            value: _allowPets,
-            onChanged: (val) => ref
-                .read(driverOfferRideViewModelProvider.notifier)
-                .setAllowPets(val),
-          ),
-          const Divider(),
-          OfferPreferenceSwitch(
-            title: AppLocalizations.of(context).allowSmokingToggle,
-            subtitle: AppLocalizations.of(context).allowSmokingSubtitle,
-            icon: Icons.smoke_free_rounded,
-            value: _allowSmoking,
-            onChanged: (val) => ref
-                .read(driverOfferRideViewModelProvider.notifier)
-                .setAllowSmoking(val),
-          ),
-          const Divider(),
-          OfferPreferenceSwitch(
-            title: AppLocalizations.of(context).allowLuggageToggle,
-            subtitle: AppLocalizations.of(context).allowLuggageSubtitle,
-            icon: Icons.luggage_rounded,
-            value: _allowLuggage,
-            onChanged: (val) => ref
-                .read(driverOfferRideViewModelProvider.notifier)
-                .setAllowLuggage(val),
-          ),
-          const Divider(),
-          OfferPreferenceSwitch(
-            title: AppLocalizations.of(context).womenOnlyToggle,
-            subtitle: AppLocalizations.of(context).womenOnlySubtitle,
-            icon: Icons.female_rounded,
-            value: _isWomenOnly,
-            onChanged: (val) => ref
-                .read(driverOfferRideViewModelProvider.notifier)
-                .setWomenOnly(val),
-          ),
-        ],
+      // Transparent Material between the colored Container and the ListTile-based
+      // switches so their ink/splash paints correctly (avoids the "ListTile
+      // background may be invisible" assertion).
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          children: [
+            OfferPreferenceSwitch(
+              title: AppLocalizations.of(context).allowPetsToggle,
+              subtitle: AppLocalizations.of(context).allowPetsSubtitle,
+              icon: Icons.pets_rounded,
+              value: _allowPets,
+              onChanged: (val) => ref
+                  .read(driverOfferRideViewModelProvider.notifier)
+                  .setAllowPets(val),
+            ),
+            const Divider(),
+            OfferPreferenceSwitch(
+              title: AppLocalizations.of(context).allowSmokingToggle,
+              subtitle: AppLocalizations.of(context).allowSmokingSubtitle,
+              icon: Icons.smoke_free_rounded,
+              value: _allowSmoking,
+              onChanged: (val) => ref
+                  .read(driverOfferRideViewModelProvider.notifier)
+                  .setAllowSmoking(val),
+            ),
+            const Divider(),
+            OfferPreferenceSwitch(
+              title: AppLocalizations.of(context).allowLuggageToggle,
+              subtitle: AppLocalizations.of(context).allowLuggageSubtitle,
+              icon: Icons.luggage_rounded,
+              value: _allowLuggage,
+              onChanged: (val) => ref
+                  .read(driverOfferRideViewModelProvider.notifier)
+                  .setAllowLuggage(val),
+            ),
+            const Divider(),
+            OfferPreferenceSwitch(
+              title: AppLocalizations.of(context).womenOnlyToggle,
+              subtitle: AppLocalizations.of(context).womenOnlySubtitle,
+              icon: Icons.female_rounded,
+              value: _isWomenOnly,
+              onChanged: (val) => ref
+                  .read(driverOfferRideViewModelProvider.notifier)
+                  .setWomenOnly(val),
+            ),
+          ],
+        ),
       ),
     ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1, end: 0);
   }
@@ -1933,7 +1943,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                         child: Text(
                           AppLocalizations.of(context).backButton,
                           style: TextStyle(
-                            fontSize: 15.sp,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
@@ -1975,7 +1985,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                                 ? AppLocalizations.of(context).createRideButton
                                 : AppLocalizations.of(context).nextButton,
                             style: TextStyle(
-                              fontSize: 15.sp,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),

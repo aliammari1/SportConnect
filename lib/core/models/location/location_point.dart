@@ -55,4 +55,16 @@ abstract class LocationPoint with _$LocationPoint {
 
   /// Get short display string
   String get shortDisplay => city ?? address.split(',').first;
+
+  /// "lat, lng" string with fixed precision, for compact coordinate display.
+  String get coordinatesString =>
+      '${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)}';
+
+  /// Address suitable for display, falling back to [coordinatesString] when no
+  /// address text is available.
+  String get displayAddress =>
+      address.trim().isNotEmpty ? address : coordinatesString;
+
+  /// Whether this point is backed by a known place identifier.
+  bool get hasPlaceId => placeId != null && placeId!.isNotEmpty;
 }

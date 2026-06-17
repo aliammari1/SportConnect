@@ -29,4 +29,13 @@ abstract class RatingBreakdown with _$RatingBreakdown {
             oneStars) /
         total;
   }
+
+  /// Whether any ratings have been recorded.
+  bool get hasRatings => total > 0;
+
+  /// [average] rounded to one decimal place.
+  double get roundedAverage => double.parse(average.toStringAsFixed(1));
+
+  /// One-decimal string of the average for direct display (e.g. "4.5").
+  String get displayAverage => average.toStringAsFixed(1);
 }

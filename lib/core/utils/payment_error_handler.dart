@@ -62,7 +62,8 @@ class PaymentErrorHandler {
         lower.contains('account verification')) {
       return "Tap 'Complete Setup' to finish verifying your payout account.";
     }
-    if (lower.contains('card_declined') || lower.contains('card was declined')) {
+    if (lower.contains('card_declined') ||
+        lower.contains('card was declined')) {
       return 'Your card was declined. Please try a different payment method.';
     }
     if (lower.contains('insufficient_funds') ||
@@ -75,8 +76,7 @@ class PaymentErrorHandler {
     if (lower.contains('incorrect_cvc') || lower.contains('incorrect cvc')) {
       return 'Incorrect card security code. Please check and try again.';
     }
-    if (lower.contains('cannot be cancelled') &&
-        lower.contains('payout')) {
+    if (lower.contains('cannot be cancelled') && lower.contains('payout')) {
       return "This payout can no longer be cancelled — it's already being processed by your bank.";
     }
     if (lower.contains('payout') && lower.contains('failed')) {
@@ -112,6 +112,8 @@ class PaymentErrorHandler {
       return message.replaceFirst('Exception: ', '');
     }
 
-    return message.isEmpty ? 'Something went wrong. Please try again.' : message;
+    return message.isEmpty
+        ? 'Something went wrong. Please try again.'
+        : message;
   }
 }

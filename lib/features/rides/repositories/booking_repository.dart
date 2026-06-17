@@ -31,8 +31,8 @@ class BookingRepository {
       'driverId': booking.driverId,
       'status': BookingStatus.pending.name,
       'seatsBooked': booking.seatsBooked,
-      'createdAt': booking.createdAt ?? DateTime.now(),
-      'updatedAt': DateTime.now(),
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
       if (booking.note != null && booking.note!.trim().isNotEmpty)
         'note': booking.note!.trim(),
       if (booking.pickupLocation != null)
@@ -47,40 +47,48 @@ class BookingRepository {
   /// Create a new booking
 
   Future<String> createBooking(RideBooking booking) async {
-    // R-10: Validate the ride exists and is still accepting bookings.
-    final rideDoc = await _firestore
-        .collection(AppConstants.ridesCollection)
-        .doc(booking.rideId)
-        .get();
-    if (!rideDoc.exists) {
-      throw StateError('Ride ${booking.rideId} not found.');
-    }
-    final rideStatus = rideDoc.data()?['status'] as String?;
-    if (rideStatus != 'active' && rideStatus != 'scheduled') {
-      throw StateError(
-        'Cannot book a ride with status "$rideStatus". Only active or scheduled rides accept bookings.',
-      );
-    }
+    // R-11/TOCTOU: Use a deterministic doc id keyed on passenger+ride and do
+    // the existence check + duplicate guard + write inside a single
+    // transaction, so two concurrent calls for the same passenger+ride cannot
+    // both pass the duplicate check and both write.
+    final deterministicBookingId = '${booking.rideId}_${booking.passengerId}';
+    final bookingWithId = booking.copyWith(id: deterministicBookingId);
 
-    // R-11: Prevent duplicate active/pending bookings for the same passenger.
-    final existing = await _bookingsCollection
-        .where('passengerId', isEqualTo: booking.passengerId)
-        .where('rideId', isEqualTo: booking.rideId)
-        .where('status', whereIn: ['pending', 'accepted'])
-        .limit(1)
-        .get();
-    if (existing.docs.isNotEmpty) {
-      throw StateError(
-        'Passenger ${booking.passengerId} already has an active booking for ride ${booking.rideId}.',
-      );
-    }
+    await _firestore.runTransaction((txn) async {
+      final rideRef = _firestore
+          .collection(AppConstants.ridesCollection)
+          .doc(booking.rideId);
+      final bookingRef = _firestore
+          .collection(AppConstants.bookingsCollection)
+          .doc(deterministicBookingId);
 
-    final docRef = _firestore
-        .collection(AppConstants.bookingsCollection)
-        .doc(booking.id);
+      // Reads first (transaction requirement).
+      final rideDoc = await txn.get(rideRef);
+      if (!rideDoc.exists) {
+        throw StateError('Ride ${booking.rideId} not found.');
+      }
+      // R-10: Validate the ride is still accepting bookings. RideStatus has no
+      // 'scheduled' value; 'active' is the only bookable status here.
+      final rideStatus = rideDoc.data()?['status'] as String?;
+      if (rideStatus != 'active') {
+        throw StateError(
+          'Cannot book a ride with status "$rideStatus". Only active rides accept bookings.',
+        );
+      }
 
-    await docRef.set(_bookingCreateMap(booking));
-    return booking.id;
+      // Atomic duplicate guard: the deterministic id makes a concurrent
+      // duplicate resolve to the same doc, so this read detects it.
+      final bookingSnap = await txn.get(bookingRef);
+      if (bookingSnap.exists) {
+        throw StateError(
+          'Passenger ${booking.passengerId} already has an active booking for ride ${booking.rideId}.',
+        );
+      }
+
+      txn.set(bookingRef, _bookingCreateMap(bookingWithId));
+    });
+
+    return deterministicBookingId;
   }
 
   /// Get booking by ID
@@ -198,7 +206,7 @@ class BookingRepository {
   }) async {
     await _bookingsCollection.doc(bookingId).update({
       'status': newStatus.name,
-      'respondedAt': DateTime.now(),
+      'respondedAt': FieldValue.serverTimestamp(),
     });
   }
 

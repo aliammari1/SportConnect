@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:reactive_cupertino_text_field/reactive_cupertino_text_field.dart';
@@ -131,6 +133,28 @@ class AdaptiveReactiveTextField extends StatelessWidget {
     BuildContext context, {
     required FormGroup? formGroup,
   }) {
+    final field = _buildCupertinoField(context, formGroup: formGroup);
+
+    // ReactiveCupertinoTextField (2.1.x) exposes no onChanged parameter, so the
+    // Material branch's onChanged would otherwise be silently dropped on Apple
+    // platforms. Bridge it by listening to the resolved control's value stream.
+    final changed = onChanged;
+    if (changed == null) return field;
+
+    final control = _resolveControl(formGroup);
+    if (control == null) return field;
+
+    return _CupertinoOnChangedListener(
+      control: control,
+      onChanged: changed,
+      child: field,
+    );
+  }
+
+  Widget _buildCupertinoField(
+    BuildContext context, {
+    required FormGroup? formGroup,
+  }) {
     return ReactiveCupertinoTextField<String>(
       formControlName: formControlName,
       formControl: formControl,
@@ -203,6 +227,7 @@ class AdaptiveReactiveTextField extends StatelessWidget {
         color: CupertinoColors.placeholderText.resolveFrom(context),
       ),
       cursorColor: CupertinoTheme.of(context).primaryColor,
+      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
     );
   }
 
@@ -262,4 +287,58 @@ class AdaptiveReactiveTextField extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Subscribes to [control]'s value changes and invokes [onChanged], mirroring
+/// the Material `ReactiveTextField.onChanged` behavior on the Cupertino path
+/// (where the underlying field offers no onChanged callback).
+class _CupertinoOnChangedListener extends StatefulWidget {
+  const _CupertinoOnChangedListener({
+    required this.control,
+    required this.onChanged,
+    required this.child,
+  });
+
+  final FormControl<String> control;
+  final ReactiveFormFieldCallback<String> onChanged;
+  final Widget child;
+
+  @override
+  State<_CupertinoOnChangedListener> createState() =>
+      _CupertinoOnChangedListenerState();
+}
+
+class _CupertinoOnChangedListenerState
+    extends State<_CupertinoOnChangedListener> {
+  StreamSubscription<String?>? _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _subscribe();
+  }
+
+  @override
+  void didUpdateWidget(_CupertinoOnChangedListener oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.control, widget.control)) {
+      unawaited(_subscription?.cancel());
+      _subscribe();
+    }
+  }
+
+  void _subscribe() {
+    _subscription = widget.control.valueChanges.listen((_) {
+      widget.onChanged(widget.control);
+    });
+  }
+
+  @override
+  void dispose() {
+    unawaited(_subscription?.cancel());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

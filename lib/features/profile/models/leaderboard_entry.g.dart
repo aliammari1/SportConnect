@@ -13,7 +13,7 @@ _LeaderboardEntry _$LeaderboardEntryFromJson(Map json) => _LeaderboardEntry(
   level: (json['level'] as num).toInt(),
   rank: (json['rank'] as num).toInt(),
   photoUrl: json['photoUrl'] as String?,
-  ridesThisMonth: (json['ridesThisMonth'] as num?)?.toInt() ?? 0,
+  totalRides: (json['totalRides'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$LeaderboardEntryToJson(_LeaderboardEntry instance) =>
@@ -24,5 +24,5 @@ Map<String, dynamic> _$LeaderboardEntryToJson(_LeaderboardEntry instance) =>
       'level': instance.level,
       'rank': instance.rank,
       'photoUrl': instance.photoUrl,
-      'ridesThisMonth': instance.ridesThisMonth,
+      'totalRides': instance.totalRides,
     };

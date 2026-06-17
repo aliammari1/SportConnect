@@ -281,7 +281,9 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
       context.pop(
         LocationPickerResult(
           location: _selectedLocation!,
-          address: _selectedAddress ?? 'Selected Location',
+          address:
+              _selectedAddress ??
+              AppLocalizations.of(context).selectedLocation,
         ),
       );
     }
@@ -309,7 +311,8 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
       );
       await map.showMarker(
         coords: Coords(location.latitude, location.longitude),
-        title: _selectedAddress ?? 'Selected Location',
+        title:
+            _selectedAddress ?? AppLocalizations.of(context).selectedLocation,
       );
     } on Exception {
       if (!mounted) return;
@@ -396,7 +399,7 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
                 onChanged: _onSearchChanged,
                 onTap: () => setState(() {}), // Trigger rebuild for focus state
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w500,
                 ),
@@ -405,7 +408,7 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
                     context,
                   ).searchAddressCityOrPlace,
                   hintStyle: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     color: AppColors.textTertiary,
                     fontWeight: FontWeight.w400,
                   ),
@@ -573,7 +576,7 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
                 Text(
                   AppLocalizations.of(context).popularCities,
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary,
                   ),
@@ -641,7 +644,7 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
                 Text(
                   city.name,
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
                     color: isSelected ? Colors.white : AppColors.textPrimary,
                   ),
@@ -674,7 +677,7 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
             options: MapOptions(
               initialCenter:
                   _selectedLocation ??
-                  const LatLng(36.8, 10.18), // Default: Tunis
+                  const LatLng(46.6, 2.5), // Default: metropolitan France
               initialZoom: _selectedLocation != null ? 14 : 6,
               onTap: (tapPosition, point) => _onMapTap(point),
             ),
@@ -742,7 +745,7 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
             ),
             child: Text(
               MapService.standardTileProvider.attribution,
-              style: TextStyle(fontSize: 9.sp, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 10.sp, color: AppColors.textTertiary),
             ),
           ),
         ),
@@ -933,7 +936,7 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
                           Text(
                             _selectedAddress!,
                             style: TextStyle(
-                              fontSize: 13.sp,
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.w500,
                               color: AppColors.textPrimary,
                             ),
@@ -1020,7 +1023,7 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
                           Text(
                             AppLocalizations.of(context).confirmLocation,
                             style: TextStyle(
-                              fontSize: 17.sp,
+                              fontSize: 16.sp,
                               fontWeight: FontWeight.w700,
                               color: _selectedLocation != null
                                   ? Colors.white

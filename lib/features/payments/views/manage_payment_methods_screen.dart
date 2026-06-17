@@ -2,6 +2,7 @@ import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
@@ -30,6 +31,7 @@ class ManagePaymentMethodsScreen extends ConsumerWidget {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: Icon(
@@ -70,7 +72,7 @@ class ManagePaymentMethodsScreen extends ConsumerWidget {
                         l10n.managePaymentMethodsDesc,
                         style: TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           height: 1.4,
                         ),
                       ),
@@ -117,7 +119,7 @@ class ManagePaymentMethodsScreen extends ConsumerWidget {
                         ? l10n.changePaymentMethod
                         : l10n.addPaymentMethod,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -142,10 +144,16 @@ class ManagePaymentMethodsScreen extends ConsumerWidget {
 class _SelectedMethodCard extends StatelessWidget {
   const _SelectedMethodCard({required this.result});
 
-  final dynamic result;
+  final CustomerSheetResult? result;
 
   @override
   Widget build(BuildContext context) {
+    // Show the actual selected payment option's label (e.g. "Visa ····4242")
+    // instead of a generic message, so the user can see which card is selected.
+    final label = result?.paymentOption?.label;
+    final displayLabel = (label != null && label.isNotEmpty)
+        ? label
+        : AppLocalizations.of(context).selectedPaymentMethod;
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -159,15 +167,14 @@ class _SelectedMethodCard extends StatelessWidget {
           SizedBox(width: 12.w),
           Expanded(
             child: Text(
-              'Payment method saved',
+              displayLabel,
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 15.sp,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20.sp),
         ],
       ),
     );

@@ -268,7 +268,7 @@ class PremiumTag extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
                 color: isSelected
                     ? Colors.white

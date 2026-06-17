@@ -1,7 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sport_connect/core/constants/app_constants.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/services/firebase_service.dart';
 import 'package:sport_connect/features/auth/repositories/auth_repository.dart';
@@ -55,36 +53,27 @@ class PremiumMetadata {
   final DateTime? updatedAt;
 }
 
+/// Derived from [currentUserProvider] — no extra Firestore listener.
+///
+/// Premium state (isPremium / premiumPlan / premiumUpdatedAt) now lives on
+/// [UserModel], so this reuses the single shared user-document listener instead
+/// of opening a second snapshot on users/{uid}. That removes the divergence
+/// window where the two listeners could momentarily disagree. The provider keeps
+/// returning a [Stream] so existing [AsyncValue] consumers are unaffected.
 @riverpod
 Stream<PremiumMetadata> premiumMetadata(Ref ref) async* {
-  final uid = await ref.watch(currentAuthUidProvider.future);
-  if (uid == null) {
+  // Re-runs whenever the shared currentUser stream emits a new value, so this
+  // stays in lock-step with the single user-document listener.
+  final user = await ref.watch(currentUserProvider.future);
+  if (user == null) {
     yield const PremiumMetadata(isPremium: false);
     return;
   }
-
-  yield* ref
-      .read(firebaseServiceProvider)
-      .firestore
-      .collection(AppConstants.usersCollection)
-      .doc(uid)
-      .snapshots()
-      .map((doc) {
-        final data = doc.data();
-        if (data == null) return const PremiumMetadata(isPremium: false);
-
-        final isPremium = data['isPremium'] as bool? ?? false;
-        final plan = data['premiumPlan'] as String?;
-        final rawDate = data['premiumUpdatedAt'];
-        DateTime? updatedAt;
-        if (rawDate is Timestamp) updatedAt = rawDate.toDate();
-
-        return PremiumMetadata(
-          isPremium: isPremium,
-          plan: plan,
-          updatedAt: updatedAt,
-        );
-      });
+  yield PremiumMetadata(
+    isPremium: user.isPremiumUser,
+    plan: user.premiumPlan,
+    updatedAt: user.premiumUpdatedAt,
+  );
 }
 
 /// Pending user's selected role intent during onboarding setup.

@@ -1,7 +1,5 @@
 import 'dart:async';
 
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -217,7 +215,7 @@ class _PremiumTextFieldState extends State<PremiumTextField>
               onSubmitted: widget.onSubmitted,
               onTap: widget.onTap,
               style: TextStyle(
-                fontSize: 15.sp,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
                 color: widget.enabled
                     ? AppColors.textPrimary
@@ -227,7 +225,7 @@ class _PremiumTextFieldState extends State<PremiumTextField>
               decoration: InputDecoration(
                 hintText: widget.hint,
                 hintStyle: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   color: AppColors.textTertiary,
                   fontWeight: FontWeight.w400,
                 ),
@@ -423,7 +421,7 @@ class _PremiumSearchFieldState extends State<PremiumSearchField> {
               onSubmitted: widget.onSubmitted,
               onTap: widget.onTap,
               style: TextStyle(
-                fontSize: 15.sp,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
               ),
@@ -431,7 +429,7 @@ class _PremiumSearchFieldState extends State<PremiumSearchField> {
               decoration: InputDecoration(
                 hintText: widget.hint,
                 hintStyle: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   color: AppColors.textTertiary,
                   fontWeight: FontWeight.w400,
                 ),

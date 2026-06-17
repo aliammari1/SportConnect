@@ -10,6 +10,15 @@ enum MessageStatus { sending, sent, delivered, read, failed }
 
 enum ChatType { private, rideGroup, eventGroup, support }
 
+enum ParticipantRole {
+  @JsonValue('member')
+  member,
+  @JsonValue('admin')
+  admin,
+  @JsonValue('owner')
+  owner,
+}
+
 // ── MessageModel ──────────────────────────────────────────────────────────────
 
 @freezed
@@ -64,6 +73,28 @@ abstract class MessageModel with _$MessageModel {
 
   int get totalReactions =>
       reactions.values.fold(0, (sum, list) => sum + list.length);
+
+  /// Whether this message carries an image/media attachment.
+  bool get hasMedia => mediaUrl != null && mediaUrl!.isNotEmpty;
+
+  /// Whether this message is a reply to another message.
+  bool get isReply => replyToMessageId != null;
+
+  /// Whether this message carries a (complete) location attachment.
+  bool get hasLocation => latitude != null && longitude != null;
+
+  /// Whether this message has any emoji reactions.
+  bool get hasReactions => reactions.isNotEmpty;
+
+  /// Whether the message is still being sent (optimistic/in-flight).
+  bool get isPending => status == MessageStatus.sending;
+
+  /// Whether the message failed to send.
+  bool get hasFailed => status == MessageStatus.failed;
+
+  /// Whether every participant other than the sender has read this message.
+  bool isReadByAll(Iterable<String> participantIds) =>
+      participantIds.where((id) => id != senderId).every(readBy.contains);
 }
 
 // ── ChatParticipant ───────────────────────────────────────────────────────────
@@ -76,12 +107,21 @@ abstract class ChatParticipant with _$ChatParticipant {
     String? photoUrl,
     @Default(false) bool isAdmin,
     @Default(false) bool isMuted,
+    // Role distinguishes the group owner/creator from regular admins/members.
+    // Optional & nullable: legacy docs without this key deserialize to null.
+    ParticipantRole? role,
     @TimestampConverter() DateTime? lastSeenAt,
     @TimestampConverter() DateTime? joinedAt,
   }) = _ChatParticipant;
+  // Private constructor before factory — required to host custom methods.
+  const ChatParticipant._();
 
   factory ChatParticipant.fromJson(Map<String, dynamic> json) =>
       _$ChatParticipantFromJson(json);
+
+  /// Whether the participant was recently seen within [window].
+  bool isOnline({Duration window = const Duration(minutes: 2)}) =>
+      lastSeenAt != null && DateTime.now().difference(lastSeenAt!) < window;
 }
 
 // ── ChatModel ─────────────────────────────────────────────────────────────────
@@ -160,7 +200,18 @@ abstract class ChatModel with _$ChatModel {
   String? getChatPhoto(String currentUserId) =>
       groupPhotoUrl ?? getOtherParticipant(currentUserId)?.photoUrl;
 
+  /// Whether this chat is a multi-participant group (ride or event).
+  bool get isGroup => type == ChatType.rideGroup || type == ChatType.eventGroup;
+
+  /// Whether this chat is a 1:1 private conversation.
+  bool get isPrivate => type == ChatType.private;
+
+  /// Participant count derived from whichever list is populated.
+  int get participantCount =>
+      participantIds.isNotEmpty ? participantIds.length : participants.length;
+
   int getUnreadCount(String userId) => unreadCounts[userId] ?? 0;
+  bool hasUnread(String userId) => getUnreadCount(userId) > 0;
   bool isMutedBy(String userId) => mutedBy[userId] ?? false;
   bool isPinnedBy(String userId) => pinnedBy[userId] ?? false;
   bool isVisibleFor(String userId) {
@@ -190,7 +241,13 @@ abstract class TypingIndicator with _$TypingIndicator {
     required String chatId,
     @TimestampConverter() DateTime? startedAt,
   }) = _TypingIndicator;
+  // Private constructor before factory — required to host custom methods.
+  const TypingIndicator._();
 
   factory TypingIndicator.fromJson(Map<String, dynamic> json) =>
       _$TypingIndicatorFromJson(json);
+
+  /// Whether the typing record is still fresh (not a stale lingering entry).
+  bool isActive({Duration ttl = const Duration(seconds: 6)}) =>
+      startedAt != null && DateTime.now().difference(startedAt!) < ttl;
 }

@@ -15,6 +15,7 @@ import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
+import 'package:sport_connect/core/widgets/rating_value.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
 import 'package:sport_connect/features/rides/models/booking/ride_booking.dart';
@@ -41,7 +42,9 @@ class DriverMyRidesScreen extends ConsumerStatefulWidget {
 class _DriverMyRidesScreenState extends ConsumerState<DriverMyRidesScreen> {
   String? _selectedRideId;
 
-  bool get _usesTwoPaneLayout => context.screenWidth >= Breakpoints.medium;
+  // Must match AdaptiveMasterDetailScaffold's threshold, else a tap selects a
+  // detail with no pane to render it (stuck on the list on iPad portrait).
+  bool get _usesTwoPaneLayout => context.screenWidth >= kTwoPaneMinWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -290,7 +293,7 @@ class _ActiveRideBanner extends StatelessWidget {
                     Text(
                       '${ride.origin.address} → ${ride.destination.address}',
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
@@ -512,23 +515,16 @@ class _PendingRequestCard extends ConsumerWidget {
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.star_rounded,
-                            size: 13.sp,
-                            color: AppColors.accent,
-                          ),
-                          SizedBox(width: 3.w),
-                          Text(
-                            passengerRating.toStringAsFixed(1),
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+                      RatingValue(
+                        rating: passengerRating,
+                        iconSize: 13,
+                        starColor: AppColors.accent,
+                        gap: 3,
+                        valueStyle: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -541,7 +537,7 @@ class _PendingRequestCard extends ConsumerWidget {
                         (pricePerSeatInCents / 100).toStringAsFixed(2),
                       ),
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w800,
                         color: AppColors.primary,
                       ),
@@ -602,7 +598,7 @@ class _PendingRequestCard extends ConsumerWidget {
                     child: Text(
                       l10n.declineButton,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -626,7 +622,7 @@ class _PendingRequestCard extends ConsumerWidget {
                     child: Text(
                       l10n.acceptButton,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -752,7 +748,7 @@ class _RoutePoint extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 9.sp,
+                  fontSize: 10.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textTertiary,
                   letterSpacing: 0.5,
@@ -964,7 +960,7 @@ class _HistoryRideCard extends StatelessWidget {
                   Text(
                     '${ride.origin.address} → ${ride.destination.address}',
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
@@ -1121,7 +1117,7 @@ class _TimelineRideCard extends StatelessWidget {
                         Text(
                           time,
                           style: TextStyle(
-                            fontSize: 15.sp,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w800,
                             color: AppColors.primary,
                           ),
@@ -1164,7 +1160,7 @@ class _TimelineRideCard extends StatelessWidget {
                     Text(
                       ride.origin.address,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
@@ -1182,7 +1178,7 @@ class _TimelineRideCard extends StatelessWidget {
                     Text(
                       ride.destination.address,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.textSecondary,
                       ),
                       maxLines: 1,
@@ -1364,7 +1360,7 @@ class _InlineEmpty extends StatelessWidget {
           SizedBox(height: 8.h),
           Text(
             label,
-            style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
           ),
         ],
       ),

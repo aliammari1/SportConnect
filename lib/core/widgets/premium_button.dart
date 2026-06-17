@@ -617,7 +617,7 @@ class _PremiumFABState extends State<PremiumFAB>
                 Text(
                   widget.label!,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),

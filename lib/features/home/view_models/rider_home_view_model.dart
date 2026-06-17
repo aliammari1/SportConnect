@@ -349,16 +349,14 @@ class RiderHomeViewModel extends _$RiderHomeViewModel {
           userHeading: position.heading,
         );
 
+        // Snap the anchor to a coarse grid so it only changes when the rider
+        // crosses into a new cell, instead of producing a fresh anchor (and a
+        // brand-new Firestore .snapshots() subscription) every time they move
+        // ~1km. Quantizing keeps the family key stable across small movements.
         final anchor = state.nearbyQueryAnchor;
-        if (anchor == null ||
-            locationService.calculateDistance(
-                  anchor.latitude,
-                  anchor.longitude,
-                  next.latitude,
-                  next.longitude,
-                ) >=
-                1.0) {
-          newState = newState.copyWith(nearbyQueryAnchor: next);
+        final snapped = _quantizeAnchor(next);
+        if (anchor == null || snapped != anchor) {
+          newState = newState.copyWith(nearbyQueryAnchor: snapped);
         }
 
         state = newState;
@@ -367,6 +365,21 @@ class RiderHomeViewModel extends _$RiderHomeViewModel {
         TalkerService.error('Location stream error: $e');
       },
     );
+  }
+
+  /// Grid cell size (in degrees) used to quantize the nearby-rides query
+  /// anchor. ~0.01° ≈ 1.1km of latitude, keeping the query family key stable
+  /// while the rider makes small movements.
+  static const double _anchorGridDegrees = 0.01;
+
+  /// Snap [point] to the nearest coarse grid cell so the nearby-rides query
+  /// family key (and its Firestore subscription) changes far less often.
+  LatLng _quantizeAnchor(LatLng point) {
+    final lat = (point.latitude / _anchorGridDegrees).roundToDouble() *
+        _anchorGridDegrees;
+    final lng = (point.longitude / _anchorGridDegrees).roundToDouble() *
+        _anchorGridDegrees;
+    return LatLng(lat, lng);
   }
 
   /// Stop location tracking (cleanup)
@@ -385,7 +398,6 @@ class RiderHomeViewModel extends _$RiderHomeViewModel {
       state = state.copyWith(currentZoom: zoom);
     }
   }
-
 
   /// Toggle nearby drivers visibility
   void toggleNearbyDrivers() {

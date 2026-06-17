@@ -520,7 +520,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vehicle => 'Vehicle';
 
   @override
-  String get payouts => 'payouts';
+  String get payouts => 'Payouts';
 
   @override
   String get addYourVehicle => 'Add Your Vehicle';
@@ -7880,6 +7880,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get from_8 => 'From €8';
 
   @override
+  String get onboardingEstimatedEarning => '€16';
+
+  @override
   String get rides_available => 'RIDES AVAILABLE';
 
   @override
@@ -8005,11 +8008,11 @@ class AppLocalizationsEn extends AppLocalizations {
       ')\r\n      ..writeln()\r\n      ..writeln(l10n.exportEarningsSummary)\r\n      ..writeln(\r\n        ';
 
   @override
-  String get get_paid_fornevery_ride => 'Get paid for\\nevery ride';
+  String get get_paid_fornevery_ride => 'Get paid for\nevery ride';
 
   @override
   String get set_up_eur_payouts_in_minutes_andnreceive_earnings_automatically =>
-      'Set up EUR payouts in minutes and\\nreceive earnings automatically.';
+      'Set up EUR payouts in minutes and\nreceive earnings automatically.';
 
   @override
   String get eur_balance => 'EUR balance';
@@ -8019,7 +8022,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get why_drivers_love_payouts_onnsportconnect =>
-      'Why drivers love payouts on\\nSportConnect';
+      'Why drivers love payouts on\nSportConnect';
 
   @override
   String get before_you_continue => 'Before you continue';
@@ -8036,7 +8039,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get your_account_is_connected_and_yourenall_set_to_receive_earnings =>
-      'Your account is connected and you’re\\nall set to receive earnings.';
+      'Your account is connected and you’re\nall set to receive earnings.';
 
   @override
   String get powered_by => 'Powered by';

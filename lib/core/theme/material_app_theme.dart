@@ -735,12 +735,12 @@ class AppMaterialTheme {
             (isDark ? AppColors.surfaceVariantDark : AppColors.surfaceVariant)
                 .withValues(alpha: 0.5),
         labelStyle: TextStyle(
-          fontSize: 13.sp,
+          fontSize: 12.sp,
           fontWeight: FontWeight.w500,
           color: textPrimary,
         ),
         secondaryLabelStyle: TextStyle(
-          fontSize: 13.sp,
+          fontSize: 12.sp,
           fontWeight: FontWeight.w500,
           color: cs.primary,
         ),
@@ -874,12 +874,12 @@ class AppMaterialTheme {
           borderRadius: BorderRadius.circular(PlatformAdaptive.radiusMd),
         ),
         titleTextStyle: TextStyle(
-          fontSize: 15.sp,
+          fontSize: 14.sp,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
         subtitleTextStyle: TextStyle(
-          fontSize: 13.sp,
+          fontSize: 12.sp,
           fontWeight: FontWeight.w400,
           color: textSecondary,
         ),

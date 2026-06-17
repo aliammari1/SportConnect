@@ -7,8 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
-import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
@@ -26,6 +24,18 @@ import 'package:sport_connect/l10n/generated/app_localizations.dart';
 // -----------------------------------------------------------------------------
 
 double _clamped(num value, double min, double max) {
+  // On tablets the global ScreenUtil design scale is ~1.5× (see main.dart), so
+  // scale these phone-tuned size caps up by the same factor — otherwise the
+  // hard maxima (title 32, card heights, etc.) would keep the onboarding small
+  // and leave the iPad mostly empty. Phones (scaleWidth ≤ ~1.15) are untouched.
+  final sw = ScreenUtil().scaleWidth;
+  final s = sw > 1.2 ? sw : 1.0;
+  return value.clamp(min * s, max * s).toDouble();
+}
+
+/// Width cap that must always fit the physical screen, so it is NOT scaled up
+/// on tablets the way [_clamped] is.
+double _clampedWidth(num value, double min, double max) {
   return value.clamp(min, max).toDouble();
 }
 
@@ -41,6 +51,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   int get _currentPage =>
       ref.read(onboardingViewModelProvider).currentPageIndex;
+
+  /// The PageController's live page, rounded to the nearest index. This is the
+  /// single source of truth for next/back/completion decisions, so rapid taps
+  /// can't act on a stale VM snapshot that lags the controller (setPageIndex
+  /// only fires asynchronously after a page-change animation begins).
+  int get _controllerPage {
+    if (!_pageController.hasClients || _pageController.page == null) {
+      return _currentPage;
+    }
+    return _pageController.page!.round().clamp(0, _onboardingSteps.length - 1);
+  }
 
   @override
   void dispose() {
@@ -59,14 +80,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     if (!success || !mounted) return;
 
+    // Navigation is driven by isOnboardingCompleteProvider invalidation in the
+    // VM, which triggers the GoRouter redirect. No explicit go() call needed.
     unawaited(HapticFeedback.mediumImpact());
-    GoRouter.of(context).go(AppRoutes.login.path);
   }
 
   void _goNext() {
     unawaited(HapticFeedback.lightImpact());
 
-    if (_currentPage == _onboardingSteps.length - 1) {
+    if (_controllerPage == _onboardingSteps.length - 1) {
       unawaited(_completeOnboarding());
       return;
     }
@@ -80,7 +102,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void _goBack() {
-    if (_currentPage == 0) return;
+    if (_controllerPage == 0) return;
 
     unawaited(HapticFeedback.lightImpact());
     unawaited(
@@ -94,6 +116,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final vmState = ref.watch(onboardingViewModelProvider);
+
+    // Show a SnackBar whenever an error is set in the VM state.
+    ref.listen<OnboardingState>(onboardingViewModelProvider, (previous, next) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        // The VM emits a stable, non-PII error key; map it to a localized
+        // message so users never see a raw exception string.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).somethingWentWrong),
+          ),
+        );
+        ref.read(onboardingViewModelProvider.notifier).clearError();
+      }
+    });
+
     final maxWidth = context.screenWidth >= Breakpoints.medium
         ? 1180.0
         : kMaxWidthForm;
@@ -444,9 +482,16 @@ class _OnboardingPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isTabletLayout = constraints.maxWidth >= Breakpoints.medium;
+        // Treat iPad-portrait (shortestSide >= 600 but width < 840) as a tablet
+        // too: use a wider, richer single column instead of a phone-width column
+        // floating in the middle of the canvas.
+        final isTabletDevice =
+            MediaQuery.sizeOf(context).shortestSide >= Breakpoints.compact;
         final maxContentWidth = isTabletLayout
-            ? _clamped(980.w, 760, 1040)
-            : _clamped(430.w, 320, 460);
+            ? _clampedWidth(980.w, 760, 1040)
+            : isTabletDevice
+            ? _clampedWidth(640.w, 560, 720)
+            : _clampedWidth(430.w, 320, 460);
         final visual = _VisualCard(
           visual: step.visual,
         ).animate().fadeIn(duration: 360.ms).slideY(begin: 0.025);
@@ -462,17 +507,23 @@ class _OnboardingPage extends StatelessWidget {
             SizedBox(height: _clamped(10.h, 7, 12)),
             Semantics(
               header: true,
-              child: Text(
-                step.title(l10n),
-                textAlign: isTabletLayout ? TextAlign.start : TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: _clamped(29.sp, 24, 32),
-                  height: 1.08,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: isTabletLayout
+                    ? Alignment.centerLeft
+                    : Alignment.center,
+                child: Text(
+                  step.title(l10n),
+                  textAlign: isTabletLayout ? TextAlign.start : TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: _clamped(29.sp, 24, 32),
+                    height: 1.08,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
                 ),
               ),
             ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.08),
@@ -513,11 +564,16 @@ class _OnboardingPage extends StatelessWidget {
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
             child: Align(
-              alignment: Alignment.topCenter,
+              // Center vertically so the extra height on tablets/landscape is
+              // balanced as margins around the content instead of dumped into
+              // an empty bottom. On phones the content ~fills, so this is a
+              // no-op there.
+              alignment: Alignment.center,
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxContentWidth),
                 child: isTabletLayout
                     ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(flex: 6, child: visual),
                           SizedBox(width: _clamped(28.w, 24, 36)),
@@ -934,7 +990,7 @@ class _EarningsHeroCard extends StatelessWidget {
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            '€16',
+                            AppLocalizations.of(context).onboardingEstimatedEarning,
                             maxLines: 1,
                             style: TextStyle(
                               color: AppColors.textPrimary,
@@ -1571,7 +1627,7 @@ class _HeroEventTitle extends StatelessWidget {
             title,
             style: TextStyle(
               color: AppColors.primary,
-              fontSize: 34.sp,
+              fontSize: 32.sp,
               fontWeight: FontWeight.w900,
               letterSpacing: 0,
               height: 0.92,
@@ -1581,7 +1637,7 @@ class _HeroEventTitle extends StatelessWidget {
             distance,
             style: TextStyle(
               color: AppColors.primary,
-              fontSize: 50.sp,
+              fontSize: 40.sp,
               fontWeight: FontWeight.w900,
               letterSpacing: 0,
               height: 0.98,
@@ -2288,10 +2344,11 @@ class _OnboardingBottomControls extends StatelessWidget {
               Expanded(
                 child: _PrimaryCtaButton(
                   label: isCompleting
-                      ? '...'
+                      ? loc.loading
                       : isLast
                       ? loc.getStarted
                       : loc.kContinue,
+                  isLoading: isCompleting,
                   onPressed: isCompleting ? null : onNext,
                   icon: Icons.arrow_forward_rounded,
                 ),
@@ -2340,11 +2397,13 @@ class _PrimaryCtaButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     required this.icon,
+    this.isLoading = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData icon;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -2397,11 +2456,21 @@ class _PrimaryCtaButton extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: _clamped(12.w, 9, 14)),
-                Icon(
-                  icon,
-                  color: Colors.white,
-                  size: _clamped(21.sp, 19, 22),
-                ),
+                if (isLoading)
+                  SizedBox(
+                    width: _clamped(21.sp, 19, 22),
+                    height: _clamped(21.sp, 19, 22),
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                else
+                  Icon(
+                    icon,
+                    color: Colors.white,
+                    size: _clamped(21.sp, 19, 22),
+                  ),
               ],
             ),
           ),

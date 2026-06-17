@@ -260,14 +260,18 @@ class PaymentRepository {
 
   Future<String> createPaymentTransaction(PaymentTransaction payment) async {
     try {
-      final docRef = _paymentsCollection.doc();
-      final paymentWithId = payment.copyWith(
-        id: docRef.id,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+      final docRef = _firestore
+          .collection(AppConstants.paymentsCollection)
+          .doc();
+      final paymentWithId = payment.copyWith(id: docRef.id);
 
-      await docRef.set(paymentWithId);
+      // Write the model fields then override timestamps with server values so
+      // that createdAt/updatedAt are set by Firestore's clock, not the client.
+      final data = paymentWithId.toJson()
+        ..['createdAt'] = FieldValue.serverTimestamp()
+        ..['updatedAt'] = FieldValue.serverTimestamp();
+
+      await docRef.set(data);
       TalkerService.info('Payment transaction created: ${docRef.id}');
       return docRef.id;
     } on Exception catch (e) {
@@ -289,6 +293,10 @@ class PaymentRepository {
   };
 
   /// Update payment transaction status — enforces valid state machine.
+  ///
+  /// The read-then-write is wrapped in a Firestore transaction so that
+  /// the state-machine guard and the write are atomic; concurrent updates
+  /// cannot slip an invalid transition past the check.
 
   Future<void> updatePaymentStatus({
     required String paymentId,
@@ -297,23 +305,34 @@ class PaymentRepository {
     DateTime? completedAt,
   }) async {
     try {
-      // FIX P-1: Read current status first and reject invalid transitions.
-      final current = await _paymentsCollection.doc(paymentId).get();
-      if (current.exists) {
-        final currentStatus = current.data()!.status.name;
-        final allowed = _validTransitions[currentStatus] ?? {};
-        if (!allowed.contains(status.name)) {
-          throw StateError(
-            'Invalid payment transition: $currentStatus → ${status.name}',
-          );
-        }
-      }
+      final docRef = _firestore
+          .collection(AppConstants.paymentsCollection)
+          .doc(paymentId);
 
-      await _paymentsCollection.doc(paymentId).update({
-        'status': status.name,
-        'updatedAt': DateTime.now(),
-        'failureReason': ?failureReason,
-        if (completedAt != null) 'completedAt': Timestamp.fromDate(completedAt),
+      await _firestore.runTransaction((transaction) async {
+        final snapshot = await transaction.get(docRef);
+        if (snapshot.exists) {
+          final data = snapshot.data();
+          final currentStatus = data?['status'] as String?;
+          if (currentStatus != null) {
+            final allowed = _validTransitions[currentStatus] ?? {};
+            if (!allowed.contains(status.name)) {
+              throw StateError(
+                'Invalid payment transition: $currentStatus → ${status.name}',
+              );
+            }
+          }
+        }
+
+        final updateData = <String, Object?>{
+          'status': status.name,
+          'updatedAt': FieldValue.serverTimestamp(),
+          if (failureReason != null) 'failureReason': failureReason,
+          if (completedAt != null)
+            'completedAt': Timestamp.fromDate(completedAt),
+        };
+
+        transaction.update(docRef, updateData);
       });
 
       TalkerService.info(
@@ -580,6 +599,15 @@ class PaymentRepository {
           .limit(500)
           .get();
 
+      if (allPayments.docs.length == 500) {
+        TalkerService.warning(
+          'calculateEarningsSummary: fallback scan returned exactly 500 '
+          'documents for driver $driverId — earnings total may be understated '
+          'if this driver has more than 500 completed rides. '
+          'Ensure the Cloud Function initialises driver_stats correctly.',
+        );
+      }
+
       final payments = await _filterCompletedRidePayments(
         allPayments.docs.map((doc) => doc.data()).toList(),
       );
@@ -648,13 +676,17 @@ class PaymentRepository {
 
   Future<String> createPayout(DriverPayout payout) async {
     try {
-      final docRef = _payoutsCollection.doc();
-      final payoutWithId = payout.copyWith(
-        id: docRef.id,
-        createdAt: DateTime.now(),
-      );
+      final docRef = _firestore
+          .collection(AppConstants.payoutsCollection)
+          .doc();
+      final payoutWithId = payout.copyWith(id: docRef.id);
 
-      await docRef.set(payoutWithId);
+      // Override createdAt with a server-side timestamp so payout ordering
+      // is not skewed by client clock drift.
+      final data = payoutWithId.toJson()
+        ..['createdAt'] = FieldValue.serverTimestamp();
+
+      await docRef.set(data);
       TalkerService.info('Payout created: ${docRef.id}');
       return docRef.id;
     } on Exception catch (e) {
@@ -674,7 +706,7 @@ class PaymentRepository {
     try {
       await _payoutsCollection.doc(payoutId).update({
         'status': status.name,
-        'updatedAt': DateTime.now(),
+        'updatedAt': FieldValue.serverTimestamp(),
         'failureReason': ?failureReason,
         if (arrivedAt != null) 'arrivedAt': Timestamp.fromDate(arrivedAt),
       });

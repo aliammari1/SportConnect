@@ -13,13 +13,23 @@ import 'package:sport_connect/core/utils/responsive_utils.dart';
 
 enum LegalDocumentType { terms, privacy }
 
-class LegalScreen extends ConsumerWidget {
+class LegalScreen extends ConsumerStatefulWidget {
   const LegalScreen({required this.type, super.key});
 
   final LegalDocumentType type;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LegalScreen> createState() => _LegalScreenState();
+}
+
+class _LegalScreenState extends ConsumerState<LegalScreen> {
+  // Bumped to force a fresh InAppWebView (re-running initialData) on retry.
+  Key _webViewKey = UniqueKey();
+
+  LegalDocumentType get type => widget.type;
+
+  @override
+  Widget build(BuildContext context) {
     final uiState = ref.watch(legalScreenUiViewModelProvider(type));
     final l10n = AppLocalizations.of(context);
     final title = type == LegalDocumentType.terms
@@ -33,6 +43,7 @@ class LegalScreen extends ConsumerWidget {
       ),
       child: AdaptiveScaffold(
         appBar: AdaptiveAppBar(
+          useNativeToolbar: false,
           leading: IconButton(
             tooltip: l10n.goBackTooltip,
             icon: Container(
@@ -55,61 +66,77 @@ class LegalScreen extends ConsumerWidget {
         body: MaxWidthContainer(
           maxWidth: kMaxWidthWide,
           child: Stack(
-          children: [
-            InAppWebView(
-              initialData: InAppWebViewInitialData(
-                data: _buildHtmlContent(
-                  title,
-                  type,
-                  Localizations.localeOf(context).languageCode,
-                ),
-              ),
-              initialSettings: InAppWebViewSettings(
-                javaScriptEnabled: false,
-                disableContextMenu: true,
-                useOnLoadResource: false,
-              ),
-              onLoadStop: (controller, url) {
-                ref
-                    .read(legalScreenUiViewModelProvider(type).notifier)
-                    .setLoading(false);
-              },
-              onReceivedError: (controller, request, error) {
-                ref
-                    .read(legalScreenUiViewModelProvider(type).notifier)
-                    .setLoading(false);
-              },
-            ),
-            if (uiState.isLoading)
-              ColoredBox(
-                color: Colors.white,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CircularProgressIndicator.adaptive(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.primary,
-                        ),
-                        strokeWidth: 2.5,
-                      ),
-                      SizedBox(height: 16.h),
-                      Text(
-                        type == LegalDocumentType.terms
-                            ? l10n.loadingTermsOfService
-                            : l10n.loadingPrivacyPolicy,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
+            children: [
+              InAppWebView(
+                key: _webViewKey,
+                initialData: InAppWebViewInitialData(
+                  data: _buildHtmlContent(
+                    title,
+                    type,
+                    Localizations.localeOf(context).languageCode,
                   ),
-                ).animate().fadeIn(duration: 300.ms),
+                ),
+                initialSettings: InAppWebViewSettings(
+                  javaScriptEnabled: false,
+                  disableContextMenu: true,
+                  useOnLoadResource: false,
+                ),
+                onLoadStop: (controller, url) {
+                  // Late async callback: the widget (and its autoDispose
+                  // provider) may already be gone after the user taps back.
+                  if (!mounted) return;
+                  ref
+                      .read(legalScreenUiViewModelProvider(type).notifier)
+                      .setLoading(false);
+                },
+                onReceivedError: (controller, request, error) {
+                  if (!mounted) return;
+                  ref
+                      .read(legalScreenUiViewModelProvider(type).notifier)
+                      .setError();
+                },
               ),
-          ],
+              if (uiState.hasError)
+                _LegalErrorView(
+                  message: l10n.somethingWentWrong,
+                  retryLabel: l10n.tryAgain,
+                  onRetry: () {
+                    ref
+                        .read(legalScreenUiViewModelProvider(type).notifier)
+                        .retry();
+                    setState(() => _webViewKey = UniqueKey());
+                  },
+                )
+              else if (uiState.isLoading)
+                ColoredBox(
+                  color: Colors.white,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator.adaptive(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primary,
+                          ),
+                          strokeWidth: 2.5,
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          type == LegalDocumentType.terms
+                              ? l10n.loadingTermsOfService
+                              : l10n.loadingPrivacyPolicy,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn(duration: 300.ms),
+                ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -1877,4 +1904,52 @@ class LegalScreen extends ConsumerWidget {
   </body>
 </html>
 ''';
+}
+
+class _LegalErrorView extends StatelessWidget {
+  const _LegalErrorView({
+    required this.message,
+    required this.retryLabel,
+    required this.onRetry,
+  });
+
+  final String message;
+  final String retryLabel;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Colors.white,
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                size: 48.sp,
+                color: AppColors.textSecondary,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              AdaptiveButton.child(
+                onPressed: onRetry,
+                child: Text(retryLabel),
+              ),
+            ],
+          ),
+        ).animate().fadeIn(duration: 300.ms),
+      ),
+    );
+  }
 }

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/utils/user_facing_error.dart';
 import 'package:sport_connect/core/widgets/address_autocomplete_field.dart';
 import 'package:sport_connect/features/auth/repositories/auth_repository.dart';
@@ -705,6 +706,14 @@ class ProfileEditViewModel extends _$ProfileEditViewModel {
             .uploadProfileImage(newPhotoFile, updatedUser.uid);
         if (!ref.mounted) return false;
       } else if (removePhoto) {
+        // Delete the Storage file before clearing the Firestore URL so the
+        // file is not left as an orphan. deleteProfilePhoto also sets
+        // photoUrl to null in Firestore; we set it here too so the in-memory
+        // user object is consistent.
+        await ref
+            .read(profileRepositoryProvider)
+            .deleteProfilePhoto(updatedUser.uid);
+        if (!ref.mounted) return false;
         photoUrl = null;
       }
 
@@ -714,9 +723,30 @@ class ProfileEditViewModel extends _$ProfileEditViewModel {
         pending: (value) => value, // No editing
       );
 
+      // PROF-3: persist only the user-editable subset. Writing the full
+      // toJson() map would let the client silently overwrite server-managed
+      // fields (email, role, isBanned, isPremium, rating, gamification,
+      // stripe IDs, createdAt). These must stay server-controlled and be
+      // locked down by Firestore Security Rules. We pick the safe keys from
+      // the serialized map so value conversions (timestamps, enums) match.
+      const editableFields = <String>{
+        'username',
+        'phoneNumber',
+        'dateOfBirth',
+        'gender',
+        'address',
+        'expertise',
+        'photoUrl',
+      };
+      final serialized = finalUser.toJson();
+      final editableUpdates = <String, dynamic>{
+        for (final key in editableFields)
+          if (serialized.containsKey(key)) key: serialized[key],
+      };
+
       await ref
           .read(profileRepositoryProvider)
-          .updateProfile(finalUser.uid, finalUser.toJson());
+          .updateProfile(finalUser.uid, editableUpdates);
 
       if (!ref.mounted) return false;
       state = state.copyWith(
@@ -890,8 +920,16 @@ class SocialActionsViewModel extends _$SocialActionsViewModel {
           isBlocked: blockedUsers.contains(targetUserId),
         );
       }
-    } on Exception {
-      // Ignore errors
+    } on Exception catch (e, st) {
+      // PROF-8: log instead of silently swallowing so a failed block-status
+      // load leaves a diagnostic trail rather than just defaulting to
+      // isBlocked=false with no trace.
+      TalkerService.error(
+        'SocialActionsViewModel._checkFollowStatus failed for '
+        'currentUserId=$currentUserId, targetUserId=$targetUserId',
+        e,
+        st,
+      );
     }
   }
 

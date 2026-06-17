@@ -1,9 +1,10 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
 /// User roles in the app
 enum UserRole {
   rider,
   driver,
-  pending
-  ;
+  pending;
 
   String get displayName {
     switch (this) {
@@ -34,8 +35,7 @@ enum UserLevel {
   silver(1000, 5000, 'Silver', 2),
   gold(5000, 15000, 'Gold', 3),
   platinum(15000, 35000, 'Platinum', 4),
-  diamond(35000, double.infinity, 'Diamond', 5)
-  ;
+  diamond(35000, double.infinity, 'Diamond', 5);
 
   final double minXP;
   final double maxXP;
@@ -74,8 +74,7 @@ enum Expertise {
   rookie('Rookie'),
   intermediate('Intermediate'),
   advanced('Advanced'),
-  expert('Expert')
-  ;
+  expert('Expert');
 
   final String displayName;
 
@@ -85,11 +84,62 @@ enum Expertise {
 }
 
 enum AppLocale {
+  @JsonValue('en')
   english('en'),
-  french('fr')
-  ;
+  @JsonValue('fr')
+  french('fr');
 
   final String code;
 
   const AppLocale(this.code);
+}
+
+/// Gender options. The wire format remains a free-form [String] (persisted on
+/// the user model); this enum offers typed, validated access via getters while
+/// keeping backward compatibility through [fromValue].
+enum Gender {
+  male('male'),
+  female('female'),
+  other('other'),
+  preferNotToSay('prefer_not_to_say');
+
+  final String value;
+
+  const Gender(this.value);
+
+  /// Resolve a persisted gender string to a [Gender], or `null` when the value
+  /// is absent/unrecognised. Matching is case-insensitive and tolerant of a few
+  /// common variants so existing data keeps working.
+  static Gender? fromValue(String? value) {
+    if (value == null) return null;
+    final normalized = value.trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+    for (final gender in Gender.values) {
+      if (gender.value == normalized) return gender;
+    }
+    switch (normalized) {
+      case 'm':
+        return Gender.male;
+      case 'f':
+        return Gender.female;
+      case 'prefernottosay':
+      case 'prefer-not-to-say':
+        return Gender.preferNotToSay;
+      default:
+        return null;
+    }
+  }
+
+  String get displayName {
+    switch (this) {
+      case Gender.male:
+        return 'Male';
+      case Gender.female:
+        return 'Female';
+      case Gender.other:
+        return 'Other';
+      case Gender.preferNotToSay:
+        return 'Prefer not to say';
+    }
+  }
 }

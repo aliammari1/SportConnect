@@ -201,7 +201,7 @@ class LocationMessageContent extends StatelessWidget {
                 child: Text(
                   message.content.replaceFirst('📍 ', ''),
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: isMe ? Colors.white : AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
@@ -235,7 +235,7 @@ class TextMessageContent extends StatelessWidget {
           ? AppLocalizations.of(context).thisMessageWasDeleted
           : message.content,
       style: TextStyle(
-        fontSize: 15.sp,
+        fontSize: 14.sp,
         color: isMe ? Colors.white : AppColors.textPrimary,
         fontStyle: message.isDeleted ? FontStyle.italic : FontStyle.normal,
         height: 1.4,

@@ -18,8 +18,17 @@ abstract class RideCapacity with _$RideCapacity {
   /// Remaining seats
   int get remaining => available - booked;
 
+  /// Remaining seats (alias for [remaining], reads naturally at call sites).
+  int get seatsRemaining => remaining;
+
   /// Is ride full
   bool get isFull => remaining <= 0;
+
+  /// Has at least one bookable seat left.
+  bool get hasAvailability => remaining > 0;
+
+  /// Only a single seat remains — useful for urgency messaging in the UI.
+  bool get isAlmostFull => remaining == 1;
 
   /// Can book requested seats
   bool canBook(int seats) => remaining >= seats && seats > 0;

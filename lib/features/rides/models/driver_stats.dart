@@ -34,9 +34,23 @@ abstract class DriverStats with _$DriverStats {
     @Default(0.0) double totalDistance,
     @Default(null) @TimestampConverter() DateTime? lastRideAt,
   }) = _DriverStats;
+  const DriverStats._();
 
   factory DriverStats.fromJson(Map<String, dynamic> json) =>
       _$DriverStatsFromJson(_normalizeDriverStatsJson(json));
+
+  /// Net earnings after the driver's own spend on the platform.
+  int get netEarningsInCents => totalEarningsInCents - totalSpentInCents;
+
+  /// Average gross earnings per completed ride, in cents.
+  int get averageEarningsPerRideInCents =>
+      totalRides > 0 ? (totalEarningsInCents / totalRides).round() : 0;
+
+  /// Whether the driver has completed at least one ride.
+  bool get hasRides => totalRides > 0;
+
+  /// Whether there are requests awaiting the driver's response.
+  bool get hasPendingRequests => pendingRequests > 0;
 }
 
 Map<String, dynamic> _normalizeDriverStatsJson(Map<String, dynamic> json) {
@@ -76,7 +90,16 @@ abstract class EarningsTransaction with _$EarningsTransaction {
     @Default(EarningsTransactionType.ride)
     EarningsTransactionType type, // ride, bonus, refund, payout
   }) = _EarningsTransaction;
+  const EarningsTransaction._();
 
   factory EarningsTransaction.fromJson(Map<String, dynamic> json) =>
       _$EarningsTransactionFromJson(json);
+
+  /// Whether this entry reduces the driver's balance (refund or payout).
+  bool get isDebit =>
+      type == EarningsTransactionType.refund ||
+      type == EarningsTransactionType.payout;
+
+  /// Signed amount: positive for credits, negative for debits.
+  int get signedAmountInCents => isDebit ? -amountInCents : amountInCents;
 }

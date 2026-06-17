@@ -300,7 +300,7 @@ class _VehicleMiniTag extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 10.5.sp,
+          fontSize: 10.sp,
           fontWeight: FontWeight.w700,
           color: muted ? AppColors.textSecondary : accent,
         ),
@@ -365,7 +365,7 @@ class VehicleSectionCard extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 14.5.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w900,
                         color: AppColors.textPrimary,
                       ),
@@ -376,7 +376,7 @@ class VehicleSectionCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11.5.sp,
+                        fontSize: 11.sp,
                         height: 1.28,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textSecondary,
@@ -705,7 +705,7 @@ class _ColorChoiceChip extends StatelessWidget {
             Text(
               _vehicleColorLabel(context, option.label),
               style: TextStyle(
-                fontSize: 11.5.sp,
+                fontSize: 11.sp,
                 fontWeight: FontWeight.w800,
                 color: selected ? AppColors.primary : AppColors.textPrimary,
               ),
@@ -758,7 +758,7 @@ class _OtherColorChip extends StatelessWidget {
             Text(
               l10n.other_color,
               style: TextStyle(
-                fontSize: 11.5.sp,
+                fontSize: 11.sp,
                 fontWeight: FontWeight.w800,
                 color: selected ? AppColors.primary : AppColors.textPrimary,
               ),
@@ -1102,7 +1102,7 @@ class _NumberChoiceChip extends StatelessWidget {
           child: Text(
             '$value',
             style: TextStyle(
-              fontSize: 15.sp,
+              fontSize: 14.sp,
               fontWeight: FontWeight.w900,
               color: selected ? Colors.white : AppColors.textPrimary,
             ),

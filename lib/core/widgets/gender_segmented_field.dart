@@ -207,7 +207,7 @@ class _FieldErrorText extends StatelessWidget {
               child: Text(
                 errorText,
                 style: TextStyle(
-                  fontSize: 11.5.sp,
+                  fontSize: 11.sp,
                   fontWeight: FontWeight.w500,
                   color: AppColors.error,
                 ),

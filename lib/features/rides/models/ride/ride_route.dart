@@ -34,6 +34,18 @@ abstract class RideRoute with _$RideRoute {
   factory RideRoute.fromJson(Map<String, dynamic> json) =>
       _$RideRouteFromJson(json);
 
+  /// Whether the route has intermediate stops.
+  bool get hasWaypoints => waypoints.isNotEmpty;
+
+  /// Waypoints ordered by their [RouteWaypoint.order] for display/iteration.
+  List<RouteWaypoint> get orderedWaypoints {
+    final sorted = [...waypoints]..sort((a, b) => a.order.compareTo(b.order));
+    return sorted;
+  }
+
+  /// Human-readable origin → destination summary using address labels.
+  String get displayRoute => '${origin.address} → ${destination.address}';
+
   /// Get formatted distance
   String get formattedDistance =>
       distanceKm != null ? '${distanceKm!.toStringAsFixed(1)} km' : 'N/A';

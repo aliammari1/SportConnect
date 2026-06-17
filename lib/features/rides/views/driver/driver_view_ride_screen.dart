@@ -18,10 +18,12 @@ import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
+import 'package:sport_connect/core/utils/currency_formatter.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/utils/share_sheet_origin.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
+import 'package:sport_connect/core/widgets/app_segmented_tab_view.dart';
 import 'package:sport_connect/core/widgets/passenger_info_widget.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
 import 'package:sport_connect/core/widgets/ride_feature_widgets.dart';
@@ -89,6 +91,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
   Widget _buildLoadingState() {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).yourRide,
       ),
       body: const SkeletonLoader(itemCount: 5),
@@ -98,6 +101,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
   Widget _buildErrorState(String error) {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).yourRide,
       ),
       body: Center(
@@ -201,7 +205,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
               ),
             ];
           },
-          body: AdaptiveTabBarView(
+          body: AppSegmentedTabView(
             tabs: [
               AppLocalizations.of(context).details,
               if (pendingBookings.isNotEmpty)
@@ -395,7 +399,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                             Text(
                               DateFormat('HH:mm').format(ride.departureTime),
                               style: TextStyle(
-                                fontSize: 26.sp,
+                                fontSize: 24.sp,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
@@ -416,7 +420,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                           Text(
                             '€${_calculateEarnings(ride, confirmedBookings).toStringAsFixed(0)}',
                             style: TextStyle(
-                              fontSize: 22.sp,
+                              fontSize: 20.sp,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primaryLight,
                             ),
@@ -529,7 +533,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
           Expanded(
             child: RideStatItem(
               icon: Icons.euro_rounded,
-              value: '€${(ride.pricePerSeatInCents / 100).toStringAsFixed(2)}',
+              value: CurrencyFormatter.fromCents(ride.pricePerSeatInCents),
               label: AppLocalizations.of(context).perSeat,
             ),
           ),
@@ -576,7 +580,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
               Text(
                 AppLocalizations.of(context).route,
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -649,7 +653,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                     Text(
                       ride.origin.address,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -706,7 +710,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                               Text(
                                 wp.location.address,
                                 style: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: 12.sp,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
@@ -748,7 +752,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                     Text(
                       ride.destination.address,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -832,7 +836,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                 Text(
                   ride.vehicleInfo ?? 'Vehicle',
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
@@ -843,7 +847,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                     context,
                   ).valueTotalSeats(ride.availableSeats),
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -888,7 +892,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
               Text(
                 AppLocalizations.of(context).preferences,
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -952,7 +956,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
               Text(
                 AppLocalizations.of(context).notes,
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -996,7 +1000,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
             SizedBox(height: 8.h),
             Text(
               AppLocalizations.of(context).newBookingRequestsWillAppear,
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textTertiary),
             ),
           ],
         ),
@@ -1041,7 +1045,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                     PassengerNameWidget(
                       passengerId: booking.passengerId,
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
@@ -1058,7 +1062,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                         Text(
                           '${booking.seatsBooked} ${booking.seatsBooked == 1 ? AppLocalizations.of(context).seat : AppLocalizations.of(context).seats}',
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -1072,7 +1076,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                         Text(
                           _timeAgo(booking.createdAt),
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -1088,7 +1092,9 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
-                  '€${((ride.pricePerSeatInCents * booking.seatsBooked) / 100).toStringAsFixed(2)}',
+                  CurrencyFormatter.fromCents(
+                    ride.pricePerSeatInCents * booking.seatsBooked,
+                  ),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
@@ -1230,7 +1236,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
             SizedBox(height: 8.h),
             Text(
               AppLocalizations.of(context).acceptBookingRequestsToAdd,
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textTertiary),
             ),
           ],
         ),
@@ -1272,7 +1278,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                       child: PassengerNameWidget(
                         passengerId: booking.passengerId,
                         style: TextStyle(
-                          fontSize: 15.sp,
+                          fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
                         ),
@@ -1311,9 +1317,11 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                     ),
                     SizedBox(width: 8.w),
                     Text(
-                      '€${((ride.pricePerSeatInCents * booking.seatsBooked) / 100).toStringAsFixed(2)}',
+                      CurrencyFormatter.fromCents(
+                        ride.pricePerSeatInCents * booking.seatsBooked,
+                      ),
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
                       ),
@@ -1948,6 +1956,13 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
       _showInfoSnackBar(
         message: AppLocalizations.of(context).rideCompleted,
         backgroundColor: AppColors.textPrimary,
+      );
+      // Route the driver to the completion screen so the post-completion flow
+      // (rate passenger, instant payout) is reachable in-app, mirroring the
+      // passenger active-ride auto-navigation on RideStatus.completed.
+      if (!mounted) return;
+      context.pushReplacement(
+        AppRoutes.rideCompletion.path.replaceFirst(':id', ride.id),
       );
     } on Exception {
       _showErrorMessage('Could not complete ride. Please try again.');

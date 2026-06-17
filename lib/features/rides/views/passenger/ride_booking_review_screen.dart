@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sport_connect/core/animations/feedback_animations.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
+import 'package:sport_connect/core/models/location/location_point.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
@@ -20,6 +21,7 @@ import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 import 'package:sport_connect/features/rides/view_models/ride_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RideBookingReviewScreen extends ConsumerStatefulWidget {
   const RideBookingReviewScreen({
@@ -539,7 +541,7 @@ class _Header extends StatelessWidget {
                   title,
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 22.sp,
+                    fontSize: 20.sp,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0,
                   ),
@@ -549,7 +551,7 @@ class _Header extends StatelessWidget {
                   subtitle,
                   style: TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -652,7 +654,7 @@ class _ProgressStep extends StatelessWidget {
                     number,
                     style: TextStyle(
                       color: isActive ? Colors.white : AppColors.textSecondary,
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -767,8 +769,8 @@ class _RideSummaryHero extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${_placeTitle(ride.origin.address, ride.origin.city)} '
-                          'to ${_placeTitle(ride.destination.address, ride.destination.city)}',
+                          '${_heroPlaceTitle(ride.origin)} '
+                          'to ${_heroPlaceTitle(ride.destination, other: ride.origin)}',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -819,7 +821,7 @@ class _RideSummaryHero extends ConsumerWidget {
                               l10n.routeDistanceFallback,
                           style: TextStyle(
                             color: AppColors.textPrimary,
-                            fontSize: 17.sp,
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -831,7 +833,7 @@ class _RideSummaryHero extends ConsumerWidget {
                               ),
                           style: TextStyle(
                             color: AppColors.textSecondary,
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -913,7 +915,7 @@ class _HeroMetaPill extends StatelessWidget {
             label,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 12.5.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1001,6 +1003,9 @@ class _LocationTimelineCard extends StatelessWidget {
             label: AppLocalizations.of(context).pickup_point,
             title: _placeTitle(ride.origin.address, ride.origin.city),
             subtitle: ride.origin.address,
+            latitude: ride.origin.latitude,
+            longitude: ride.origin.longitude,
+            navigationLabel: ride.origin.address,
             showLine: true,
           ),
           SizedBox(height: 4.h),
@@ -1010,6 +1015,9 @@ class _LocationTimelineCard extends StatelessWidget {
             label: AppLocalizations.of(context).dropoff_point,
             title: _placeTitle(ride.destination.address, ride.destination.city),
             subtitle: ride.destination.address,
+            latitude: ride.destination.latitude,
+            longitude: ride.destination.longitude,
+            navigationLabel: ride.destination.address,
             showLine: false,
           ),
         ],
@@ -1025,6 +1033,9 @@ class _TimelinePoint extends StatelessWidget {
     required this.label,
     required this.title,
     required this.subtitle,
+    required this.latitude,
+    required this.longitude,
+    required this.navigationLabel,
     required this.showLine,
   });
 
@@ -1033,7 +1044,23 @@ class _TimelinePoint extends StatelessWidget {
   final String label;
   final String title;
   final String subtitle;
+  final double latitude;
+  final double longitude;
+  final String navigationLabel;
   final bool showLine;
+
+  Future<void> _openInMaps() async {
+    final encodedLabel = Uri.encodeComponent(
+      navigationLabel.trim().isNotEmpty ? navigationLabel.trim() : title,
+    );
+    final coords = '$latitude,$longitude';
+    // Universal geo/maps link that resolves to the platform maps app when
+    // available and falls back to the web map otherwise.
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$coords($encodedLabel)',
+    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1071,7 +1098,7 @@ class _TimelinePoint extends StatelessWidget {
                     label,
                     style: TextStyle(
                       color: color,
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -1082,7 +1109,7 @@ class _TimelinePoint extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 17.sp,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -1093,7 +1120,7 @@ class _TimelinePoint extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       height: 1.3,
                       fontWeight: FontWeight.w500,
                     ),
@@ -1104,7 +1131,7 @@ class _TimelinePoint extends StatelessWidget {
           ),
           _GlassIconButton(
             icon: Icons.navigation_rounded,
-            onPressed: () {},
+            onPressed: _openInMaps,
             size: 44,
           ),
         ],
@@ -1160,12 +1187,14 @@ class _PriceBreakdownCard extends StatelessWidget {
             label: AppLocalizations.of(context).fare,
             value: '$currencySymbol${fare.toStringAsFixed(2)}',
           ),
-          SizedBox(height: 12.h),
-          _PriceLine(
-            label: AppLocalizations.of(context).service_fee,
-            value: '$currencySymbol${serviceFee.toStringAsFixed(2)}',
-            info: true,
-          ),
+          if (serviceFee > 0) ...[
+            SizedBox(height: 12.h),
+            _PriceLine(
+              label: AppLocalizations.of(context).service_fee,
+              value: '$currencySymbol${serviceFee.toStringAsFixed(2)}',
+              info: true,
+            ),
+          ],
           Padding(
             padding: EdgeInsets.symmetric(vertical: 16.h),
             child: const Divider(color: AppColors.border, height: 1),
@@ -1214,7 +1243,7 @@ class _TrustAndPolicyCard extends StatelessWidget {
                   ).you_can_cancel_before_the_driver_accepts_your_request,
                   style: TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     height: 1.35,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1282,7 +1311,7 @@ class _BookingFooter extends StatelessWidget {
                       text: '$currencySymbol${total.toStringAsFixed(2)}',
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 30.sp,
+                        fontSize: 28.sp,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0,
                         height: 1.15,
@@ -1345,7 +1374,7 @@ class _TabletBookingSidebar extends StatelessWidget {
             ).review_your_ride_before_sending_the_request,
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               height: 1.35,
             ),
           ),
@@ -1354,7 +1383,7 @@ class _TabletBookingSidebar extends StatelessWidget {
             AppLocalizations.of(context).total,
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1455,7 +1484,7 @@ class _OptionRow extends StatelessWidget {
                 subtitle,
                 style: TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1504,7 +1533,7 @@ class _SeatStepper extends StatelessWidget {
                 '$value',
                 style: TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 17.sp,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -1744,7 +1773,7 @@ class _PrimaryActionButton extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 15.5.sp,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0,
                       ),
@@ -1772,10 +1801,16 @@ class _SoftDivider extends StatelessWidget {
   }
 }
 
-double _serviceFee(double fare) {
-  if (fare <= 0) return 0;
-  return 2;
-}
+/// Service fee shown on the review screen.
+///
+/// Must equal the fee actually added to the Stripe PaymentIntent. The booking
+/// charge (pending_booking_view_model / payment_view_model) currently captures
+/// only `pricePerSeatInCents * seatsBooked` with NO added fee, so the quoted
+/// total must not include one — otherwise the confirmed total would never match
+/// the amount captured. If a platform fee is later introduced, it must be added
+/// to the PaymentIntent amount and mirrored here from a single shared
+/// fare/fee calculator.
+double _serviceFee(double fare) => 0;
 
 String _placeTitle(String address, String? city) {
   final cleanCity = city?.trim();
@@ -1791,6 +1826,35 @@ String _placeTitle(String address, String? city) {
       .toList();
 
   return parts.isEmpty ? address : parts.first;
+}
+
+/// First distinctive, human-readable segment of an address (e.g. a venue or
+/// street line) rather than the city, used to disambiguate the hero title.
+String? _addressDetail(String address, String? city) {
+  final cleanCity = city?.trim().toLowerCase();
+  final parts = address
+      .split(',')
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty)
+      .toList();
+  for (final part in parts) {
+    if (part.toLowerCase() != cleanCity) return part;
+  }
+  return null;
+}
+
+/// Hero title for a single endpoint. Prefers the city, but when [other] resolves
+/// to the same city, falls back to a finer address detail so the title reads
+/// from-where → to-where instead of "City to City".
+String _heroPlaceTitle(LocationPoint point, {LocationPoint? other}) {
+  final base = _placeTitle(point.address, point.city);
+  if (other == null) return base;
+
+  final otherBase = _placeTitle(other.address, other.city);
+  if (base.toLowerCase() != otherBase.toLowerCase()) return base;
+
+  final detail = _addressDetail(point.address, point.city);
+  return detail ?? base;
 }
 
 String _currencySymbol(String currency) {

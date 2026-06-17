@@ -18,8 +18,11 @@ mixin _$EventModel {
  String get id; String get creatorId; String get title; EventType get type; LocationPoint get location;@RequiredTimestampConverter() DateTime get startsAt;@TimestampConverter() DateTime? get endsAt; String? get description;/// Display name of the organiser (denormalized for fast rendering).
  String? get organizerName;/// Cover image URL (Firebase Storage).
  String? get imageUrl; List<String> get participantIds; int get maxParticipants; bool get isActive;// ── Event-Ride Integration fields ──
-/// IDs of rides linked to this event.
- List<String> get linkedRideIds;/// RSVP ride status per participant: { uid: 'driving' | 'need_ride' | 'self_arranged' }.
+// Note: the event↔ride link is standardized on `ride.eventId` (queried via
+// streamRidesByEventId / eventLinkedRidesProvider). The previously
+// one-directional `linkedRideIds` array was never populated and has been
+// removed to avoid a permanently-empty dead field.
+/// RSVP ride status per participant: { uid: 'driving' | 'need_ride' | 'self_arranged' }.
  Map<String, String> get rideStatuses;/// Post-event meetup pin location for coordinating departure.
  LocationPoint? get meetupPinLocation;/// Auto-created chat group ID for event participants.
  String? get chatGroupId;/// Whether this is a recurring event (e.g. weekly training).
@@ -39,16 +42,16 @@ $EventModelCopyWith<EventModel> get copyWith => _$EventModelCopyWithImpl<EventMo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventModel&&(identical(other.id, id) || other.id == id)&&(identical(other.creatorId, creatorId) || other.creatorId == creatorId)&&(identical(other.title, title) || other.title == title)&&(identical(other.type, type) || other.type == type)&&(identical(other.location, location) || other.location == location)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.organizerName, organizerName) || other.organizerName == organizerName)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other.participantIds, participantIds)&&(identical(other.maxParticipants, maxParticipants) || other.maxParticipants == maxParticipants)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&const DeepCollectionEquality().equals(other.linkedRideIds, linkedRideIds)&&const DeepCollectionEquality().equals(other.rideStatuses, rideStatuses)&&(identical(other.meetupPinLocation, meetupPinLocation) || other.meetupPinLocation == meetupPinLocation)&&(identical(other.chatGroupId, chatGroupId) || other.chatGroupId == chatGroupId)&&(identical(other.isRecurring, isRecurring) || other.isRecurring == isRecurring)&&(identical(other.recurringPattern, recurringPattern) || other.recurringPattern == recurringPattern)&&(identical(other.recurringEndDate, recurringEndDate) || other.recurringEndDate == recurringEndDate)&&(identical(other.costSplitEnabled, costSplitEnabled) || other.costSplitEnabled == costSplitEnabled)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventModel&&(identical(other.id, id) || other.id == id)&&(identical(other.creatorId, creatorId) || other.creatorId == creatorId)&&(identical(other.title, title) || other.title == title)&&(identical(other.type, type) || other.type == type)&&(identical(other.location, location) || other.location == location)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.organizerName, organizerName) || other.organizerName == organizerName)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other.participantIds, participantIds)&&(identical(other.maxParticipants, maxParticipants) || other.maxParticipants == maxParticipants)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&const DeepCollectionEquality().equals(other.rideStatuses, rideStatuses)&&(identical(other.meetupPinLocation, meetupPinLocation) || other.meetupPinLocation == meetupPinLocation)&&(identical(other.chatGroupId, chatGroupId) || other.chatGroupId == chatGroupId)&&(identical(other.isRecurring, isRecurring) || other.isRecurring == isRecurring)&&(identical(other.recurringPattern, recurringPattern) || other.recurringPattern == recurringPattern)&&(identical(other.recurringEndDate, recurringEndDate) || other.recurringEndDate == recurringEndDate)&&(identical(other.costSplitEnabled, costSplitEnabled) || other.costSplitEnabled == costSplitEnabled)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,creatorId,title,type,location,startsAt,endsAt,description,organizerName,imageUrl,const DeepCollectionEquality().hash(participantIds),maxParticipants,isActive,const DeepCollectionEquality().hash(linkedRideIds),const DeepCollectionEquality().hash(rideStatuses),meetupPinLocation,chatGroupId,isRecurring,recurringPattern,recurringEndDate,costSplitEnabled,createdAt,updatedAt]);
+int get hashCode => Object.hashAll([runtimeType,id,creatorId,title,type,location,startsAt,endsAt,description,organizerName,imageUrl,const DeepCollectionEquality().hash(participantIds),maxParticipants,isActive,const DeepCollectionEquality().hash(rideStatuses),meetupPinLocation,chatGroupId,isRecurring,recurringPattern,recurringEndDate,costSplitEnabled,createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'EventModel(id: $id, creatorId: $creatorId, title: $title, type: $type, location: $location, startsAt: $startsAt, endsAt: $endsAt, description: $description, organizerName: $organizerName, imageUrl: $imageUrl, participantIds: $participantIds, maxParticipants: $maxParticipants, isActive: $isActive, linkedRideIds: $linkedRideIds, rideStatuses: $rideStatuses, meetupPinLocation: $meetupPinLocation, chatGroupId: $chatGroupId, isRecurring: $isRecurring, recurringPattern: $recurringPattern, recurringEndDate: $recurringEndDate, costSplitEnabled: $costSplitEnabled, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'EventModel(id: $id, creatorId: $creatorId, title: $title, type: $type, location: $location, startsAt: $startsAt, endsAt: $endsAt, description: $description, organizerName: $organizerName, imageUrl: $imageUrl, participantIds: $participantIds, maxParticipants: $maxParticipants, isActive: $isActive, rideStatuses: $rideStatuses, meetupPinLocation: $meetupPinLocation, chatGroupId: $chatGroupId, isRecurring: $isRecurring, recurringPattern: $recurringPattern, recurringEndDate: $recurringEndDate, costSplitEnabled: $costSplitEnabled, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -59,7 +62,7 @@ abstract mixin class $EventModelCopyWith<$Res>  {
   factory $EventModelCopyWith(EventModel value, $Res Function(EventModel) _then) = _$EventModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String creatorId, String title, EventType type, LocationPoint location,@RequiredTimestampConverter() DateTime startsAt,@TimestampConverter() DateTime? endsAt, String? description, String? organizerName, String? imageUrl, List<String> participantIds, int maxParticipants, bool isActive, List<String> linkedRideIds, Map<String, String> rideStatuses, LocationPoint? meetupPinLocation, String? chatGroupId, bool isRecurring, RecurrencePattern? recurringPattern,@TimestampConverter() DateTime? recurringEndDate, bool costSplitEnabled,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
+ String id, String creatorId, String title, EventType type, LocationPoint location,@RequiredTimestampConverter() DateTime startsAt,@TimestampConverter() DateTime? endsAt, String? description, String? organizerName, String? imageUrl, List<String> participantIds, int maxParticipants, bool isActive, Map<String, String> rideStatuses, LocationPoint? meetupPinLocation, String? chatGroupId, bool isRecurring, RecurrencePattern? recurringPattern,@TimestampConverter() DateTime? recurringEndDate, bool costSplitEnabled,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
 });
 
 
@@ -76,7 +79,7 @@ class _$EventModelCopyWithImpl<$Res>
 
 /// Create a copy of EventModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? creatorId = null,Object? title = null,Object? type = null,Object? location = null,Object? startsAt = null,Object? endsAt = freezed,Object? description = freezed,Object? organizerName = freezed,Object? imageUrl = freezed,Object? participantIds = null,Object? maxParticipants = null,Object? isActive = null,Object? linkedRideIds = null,Object? rideStatuses = null,Object? meetupPinLocation = freezed,Object? chatGroupId = freezed,Object? isRecurring = null,Object? recurringPattern = freezed,Object? recurringEndDate = freezed,Object? costSplitEnabled = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? creatorId = null,Object? title = null,Object? type = null,Object? location = null,Object? startsAt = null,Object? endsAt = freezed,Object? description = freezed,Object? organizerName = freezed,Object? imageUrl = freezed,Object? participantIds = null,Object? maxParticipants = null,Object? isActive = null,Object? rideStatuses = null,Object? meetupPinLocation = freezed,Object? chatGroupId = freezed,Object? isRecurring = null,Object? recurringPattern = freezed,Object? recurringEndDate = freezed,Object? costSplitEnabled = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,creatorId: null == creatorId ? _self.creatorId : creatorId // ignore: cast_nullable_to_non_nullable
@@ -91,8 +94,7 @@ as String?,imageUrl: freezed == imageUrl ? _self.imageUrl : imageUrl // ignore: 
 as String?,participantIds: null == participantIds ? _self.participantIds : participantIds // ignore: cast_nullable_to_non_nullable
 as List<String>,maxParticipants: null == maxParticipants ? _self.maxParticipants : maxParticipants // ignore: cast_nullable_to_non_nullable
 as int,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
-as bool,linkedRideIds: null == linkedRideIds ? _self.linkedRideIds : linkedRideIds // ignore: cast_nullable_to_non_nullable
-as List<String>,rideStatuses: null == rideStatuses ? _self.rideStatuses : rideStatuses // ignore: cast_nullable_to_non_nullable
+as bool,rideStatuses: null == rideStatuses ? _self.rideStatuses : rideStatuses // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,meetupPinLocation: freezed == meetupPinLocation ? _self.meetupPinLocation : meetupPinLocation // ignore: cast_nullable_to_non_nullable
 as LocationPoint?,chatGroupId: freezed == chatGroupId ? _self.chatGroupId : chatGroupId // ignore: cast_nullable_to_non_nullable
 as String?,isRecurring: null == isRecurring ? _self.isRecurring : isRecurring // ignore: cast_nullable_to_non_nullable
@@ -207,10 +209,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String creatorId,  String title,  EventType type,  LocationPoint location, @RequiredTimestampConverter()  DateTime startsAt, @TimestampConverter()  DateTime? endsAt,  String? description,  String? organizerName,  String? imageUrl,  List<String> participantIds,  int maxParticipants,  bool isActive,  List<String> linkedRideIds,  Map<String, String> rideStatuses,  LocationPoint? meetupPinLocation,  String? chatGroupId,  bool isRecurring,  RecurrencePattern? recurringPattern, @TimestampConverter()  DateTime? recurringEndDate,  bool costSplitEnabled, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String creatorId,  String title,  EventType type,  LocationPoint location, @RequiredTimestampConverter()  DateTime startsAt, @TimestampConverter()  DateTime? endsAt,  String? description,  String? organizerName,  String? imageUrl,  List<String> participantIds,  int maxParticipants,  bool isActive,  Map<String, String> rideStatuses,  LocationPoint? meetupPinLocation,  String? chatGroupId,  bool isRecurring,  RecurrencePattern? recurringPattern, @TimestampConverter()  DateTime? recurringEndDate,  bool costSplitEnabled, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _EventModel() when $default != null:
-return $default(_that.id,_that.creatorId,_that.title,_that.type,_that.location,_that.startsAt,_that.endsAt,_that.description,_that.organizerName,_that.imageUrl,_that.participantIds,_that.maxParticipants,_that.isActive,_that.linkedRideIds,_that.rideStatuses,_that.meetupPinLocation,_that.chatGroupId,_that.isRecurring,_that.recurringPattern,_that.recurringEndDate,_that.costSplitEnabled,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.creatorId,_that.title,_that.type,_that.location,_that.startsAt,_that.endsAt,_that.description,_that.organizerName,_that.imageUrl,_that.participantIds,_that.maxParticipants,_that.isActive,_that.rideStatuses,_that.meetupPinLocation,_that.chatGroupId,_that.isRecurring,_that.recurringPattern,_that.recurringEndDate,_that.costSplitEnabled,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -228,10 +230,10 @@ return $default(_that.id,_that.creatorId,_that.title,_that.type,_that.location,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String creatorId,  String title,  EventType type,  LocationPoint location, @RequiredTimestampConverter()  DateTime startsAt, @TimestampConverter()  DateTime? endsAt,  String? description,  String? organizerName,  String? imageUrl,  List<String> participantIds,  int maxParticipants,  bool isActive,  List<String> linkedRideIds,  Map<String, String> rideStatuses,  LocationPoint? meetupPinLocation,  String? chatGroupId,  bool isRecurring,  RecurrencePattern? recurringPattern, @TimestampConverter()  DateTime? recurringEndDate,  bool costSplitEnabled, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String creatorId,  String title,  EventType type,  LocationPoint location, @RequiredTimestampConverter()  DateTime startsAt, @TimestampConverter()  DateTime? endsAt,  String? description,  String? organizerName,  String? imageUrl,  List<String> participantIds,  int maxParticipants,  bool isActive,  Map<String, String> rideStatuses,  LocationPoint? meetupPinLocation,  String? chatGroupId,  bool isRecurring,  RecurrencePattern? recurringPattern, @TimestampConverter()  DateTime? recurringEndDate,  bool costSplitEnabled, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _EventModel():
-return $default(_that.id,_that.creatorId,_that.title,_that.type,_that.location,_that.startsAt,_that.endsAt,_that.description,_that.organizerName,_that.imageUrl,_that.participantIds,_that.maxParticipants,_that.isActive,_that.linkedRideIds,_that.rideStatuses,_that.meetupPinLocation,_that.chatGroupId,_that.isRecurring,_that.recurringPattern,_that.recurringEndDate,_that.costSplitEnabled,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.creatorId,_that.title,_that.type,_that.location,_that.startsAt,_that.endsAt,_that.description,_that.organizerName,_that.imageUrl,_that.participantIds,_that.maxParticipants,_that.isActive,_that.rideStatuses,_that.meetupPinLocation,_that.chatGroupId,_that.isRecurring,_that.recurringPattern,_that.recurringEndDate,_that.costSplitEnabled,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -248,10 +250,10 @@ return $default(_that.id,_that.creatorId,_that.title,_that.type,_that.location,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String creatorId,  String title,  EventType type,  LocationPoint location, @RequiredTimestampConverter()  DateTime startsAt, @TimestampConverter()  DateTime? endsAt,  String? description,  String? organizerName,  String? imageUrl,  List<String> participantIds,  int maxParticipants,  bool isActive,  List<String> linkedRideIds,  Map<String, String> rideStatuses,  LocationPoint? meetupPinLocation,  String? chatGroupId,  bool isRecurring,  RecurrencePattern? recurringPattern, @TimestampConverter()  DateTime? recurringEndDate,  bool costSplitEnabled, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String creatorId,  String title,  EventType type,  LocationPoint location, @RequiredTimestampConverter()  DateTime startsAt, @TimestampConverter()  DateTime? endsAt,  String? description,  String? organizerName,  String? imageUrl,  List<String> participantIds,  int maxParticipants,  bool isActive,  Map<String, String> rideStatuses,  LocationPoint? meetupPinLocation,  String? chatGroupId,  bool isRecurring,  RecurrencePattern? recurringPattern, @TimestampConverter()  DateTime? recurringEndDate,  bool costSplitEnabled, @TimestampConverter()  DateTime? createdAt, @TimestampConverter()  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _EventModel() when $default != null:
-return $default(_that.id,_that.creatorId,_that.title,_that.type,_that.location,_that.startsAt,_that.endsAt,_that.description,_that.organizerName,_that.imageUrl,_that.participantIds,_that.maxParticipants,_that.isActive,_that.linkedRideIds,_that.rideStatuses,_that.meetupPinLocation,_that.chatGroupId,_that.isRecurring,_that.recurringPattern,_that.recurringEndDate,_that.costSplitEnabled,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.creatorId,_that.title,_that.type,_that.location,_that.startsAt,_that.endsAt,_that.description,_that.organizerName,_that.imageUrl,_that.participantIds,_that.maxParticipants,_that.isActive,_that.rideStatuses,_that.meetupPinLocation,_that.chatGroupId,_that.isRecurring,_that.recurringPattern,_that.recurringEndDate,_that.costSplitEnabled,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -263,7 +265,7 @@ return $default(_that.id,_that.creatorId,_that.title,_that.type,_that.location,_
 @JsonSerializable()
 
 class _EventModel extends EventModel {
-  const _EventModel({required this.id, required this.creatorId, required this.title, required this.type, required this.location, @RequiredTimestampConverter() required this.startsAt, @TimestampConverter() this.endsAt, this.description, this.organizerName, this.imageUrl, final  List<String> participantIds = const [], this.maxParticipants = 0, this.isActive = true, final  List<String> linkedRideIds = const [], final  Map<String, String> rideStatuses = const {}, this.meetupPinLocation, this.chatGroupId, this.isRecurring = false, this.recurringPattern, @TimestampConverter() this.recurringEndDate, this.costSplitEnabled = false, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt}): _participantIds = participantIds,_linkedRideIds = linkedRideIds,_rideStatuses = rideStatuses,super._();
+  const _EventModel({required this.id, required this.creatorId, required this.title, required this.type, required this.location, @RequiredTimestampConverter() required this.startsAt, @TimestampConverter() this.endsAt, this.description, this.organizerName, this.imageUrl, final  List<String> participantIds = const [], this.maxParticipants = 0, this.isActive = true, final  Map<String, String> rideStatuses = const {}, this.meetupPinLocation, this.chatGroupId, this.isRecurring = false, this.recurringPattern, @TimestampConverter() this.recurringEndDate, this.costSplitEnabled = false, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt}): _participantIds = participantIds,_rideStatuses = rideStatuses,super._();
   factory _EventModel.fromJson(Map<String, dynamic> json) => _$EventModelFromJson(json);
 
 @override final  String id;
@@ -288,18 +290,17 @@ class _EventModel extends EventModel {
 @override@JsonKey() final  int maxParticipants;
 @override@JsonKey() final  bool isActive;
 // ── Event-Ride Integration fields ──
-/// IDs of rides linked to this event.
- final  List<String> _linkedRideIds;
-// ── Event-Ride Integration fields ──
-/// IDs of rides linked to this event.
-@override@JsonKey() List<String> get linkedRideIds {
-  if (_linkedRideIds is EqualUnmodifiableListView) return _linkedRideIds;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_linkedRideIds);
-}
-
+// Note: the event↔ride link is standardized on `ride.eventId` (queried via
+// streamRidesByEventId / eventLinkedRidesProvider). The previously
+// one-directional `linkedRideIds` array was never populated and has been
+// removed to avoid a permanently-empty dead field.
 /// RSVP ride status per participant: { uid: 'driving' | 'need_ride' | 'self_arranged' }.
  final  Map<String, String> _rideStatuses;
+// ── Event-Ride Integration fields ──
+// Note: the event↔ride link is standardized on `ride.eventId` (queried via
+// streamRidesByEventId / eventLinkedRidesProvider). The previously
+// one-directional `linkedRideIds` array was never populated and has been
+// removed to avoid a permanently-empty dead field.
 /// RSVP ride status per participant: { uid: 'driving' | 'need_ride' | 'self_arranged' }.
 @override@JsonKey() Map<String, String> get rideStatuses {
   if (_rideStatuses is EqualUnmodifiableMapView) return _rideStatuses;
@@ -335,16 +336,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventModel&&(identical(other.id, id) || other.id == id)&&(identical(other.creatorId, creatorId) || other.creatorId == creatorId)&&(identical(other.title, title) || other.title == title)&&(identical(other.type, type) || other.type == type)&&(identical(other.location, location) || other.location == location)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.organizerName, organizerName) || other.organizerName == organizerName)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other._participantIds, _participantIds)&&(identical(other.maxParticipants, maxParticipants) || other.maxParticipants == maxParticipants)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&const DeepCollectionEquality().equals(other._linkedRideIds, _linkedRideIds)&&const DeepCollectionEquality().equals(other._rideStatuses, _rideStatuses)&&(identical(other.meetupPinLocation, meetupPinLocation) || other.meetupPinLocation == meetupPinLocation)&&(identical(other.chatGroupId, chatGroupId) || other.chatGroupId == chatGroupId)&&(identical(other.isRecurring, isRecurring) || other.isRecurring == isRecurring)&&(identical(other.recurringPattern, recurringPattern) || other.recurringPattern == recurringPattern)&&(identical(other.recurringEndDate, recurringEndDate) || other.recurringEndDate == recurringEndDate)&&(identical(other.costSplitEnabled, costSplitEnabled) || other.costSplitEnabled == costSplitEnabled)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventModel&&(identical(other.id, id) || other.id == id)&&(identical(other.creatorId, creatorId) || other.creatorId == creatorId)&&(identical(other.title, title) || other.title == title)&&(identical(other.type, type) || other.type == type)&&(identical(other.location, location) || other.location == location)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.description, description) || other.description == description)&&(identical(other.organizerName, organizerName) || other.organizerName == organizerName)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&const DeepCollectionEquality().equals(other._participantIds, _participantIds)&&(identical(other.maxParticipants, maxParticipants) || other.maxParticipants == maxParticipants)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&const DeepCollectionEquality().equals(other._rideStatuses, _rideStatuses)&&(identical(other.meetupPinLocation, meetupPinLocation) || other.meetupPinLocation == meetupPinLocation)&&(identical(other.chatGroupId, chatGroupId) || other.chatGroupId == chatGroupId)&&(identical(other.isRecurring, isRecurring) || other.isRecurring == isRecurring)&&(identical(other.recurringPattern, recurringPattern) || other.recurringPattern == recurringPattern)&&(identical(other.recurringEndDate, recurringEndDate) || other.recurringEndDate == recurringEndDate)&&(identical(other.costSplitEnabled, costSplitEnabled) || other.costSplitEnabled == costSplitEnabled)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,creatorId,title,type,location,startsAt,endsAt,description,organizerName,imageUrl,const DeepCollectionEquality().hash(_participantIds),maxParticipants,isActive,const DeepCollectionEquality().hash(_linkedRideIds),const DeepCollectionEquality().hash(_rideStatuses),meetupPinLocation,chatGroupId,isRecurring,recurringPattern,recurringEndDate,costSplitEnabled,createdAt,updatedAt]);
+int get hashCode => Object.hashAll([runtimeType,id,creatorId,title,type,location,startsAt,endsAt,description,organizerName,imageUrl,const DeepCollectionEquality().hash(_participantIds),maxParticipants,isActive,const DeepCollectionEquality().hash(_rideStatuses),meetupPinLocation,chatGroupId,isRecurring,recurringPattern,recurringEndDate,costSplitEnabled,createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'EventModel(id: $id, creatorId: $creatorId, title: $title, type: $type, location: $location, startsAt: $startsAt, endsAt: $endsAt, description: $description, organizerName: $organizerName, imageUrl: $imageUrl, participantIds: $participantIds, maxParticipants: $maxParticipants, isActive: $isActive, linkedRideIds: $linkedRideIds, rideStatuses: $rideStatuses, meetupPinLocation: $meetupPinLocation, chatGroupId: $chatGroupId, isRecurring: $isRecurring, recurringPattern: $recurringPattern, recurringEndDate: $recurringEndDate, costSplitEnabled: $costSplitEnabled, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'EventModel(id: $id, creatorId: $creatorId, title: $title, type: $type, location: $location, startsAt: $startsAt, endsAt: $endsAt, description: $description, organizerName: $organizerName, imageUrl: $imageUrl, participantIds: $participantIds, maxParticipants: $maxParticipants, isActive: $isActive, rideStatuses: $rideStatuses, meetupPinLocation: $meetupPinLocation, chatGroupId: $chatGroupId, isRecurring: $isRecurring, recurringPattern: $recurringPattern, recurringEndDate: $recurringEndDate, costSplitEnabled: $costSplitEnabled, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -355,7 +356,7 @@ abstract mixin class _$EventModelCopyWith<$Res> implements $EventModelCopyWith<$
   factory _$EventModelCopyWith(_EventModel value, $Res Function(_EventModel) _then) = __$EventModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String creatorId, String title, EventType type, LocationPoint location,@RequiredTimestampConverter() DateTime startsAt,@TimestampConverter() DateTime? endsAt, String? description, String? organizerName, String? imageUrl, List<String> participantIds, int maxParticipants, bool isActive, List<String> linkedRideIds, Map<String, String> rideStatuses, LocationPoint? meetupPinLocation, String? chatGroupId, bool isRecurring, RecurrencePattern? recurringPattern,@TimestampConverter() DateTime? recurringEndDate, bool costSplitEnabled,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
+ String id, String creatorId, String title, EventType type, LocationPoint location,@RequiredTimestampConverter() DateTime startsAt,@TimestampConverter() DateTime? endsAt, String? description, String? organizerName, String? imageUrl, List<String> participantIds, int maxParticipants, bool isActive, Map<String, String> rideStatuses, LocationPoint? meetupPinLocation, String? chatGroupId, bool isRecurring, RecurrencePattern? recurringPattern,@TimestampConverter() DateTime? recurringEndDate, bool costSplitEnabled,@TimestampConverter() DateTime? createdAt,@TimestampConverter() DateTime? updatedAt
 });
 
 
@@ -372,7 +373,7 @@ class __$EventModelCopyWithImpl<$Res>
 
 /// Create a copy of EventModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? creatorId = null,Object? title = null,Object? type = null,Object? location = null,Object? startsAt = null,Object? endsAt = freezed,Object? description = freezed,Object? organizerName = freezed,Object? imageUrl = freezed,Object? participantIds = null,Object? maxParticipants = null,Object? isActive = null,Object? linkedRideIds = null,Object? rideStatuses = null,Object? meetupPinLocation = freezed,Object? chatGroupId = freezed,Object? isRecurring = null,Object? recurringPattern = freezed,Object? recurringEndDate = freezed,Object? costSplitEnabled = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? creatorId = null,Object? title = null,Object? type = null,Object? location = null,Object? startsAt = null,Object? endsAt = freezed,Object? description = freezed,Object? organizerName = freezed,Object? imageUrl = freezed,Object? participantIds = null,Object? maxParticipants = null,Object? isActive = null,Object? rideStatuses = null,Object? meetupPinLocation = freezed,Object? chatGroupId = freezed,Object? isRecurring = null,Object? recurringPattern = freezed,Object? recurringEndDate = freezed,Object? costSplitEnabled = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_EventModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,creatorId: null == creatorId ? _self.creatorId : creatorId // ignore: cast_nullable_to_non_nullable
@@ -387,8 +388,7 @@ as String?,imageUrl: freezed == imageUrl ? _self.imageUrl : imageUrl // ignore: 
 as String?,participantIds: null == participantIds ? _self._participantIds : participantIds // ignore: cast_nullable_to_non_nullable
 as List<String>,maxParticipants: null == maxParticipants ? _self.maxParticipants : maxParticipants // ignore: cast_nullable_to_non_nullable
 as int,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
-as bool,linkedRideIds: null == linkedRideIds ? _self._linkedRideIds : linkedRideIds // ignore: cast_nullable_to_non_nullable
-as List<String>,rideStatuses: null == rideStatuses ? _self._rideStatuses : rideStatuses // ignore: cast_nullable_to_non_nullable
+as bool,rideStatuses: null == rideStatuses ? _self._rideStatuses : rideStatuses // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,meetupPinLocation: freezed == meetupPinLocation ? _self.meetupPinLocation : meetupPinLocation // ignore: cast_nullable_to_non_nullable
 as LocationPoint?,chatGroupId: freezed == chatGroupId ? _self.chatGroupId : chatGroupId // ignore: cast_nullable_to_non_nullable
 as String?,isRecurring: null == isRecurring ? _self.isRecurring : isRecurring // ignore: cast_nullable_to_non_nullable

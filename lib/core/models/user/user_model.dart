@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:sport_connect/core/converters/timestamp_converter.dart';
+import 'package:sport_connect/core/models/location/location_point.dart';
 import 'package:sport_connect/core/models/user/gamification_stats.dart';
 import 'package:sport_connect/core/models/user/rating_breakdown.dart';
 import 'package:sport_connect/core/models/user/user_enums.dart';
@@ -34,6 +35,8 @@ sealed class UserModel with _$UserModel {
     @Default(false) bool isEmailVerified,
     @Default(false) bool isBanned,
     @Default(false) bool isPremium,
+    String? premiumPlan, // 'monthly' | 'yearly'
+    @TimestampConverter() DateTime? premiumUpdatedAt,
 
     // Social
     @Default([]) List<String> blockedUsers,
@@ -79,6 +82,8 @@ sealed class UserModel with _$UserModel {
     @Default(false) bool isEmailVerified,
     @Default(false) bool isBanned,
     @Default(false) bool isPremium,
+    String? premiumPlan, // 'monthly' | 'yearly'
+    @TimestampConverter() DateTime? premiumUpdatedAt,
 
     // Social
     @Default([]) List<String> blockedUsers,
@@ -147,6 +152,97 @@ extension UserModelLogic on UserModel {
     pending: (_) => UserLevel.bronze,
   );
 
+  /// Whether the user currently holds premium status. Pending users are never
+  /// premium.
+  bool get isPremiumUser => map(
+    rider: (r) => r.isPremium,
+    driver: (d) => d.isPremium,
+    pending: (_) => false,
+  );
+
+  /// Premium plan slug ('monthly' | 'yearly'), if any. Pending users have none.
+  String? get premiumPlan => map(
+    rider: (r) => r.premiumPlan,
+    driver: (d) => d.premiumPlan,
+    pending: (_) => null,
+  );
+
+  /// When the premium status was last updated. Pending users have none.
+  DateTime? get premiumUpdatedAt => map(
+    rider: (r) => r.premiumUpdatedAt,
+    driver: (d) => d.premiumUpdatedAt,
+    pending: (_) => null,
+  );
+
+  /// Typed gender, derived from the persisted free-form [String]. `null` for
+  /// pending users or when the stored value is absent/unrecognised.
+  Gender? get genderEnum => map(
+    rider: (r) => Gender.fromValue(r.gender),
+    driver: (d) => Gender.fromValue(d.gender),
+    pending: (_) => null,
+  );
+
+  /// Human-friendly name for UI surfaces. Falls back to the email's local part
+  /// when no username is set, and finally to a generic label.
+  String get displayName {
+    final name = map(
+      rider: (r) => r.username,
+      driver: (d) => d.username,
+      pending: (p) => p.username,
+    );
+    if (name.isNotEmpty) return name;
+    final emailValue = map(
+      rider: (r) => r.email,
+      driver: (d) => d.email,
+      pending: (p) => p.email,
+    );
+    final localPart = emailValue.split('@').first;
+    if (localPart.isNotEmpty) return localPart;
+    return 'User';
+  }
+
+  /// Up to two uppercase initials derived from [displayName], for avatars.
+  String get initials {
+    final source = displayName.trim();
+    if (source.isEmpty) return '';
+    final parts = source.split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+    final letters = parts.map((p) => p[0].toUpperCase()).take(2).join();
+    return letters.isNotEmpty ? letters : source[0].toUpperCase();
+  }
+
+  /// Whether the account is usable: email verified and not banned.
+  bool get isActive => map(
+    rider: (r) => r.isEmailVerified && !r.isBanned,
+    driver: (d) => d.isEmailVerified && !d.isBanned,
+    pending: (p) => p.isEmailVerified && !p.isBanned,
+  );
+
+  /// Whether the user has usable address coordinates. Always `false` for
+  /// pending users (they carry no location fields).
+  bool get hasLocation => map(
+    rider: (r) => r.latitude != null && r.longitude != null,
+    driver: (d) => d.latitude != null && d.longitude != null,
+    pending: (_) => false,
+  );
+
+  /// Age in whole years derived from [dateOfBirth], or `null` when the date of
+  /// birth is not set.
+  int? get age {
+    final dob = map(
+      rider: (r) => r.dateOfBirth,
+      driver: (d) => d.dateOfBirth,
+      pending: (p) => p.dateOfBirth,
+    );
+    if (dob == null) return null;
+    final now = DateTime.now();
+    var years = now.year - dob.year;
+    final hadBirthdayThisYear =
+        now.month > dob.month ||
+        (now.month == dob.month && now.day >= dob.day);
+    if (!hadBirthdayThisYear) years -= 1;
+    return years < 0 ? 0 : years;
+  }
+
   /// Profile completion check
   bool get isProfileComplete {
     return map(
@@ -174,6 +270,18 @@ extension UserTypeCheck on UserModel {
 
   RiderModel? get asRider => this is RiderModel ? this as RiderModel : null;
   DriverModel? get asDriver => this is DriverModel ? this as DriverModel : null;
+}
+
+/// Rider specific logic
+extension RiderLogic on RiderModel {
+  /// Bundled [LocationPoint] derived from the loose latitude/longitude/address
+  /// primitives. Returns `null` when coordinates are not set.
+  LocationPoint? get location {
+    final lat = latitude;
+    final lng = longitude;
+    if (lat == null || lng == null) return null;
+    return LocationPoint(latitude: lat, longitude: lng, address: address ?? '');
+  }
 }
 
 /// Driver specific logic

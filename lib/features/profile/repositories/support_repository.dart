@@ -59,7 +59,7 @@ class SupportRepository {
         'description': description,
         'attachmentUrls': urls,
         'status': 'pending',
-        'createdAt': Timestamp.now(),
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
       TalkerService.info('Report submitted: ${docRef.id}');
@@ -102,7 +102,7 @@ class SupportRepository {
         'message': message,
         'attachmentUrls': urls,
         'status': 'open',
-        'createdAt': Timestamp.now(),
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
       TalkerService.info('Support ticket submitted: ${docRef.id}');

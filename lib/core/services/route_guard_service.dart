@@ -135,6 +135,15 @@ class RouteGuardService {
       }
     }
 
+    // Once onboarding is complete, never strand the user on the intro carousel.
+    // Onboarding is also a "public" route, so without this the public-route
+    // branch below returns null (stay) for signed-out users who just finished
+    // onboarding — leaving them unable to pass the onboarding screen. Route them
+    // to their resolved destination (login when signed out).
+    if (currentPath == AppRoutes.onboarding.path && hasCompletedOnboarding) {
+      return _getInitialRoute();
+    }
+
     if (_isLegalRoute(currentPath)) return null;
 
     if (isLoggedIn &&
@@ -162,7 +171,10 @@ class RouteGuardService {
 
     if (currentPath == AppRoutes.roleSelection.path && isLoggedIn) {
       if (_isPendingUser) {
-        return null;
+        // Once the user has picked a role (intent saved), move them on to that
+        // onboarding flow; with no saved intent yet, keep them on role
+        // selection (_pendingIntentRoute is null → no redirect).
+        return _pendingIntentRoute;
       }
       return _getDashboardRoute();
     }
@@ -262,8 +274,14 @@ class RouteGuardService {
           return _driverOnboardingRedirectPath;
         }
 
+        // While the connected-account provider is still loading we do NOT yet
+        // know whether payout setup is complete. Sending the driver to the
+        // Stripe onboarding screen here makes an already-set-up driver flash
+        // that screen before being bounced back to driverHome. Send them to
+        // their dashboard instead; getRedirect() will move them to Stripe
+        // onboarding once the account has loaded and we know setup is missing.
         if (isConnectedAccountLoading) {
-          return AppRoutes.driverStripeOnboarding.path;
+          return AppRoutes.driverHome.path;
         }
 
         if (!hasCompletedDriverPayoutSetup) {

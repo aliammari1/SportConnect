@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
-import 'package:sport_connect/core/theme/app_typography.dart';
 import 'package:sport_connect/core/widgets/custom_button.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
@@ -36,9 +35,21 @@ class ErrorBoundary extends StatefulWidget {
 class _ErrorBoundaryState extends State<ErrorBoundary> {
   FlutterErrorDetails? _errorDetails;
 
-  @override
-  void initState() {
-    super.initState();
+  void _handleError(FlutterErrorDetails details) {
+    // Report to the framework as usual (Crashlytics, console, etc.).
+    FlutterError.presentError(details);
+    widget.onError?.call(details);
+
+    // Schedule the fallback rebuild for after the current build/layout pass,
+    // since errors are typically raised while building a descendant.
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _errorDetails == null) {
+        setState(() {
+          _errorDetails = details;
+        });
+      }
+    });
   }
 
   void _reset() {
@@ -58,14 +69,20 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
       );
     }
 
-    return widget.child;
+    // Install a scoped error widget builder so a build failure in a descendant
+    // is captured here (and reported) instead of tearing down the subtree.
+    return _ErrorBoundaryScope(
+      onError: _handleError,
+      child: widget.child,
+    );
   }
 }
 
-/// Catches Flutter framework errors thrown during the build phase of
-/// descendants and reports them via the [ErrorBoundary] state.
-class _ErrorBoundaryBuildObserver extends StatelessWidget {
-  const _ErrorBoundaryBuildObserver({
+/// Installs a scoped [ErrorWidget.builder] for the lifetime of [child] so that
+/// build-phase errors in descendants are reported to [onError] and rendered as
+/// an inert placeholder instead of the red error box / a crash.
+class _ErrorBoundaryScope extends StatefulWidget {
+  const _ErrorBoundaryScope({
     required this.child,
     required this.onError,
   });
@@ -74,8 +91,32 @@ class _ErrorBoundaryBuildObserver extends StatelessWidget {
   final ValueSetter<FlutterErrorDetails> onError;
 
   @override
+  State<_ErrorBoundaryScope> createState() => _ErrorBoundaryScopeState();
+}
+
+class _ErrorBoundaryScopeState extends State<_ErrorBoundaryScope> {
+  late final ErrorWidgetBuilder _previousBuilder;
+
+  @override
+  void initState() {
+    super.initState();
+    _previousBuilder = ErrorWidget.builder;
+    ErrorWidget.builder = (details) {
+      widget.onError(details);
+      // Return an inert placeholder; the boundary will swap in the fallback UI.
+      return const SizedBox.shrink();
+    };
+  }
+
+  @override
+  void dispose() {
+    ErrorWidget.builder = _previousBuilder;
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return child;
+    return widget.child;
   }
 }
 
@@ -105,13 +146,13 @@ class _DefaultErrorFallback extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   l10n.somethingWentWrong,
-                  style: AppTypography.headlineSmall,
+                  style: Theme.of(context).textTheme.headlineSmall,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   l10n.pleaseTryAgainLater,
-                  style: AppTypography.bodyMedium.copyWith(
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,

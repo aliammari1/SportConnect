@@ -60,7 +60,7 @@ final class LegalScreenUiViewModelProvider
 }
 
 String _$legalScreenUiViewModelHash() =>
-    r'b68ba3909b4750dea8ded46c9e081ed318dcefbe';
+    r'1768a3fc481ad2a955e7cf54fd8ea4744c5c0a3b';
 
 final class LegalScreenUiViewModelFamily extends $Family
     with

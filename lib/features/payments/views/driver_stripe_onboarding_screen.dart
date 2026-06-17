@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -14,7 +15,6 @@ import 'package:sport_connect/features/payments/view_models/payment_view_model.d
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
 const _ink = Color(0xFF062015);
-const _ink2 = Color(0xFF113D27);
 const _muted = Color(0xFF607466);
 const _border = Color(0xFFDCEADF);
 const _screenBg = Color(0xFFF6FBF7);
@@ -31,8 +31,14 @@ enum _PayoutSetupPage { intro, prep, success }
 /// 2. Before-you-continue checklist
 /// 3. Payouts-ready confirmation
 ///
-/// Existing Stripe Connect WebView, URL allow-listing, refresh handling,
-/// completion handling, and Riverpod state are preserved.
+/// The Stripe Connect hosted onboarding URL is presented in an
+/// `SFSafariViewController` on iOS (and a Chrome Custom Tab on Android) via
+/// [ChromeSafariBrowser]. Apple rejects apps that load financial/identity
+/// onboarding flows inside an embedded `WKWebView` (App Store Review
+/// Guideline 4.0 / 5.1.1), and Stripe's own guidance is to use the native
+/// secure browser. When the browser closes we re-verify the connected
+/// account server-side (the only source of truth) rather than trusting any
+/// redirect URL.
 class DriverStripeOnboardingScreen extends ConsumerStatefulWidget {
   const DriverStripeOnboardingScreen({super.key});
 
@@ -45,7 +51,13 @@ class _DriverStripeOnboardingScreenState
     extends ConsumerState<DriverStripeOnboardingScreen> {
   bool _didNavigateAway = false;
   _PayoutSetupPage _page = _PayoutSetupPage.intro;
-  InAppWebViewController? _webViewController;
+
+  /// Native secure browser (SFSafariViewController on iOS, Chrome Custom Tab
+  /// on Android) used to host the Stripe Connect onboarding flow.
+  late final _StripeSafariBrowser _safariBrowser = _StripeSafariBrowser(
+    onClosedCallback: _onSafariClosed,
+  );
+  bool _safariLaunched = false;
 
   @override
   void initState() {
@@ -115,8 +127,8 @@ class _DriverStripeOnboardingScreenState
         }
       });
 
-    if (onboardingState.showWebView && onboardingState.onboardingUrl != null) {
-      return _buildWebView(onboardingState);
+    if (onboardingState.showWebView) {
+      return _buildSafariHandoff();
     }
 
     if (onboardingState.isConnected || _page == _PayoutSetupPage.success) {
@@ -240,7 +252,7 @@ class _DriverStripeOnboardingScreenState
                     'SportConnect',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0,
                     ),
@@ -269,7 +281,7 @@ class _DriverStripeOnboardingScreenState
                 l10n.get_paid_fornevery_ride,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 31.sp,
+                  fontSize: 32.sp,
                   height: 1.10,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0,
@@ -280,7 +292,7 @@ class _DriverStripeOnboardingScreenState
                 l10n.set_up_eur_payouts_in_minutes_andnreceive_earnings_automatically,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.78),
-                  fontSize: 13.4.sp,
+                  fontSize: 14.sp,
                   height: 1.45,
                   fontWeight: FontWeight.w500,
                 ),
@@ -355,13 +367,16 @@ class _DriverStripeOnboardingScreenState
                   style: _labelStyle(_muted),
                 ),
                 SizedBox(height: 8.h),
+                // Illustrative placeholder shown on the pre-onboarding intro
+                // hero (the driver has no connected account / balance yet).
+                // Masked so it cannot be mistaken for the user's real money.
                 Text(
-                  '14 320,50 €',
+                  '•••• €',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: _ink,
-                    fontSize: 27.sp,
+                    fontSize: 28.sp,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0,
                   ),
@@ -389,7 +404,7 @@ class _DriverStripeOnboardingScreenState
                         'Ready for EUR payout',
                         style: TextStyle(
                           color: const Color(0xFF159A50),
-                          fontSize: 10.2.sp,
+                          fontSize: 10.sp,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -444,7 +459,7 @@ class _DriverStripeOnboardingScreenState
                     item,
                     style: TextStyle(
                       color: const Color(0xFF34415F),
-                      fontSize: 12.4.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -482,7 +497,7 @@ class _DriverStripeOnboardingScreenState
                     l10n.heres_what_youll_need_to_get_set_up,
                     style: TextStyle(
                       color: _muted,
-                      fontSize: 13.4.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ).animate().fadeIn(delay: 60.ms),
@@ -565,10 +580,11 @@ class _DriverStripeOnboardingScreenState
                 children: [
                   _buildSuccessHeader(),
                   SizedBox(height: 18.h),
-                  const _PayoutAccountCard(),
-                  SizedBox(height: 12.h),
-                  const _EarningsSnapshotCard(),
-                  SizedBox(height: 12.h),
+                  // _PayoutAccountCard and _EarningsSnapshotCard previously
+                  // rendered fabricated placeholder financial data (fake IBAN,
+                  // balance, next-payout date) to every driver who completed
+                  // onboarding. Removed until they can be bound to the driver's
+                  // real connected-account / earnings data.
                   const _GreatJobCard(),
                   SizedBox(height: 14.h),
                   _buildStatusArea(context, state),
@@ -591,7 +607,7 @@ class _DriverStripeOnboardingScreenState
                   text: TextSpan(
                     style: TextStyle(
                       color: _muted,
-                      fontSize: 11.5.sp,
+                      fontSize: 11.sp,
                       fontWeight: FontWeight.w600,
                     ),
                     children: [
@@ -688,7 +704,7 @@ class _DriverStripeOnboardingScreenState
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: _muted,
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   height: 1.38,
                   fontWeight: FontWeight.w600,
                 ),
@@ -738,211 +754,85 @@ class _DriverStripeOnboardingScreenState
     return Column(children: widgets);
   }
 
-  /// Start Stripe Connect onboarding process.
+  /// Start Stripe Connect onboarding: create/refresh the account link, then
+  /// open it in the native secure browser.
   Future<void> _startOnboarding() async {
     await ref
         .read(driverStripeOnboardingFlowViewModelProvider.notifier)
         .startOnboarding(ref.read(currentUserProvider).value);
+
+    if (!mounted) return;
+
+    final url = ref
+        .read(driverStripeOnboardingFlowViewModelProvider)
+        .onboardingUrl;
+    if (url != null && url.isNotEmpty) {
+      await _openStripeOnboarding(url);
+    }
   }
 
-  /// Build the WebView screen for Stripe onboarding.
-  Widget _buildWebView(DriverStripeOnboardingFlowState onboardingState) {
-    final l10n = AppLocalizations.of(context);
+  /// Present the Stripe onboarding URL in SFSafariViewController (iOS) /
+  /// Chrome Custom Tab (Android). Completion is detected when the browser
+  /// closes ([_onSafariClosed]), where we re-verify the account server-side.
+  Future<void> _openStripeOnboarding(String url) async {
+    if (_safariLaunched) return;
+    _safariLaunched = true;
 
-    return AdaptiveScaffold(
-      appBar: AdaptiveAppBar(
-        title: l10n.connectStripe,
-        leading: IconButton(
-          tooltip: l10n.actionCancel,
-          icon: const Icon(Icons.close_rounded),
-          onPressed: _showCancelConfirmation,
+    try {
+      await _safariBrowser.open(
+        url: WebUri(url),
+        settings: ChromeSafariBrowserSettings(
+          barCollapsingEnabled: false,
+          presentationStyle: ModalPresentationStyle.OVER_FULL_SCREEN,
         ),
-      ),
-      body: MaxWidthContainer(
-        maxWidth: kMaxWidthForm,
-        child: Stack(
+      );
+    } on Exception {
+      _safariLaunched = false;
+      if (!mounted) return;
+      ref
+          .read(driverStripeOnboardingFlowViewModelProvider.notifier)
+          .failWebViewLoad(AppLocalizations.of(context).stripePageLoadFailed);
+    }
+  }
+
+  /// Called when the Stripe secure browser closes (either because Stripe
+  /// redirected to the return URL, or the driver dismissed it). We never trust
+  /// the redirect: we re-fetch the connected-account status from the server.
+  void _onSafariClosed() {
+    _safariLaunched = false;
+    if (!mounted) return;
+
+    final state = ref.read(driverStripeOnboardingFlowViewModelProvider);
+    if (state.completionHandled) return;
+
+    ref
+        .read(driverStripeOnboardingFlowViewModelProvider.notifier)
+        .markCompletionHandled();
+    unawaited(_handleOnboardingComplete());
+  }
+
+  /// Lightweight placeholder shown behind the secure browser while Stripe
+  /// onboarding is in progress.
+  Widget _buildSafariHandoff() {
+    final l10n = AppLocalizations.of(context);
+    return _buildShell(
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            InAppWebView(
-              initialUrlRequest: URLRequest(
-                url: WebUri(onboardingState.onboardingUrl!),
-              ),
-              initialSettings: InAppWebViewSettings(
-                useShouldOverrideUrlLoading: true,
-                supportZoom: false,
-                builtInZoomControls: false,
-              ),
-              onWebViewCreated: (controller) {
-                _webViewController = controller;
-              },
-              onProgressChanged: (controller, progress) {
-                ref
-                    .read(driverStripeOnboardingFlowViewModelProvider.notifier)
-                    .setWebViewProgress(progress / 100);
-              },
-              onLoadStart: (controller, url) {},
-              onLoadStop: (controller, url) async {
-                final urlStr = url?.toString() ?? '';
-
-                if (urlStr.contains('stripe-refresh')) {
-                  await ref
-                      .read(
-                        driverStripeOnboardingFlowViewModelProvider.notifier,
-                      )
-                      .resumeOnboarding();
-                  final newUrl = ref
-                      .read(driverStripeOnboardingFlowViewModelProvider)
-                      .onboardingUrl;
-                  if (newUrl != null && newUrl.isNotEmpty) {
-                    await controller.loadUrl(
-                      urlRequest: URLRequest(url: WebUri(newUrl)),
-                    );
-                  }
-                } else if (urlStr.contains('stripe-return') &&
-                    !onboardingState.completionHandled) {
-                  ref
-                      .read(
-                        driverStripeOnboardingFlowViewModelProvider.notifier,
-                      )
-                      .markCompletionHandled();
-                  await _handleOnboardingComplete();
-                }
-              },
-              onReceivedError: (controller, request, error) {
-                ref
-                    .read(driverStripeOnboardingFlowViewModelProvider.notifier)
-                    .failWebViewLoad(l10n.stripePageLoadFailed);
-              },
-              shouldOverrideUrlLoading: (controller, navigationAction) async {
-                final url = navigationAction.request.url?.toString() ?? '';
-
-                if (url.contains('stripe-return') &&
-                    !onboardingState.completionHandled) {
-                  ref
-                      .read(
-                        driverStripeOnboardingFlowViewModelProvider.notifier,
-                      )
-                      .markCompletionHandled();
-                  await _handleOnboardingComplete();
-                  return NavigationActionPolicy.CANCEL;
-                }
-
-                if (url.startsWith('sportconnect://') &&
-                    !onboardingState.completionHandled) {
-                  ref
-                      .read(
-                        driverStripeOnboardingFlowViewModelProvider.notifier,
-                      )
-                      .markCompletionHandled();
-                  await _handleOnboardingComplete();
-                  return NavigationActionPolicy.CANCEL;
-                }
-
-                if (url.contains('stripe.com') ||
-                    url.contains('connect.stripe.com') ||
-                    url.contains('verify.stripe.com') ||
-                    url.contains('uploads.stripe.com') ||
-                    url.contains('hooks.stripe.com') ||
-                    url.contains('sportaxitrip.com') ||
-                    url.contains('stripe-refresh')) {
-                  return NavigationActionPolicy.ALLOW;
-                }
-
-                return NavigationActionPolicy.CANCEL;
-              },
+            const CircularProgressIndicator.adaptive(),
+            SizedBox(height: 18.h),
+            Text(
+              l10n.stripeLoadingConnect,
+              textAlign: TextAlign.center,
+              style: _titleStyle(18),
             ),
-            if (onboardingState.webViewProgress < 1.0)
-              PositionedDirectional(
-                top: 0,
-                start: 0,
-                end: 0,
-                child: LinearProgressIndicator(
-                  value: onboardingState.webViewProgress == 0
-                      ? null
-                      : onboardingState.webViewProgress,
-                  minHeight: 3.h,
-                  color: AppColors.primary,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.10),
-                ),
-              ),
-            if (onboardingState.webViewProgress == 0.0)
-              ColoredBox(
-                color: AppColors.background,
-                child: Center(
-                  child:
-                      Container(
-                            margin: EdgeInsets.symmetric(horizontal: 28.w),
-                            padding: EdgeInsets.all(24.w),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(26.r),
-                              border: Border.all(
-                                color: AppColors.border.withValues(alpha: 0.50),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.06),
-                                  blurRadius: 28.r,
-                                  offset: Offset(0, 14.h),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 62.w,
-                                  height: 62.w,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(
-                                      alpha: 0.10,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(
-                                    child: SizedBox(
-                                      width: 27.w,
-                                      height: 27.w,
-                                      child:
-                                          const CircularProgressIndicator.adaptive(
-                                            strokeWidth: 2.5,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                  AppColors.primary,
-                                                ),
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 18.h),
-                                Text(
-                                  l10n.stripeLoadingConnect,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                SizedBox(height: 8.h),
-                                Text(
-                                  l10n.poweredByStripe,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                          .animate()
-                          .fadeIn(duration: 250.ms)
-                          .scale(
-                            begin: const Offset(0.97, 0.97),
-                          ),
-                ),
-              ),
+            SizedBox(height: 8.h),
+            Text(
+              l10n.poweredByStripe,
+              textAlign: TextAlign.center,
+              style: _captionStyle(),
+            ),
           ],
         ),
       ),
@@ -972,36 +862,18 @@ class _DriverStripeOnboardingScreenState
       setState(() => _page = _PayoutSetupPage.success);
     }
   }
+}
 
-  /// Show confirmation dialog before canceling onboarding.
-  Future<void> _showCancelConfirmation() async {
-    final shouldCancel = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog.adaptive(
-        title: Text(AppLocalizations.of(context).cancelSetupTitle),
-        content: Text(AppLocalizations.of(context).cancelSetupMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context).continueSetup),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: Text(AppLocalizations.of(context).actionCancel),
-          ),
-        ],
-      ),
-    );
+/// SFSafariViewController (iOS) / Chrome Custom Tab (Android) wrapper
+/// used for Stripe Connect hosted onboarding. We only need the
+/// `onClosed` lifecycle hook to trigger server-side re-verification.
+class _StripeSafariBrowser extends ChromeSafariBrowser {
+  _StripeSafariBrowser({required this.onClosedCallback});
 
-    if (shouldCancel == true && context.mounted) {
-      ref
-          .read(driverStripeOnboardingFlowViewModelProvider.notifier)
-          .cancelOnboarding();
+  final VoidCallback onClosedCallback;
 
-      setState(() => _page = _PayoutSetupPage.prep);
-    }
-  }
+  @override
+  void onClosed() => onClosedCallback();
 }
 
 class _StickyFooter extends StatelessWidget {
@@ -1084,7 +956,7 @@ class _GradientButton extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 14.5.sp,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0,
                           ),
@@ -1119,7 +991,7 @@ class _PoweredByStripe extends StatelessWidget {
           'stripe',
           style: TextStyle(
             color: _stripeGreen,
-            fontSize: 17.sp,
+            fontSize: 16.sp,
             fontWeight: FontWeight.w900,
             letterSpacing: 0,
           ),
@@ -1154,7 +1026,7 @@ class _MiniLogo extends StatelessWidget {
           'S',
           style: TextStyle(
             color: onDark ? _ink : Colors.white,
-            fontSize: 15.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w900,
             fontStyle: FontStyle.italic,
           ),
@@ -1220,7 +1092,7 @@ class _MiniFeatureTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: _ink,
-              fontSize: 10.7.sp,
+              fontSize: 11.sp,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -1231,7 +1103,7 @@ class _MiniFeatureTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: _muted,
-              fontSize: 8.7.sp,
+              fontSize: 10.sp,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1595,212 +1467,13 @@ class _SecurityBadge extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: _ink,
-                fontSize: 10.5.sp,
+                fontSize: 10.sp,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _PayoutAccountCard extends StatelessWidget {
-  const _PayoutAccountCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _InfoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.payout_account, style: _smallStrongStyle()),
-          SizedBox(height: 13.h),
-          Row(
-            children: [
-              _CircleIcon(
-                icon: Icons.account_balance_rounded,
-                color: _primaryGreen,
-                backgroundColor: const Color(0xFFE9F9EF),
-                size: 36.w,
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: Text(
-                  'BNP Paribas •••• 4521',
-                  style: TextStyle(
-                    color: _ink,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAF9EF),
-                  borderRadius: BorderRadius.circular(999.r),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      l10n.verified,
-                      style: TextStyle(
-                        color: const Color(0xFF16994E),
-                        fontSize: 10.5.sp,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    SizedBox(width: 4.w),
-                    Icon(
-                      Icons.check_circle_rounded,
-                      color: const Color(0xFF20B962),
-                      size: 13.sp,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 14.h),
-          Divider(height: 1.h, color: _border),
-          SizedBox(height: 14.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(l10n.next_payout, style: _smallStrongStyle()),
-                    SizedBox(height: 6.h),
-                    Text(
-                      'Wed, 28 May',
-                      style: TextStyle(
-                        color: _ink,
-                        fontSize: 21.sp,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAF9EF),
-                  borderRadius: BorderRadius.circular(999.r),
-                ),
-                child: Text(
-                  l10n.two_days_left,
-                  style: TextStyle(
-                    color: const Color(0xFF16994E),
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 13.h),
-          Text(l10n.payout_schedule, style: _smallStrongStyle()),
-          SizedBox(height: 6.h),
-          Row(
-            children: [
-              Icon(Icons.calendar_today_rounded, color: _muted, size: 14.sp),
-              SizedBox(width: 8.w),
-              Text(
-                l10n.weekly_to_your_french_iban,
-                style: TextStyle(
-                  color: _muted,
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 140.ms).slideY(begin: 0.04, end: 0);
-  }
-}
-
-class _EarningsSnapshotCard extends StatelessWidget {
-  const _EarningsSnapshotCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _InfoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(l10n.earnings_snapshot, style: _smallStrongStyle()),
-              const Spacer(),
-              Text(
-                l10n.this_week,
-                style: TextStyle(
-                  color: const Color(0xFF8A94B5),
-                  fontSize: 10.5.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 13.h),
-          Container(
-            padding: EdgeInsets.all(14.w),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3FBF5),
-              borderRadius: BorderRadius.circular(17.r),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _SnapshotMetric(
-                    label: l10n.earnings,
-                    value: '14 320,50 €',
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                _SnapshotMetric(label: l10n.trips, value: '28'),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.04, end: 0);
-  }
-}
-
-class _SnapshotMetric extends StatelessWidget {
-  const _SnapshotMetric({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: _labelStyle(_muted)),
-        SizedBox(height: 6.h),
-        Text(
-          value,
-          style: TextStyle(
-            color: _ink,
-            fontSize: 19.sp,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -1856,7 +1529,7 @@ class _GreatJobCard extends StatelessWidget {
                       l10n.youre_doing_great,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -1865,7 +1538,7 @@ class _GreatJobCard extends StatelessWidget {
                       l10n.keep_driving_more_rides_more_earnings,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.82),
-                        fontSize: 11.5.sp,
+                        fontSize: 11.sp,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1907,30 +1580,6 @@ class _InfoCard extends StatelessWidget {
         ],
       ),
       child: child,
-    );
-  }
-}
-
-class _CircleIcon extends StatelessWidget {
-  const _CircleIcon({
-    required this.icon,
-    required this.color,
-    required this.backgroundColor,
-    required this.size,
-  });
-
-  final IconData icon;
-  final Color color;
-  final Color backgroundColor;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle),
-      child: Icon(icon, color: color, size: size * 0.56),
     );
   }
 }
@@ -1981,7 +1630,7 @@ class _InlineStatusCard extends StatelessWidget {
               message,
               style: TextStyle(
                 color: iconColor,
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
                 height: 1.35,
               ),
@@ -2140,7 +1789,7 @@ TextStyle _cardTitleStyle() {
 TextStyle _captionStyle() {
   return TextStyle(
     color: _muted,
-    fontSize: 11.5.sp,
+    fontSize: 11.sp,
     height: 1.35,
     fontWeight: FontWeight.w600,
   );
@@ -2151,13 +1800,5 @@ TextStyle _labelStyle(Color color) {
     color: color,
     fontSize: 11.sp,
     fontWeight: FontWeight.w700,
-  );
-}
-
-TextStyle _smallStrongStyle() {
-  return TextStyle(
-    color: _ink,
-    fontSize: 11.5.sp,
-    fontWeight: FontWeight.w900,
   );
 }

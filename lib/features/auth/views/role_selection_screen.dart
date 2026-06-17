@@ -123,139 +123,149 @@ class RoleSelectionScreen extends ConsumerWidget {
           child: SingleChildScrollView(
             padding: adaptiveScreenPadding(context),
             child: Column(
-            children: [
-              SizedBox(height: 32.h),
+              children: [
+                SizedBox(height: 32.h),
 
-              // Header
-              _buildHeader(l10n)
-                  .animate()
-                  .fadeIn(duration: 500.ms)
-                  .slideY(begin: -0.2, curve: Curves.easeOutCubic),
+                // Header
+                _buildHeader(l10n)
+                    .animate()
+                    .fadeIn(duration: 500.ms)
+                    .slideY(begin: -0.2, curve: Curves.easeOutCubic),
 
-              SizedBox(height: 32.h),
+                SizedBox(height: 32.h),
 
-              // Role options — side-by-side on tablet, stacked on phone
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final crossAxisCount = responsiveValue<int>(
-                    context,
-                    phone: 1,
-                    tablet: 2,
-                    desktop: 3,
-                  );
-                  final riderCard = _buildRoleCard(
-                    onRoleSelected: (role) => ref
-                        .read(roleSelectionViewModelProvider.notifier)
-                        .selectRole(role),
-                    selectedRole: vmState.selectedRole,
-                    role: UserRole.rider,
-                    icon: Icons.person_rounded,
-                    title: l10n.iMARider,
-                    description: l10n.riderRoleDescription,
-                    features: [
-                      l10n.riderFeatureSearch,
-                      l10n.riderFeatureBook,
-                      l10n.riderFeatureChat,
-                      l10n.riderFeatureTrack,
-                    ],
-                  ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideX(begin: -0.2, curve: Curves.easeOutCubic);
+                // Role options — side-by-side on tablet, stacked on phone
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = responsiveValue<int>(
+                      context,
+                      phone: 1,
+                      tablet: 2,
+                      desktop: 3,
+                    );
+                    final riderCard =
+                        _buildRoleCard(
+                              onRoleSelected: (role) => ref
+                                  .read(roleSelectionViewModelProvider.notifier)
+                                  .selectRole(role),
+                              selectedRole: vmState.selectedRole,
+                              role: UserRole.rider,
+                              icon: Icons.person_rounded,
+                              title: l10n.iMARider,
+                              description: l10n.riderRoleDescription,
+                              features: [
+                                l10n.riderFeatureSearch,
+                                l10n.riderFeatureBook,
+                                l10n.riderFeatureChat,
+                                l10n.riderFeatureTrack,
+                              ],
+                            )
+                            .animate()
+                            .fadeIn(duration: 500.ms, delay: 200.ms)
+                            .slideX(begin: -0.2, curve: Curves.easeOutCubic);
 
-                  final driverCard = _buildRoleCard(
-                    onRoleSelected: (role) => ref
-                        .read(roleSelectionViewModelProvider.notifier)
-                        .selectRole(role),
-                    selectedRole: vmState.selectedRole,
-                    role: UserRole.driver,
-                    icon: Icons.directions_car_rounded,
-                    title: l10n.iMADriver,
-                    description: l10n.driverRoleDescription,
-                    features: [
-                      l10n.driverFeatureCreate,
-                      l10n.driverFeaturePrice,
-                      l10n.driverFeatureAccept,
-                      l10n.driverFeatureEarn,
-                    ],
-                  ).animate().fadeIn(duration: 500.ms, delay: 300.ms).slideX(begin: 0.2, curve: Curves.easeOutCubic);
+                    final driverCard =
+                        _buildRoleCard(
+                              onRoleSelected: (role) => ref
+                                  .read(roleSelectionViewModelProvider.notifier)
+                                  .selectRole(role),
+                              selectedRole: vmState.selectedRole,
+                              role: UserRole.driver,
+                              icon: Icons.directions_car_rounded,
+                              title: l10n.iMADriver,
+                              description: l10n.driverRoleDescription,
+                              features: [
+                                l10n.driverFeatureCreate,
+                                l10n.driverFeaturePrice,
+                                l10n.driverFeatureAccept,
+                                l10n.driverFeatureEarn,
+                              ],
+                            )
+                            .animate()
+                            .fadeIn(duration: 500.ms, delay: 300.ms)
+                            .slideX(begin: 0.2, curve: Curves.easeOutCubic);
 
-                  if (crossAxisCount >= 2) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    if (crossAxisCount >= 2) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: riderCard),
+                          SizedBox(width: AppSpacing.md),
+                          Expanded(child: driverCard),
+                        ],
+                      );
+                    }
+                    return Column(
                       children: [
-                        Expanded(child: riderCard),
-                        SizedBox(width: AppSpacing.md),
-                        Expanded(child: driverCard),
+                        riderCard,
+                        SizedBox(height: AppSpacing.md),
+                        driverCard,
                       ],
                     );
-                  }
-                  return Column(
-                    children: [
-                      riderCard,
-                      SizedBox(height: AppSpacing.md),
-                      driverCard,
-                    ],
-                  );
-                },
-              ),
-
-              SizedBox(height: 32.h),
-
-              // Info text
-              Text(
-                l10n.youCanChangeYourRole,
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: AppColors.textSecondary,
+                  },
                 ),
-              ).animate().fadeIn(duration: 500.ms, delay: 400.ms),
 
-              SizedBox(height: 16.h),
+                SizedBox(height: 32.h),
 
-              Align(
-                alignment: Alignment.centerRight,
-                child: Wrap(
-                  spacing: 8.w,
-                  children: [
-                    PremiumButton(
-                      onPressed: vmState.isLoading ? null : changeGoogleAccount,
-                      icon: Icons.switch_account_rounded,
-                      text: l10n.changeGoogleAccount,
-                      style: PremiumButtonStyle.outline,
-                    ),
-                    if (Platform.isIOS || Platform.isMacOS)
+                // Info text
+                Text(
+                  l10n.youCanChangeYourRole,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ).animate().fadeIn(duration: 500.ms, delay: 400.ms),
+
+                SizedBox(height: 16.h),
+
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    spacing: 8.w,
+                    children: [
                       PremiumButton(
                         onPressed: vmState.isLoading
                             ? null
-                            : changeAppleAccount,
+                            : changeGoogleAccount,
                         icon: Icons.switch_account_rounded,
-                        text: l10n.changeAppleAccount,
+                        text: l10n.changeGoogleAccount,
                         style: PremiumButtonStyle.outline,
                       ),
-                  ],
+                      if (Platform.isIOS || Platform.isMacOS)
+                        PremiumButton(
+                          onPressed: vmState.isLoading
+                              ? null
+                              : changeAppleAccount,
+                          icon: Icons.switch_account_rounded,
+                          text: l10n.changeAppleAccount,
+                          style: PremiumButtonStyle.outline,
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              // Continue button
-              SizedBox(
-                    width: double.infinity,
-                    child: PremiumButton(
-                      text: l10n.continueButton,
-                      onPressed:
-                          vmState.selectedRole == null || vmState.isLoading
-                          ? null
-                          : continueWithRole,
-                      isLoading: vmState.isLoading,
-                      style: PremiumButtonStyle.gradient,
-                    ),
-                  )
-                  .animate()
-                  .fadeIn(duration: 500.ms, delay: 500.ms)
-                  .slideY(begin: 0.2, curve: Curves.easeOutCubic),
+                const SizedBox(height: 10),
+                // Continue button
+                SizedBox(
+                      width: double.infinity,
+                      child: PremiumButton(
+                        text: l10n.continueButton,
+                        onPressed:
+                            vmState.selectedRole == null || vmState.isLoading
+                            ? null
+                            : continueWithRole,
+                        isLoading: vmState.isLoading,
+                        style: PremiumButtonStyle.gradient,
+                      ),
+                    )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: 500.ms)
+                    .slideY(begin: 0.2, curve: Curves.easeOutCubic),
 
-              SizedBox(height: 32.h),
-            ],
+                SizedBox(height: 32.h),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -362,7 +372,7 @@ Widget _buildRoleCard({
                         child: Text(
                           title,
                           style: TextStyle(
-                            fontSize: 17.sp,
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                           ),
@@ -419,13 +429,15 @@ Widget _buildRoleCard({
                             size: 12.sp,
                           ),
                           SizedBox(width: 3.w),
-                          Text(
-                            feature,
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: isSelected
-                                  ? AppColors.textPrimary
-                                  : AppColors.textSecondary,
+                          Flexible(
+                            child: Text(
+                              feature,
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: isSelected
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
+                              ),
                             ),
                           ),
                         ],

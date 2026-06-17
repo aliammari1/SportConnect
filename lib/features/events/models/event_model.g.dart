@@ -26,11 +26,6 @@ _EventModel _$EventModelFromJson(Map json) => _EventModel(
       const [],
   maxParticipants: (json['maxParticipants'] as num?)?.toInt() ?? 0,
   isActive: json['isActive'] as bool? ?? true,
-  linkedRideIds:
-      (json['linkedRideIds'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      const [],
   rideStatuses:
       (json['rideStatuses'] as Map?)?.map(
         (k, e) => MapEntry(k as String, e as String),
@@ -70,7 +65,6 @@ Map<String, dynamic> _$EventModelToJson(_EventModel instance) =>
       'participantIds': instance.participantIds,
       'maxParticipants': instance.maxParticipants,
       'isActive': instance.isActive,
-      'linkedRideIds': instance.linkedRideIds,
       'rideStatuses': instance.rideStatuses,
       'meetupPinLocation': instance.meetupPinLocation?.toJson(),
       'chatGroupId': instance.chatGroupId,

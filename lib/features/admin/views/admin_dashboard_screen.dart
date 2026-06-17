@@ -19,6 +19,7 @@ class AdminDashboardScreen extends ConsumerWidget {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.adminDashboard,
       ),
       body: access.when(
@@ -167,7 +168,7 @@ class _IssueTile extends ConsumerWidget {
                 child: Text(
                   issue.title,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -187,7 +188,7 @@ class _IssueTile extends ConsumerWidget {
             issue.subtitle,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
           ),
           SizedBox(height: 10.h),
           Wrap(
@@ -327,7 +328,7 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
+class _ActionButton extends StatefulWidget {
   const _ActionButton({
     required this.label,
     required this.icon,
@@ -337,19 +338,72 @@ class _ActionButton extends StatelessWidget {
 
   final String label;
   final IconData icon;
-  final VoidCallback onPressed;
+  final Future<void> Function() onPressed;
   final bool isDestructive;
+
+  @override
+  State<_ActionButton> createState() => _ActionButtonState();
+}
+
+class _ActionButtonState extends State<_ActionButton> {
+  bool _busy = false;
+
+  Future<void> _handlePressed() async {
+    // Re-entry guard: ignore taps while a previous action is in flight to
+    // prevent duplicate money-moving submissions on rapid double-taps.
+    if (_busy) return;
+
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showAdaptiveDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog.adaptive(
+        title: Text(l10n.actionConfirm),
+        content: Text(widget.label),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.actionCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              l10n.actionConfirm,
+              style: widget.isDestructive
+                  ? const TextStyle(color: AppColors.error)
+                  : null,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _busy = true);
+    try {
+      await widget.onPressed();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16.sp),
-      label: Text(label),
+      onPressed: _busy ? null : _handlePressed,
+      icon: _busy
+          ? SizedBox(
+              width: 16.sp,
+              height: 16.sp,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(widget.icon, size: 16.sp),
+      label: Text(widget.label),
       style: OutlinedButton.styleFrom(
-        foregroundColor: isDestructive ? AppColors.error : AppColors.primary,
+        foregroundColor: widget.isDestructive
+            ? AppColors.error
+            : AppColors.primary,
         side: BorderSide(
-          color: isDestructive ? AppColors.error : AppColors.primary,
+          color: widget.isDestructive ? AppColors.error : AppColors.primary,
         ),
       ),
     );

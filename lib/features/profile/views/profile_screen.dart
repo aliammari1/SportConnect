@@ -18,6 +18,7 @@ import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/custom_button.dart';
 import 'package:sport_connect/core/widgets/gamification_widgets.dart';
+import 'package:sport_connect/core/widgets/icon_stat_card.dart';
 import 'package:sport_connect/core/widgets/permission_dialog_helper.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
 import 'package:sport_connect/core/widgets/rating_and_profile_widgets.dart';
@@ -162,7 +163,10 @@ class ProfileScreen extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left panel: profile header + stats
+          // Left panel: profile header + stats.
+          // `.w` scales the panel width with the ~1.5× tablet content scale —
+          // a fixed raw-px width was too narrow for the scaled stat cards/XP
+          // row and squeezed their text (overlap + overflow stripes).
           SizedBox(
             width: responsiveValue<double>(
               context,
@@ -170,7 +174,7 @@ class ProfileScreen extends ConsumerWidget {
               medium: 380,
               expanded: 420,
               large: 460,
-            ),
+            ).w,
             child: SingleChildScrollView(
               padding: adaptiveScreenPadding(context),
               child: Column(
@@ -589,7 +593,7 @@ class ProfileScreen extends ConsumerWidget {
                       ).memberSinceValue(_formatDate(context, memberSince))
                     : AppLocalizations.of(context).newMember,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   color: AppColors.textSecondary,
                 ),
               ),
@@ -728,7 +732,7 @@ class ProfileScreen extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildStatCard(
+                  child: IconStatCard.tinted(
                     icon: Icons.route_rounded,
                     value: totalRides.toString(),
                     label: AppLocalizations.of(context).totalRides,
@@ -737,7 +741,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
-                  child: _buildStatCard(
+                  child: IconStatCard.tinted(
                     icon: Icons.route_rounded,
                     value: AppLocalizations.of(
                       context,
@@ -752,7 +756,7 @@ class ProfileScreen extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildStatCard(
+                  child: IconStatCard.tinted(
                     icon: Icons.local_fire_department_rounded,
                     value: '$currentStreak',
                     label: AppLocalizations.of(context).dayStreak,
@@ -762,7 +766,7 @@ class ProfileScreen extends ConsumerWidget {
                 SizedBox(width: 12.w),
                 if (user.isDriver)
                   Expanded(
-                    child: _buildStatCard(
+                    child: IconStatCard.tinted(
                       icon: moneyStatIcon,
                       value: moneyStatValue,
                       label: moneyStatLabel,
@@ -819,12 +823,16 @@ class ProfileScreen extends ConsumerWidget {
                     size: 20.sp,
                   ),
                   SizedBox(width: 8.w),
-                  Text(
-                    AppLocalizations.of(context).levelAndXp,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                  Flexible(
+                    child: Text(
+                      AppLocalizations.of(context).levelAndXp,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                   const Spacer(),
@@ -844,88 +852,46 @@ class ProfileScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    level.name,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                  Flexible(
+                    child: Text(
+                      level.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context).viewAchievements,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textSecondary,
+                  SizedBox(width: 8.w),
+                  Flexible(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            AppLocalizations.of(context).viewAchievements,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                         ),
-                      ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppColors.textSecondary,
-                        size: 16.sp,
-                      ),
-                    ],
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppColors.textSecondary,
+                          size: 16.sp,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard({
-    required IconData icon,
-    required String value,
-    required String label,
-    required Color color,
-  }) {
-    return Semantics(
-      label: '$label: $value',
-      child: Container(
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(8.w),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Icon(icon, color: color, size: 18.sp),
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -1023,7 +989,7 @@ class ProfileScreen extends ConsumerWidget {
                               Text(
                                 item.title,
                                 style: TextStyle(
-                                  fontSize: 15.sp,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
                                 ),
@@ -1149,7 +1115,7 @@ class ProfileScreen extends ConsumerWidget {
             Text(
               AppLocalizations.of(context).profileNotFound,
               style: TextStyle(
-                fontSize: 22.sp,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),

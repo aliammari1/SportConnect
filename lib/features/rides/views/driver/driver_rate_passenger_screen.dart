@@ -132,6 +132,7 @@ class _DriverRatePassengerScreenState
   AdaptiveScaffold _buildAdaptiveScaffold({required Widget body}) {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).ratePassenger,
       ),
       body: body,
@@ -145,6 +146,7 @@ class _DriverRatePassengerScreenState
   ) {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).ratePassenger,
       ),
       body: MaxWidthContainer(
@@ -158,7 +160,7 @@ class _DriverRatePassengerScreenState
               Text(
                 AppLocalizations.of(context).how_was_your_passenger,
                 style: TextStyle(
-                  fontSize: 22.sp,
+                  fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
@@ -169,7 +171,7 @@ class _DriverRatePassengerScreenState
                   context,
                 ).your_honest_feedback_helps_build_a_safer_more_reliable_community,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   color: AppColors.textSecondary,
                   height: 1.5,
                 ),

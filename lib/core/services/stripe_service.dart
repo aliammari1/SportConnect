@@ -89,7 +89,15 @@ class StripeService {
     try {
       final callable = _functions.httpsCallable(name);
       final result = await callable.call<Map<String, dynamic>>(data);
-      return result.data;
+      // On Android/iOS the cloud_functions plugin decodes NESTED objects as
+      // Map<Object?, Object?> even when the top level is Map<String, dynamic>
+      // (flutterfire #6546/#11872/#13038/#13136). Recursively normalize so
+      // callers doing `as Map<String, dynamic>` / JsonSerializable fromJson on
+      // nested objects don't throw a type-subtype error.
+      final converted = _deepConvert(result.data);
+      return converted is Map<String, dynamic>
+          ? converted
+          : Map<String, dynamic>.from(result.data as Map);
     } on FirebaseFunctionsException catch (e) {
       TalkerService.error('Firebase Functions error: ${e.code} - ${e.message}');
       throw StripePaymentException(
@@ -100,6 +108,23 @@ class StripeService {
       TalkerService.error('Error calling function $name: $e');
       throw StripePaymentException('Failed to call function: $e');
     }
+  }
+
+  /// Recursively converts a value decoded by the cloud_functions plugin into
+  /// strongly typed Dart collections. Nested maps are coerced to
+  /// `Map<String, dynamic>` and lists are walked element-by-element so that
+  /// downstream `as Map<String, dynamic>` casts and JsonSerializable fromJson
+  /// calls succeed on mobile (see flutterfire #6546/#11872/#13038/#13136).
+  static Object? _deepConvert(Object? value) {
+    if (value is Map) {
+      return value.map<String, dynamic>(
+        (key, val) => MapEntry(key.toString(), _deepConvert(val)),
+      );
+    }
+    if (value is List) {
+      return value.map<dynamic>(_deepConvert).toList();
+    }
+    return value;
   }
 
   /// Create Payment Intent for ride booking

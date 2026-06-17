@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
- import 'package:sport_connect/features/payments/views/premium_checkout_screen.dart';
+import 'package:sport_connect/features/payments/views/premium_checkout_screen.dart';
 import 'package:sport_connect/features/payments/views/premium_subscribe_screen.dart';
 
 /// Premium module routes

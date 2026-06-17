@@ -40,7 +40,7 @@ class RatingBreakdownWidget extends StatelessWidget {
               Text(
                 averageRating.toStringAsFixed(1),
                 style: TextStyle(
-                  fontSize: 36.sp,
+                  fontSize: 32.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
                 ),
@@ -240,33 +240,39 @@ class VerificationBadges extends StatelessWidget {
   const VerificationBadges({
     required this.isEmailVerified,
     super.key,
+    this.isIdVerified = false,
+    this.isPhoneVerified = false,
     this.isDriverLicenseVerified = false,
     this.compact = false,
   });
 
   final bool isEmailVerified;
+  final bool isIdVerified;
+  final bool isPhoneVerified;
   final bool isDriverLicenseVerified;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final badges = <_BadgeInfo>[
-      const _BadgeInfo(
-        Icons.verified_user_rounded,
-        'ID Verified',
-        AppColors.success,
-      ),
+      if (isIdVerified)
+        const _BadgeInfo(
+          Icons.verified_user_rounded,
+          'ID Verified',
+          AppColors.success,
+        ),
       if (isDriverLicenseVerified)
         const _BadgeInfo(
           Icons.badge_rounded,
           'License Verified',
           AppColors.info,
         ),
-      const _BadgeInfo(
-        Icons.phone_android_rounded,
-        'Phone Verified',
-        AppColors.primary,
-      ),
+      if (isPhoneVerified)
+        const _BadgeInfo(
+          Icons.phone_android_rounded,
+          'Phone Verified',
+          AppColors.primary,
+        ),
       if (isEmailVerified)
         const _BadgeInfo(
           Icons.email_rounded,

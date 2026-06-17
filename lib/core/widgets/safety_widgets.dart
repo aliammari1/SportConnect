@@ -53,32 +53,14 @@ class _IncidentReportSheetState extends State<IncidentReportSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Title and drag handle are provided by AppModalSheet's always-visible
+    // top bar (see IncidentReportSheet.show), so they are not repeated here.
     return Padding(
-      padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
+      padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 32.h),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            AppLocalizations.of(context).reportIncident,
-            style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          SizedBox(height: 16.h),
           // Type selection
           Text(
             AppLocalizations.of(context).incidentType,
@@ -170,8 +152,7 @@ enum IncidentType {
   routeDeviation,
   vehicleIssue,
   noShow,
-  other
-  ;
+  other;
 
   IconData get icon {
     switch (this) {
@@ -194,8 +175,7 @@ enum IncidentType {
 enum IncidentSeverity {
   low,
   medium,
-  high
-  ;
+  high;
 
   String localizedLabel(BuildContext context) {
     final l10n = AppLocalizations.of(context);

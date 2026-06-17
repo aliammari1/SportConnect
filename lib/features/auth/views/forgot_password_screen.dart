@@ -59,6 +59,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           tooltip: l10n.goBackTooltip,
           icon: Icon(Icons.adaptive.arrow_back_rounded),
@@ -119,7 +120,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           Text(
             l10n.enterYourEmailAddressAnd,
             style: TextStyle(
-              fontSize: 15.sp,
+              fontSize: 14.sp,
               color: AppColors.textSecondary,
               height: 1.5,
             ),
@@ -203,7 +204,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         Text(
           l10n.forgotPasswordCheckEmail,
           style: TextStyle(
-            fontSize: 26.sp,
+            fontSize: 24.sp,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           ),
@@ -215,7 +216,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           l10n.passwordResetEmailSentCheck,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 15.sp,
+            fontSize: 14.sp,
             color: AppColors.textSecondary,
             height: 1.5,
           ),

@@ -15,6 +15,7 @@ import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
 import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
+import 'package:sport_connect/core/widgets/rating_value.dart';
 import 'package:sport_connect/features/profile/view_models/user_search_view_model.dart';
 import 'package:sport_connect/features/profile/views/profile_screen.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
@@ -112,7 +113,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                 Text(
                   AppLocalizations.of(context).findPeople,
                   style: TextStyle(
-                    fontSize: 22.sp,
+                    fontSize: 20.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
@@ -120,7 +121,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                 Text(
                   AppLocalizations.of(context).searchByName,
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -271,7 +272,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                       child: Text(
                         tag,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           color: AppColors.textPrimary,
                         ),
                       ),
@@ -342,7 +343,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
           SizedBox(height: 8.h),
           Text(
             AppLocalizations.of(context).tryADifferentSearchTerm,
-            style: TextStyle(fontSize: 13.sp, color: AppColors.textTertiary),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -406,7 +407,10 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
 
           void navigateToProfile() {
             unawaited(HapticFeedback.lightImpact());
-            if (context.isTabletOrLarger) {
+            // Match AdaptiveMasterDetailScaffold's two-pane threshold, else on
+            // iPad portrait this selects a user with no detail pane to show
+            // (stuck on the list).
+            if (context.screenWidth >= kTwoPaneMinWidth) {
               setState(() => _selectedUserId = user.uid);
               return;
             }
@@ -449,7 +453,7 @@ class _UserSearchScreenState extends ConsumerState<UserSearchScreen> {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'Profile',
+                    AppLocalizations.of(context).navProfile,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12.sp,
@@ -515,7 +519,7 @@ class _UserCard extends StatelessWidget {
                               ? user.username[0].toUpperCase()
                               : '?',
                           style: TextStyle(
-                            fontSize: 22.sp,
+                            fontSize: 20.sp,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),
@@ -571,33 +575,21 @@ class _UserCard extends StatelessWidget {
                               _ => 0,
                             } >
                             0)
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.star_rounded,
-                                size: 14.sp,
-                                color: AppColors.warning,
-                              ),
-                              SizedBox(width: 2.w),
-                              Text(
-                                switch (user) {
-                                  final RiderModel rider =>
-                                    rider.asRider?.rating.average
-                                            .toStringAsFixed(1) ??
-                                        '0.0',
-                                  final DriverModel driver =>
-                                    driver.asDriver?.rating.average
-                                            .toStringAsFixed(1) ??
-                                        '0.0',
-                                  _ => '0.0',
-                                },
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
+                          RatingValue(
+                            rating: switch (user) {
+                              final RiderModel rider =>
+                                rider.asRider?.rating.average ?? 0,
+                              final DriverModel driver =>
+                                driver.asDriver?.rating.average ?? 0,
+                              _ => 0,
+                            }.toDouble(),
+                            starColor: AppColors.warning,
+                            gap: 2,
+                            valueStyle: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                       ],
                     ),

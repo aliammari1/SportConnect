@@ -21,6 +21,10 @@ RiderModel _$RiderModelFromJson(Map json) => RiderModel(
   isEmailVerified: json['isEmailVerified'] as bool? ?? false,
   isBanned: json['isBanned'] as bool? ?? false,
   isPremium: json['isPremium'] as bool? ?? false,
+  premiumPlan: json['premiumPlan'] as String?,
+  premiumUpdatedAt: const TimestampConverter().fromJson(
+    json['premiumUpdatedAt'],
+  ),
   blockedUsers:
       (json['blockedUsers'] as List<dynamic>?)
           ?.map((e) => e as String)
@@ -67,6 +71,10 @@ Map<String, dynamic> _$RiderModelToJson(RiderModel instance) =>
       'isEmailVerified': instance.isEmailVerified,
       'isBanned': instance.isBanned,
       'isPremium': instance.isPremium,
+      'premiumPlan': instance.premiumPlan,
+      'premiumUpdatedAt': const TimestampConverter().toJson(
+        instance.premiumUpdatedAt,
+      ),
       'blockedUsers': instance.blockedUsers,
       'rating': instance.rating.toJson(),
       'gamification': instance.gamification.toJson(),
@@ -101,6 +109,10 @@ DriverModel _$DriverModelFromJson(Map json) => DriverModel(
   isEmailVerified: json['isEmailVerified'] as bool? ?? false,
   isBanned: json['isBanned'] as bool? ?? false,
   isPremium: json['isPremium'] as bool? ?? false,
+  premiumPlan: json['premiumPlan'] as String?,
+  premiumUpdatedAt: const TimestampConverter().fromJson(
+    json['premiumUpdatedAt'],
+  ),
   blockedUsers:
       (json['blockedUsers'] as List<dynamic>?)
           ?.map((e) => e as String)
@@ -151,6 +163,10 @@ Map<String, dynamic> _$DriverModelToJson(DriverModel instance) =>
       'isEmailVerified': instance.isEmailVerified,
       'isBanned': instance.isBanned,
       'isPremium': instance.isPremium,
+      'premiumPlan': instance.premiumPlan,
+      'premiumUpdatedAt': const TimestampConverter().toJson(
+        instance.premiumUpdatedAt,
+      ),
       'blockedUsers': instance.blockedUsers,
       'rating': instance.rating.toJson(),
       'gamification': instance.gamification.toJson(),

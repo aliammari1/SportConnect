@@ -72,7 +72,7 @@ class PostRideReviewPrompt extends StatelessWidget {
             Text(
               AppLocalizations.of(context).rateYourExperienceWith(driverName),
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 color: theme.textTheme.bodySmall?.color,
               ),
               textAlign: TextAlign.center,
@@ -107,7 +107,7 @@ class PostRideReviewPrompt extends StatelessWidget {
               child: Text(
                 AppLocalizations.of(context).skipForNow,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   color: theme.textTheme.bodySmall?.color,
                 ),
               ),
@@ -244,7 +244,7 @@ class FeatureTooltip extends StatelessWidget {
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
@@ -264,7 +264,7 @@ class FeatureTooltip extends StatelessWidget {
           Text(
             description,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               color: Colors.white.withValues(alpha: 0.85),
             ),
           ),
@@ -292,7 +292,7 @@ class FeatureTooltip extends StatelessWidget {
                       child: Text(
                         currentStep < totalSteps ? 'Next' : 'Got it!',
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),

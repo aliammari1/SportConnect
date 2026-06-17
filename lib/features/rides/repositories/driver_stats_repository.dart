@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -296,107 +295,21 @@ class DriverStatsRepository {
     return null;
   }
 
-  /// Accept a ride request
-  ///
-  /// Updates the booking document in the `bookings` collection and
-  /// increments the ride's booked capacity.
-
-  Future<void> acceptRequest(String rideId, String bookingId) async {
-    final pickupOtp = (1000 + math.Random.secure().nextInt(9000)).toString();
-
-    await _firestore.runTransaction((txn) async {
-      final bookingRef = _firestore
-          .collection(AppConstants.bookingsCollection)
-          .doc(bookingId);
-      final rideRef = _firestore
-          .collection(AppConstants.ridesCollection)
-          .doc(rideId);
-
-      final bookingSnap = await txn.get(bookingRef);
-      if (!bookingSnap.exists) return;
-      final bookingData = bookingSnap.data()!;
-      if (bookingData['status'] == BookingStatus.accepted.name) return;
-      if (bookingData['status'] != BookingStatus.pending.name) {
-        throw StateError('Booking already processed');
-      }
-
-      final rideSnap = await txn.get(rideRef);
-      if (!rideSnap.exists) throw StateError('Ride not found');
-      final rideData = rideSnap.data()!;
-      final capacity = rideData['capacity'] as Map<String, dynamic>? ?? {};
-      final total =
-          (capacity['available'] as int?) ?? (capacity['total'] as int?) ?? 0;
-      final booked = (capacity['booked'] as int?) ?? 0;
-      final seatsBooked = (bookingData['seatsBooked'] as int?) ?? 1;
-      final remaining = total - booked;
-      if (remaining < seatsBooked) {
-        throw StateError(
-          'Not enough seats: $remaining available, $seatsBooked requested.',
-        );
-      }
-
-      final updates = <String, dynamic>{
-        'capacity.booked': FieldValue.increment(seatsBooked),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-      final pickupLocationMap = bookingData['pickupLocation'];
-      if (pickupLocationMap is Map<String, dynamic>) {
-        final route = rideData['route'] as Map<String, dynamic>? ?? {};
-        final waypoints = route['waypoints'] as List? ?? [];
-        updates['route.waypoints'] = FieldValue.arrayUnion([
-          {'location': pickupLocationMap, 'order': waypoints.length},
-        ]);
-      }
-
-      txn.update(bookingRef, {
-        'status': BookingStatus.accepted.name,
-        'respondedAt': FieldValue.serverTimestamp(),
-        'pickupOtp': pickupOtp,
-      });
-      txn.update(rideRef, updates);
-    });
-  }
-
-  /// Decline a ride request
-  ///
-  /// Updates the booking document status in the `bookings` collection.
-
-  Future<void> declineRequest(String rideId, String bookingId) async {
-    final bookingDoc = await _rideBookingsCollection.doc(bookingId).get();
-    if (!bookingDoc.exists) return;
-
-    await _rideBookingsCollection.doc(bookingId).update({
-      'status': 'rejected',
-      'respondedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  /// Update driver stats after ride completion
-
-  Future<void> recordRideCompletion({
-    required String driverId,
-    required int earningsInCents,
-    required double distanceKm,
-  }) async {
-    final currentStats = await getDriverStats(driverId);
-    final updatedStats = currentStats.copyWith(
-      totalRides: currentStats.totalRides + 1,
-      ridesToday: currentStats.ridesToday + 1, // new
-      ridesThisWeek: currentStats.ridesThisWeek + 1,
-      ridesThisMonth: currentStats.ridesThisMonth + 1,
-      totalEarningsInCents: currentStats.totalEarningsInCents + earningsInCents,
-      earningsTodayInCents: currentStats.earningsTodayInCents + earningsInCents,
-      earningsThisWeekInCents:
-          currentStats.earningsThisWeekInCents + earningsInCents,
-      earningsThisMonthInCents:
-          currentStats.earningsThisMonthInCents + earningsInCents,
-      totalDistance: currentStats.totalDistance + distanceKm,
-      lastRideAt: DateTime.now(),
-    );
-    await _driverStatsCollection
-        .doc(driverId)
-        .set(updatedStats, SetOptions(merge: true));
-  }
+  // NOTE: Accept/decline booking transactions and ride-completion stat writes
+  // were removed from this repository to eliminate divergent copies of the
+  // critical seat/OTP/capacity logic. The single source of truth for accepting
+  // and declining bookings is RideRepository.updateBookingStatus (reached via
+  // RideRequestService). DriverStatsRepository is now read/stream-only.
+  //
+  // Previously here:
+  //   - acceptRequest / declineRequest: duplicated RideRepository's accept/
+  //     reject transaction (OTP gen, capacity.booked increment, waypoint
+  //     arrayUnion, conditional capacity release). They had no callers and
+  //     could drift from RideRepository (e.g. the active->full transition).
+  //   - recordRideCompletion: dead code (zero callers). Driver earnings are
+  //     owned by the Stripe webhook aggregation, and its windowed counters
+  //     (ridesToday/ThisWeek/ThisMonth) had no server-side rollover, so they
+  //     would have grown unbounded had it ever been called.
 }
 
 @riverpod

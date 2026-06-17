@@ -10,7 +10,12 @@ class AdaptiveMasterDetailScaffold extends StatelessWidget {
     super.key,
     this.masterFlex = 5,
     this.detailFlex = 7,
-    this.minTwoPaneWidth = Breakpoints.medium,
+    // Two-pane needs real room: with the ~1.5× tablet scale, two side-by-side
+    // panes only fit from ~landscape-iPad width up. Below this (e.g. iPad
+    // PORTRAIT at 1032pt) we render a single full-width column and push the
+    // detail as a page. Screens MUST gate their tap handlers on the same
+    // [kTwoPaneMinWidth] or taps will set a detail that has no pane to show.
+    this.minTwoPaneWidth = kTwoPaneMinWidth,
   });
 
   final Widget master;
@@ -24,11 +29,22 @@ class AdaptiveMasterDetailScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     if (context.screenWidth < minTwoPaneWidth) return phone;
 
+    // Each pane is wrapped in a transparent Material so that Material widgets
+    // inside them (TextField/PremiumSearchField, InkWell, etc.) find a Material
+    // ancestor. The phone path returns a full Scaffold, but the two-pane Row
+    // has none — without this, the search fields in the master pane throw
+    // "No Material widget found" on tablets.
     return Row(
       children: [
-        Expanded(flex: masterFlex, child: master),
+        Expanded(
+          flex: masterFlex,
+          child: Material(type: MaterialType.transparency, child: master),
+        ),
         const VerticalDivider(width: 1, color: AppColors.border),
-        Expanded(flex: detailFlex, child: detail),
+        Expanded(
+          flex: detailFlex,
+          child: Material(type: MaterialType.transparency, child: detail),
+        ),
       ],
     );
   }

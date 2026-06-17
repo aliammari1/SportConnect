@@ -119,7 +119,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                 Text(
                   AppLocalizations.of(context).unableToLoadData,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -351,7 +351,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                           )
                         : AppLocalizations.of(context).nearMe,
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                       color: vm.hasLocationFilter
                           ? AppColors.primary
@@ -408,7 +408,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
             Text(
               AppLocalizations.of(context).events_near_me,
               style: TextStyle(
-                fontSize: 17.sp,
+                fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -510,11 +510,17 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
             },
             childCount: events.length,
           ),
+          // Use a fixed main-axis extent instead of childAspectRatio so the
+          // card height tracks its content and does NOT scale with the
+          // (much wider) cell width on tablet/desktop grids. A width-derived
+          // aspect ratio caused vertical overflow stripes on iPad where the
+          // cells are wide but the content (image + scaled text rows) needs a
+          // bounded, predictable height.
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
             mainAxisSpacing: 12.h,
             crossAxisSpacing: 12.w,
-            childAspectRatio: 0.72,
+            mainAxisExtent: 260.h,
           ),
         ),
       );
@@ -681,7 +687,7 @@ class _FilterChip extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   color: isSelected ? chipColor : AppColors.textSecondary,
                 ),
@@ -764,7 +770,7 @@ class _TabletEventListItem extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 15.sp,
+                                fontSize: 14.sp,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
                                 height: 1.2,
@@ -785,6 +791,11 @@ class _TabletEventListItem extends StatelessWidget {
                       _TabletEventMetaRow(
                         icon: Icons.calendar_today_rounded,
                         label: dateLabel,
+                      ),
+                      SizedBox(height: AppSpacing.xs),
+                      _TabletEventMetaRow(
+                        icon: Icons.location_on_rounded,
+                        label: event.location.city ?? event.location.address,
                       ),
                       SizedBox(height: AppSpacing.xs),
                       Row(
@@ -1015,6 +1026,11 @@ class _EventCard extends ConsumerWidget {
                   Icons.calendar_today_rounded,
                   dateLabel,
                 ),
+                SizedBox(height: 4.h),
+                _iconRow(
+                  Icons.location_on_rounded,
+                  event.location.city ?? event.location.address,
+                ),
                 if (event.organizerName != null &&
                     event.organizerName!.isNotEmpty) ...[
                   SizedBox(height: 4.h),
@@ -1034,7 +1050,7 @@ class _EventCard extends ConsumerWidget {
                       Text(
                         AppLocalizations.of(context).eventJoinArrow,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
                           color: AppColors.primary,
                         ),
@@ -1043,7 +1059,7 @@ class _EventCard extends ConsumerWidget {
                       Text(
                         AppLocalizations.of(context).eventFullStatus,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
                           color: AppColors.warning,
                         ),
@@ -1068,7 +1084,7 @@ class _EventCard extends ConsumerWidget {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
           ),
         ),
       ],

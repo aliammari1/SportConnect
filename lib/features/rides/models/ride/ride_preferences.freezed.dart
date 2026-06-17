@@ -211,8 +211,8 @@ return $default(_that.allowPets,_that.allowSmoking,_that.allowLuggage,_that.isWo
 /// @nodoc
 @JsonSerializable()
 
-class _RidePreferences implements RidePreferences {
-  const _RidePreferences({this.allowPets = false, this.allowSmoking = false, this.allowLuggage = true, this.isWomenOnly = false});
+class _RidePreferences extends RidePreferences {
+  const _RidePreferences({this.allowPets = false, this.allowSmoking = false, this.allowLuggage = true, this.isWomenOnly = false}): super._();
   factory _RidePreferences.fromJson(Map<String, dynamic> json) => _$RidePreferencesFromJson(json);
 
 @override@JsonKey() final  bool allowPets;

@@ -18,6 +18,7 @@ import 'package:sport_connect/core/constants/app_constants.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
+import 'package:sport_connect/core/utils/currency_formatter.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/utils/share_sheet_origin.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
@@ -148,6 +149,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
   Widget _buildLoadingState() {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).rideDetails,
       ),
       body: const SkeletonLoader(itemCount: 5),
@@ -157,6 +159,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
   Widget _buildErrorState(String error) {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).rideDetails,
       ),
       body: Center(
@@ -410,7 +413,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                     child: Column(
                       children: [
                         Text(
-                          '€${(ride.pricePerSeatInCents / 100).toStringAsFixed(2)}',
+                          CurrencyFormatter.fromCents(ride.pricePerSeatInCents),
                           style: TextStyle(
                             fontSize: 20.sp,
                             fontWeight: FontWeight.bold,
@@ -461,7 +464,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                           child: DriverNameWidget(
                             driverId: ride.driverId,
                             style: TextStyle(
-                              fontSize: 17.sp,
+                              fontSize: 16.sp,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                             ),
@@ -481,7 +484,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                         DriverRatingWidget(
                           driverId: ride.driverId,
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
                             color: AppColors.textSecondary,
                           ),
@@ -492,7 +495,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                             context,
                           ).valueRides(bookings.length),
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -600,7 +603,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                   Text(
                     AppLocalizations.of(context).route,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
@@ -653,7 +656,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                         Text(
                           ride.origin.address,
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -710,7 +713,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                                   Text(
                                     wp.location.address,
                                     style: TextStyle(
-                                      fontSize: 13.sp,
+                                      fontSize: 12.sp,
                                       color: AppColors.textSecondary,
                                     ),
                                   ),
@@ -761,7 +764,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                         Text(
                           ride.destination.address,
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -874,7 +877,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                   Text(
                     AppLocalizations.of(context).rideDetails,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
@@ -930,7 +933,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                         child: Text(
                           ride.notes!,
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             color: AppColors.textSecondary,
                             fontStyle: FontStyle.italic,
                           ),
@@ -1023,7 +1026,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                   Text(
                     AppLocalizations.of(context).preferences,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
@@ -1103,7 +1106,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                   Text(
                     AppLocalizations.of(context).reviews,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
@@ -1208,7 +1211,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                     Text(
                       review.reviewerName,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
@@ -1244,7 +1247,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
             SizedBox(height: 8.h),
             Text(
               review.comment!,
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1418,7 +1421,9 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                     ),
                   ),
                   Text(
-                    '€${((ride.pricePerSeatInCents * uiState.seatsToBook) / 100).toStringAsFixed(2)}',
+                    CurrencyFormatter.fromCents(
+                      ride.pricePerSeatInCents * uiState.seatsToBook,
+                    ),
                     style: TextStyle(
                       fontSize: 20.sp,
                       fontWeight: FontWeight.bold,
@@ -1730,14 +1735,18 @@ class _BookingConfirmationSheetState extends State<_BookingConfirmationSheet> {
                   SizedBox(height: 8.h),
                   _buildRow(
                     l10n.pricePerSeat2,
-                    '€${(widget.ride.pricePerSeatInCents / 100).toStringAsFixed(2)}',
+                    CurrencyFormatter.fromCents(
+                      widget.ride.pricePerSeatInCents,
+                    ),
                   ),
                   SizedBox(height: 8.h),
                   const Divider(color: AppColors.divider),
                   SizedBox(height: 8.h),
                   _buildRow(
                     l10n.total,
-                    '€${((widget.ride.pricePerSeatInCents * widget.seatsToBook) / 100).toStringAsFixed(2)}',
+                    CurrencyFormatter.fromCents(
+                      widget.ride.pricePerSeatInCents * widget.seatsToBook,
+                    ),
                     isBold: true,
                   ),
                 ],
@@ -1752,7 +1761,7 @@ class _BookingConfirmationSheetState extends State<_BookingConfirmationSheet> {
               decoration: InputDecoration(
                 hintText: l10n.addANoteToThe,
                 hintStyle: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   color: AppColors.textTertiary,
                 ),
                 filled: true,

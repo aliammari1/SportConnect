@@ -157,6 +157,7 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.fileDisputeTitle,
         leading: IconButton(
           tooltip: AppLocalizations.of(context).goBackTooltip,
@@ -201,7 +202,7 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
             Text(
               l10n.disputeSubmittedTitle,
               style: TextStyle(
-                fontSize: 22.sp,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -282,7 +283,7 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
                   Text(
                     widget.rideId,
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w600,
                       fontFamily: 'monospace',
@@ -311,7 +312,7 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
       SizedBox(height: 4.h),
       Text(
         l10n.selectDisputeReason,
-        style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+        style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
       ).animate().fadeIn(delay: 150.ms),
 
       SizedBox(height: 16.h),
@@ -529,7 +530,7 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
                           DisputeFormViewModel.maxAttachments,
                         ),
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: formState.attachedFiles.isEmpty
                         ? AppColors.textTertiary
                         : AppColors.textPrimary,
@@ -612,7 +613,7 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
             Text(
               l10n.whatToExpectTitle,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),

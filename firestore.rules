@@ -105,7 +105,11 @@ service cloud.firestore {
         !(request.auth.uid in resource.data.participantIds) &&
         request.auth.uid in request.resource.data.participantIds &&
         request.resource.data.participantIds.size() == resource.data.participantIds.size() + 1 &&
-        request.resource.data.participantIds.hasAll(resource.data.participantIds);
+        request.resource.data.participantIds.hasAll(resource.data.participantIds) &&
+        (
+          resource.data.maxParticipants == 0 ||
+          request.resource.data.participantIds.size() <= resource.data.maxParticipants
+        );
     }
 
     function isLeavingEvent() {
@@ -137,7 +141,99 @@ service cloud.firestore {
       return changedKeys().hasOnly([
         'linkedRideIds',
         'updatedAt'
-      ]);
+      ]) &&
+        request.resource.data.linkedRideIds is list &&
+        (
+          // Exactly one element added or removed relative to the
+          // current value (mirrors arrayUnion/arrayRemove semantics).
+          (
+            request.resource.data.linkedRideIds.size() == resource.data.linkedRideIds.size() + 1 &&
+            request.resource.data.linkedRideIds.hasAll(resource.data.linkedRideIds)
+          ) ||
+          (
+            request.resource.data.linkedRideIds.size() == resource.data.linkedRideIds.size() - 1 &&
+            resource.data.linkedRideIds.hasAll(request.resource.data.linkedRideIds)
+          )
+        );
+    }
+
+    // Constrains a bookingIds-only ride update to exactly one element added or
+    // removed (arrayUnion/arrayRemove semantics), so a non-driver booker can
+    // attach/detach their own booking without being able to wipe the array or
+    // bulk-inject arbitrary ids.
+    function isSingleBookingIdDelta() {
+      return changedKeys().hasOnly(['bookingIds', 'updatedAt']) &&
+        request.resource.data.bookingIds is list &&
+        (
+          (
+            request.resource.data.bookingIds.size() == resource.data.bookingIds.size() + 1 &&
+            request.resource.data.bookingIds.hasAll(resource.data.bookingIds)
+          ) ||
+          (
+            request.resource.data.bookingIds.size() == resource.data.bookingIds.size() - 1 &&
+            resource.data.bookingIds.hasAll(request.resource.data.bookingIds)
+          )
+        );
+    }
+
+    // Returns the value of a star bucket on a (possibly missing) rating map,
+    // defaulting to 0 so the comparison works even when the rating map or an
+    // individual bucket has never been written.
+    function ratingBucket(data, bucket) {
+      return data.get('rating', {}).get(bucket, 0);
+    }
+
+    // True when exactly one star bucket changed by +1 or -1 and every other
+    // bucket is unchanged. This constrains the cross-user `rating` update so a
+    // client can only apply a single legitimate review increment/decrement and
+    // cannot forge arbitrary aggregate values (R-D6).
+    function isSingleStarBucketDelta() {
+      let deltas = [
+        ratingBucket(request.resource.data, 'fiveStars') - ratingBucket(resource.data, 'fiveStars'),
+        ratingBucket(request.resource.data, 'fourStars') - ratingBucket(resource.data, 'fourStars'),
+        ratingBucket(request.resource.data, 'threeStars') - ratingBucket(resource.data, 'threeStars'),
+        ratingBucket(request.resource.data, 'twoStars') - ratingBucket(resource.data, 'twoStars'),
+        ratingBucket(request.resource.data, 'oneStars') - ratingBucket(resource.data, 'oneStars')
+      ];
+      // Sum of absolute deltas must be exactly 1: i.e. one bucket moved by ±1
+      // and all others stayed put.
+      let absSum = math.abs(deltas[0]) + math.abs(deltas[1]) + math.abs(deltas[2]) +
+        math.abs(deltas[3]) + math.abs(deltas[4]);
+      return absSum == 1;
+    }
+
+    // Owner profile self-update: the document owner may write their own profile
+    // but server-controlled fields must remain unchanged. isPremium / isBanned
+    // (entitlement and moderation state) and the rating aggregate are owned by
+    // trusted server code and cannot be set from the client to prevent premium
+    // self-grant, ban evasion, and reputation forgery.
+    function isOwnerProfileUpdate() {
+      return request.resource.data.isPremium == resource.data.isPremium &&
+        request.resource.data.isBanned == resource.data.isBanned &&
+        request.resource.data.rating == resource.data.rating;
+    }
+
+    function isCreatorEventEdit() {
+      return changedKeys().hasOnly([
+        'title',
+        'type',
+        'location',
+        'startsAt',
+        'endsAt',
+        'description',
+        'organizerName',
+        'imageUrl',
+        'maxParticipants',
+        'isActive',
+        'meetupPinLocation',
+        'chatGroupId',
+        'isRecurring',
+        'recurringPattern',
+        'recurringEndDate',
+        'costSplitEnabled',
+        'updatedAt'
+      ]) &&
+        request.resource.data.creatorId == resource.data.creatorId;
     }
 
     // ---------------------------------------------------------------------
@@ -149,10 +245,24 @@ service cloud.firestore {
 
       allow create: if isOwner(userId);
 
-      allow update: if isOwner(userId) ||
+      allow update: if (isOwner(userId) && isOwnerProfileUpdate()) ||
         (
+          // Cross-user rating aggregate: only a single legitimate star-bucket
+          // increment/decrement is allowed, so a client cannot forge arbitrary
+          // rating values on another user (R-D6). Self-targeted rating deltas
+          // are forbidden so a user cannot inflate their own reputation.
           isAuthenticated() &&
-          changedKeys().hasOnly(['rating', 'gamification'])
+          userId != request.auth.uid &&
+          changedKeys().hasOnly(['rating']) &&
+          isSingleStarBucketDelta()
+        ) ||
+        (
+          // Cross-user gamification update (e.g. a completing ride's driver
+          // client awarding XP to ride participants). Left as-is; not part of
+          // the rating aggregate. This relies on client-side XP logic and
+          // should ideally move to a trusted Cloud Function — see notes.
+          isAuthenticated() &&
+          changedKeys().hasOnly(['gamification'])
         );
 
       allow delete: if isOwner(userId);
@@ -175,7 +285,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() &&
         (
           resource.data.driverId == request.auth.uid ||
-          changedKeys().hasOnly(['bookingIds', 'updatedAt'])
+          isSingleBookingIdDelta()
         );
 
       allow delete: if isAuthenticated() &&
@@ -279,7 +389,8 @@ service cloud.firestore {
           (
             'eventId' in request.resource.data &&
             request.resource.data.eventId is string &&
-            request.auth.uid in get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.participantIds
+            request.auth.uid in get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.participantIds &&
+            (!isEventGroupChat(request.resource.data) || isCurrentUserPremium())
           )
         );
 
@@ -298,7 +409,12 @@ service cloud.firestore {
             ])
           ) ||
 
-          // Message send preview update.
+          // Message send preview update. Membership ('participantIds') is
+          // deliberately excluded here so a preview update cannot add/remove
+          // chat members; membership changes go through the dedicated
+          // "Remove self" and "Event chat membership" branches below. On an
+          // existing chat the client never includes participantIds in this
+          // update (it is only written on the create path).
           (
             request.auth.uid in resource.data.participantIds &&
             changedKeys().hasOnly([
@@ -308,7 +424,6 @@ service cloud.firestore {
               'lastMessageType',
               'lastMessageAt',
               'updatedAt',
-              'participantIds',
               'deletedAtBy'
             ]) &&
             request.resource.data.lastMessageSenderId == request.auth.uid
@@ -328,6 +443,7 @@ service cloud.firestore {
             'eventId' in resource.data &&
             resource.data.eventId is string &&
             request.auth.uid in get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.participantIds &&
+            (!isEventGroupChat(resource.data) || isCurrentUserPremium()) &&
             changedKeys().hasOnly([
               'participantIds',
               'updatedAt'
@@ -394,13 +510,35 @@ service cloud.firestore {
     // ---------------------------------------------------------------------
 
     match /vehicles/{vehicleId} {
+      // Owners read their own vehicles for management, AND any authenticated
+      // user (e.g. a passenger on an active ride) may read a driver's vehicle
+      // so the safety photo-match card can stream the driver's vehicle via
+      // where('ownerId', ==, driverId). Vehicle data here is non-sensitive
+      // (make/model/plate/photo) and rides are already readable by any
+      // authenticated user, so this aligns the rule with the real passenger
+      // read pattern (userVehiclesStreamProvider(driverId)).
       allow read: if isAuthenticated();
 
       allow create: if isAuthenticated() &&
         request.resource.data.ownerId == request.auth.uid;
 
       allow update: if isAuthenticated() &&
-        resource.data.ownerId == request.auth.uid;
+        resource.data.ownerId == request.auth.uid &&
+        request.resource.data.ownerId == resource.data.ownerId &&
+        (
+          // User-editable fields from the management/edit form.
+          changedKeys().hasOnly([
+            'make', 'model', 'year', 'color', 'licensePlate',
+            'capacity', 'imageUrl', 'imageUrls', 'isActive', 'updatedAt'
+          ]) ||
+          // Stats aggregation path (updateVehicleStats): the owner may update
+          // only the aggregate counters and timestamp. Maintained client-side
+          // via a Firestore transaction for now; ideally moved to a trusted
+          // Cloud Function later.
+          changedKeys().hasOnly([
+            'totalRides', 'averageRating', 'updatedAt'
+          ])
+        );
 
       allow delete: if isAuthenticated() &&
         resource.data.ownerId == request.auth.uid;
@@ -440,14 +578,10 @@ service cloud.firestore {
           resource.data.riderId == request.auth.uid
         );
 
-      allow create: if isAuthenticated() &&
-        (
-          request.resource.data.driverId == request.auth.uid ||
-          request.resource.data.riderId == request.auth.uid
-        );
-
-      allow update, delete: if isAuthenticated() &&
-        resource.data.driverId == request.auth.uid;
+      // Ledger entries are server-owned. Writes happen exclusively from Cloud
+      // Functions / Stripe webhook handlers via the Admin SDK so amounts, status
+      // and payout fields cannot be fabricated or altered from the client.
+      allow create, update, delete: if false;
     }
 
     match /{path=**}/transactions/{transactionId} {
@@ -457,14 +591,8 @@ service cloud.firestore {
           resource.data.riderId == request.auth.uid
         );
 
-      allow create: if isAuthenticated() &&
-        (
-          request.resource.data.driverId == request.auth.uid ||
-          request.resource.data.riderId == request.auth.uid
-        );
-
-      allow update, delete: if isAuthenticated() &&
-        resource.data.driverId == request.auth.uid;
+      // Ledger entries are server-owned (see above).
+      allow create, update, delete: if false;
     }
 
     // ---------------------------------------------------------------------
@@ -493,11 +621,15 @@ service cloud.firestore {
       allow create: if isAuthenticated() &&
         request.resource.data.riderId == request.auth.uid;
 
+      // Either party may update, but the identity fields are immutable so
+      // neither can re-target the request to a different rider/driver.
       allow update: if isAuthenticated() &&
         (
           resource.data.riderId == request.auth.uid ||
           resource.data.driverId == request.auth.uid
-        );
+        ) &&
+        request.resource.data.riderId == resource.data.riderId &&
+        request.resource.data.driverId == resource.data.driverId;
 
       allow delete: if isAuthenticated() &&
         (
@@ -534,11 +666,30 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read: if isAuthenticated();
 
+      // Self-review prevention is enforced here (R-D6); completed-paid-seat
+      // eligibility and no-duplicate constraints require querying bookings,
+      // which Security Rules cannot do and must live in a Cloud Function.
       allow create: if isAuthenticated() &&
-        request.resource.data.reviewerId == request.auth.uid;
+        request.resource.data.reviewerId == request.auth.uid &&
+        request.resource.data.reviewerId != request.resource.data.revieweeId &&
+        request.resource.data.revieweeId is string &&
+        request.resource.data.rideId is string &&
+        // rating is a double in [1, 5] (use `is number` since whole-number
+        // ratings serialize as doubles, not ints). Validated at create time
+        // because rating is made immutable on update and reviews are
+        // world-readable, so a bad value would otherwise be permanent.
+        request.resource.data.rating is number &&
+        request.resource.data.rating >= 1 &&
+        request.resource.data.rating <= 5;
 
+      // The identity and rating fields are immutable on update so a client can
+      // neither re-target a review nor alter its rating after the fact (R-D6).
       allow update: if isAuthenticated() &&
-        resource.data.reviewerId == request.auth.uid;
+        resource.data.reviewerId == request.auth.uid &&
+        request.resource.data.reviewerId == resource.data.reviewerId &&
+        request.resource.data.revieweeId == resource.data.revieweeId &&
+        request.resource.data.rideId == resource.data.rideId &&
+        request.resource.data.rating == resource.data.rating;
 
       allow delete: if isAuthenticated() &&
         resource.data.reviewerId == request.auth.uid;
@@ -556,7 +707,7 @@ service cloud.firestore {
 
       allow update: if isAuthenticated() &&
         (
-          resource.data.creatorId == request.auth.uid ||
+          (resource.data.creatorId == request.auth.uid && isCreatorEventEdit()) ||
 
           isJoiningEvent() ||
 

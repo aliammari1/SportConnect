@@ -1043,7 +1043,7 @@ abstract class AppLocalizations {
   /// Text from _buildStepIndicator in driver_onboarding_screen.dart
   ///
   /// In en, this message translates to:
-  /// **'payouts'**
+  /// **'Payouts'**
   String get payouts;
 
   /// Text from _buildStepHeader.title in driver_onboarding_screen.dart
@@ -14482,6 +14482,12 @@ abstract class AppLocalizations {
   /// **'From €8'**
   String get from_8;
 
+  /// No description provided for @onboardingEstimatedEarning.
+  ///
+  /// In en, this message translates to:
+  /// **'€16'**
+  String get onboardingEstimatedEarning;
+
   /// No description provided for @rides_available.
   ///
   /// In en, this message translates to:
@@ -14711,13 +14717,13 @@ abstract class AppLocalizations {
   /// No description provided for @get_paid_fornevery_ride.
   ///
   /// In en, this message translates to:
-  /// **'Get paid for\\nevery ride'**
+  /// **'Get paid for\nevery ride'**
   String get get_paid_fornevery_ride;
 
   /// No description provided for @set_up_eur_payouts_in_minutes_andnreceive_earnings_automatically.
   ///
   /// In en, this message translates to:
-  /// **'Set up EUR payouts in minutes and\\nreceive earnings automatically.'**
+  /// **'Set up EUR payouts in minutes and\nreceive earnings automatically.'**
   String get set_up_eur_payouts_in_minutes_andnreceive_earnings_automatically;
 
   /// No description provided for @eur_balance.
@@ -14735,7 +14741,7 @@ abstract class AppLocalizations {
   /// No description provided for @why_drivers_love_payouts_onnsportconnect.
   ///
   /// In en, this message translates to:
-  /// **'Why drivers love payouts on\\nSportConnect'**
+  /// **'Why drivers love payouts on\nSportConnect'**
   String get why_drivers_love_payouts_onnsportconnect;
 
   /// No description provided for @before_you_continue.
@@ -14765,7 +14771,7 @@ abstract class AppLocalizations {
   /// No description provided for @your_account_is_connected_and_yourenall_set_to_receive_earnings.
   ///
   /// In en, this message translates to:
-  /// **'Your account is connected and you’re\\nall set to receive earnings.'**
+  /// **'Your account is connected and you’re\nall set to receive earnings.'**
   String get your_account_is_connected_and_yourenall_set_to_receive_earnings;
 
   /// No description provided for @powered_by.

@@ -21,8 +21,9 @@ abstract class RideSchedule with _$RideSchedule {
   factory RideSchedule.fromJson(Map<String, dynamic> json) =>
       _$RideScheduleFromJson(json);
 
-  /// Check if ride is in the past
-  bool get isPast => DateTime.now().isAfter(departureTime);
+  /// Check if ride is in the past (accounts for the flexibility window)
+  bool get isPast =>
+      DateTime.now().isAfter(departureTime.add(Duration(minutes: flexibilityMinutes)));
 
   /// Check if ride is upcoming (within next 24 hours)
   bool get isUpcoming {
@@ -37,6 +38,13 @@ abstract class RideSchedule with _$RideSchedule {
     final diff = departureTime.difference(now);
     return diff.inMinutes <= flexibilityMinutes && diff.inMinutes >= 0;
   }
+
+  /// Whether the driver has stamped an actual departure.
+  bool get hasDeparted => actualDepartureTime != null;
+
+  /// Time remaining until departure (negative once the window has passed).
+  Duration get timeUntilDeparture =>
+      departureTime.difference(DateTime.now());
 
   /// Get departure window (earliest to latest)
   DateTimeRange get departureWindow {

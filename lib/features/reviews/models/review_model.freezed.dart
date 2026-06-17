@@ -834,8 +834,8 @@ return $default(_that.rideId,_that.revieweeId,_that.revieweeName,_that.type,_tha
 /// @nodoc
 @JsonSerializable()
 
-class _CreateReviewRequest implements CreateReviewRequest {
-  const _CreateReviewRequest({required this.rideId, required this.revieweeId, required this.revieweeName, required this.type, required this.rating, this.revieweePhotoUrl, this.comment, final  List<String> tags = const []}): _tags = tags;
+class _CreateReviewRequest extends CreateReviewRequest {
+  const _CreateReviewRequest({required this.rideId, required this.revieweeId, required this.revieweeName, required this.type, required this.rating, this.revieweePhotoUrl, this.comment, final  List<String> tags = const []}): _tags = tags,super._();
   factory _CreateReviewRequest.fromJson(Map<String, dynamic> json) => _$CreateReviewRequestFromJson(json);
 
 @override final  String rideId;

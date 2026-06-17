@@ -17,6 +17,14 @@ class HomeRepository {
   HomeRepository(this._firestore);
   final FirebaseFirestore _firestore;
 
+  /// Server-side document cap fetched before client-side distance filtering.
+  /// Must be large relative to the requested `limit` so the radius filter does
+  /// not silently truncate nearby results, but kept as low as practical because
+  /// Firestore bills per-document read on every snapshot emission — a moving
+  /// rider re-subscribes per anchor and most fetched docs are discarded by the
+  /// radius filter. 80 keeps a 4× headroom over the default `limit` of 20.
+  static const int _serverFetchCap = 80;
+
   CollectionReference<RideModel> get _ridesCollection => _firestore
       .collection(AppConstants.ridesCollection)
       .withConverter(
@@ -31,7 +39,12 @@ class HomeRepository {
     double radiusKm = 50,
     int limit = 20,
   }) {
-    // Note: For production, use geohashing or Firebase GeoFire for efficient geo-queries
+    // Note: For production, use geohashing or Firebase GeoFire for efficient geo-queries.
+    // A geo-bound and a time inequality cannot be combined in one Firestore query,
+    // so we fetch a larger server-side window and filter by distance client-side.
+    // The server cap must be much larger than `limit` because the radius filter can
+    // discard most fetched docs; applying `limit` before the distance filter would
+    // silently truncate nearby results.
     return _ridesCollection
         .where('status', isEqualTo: 'active')
         .where(
@@ -39,7 +52,7 @@ class HomeRepository {
           isGreaterThan: Timestamp.fromDate(DateTime.now()),
         )
         .orderBy('schedule.departureTime')
-        .limit(limit)
+        .limit(_serverFetchCap)
         .snapshots()
         .map((snapshot) {
           const distance = Distance();
@@ -56,6 +69,8 @@ class HomeRepository {
                 );
                 return distanceMeters <= maxDistanceMeters;
               })
+              // Apply the requested count only AFTER the distance filter, so the
+              // radius predicate cannot starve the result set.
               .take(limit)
               .toList();
 

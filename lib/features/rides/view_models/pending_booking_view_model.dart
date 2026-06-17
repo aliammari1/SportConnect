@@ -68,6 +68,7 @@ class PendingBookingState {
     this.isProcessingPayment = false,
     this.isCancelling = false,
     this.paymentFailed = false,
+    this.paymentSubmittedIntentId,
     this.lastError,
     this.osrmRoutePoints,
     this.loadedRouteKey,
@@ -86,6 +87,15 @@ class PendingBookingState {
   final bool isProcessingPayment;
   final bool isCancelling;
   final bool paymentFailed;
+
+  /// The paymentIntentId of a charge that has been captured client-side but
+  /// whose `paidAt` has not yet been written by the Stripe webhook. While set,
+  /// the Complete Payment CTA is suppressed so the user is not asked to pay
+  /// again (and does not perceive a double charge) in the window between charge
+  /// capture and webhook delivery. Cleared once the streamed booking confirms
+  /// payment (paidAt != null) or carries the matching paymentIntentId.
+  final String? paymentSubmittedIntentId;
+
   final String? lastError;
   final List<LatLng>? osrmRoutePoints;
   final String? loadedRouteKey;
@@ -96,7 +106,13 @@ class PendingBookingState {
   RideBooking? get booking => bookingData;
 
   bool get isAcceptedNeedsPayment =>
-      booking?.status == BookingStatus.accepted && booking?.paidAt == null;
+      booking?.status == BookingStatus.accepted &&
+      booking?.paidAt == null &&
+      // Suppress the CTA once a charge has been captured for this booking,
+      // independent of the streamed paidAt (written asynchronously by the
+      // Stripe webhook). Avoids re-showing "Complete Payment" / a perceived
+      // double charge between capture and webhook delivery.
+      paymentSubmittedIntentId == null;
 
   bool get isPending => booking?.status == BookingStatus.pending;
 
@@ -112,6 +128,7 @@ class PendingBookingState {
     bool? isProcessingPayment,
     bool? isCancelling,
     bool? paymentFailed,
+    Object? paymentSubmittedIntentId = _unset,
     Object? lastError = _unset,
     Object? osrmRoutePoints = _unset,
     Object? loadedRouteKey = _unset,
@@ -130,6 +147,9 @@ class PendingBookingState {
       isProcessingPayment: isProcessingPayment ?? this.isProcessingPayment,
       isCancelling: isCancelling ?? this.isCancelling,
       paymentFailed: paymentFailed ?? this.paymentFailed,
+      paymentSubmittedIntentId: paymentSubmittedIntentId == _unset
+          ? this.paymentSubmittedIntentId
+          : paymentSubmittedIntentId as String?,
       lastError: lastError == _unset ? this.lastError : lastError as String?,
       osrmRoutePoints: osrmRoutePoints == _unset
           ? this.osrmRoutePoints
@@ -252,8 +272,20 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
     final matchingBooking = _latestBookingForRide(bookings, state.rideId);
 
     final previousDeadline = _deadlineFor(state.booking, state.rideAsync.value);
+
+    // Clear the captured-charge suppression once the streamed booking confirms
+    // payment server-side (paidAt written by the webhook) or carries the same
+    // paymentIntentId we submitted. Otherwise keep suppressing the CTA.
+    final submittedIntentId = state.paymentSubmittedIntentId;
+    final paymentConfirmed =
+        submittedIntentId != null &&
+        matchingBooking != null &&
+        (matchingBooking.paidAt != null ||
+            matchingBooking.paymentIntentId == submittedIntentId);
+
     state = state.copyWith(
       bookingData: matchingBooking,
+      paymentSubmittedIntentId: paymentConfirmed ? null : submittedIntentId,
       lastError: bookingsAsync.hasError
           ? bookingsAsync.error.toString()
           : state.lastError,
@@ -468,6 +500,12 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
       }
 
       final paymentIntentId = paymentData['paymentIntentId'] as String;
+      // The charge has been captured. Record the submitted intent id so the
+      // Complete Payment CTA is suppressed regardless of the streamed paidAt,
+      // which the Stripe webhook writes asynchronously. Cleared in
+      // syncPassengerBookings once the streamed booking confirms payment.
+      state = state.copyWith(paymentSubmittedIntentId: paymentIntentId);
+      var reconciled = false;
       try {
         if (!ref.mounted) {
           return;
@@ -479,18 +517,56 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
               bookingId: booking.id,
               paymentIntentId: paymentIntentId,
             );
-      } on Exception {
-        // Best effort only.
+        reconciled = true;
+      } on Exception catch (e, st) {
+        // The Stripe charge has already been captured, but persisting the
+        // captured paymentIntentId to the booking failed. Log the orphaned
+        // intent for manual reconciliation; never silently swallow it.
+        TalkerService.error(
+          'Failed to mark booking paid after successful charge '
+          '(captured paymentIntentId=$paymentIntentId, bookingId=${booking.id})',
+          e,
+          st,
+        );
       }
 
       if (!ref.mounted) {
         return;
       }
 
+      // Keep the captured paymentIntentId on the local booking either way so it
+      // is available for audit/refund/retry. Do NOT synthesize paidAt locally —
+      // it is owned by the Stripe webhook; the captured intent id (tracked via
+      // paymentSubmittedIntentId) is what suppresses the Complete Payment CTA.
       final updatedBooking = booking.copyWith(
         paymentIntentId: paymentIntentId,
-        paidAt: DateTime.now(),
       );
+
+      if (!reconciled) {
+        // The charge succeeded (paymentFailed stays false) but the server-side
+        // booking was not marked paid. Do NOT optimistically navigate away as
+        // fully complete: surface a recoverable "finalizing" error so the user
+        // can retry reconciliation instead of being asked to pay again.
+        // Reconciliation explicitly failed, so allow the retry path to run by
+        // clearing the submitted-intent suppression (the CTA must re-appear).
+        state = state.copyWith(
+          bookingData: updatedBooking,
+          isProcessingPayment: false,
+          paymentFailed: false,
+          paymentSubmittedIntentId: null,
+          lastError:
+              'Payment received. Finalizing your booking failed — please tap '
+              '"Complete Payment" again to retry (you will not be charged twice).',
+        );
+        _enqueueEffect(
+          const PendingBookingEffect.snackbar(
+            'Payment received. Finalizing your booking failed — tap '
+            '"Complete Payment" to retry.',
+          ),
+        );
+        return;
+      }
+
       _lastLifecycleEffectKey =
           '${booking.id}|${BookingStatus.accepted.name}|$paymentIntentId';
       state = state.copyWith(

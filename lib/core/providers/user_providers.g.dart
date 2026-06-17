@@ -137,8 +137,24 @@ final class CurrentAuthUidProvider
 
 String _$currentAuthUidHash() => r'31cac2c5a4ca796492b0bbc020c2fd6c7584e818';
 
+/// Derived from [currentUserProvider] — no extra Firestore listener.
+///
+/// Premium state (isPremium / premiumPlan / premiumUpdatedAt) now lives on
+/// [UserModel], so this reuses the single shared user-document listener instead
+/// of opening a second snapshot on users/{uid}. That removes the divergence
+/// window where the two listeners could momentarily disagree. The provider keeps
+/// returning a [Stream] so existing [AsyncValue] consumers are unaffected.
+
 @ProviderFor(premiumMetadata)
 final premiumMetadataProvider = PremiumMetadataProvider._();
+
+/// Derived from [currentUserProvider] — no extra Firestore listener.
+///
+/// Premium state (isPremium / premiumPlan / premiumUpdatedAt) now lives on
+/// [UserModel], so this reuses the single shared user-document listener instead
+/// of opening a second snapshot on users/{uid}. That removes the divergence
+/// window where the two listeners could momentarily disagree. The provider keeps
+/// returning a [Stream] so existing [AsyncValue] consumers are unaffected.
 
 final class PremiumMetadataProvider
     extends
@@ -148,6 +164,13 @@ final class PremiumMetadataProvider
           Stream<PremiumMetadata>
         >
     with $FutureModifier<PremiumMetadata>, $StreamProvider<PremiumMetadata> {
+  /// Derived from [currentUserProvider] — no extra Firestore listener.
+  ///
+  /// Premium state (isPremium / premiumPlan / premiumUpdatedAt) now lives on
+  /// [UserModel], so this reuses the single shared user-document listener instead
+  /// of opening a second snapshot on users/{uid}. That removes the divergence
+  /// window where the two listeners could momentarily disagree. The provider keeps
+  /// returning a [Stream] so existing [AsyncValue] consumers are unaffected.
   PremiumMetadataProvider._()
     : super(
         from: null,
@@ -174,7 +197,7 @@ final class PremiumMetadataProvider
   }
 }
 
-String _$premiumMetadataHash() => r'a797ac0a173944832c649f88daba74fb8e5d61ac';
+String _$premiumMetadataHash() => r'dd887ef3249fc00badc40add31f1a122cb482fb7';
 
 /// Pending user's selected role intent during onboarding setup.
 ///

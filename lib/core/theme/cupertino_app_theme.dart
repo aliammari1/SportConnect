@@ -54,9 +54,7 @@ class AppCupertinoTheme {
 
   static CupertinoTextThemeData _buildTextTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
-    final text = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimary;
+    final text = isDark ? AppColors.textPrimaryDark : AppColors.textPrimary;
     final muted = isDark
         ? AppColors.textSecondaryDark
         : AppColors.textSecondary;
@@ -68,7 +66,7 @@ class AppCupertinoTheme {
       // Body — 17 pt (HIG minimum for primary copy)
       textStyle: TextStyle(
         fontFamily: '.SF Pro Text',
-        fontSize: 17.sp,
+        fontSize: 16.sp,
         fontWeight: FontWeight.w400,
         letterSpacing: -0.41,
         height: 1.47,
@@ -78,7 +76,7 @@ class AppCupertinoTheme {
       // Nav bar standard title — 17 pt semibold
       navTitleTextStyle: TextStyle(
         fontFamily: '.SF Pro Text',
-        fontSize: 17.sp,
+        fontSize: 16.sp,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.41,
         color: text,
@@ -87,7 +85,7 @@ class AppCupertinoTheme {
       // Nav bar large title — 34 pt (SF Pro Display ≥ 20 pt)
       navLargeTitleTextStyle: TextStyle(
         fontFamily: '.SF Pro Display',
-        fontSize: 34.sp,
+        fontSize: 32.sp,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.37,
         height: 1.21,
@@ -97,7 +95,7 @@ class AppCupertinoTheme {
       // Nav action items ("Done", "Edit") — brand color
       navActionTextStyle: TextStyle(
         fontFamily: '.SF Pro Text',
-        fontSize: 17.sp,
+        fontSize: 16.sp,
         fontWeight: FontWeight.w400,
         letterSpacing: -0.41,
         color: brand,
@@ -106,7 +104,7 @@ class AppCupertinoTheme {
       // Full-width CupertinoButton label
       actionTextStyle: TextStyle(
         fontFamily: '.SF Pro Text',
-        fontSize: 17.sp,
+        fontSize: 16.sp,
         fontWeight: FontWeight.w400,
         letterSpacing: -0.41,
         color: brand,
@@ -115,7 +113,7 @@ class AppCupertinoTheme {
       // Smaller inline action
       actionSmallTextStyle: TextStyle(
         fontFamily: '.SF Pro Text',
-        fontSize: 15.sp,
+        fontSize: 14.sp,
         fontWeight: FontWeight.w400,
         letterSpacing: -0.24,
         color: brand,
@@ -133,7 +131,7 @@ class AppCupertinoTheme {
       // Picker rows
       pickerTextStyle: TextStyle(
         fontFamily: '.SF Pro Text',
-        fontSize: 21.sp,
+        fontSize: 20.sp,
         fontWeight: FontWeight.w400,
         letterSpacing: -0.41,
         color: text,
@@ -141,7 +139,7 @@ class AppCupertinoTheme {
 
       dateTimePickerTextStyle: TextStyle(
         fontFamily: '.SF Pro Text',
-        fontSize: 21.sp,
+        fontSize: 20.sp,
         fontWeight: FontWeight.w400,
         color: text,
       ),
@@ -195,7 +193,7 @@ class AppCupertinoTheme {
       child: DefaultTextStyle(
         style: TextStyle(
           fontFamily: '.SF Pro Text',
-          fontSize: 17.sp,
+          fontSize: 16.sp,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.41,
           // onPrimary: backgroundDark in dark = 8.66:1 ✓; white in light ✓
@@ -222,11 +220,12 @@ class AppCupertinoTheme {
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
       borderRadius: BorderRadius.circular(14.r),
       // Light: 0.08 alpha (fine on white); Dark: 0.15 alpha — still subtle but visible tint
-      color: c.withValues(alpha: isDark ? 0.15 : 0.08), minimumSize: Size(minSize ?? 50.h, minSize ?? 50.h),
+      color: c.withValues(alpha: isDark ? 0.15 : 0.08),
+      minimumSize: Size(minSize ?? 50.h, minSize ?? 50.h),
       child: DefaultTextStyle(
         style: TextStyle(
           fontFamily: '.SF Pro Text',
-          fontSize: 17.sp,
+          fontSize: 16.sp,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.41,
           color: c,
@@ -245,11 +244,12 @@ class AppCupertinoTheme {
   }) {
     return CupertinoButton(
       onPressed: onPressed,
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h), minimumSize: Size(44.h, 44.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+      minimumSize: Size(44.h, 44.h),
       child: DefaultTextStyle(
         style: TextStyle(
           fontFamily: '.SF Pro Text',
-          fontSize: 17.sp,
+          fontSize: 16.sp,
           fontWeight: FontWeight.w400,
           letterSpacing: -0.41,
           color:
@@ -272,11 +272,12 @@ class AppCupertinoTheme {
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
       borderRadius: BorderRadius.circular(14.r),
       // Error at 0.12 alpha on dark: tinted bg, label provides contrast (5.94:1) ✓
-      color: errorColor.withValues(alpha: isDark ? 0.12 : 0.10), minimumSize: Size(50.h, 50.h),
+      color: errorColor.withValues(alpha: isDark ? 0.12 : 0.10),
+      minimumSize: Size(50.h, 50.h),
       child: DefaultTextStyle(
         style: TextStyle(
           fontFamily: '.SF Pro Text',
-          fontSize: 17.sp,
+          fontSize: 16.sp,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.41,
           color: errorColor,
@@ -310,7 +311,7 @@ class AppCupertinoTheme {
 
   static TextStyle textFieldStyle({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Text',
-    fontSize: 17.sp,
+    fontSize: 16.sp,
     fontWeight: FontWeight.w400,
     letterSpacing: -0.41,
     color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
@@ -319,7 +320,7 @@ class AppCupertinoTheme {
   static TextStyle textFieldPlaceholderStyle({bool isDark = false}) =>
       TextStyle(
         fontFamily: '.SF Pro Text',
-        fontSize: 17.sp,
+        fontSize: 16.sp,
         fontWeight: FontWeight.w400,
         letterSpacing: -0.41,
         color: isDark
@@ -400,7 +401,7 @@ class AppCupertinoTheme {
 
   static TextStyle listTitleStyle({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Text',
-    fontSize: 17.sp,
+    fontSize: 16.sp,
     fontWeight: FontWeight.w400,
     letterSpacing: -0.41,
     color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
@@ -408,7 +409,7 @@ class AppCupertinoTheme {
 
   static TextStyle listSubtitleStyle({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Text',
-    fontSize: 15.sp,
+    fontSize: 14.sp,
     fontWeight: FontWeight.w400,
     letterSpacing: -0.24,
     color: isDark
@@ -422,7 +423,7 @@ class AppCupertinoTheme {
 
   static TextStyle actionSheetTitleStyle({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Text',
-    fontSize: 13.sp,
+    fontSize: 12.sp,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.08,
     color: isDark
@@ -432,7 +433,7 @@ class AppCupertinoTheme {
 
   static TextStyle actionSheetMessageStyle({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Text',
-    fontSize: 13.sp,
+    fontSize: 12.sp,
     fontWeight: FontWeight.w400,
     color: isDark
         ? CupertinoColors.secondaryLabel.darkColor
@@ -470,7 +471,7 @@ class AppCupertinoTheme {
 
   static TextStyle alertTitleStyle({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Text',
-    fontSize: 17.sp,
+    fontSize: 16.sp,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.41,
     color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
@@ -478,7 +479,7 @@ class AppCupertinoTheme {
 
   static TextStyle alertMessageStyle({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Text',
-    fontSize: 13.sp,
+    fontSize: 12.sp,
     fontWeight: FontWeight.w400,
     letterSpacing: -0.08,
     color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
@@ -528,7 +529,7 @@ class AppCupertinoTheme {
 
   static TextStyle largeTitle({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Display',
-    fontSize: 34.sp,
+    fontSize: 32.sp,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.37,
     height: 1.21,
@@ -546,7 +547,7 @@ class AppCupertinoTheme {
 
   static TextStyle title2({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Display',
-    fontSize: 22.sp,
+    fontSize: 20.sp,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.35,
     height: 1.27,
@@ -564,7 +565,7 @@ class AppCupertinoTheme {
 
   static TextStyle headline({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Text',
-    fontSize: 17.sp,
+    fontSize: 16.sp,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.41,
     height: 1.47,
@@ -573,7 +574,7 @@ class AppCupertinoTheme {
 
   static TextStyle body({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Text',
-    fontSize: 17.sp,
+    fontSize: 16.sp,
     fontWeight: FontWeight.w400,
     letterSpacing: -0.41,
     height: 1.47,
@@ -591,7 +592,7 @@ class AppCupertinoTheme {
 
   static TextStyle subheadline({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Text',
-    fontSize: 15.sp,
+    fontSize: 14.sp,
     fontWeight: FontWeight.w400,
     letterSpacing: -0.24,
     height: 1.53,
@@ -600,7 +601,7 @@ class AppCupertinoTheme {
 
   static TextStyle footnote({bool isDark = false}) => TextStyle(
     fontFamily: '.SF Pro Text',
-    fontSize: 13.sp,
+    fontSize: 12.sp,
     fontWeight: FontWeight.w400,
     letterSpacing: -0.08,
     height: 1.54,

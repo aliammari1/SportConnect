@@ -13,7 +13,6 @@ class NotificationState {
     this.selectedNotificationIds = const [],
     this.filter = NotificationFilter.all,
     this.userId,
-    this.notifications = const AsyncLoading(),
   });
   final bool isLoading;
   final String? errorMessage;
@@ -23,28 +22,30 @@ class NotificationState {
   /// The UID of the currently authenticated user; null when signed out.
   final String? userId;
 
-  /// Live notifications for the current user, driven via [ref.listen].
-  final AsyncValue<List<NotificationModel>> notifications;
-
   NotificationState copyWith({
     bool? isLoading,
-    String? errorMessage,
+    // Use the [_Unset] sentinel so callers that do not pass errorMessage
+    // preserve the current value, while clearError can explicitly set null.
+    Object? errorMessage = _unset,
     List<String>? selectedNotificationIds,
     NotificationFilter? filter,
     String? userId,
-    AsyncValue<List<NotificationModel>>? notifications,
   }) {
     return NotificationState(
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
+      errorMessage: errorMessage == _unset
+          ? this.errorMessage
+          : errorMessage as String?,
       selectedNotificationIds:
           selectedNotificationIds ?? this.selectedNotificationIds,
       filter: filter ?? this.filter,
       userId: userId ?? this.userId,
-      notifications: notifications ?? this.notifications,
     );
   }
 }
+
+/// Private sentinel for the [NotificationState.copyWith] errorMessage param.
+const Object _unset = Object();
 
 /// Filter options for notifications
 enum NotificationFilter { all, unread, rides, payments, messages }
@@ -59,16 +60,11 @@ class NotificationViewModel extends _$NotificationViewModel {
     // filter) is intentionally reset, which is the correct behaviour.
     final userId = ref.watch(currentAuthUidProvider).value;
 
-    // Subscribe to the notifications stream via ref.listen so that incoming
-    // Firestore emissions do NOT re-run build() (which would reset isLoading).
-    ref.listen(userNotificationsProvider, (_, next) {
-      state = state.copyWith(notifications: next);
-    });
-
-    return NotificationState(
-      userId: userId,
-      notifications: ref.read(userNotificationsProvider),
-    );
+    // The notifications stream is consumed directly by the UI via
+    // `ref.watch(userNotificationsProvider)`; this notifier only owns transient
+    // UI state (selection, filter, loading, errors) and actions. Mirroring the
+    // stream here would observe it twice and risk drifting from the provider.
+    return NotificationState(userId: userId);
   }
 
   /// Force-refresh the notifications stream.
@@ -182,7 +178,7 @@ class NotificationViewModel extends _$NotificationViewModel {
     state = state.copyWith(selectedNotificationIds: []);
   }
 
-  /// Delete selected notifications
+  /// Delete selected notifications atomically via a Firestore batch write.
   Future<void> deleteSelected() async {
     if (state.selectedNotificationIds.isEmpty) return;
 
@@ -190,9 +186,9 @@ class NotificationViewModel extends _$NotificationViewModel {
 
     try {
       final repository = ref.read(notificationRepositoryProvider);
-      for (final id in state.selectedNotificationIds) {
-        await repository.archiveNotification(id);
-      }
+      await repository.archiveSelected(
+        List<String>.from(state.selectedNotificationIds),
+      );
       if (!ref.mounted) return;
       state = state.copyWith(isLoading: false, selectedNotificationIds: []);
     } on Exception catch (e) {
@@ -204,9 +200,9 @@ class NotificationViewModel extends _$NotificationViewModel {
     }
   }
 
-  /// Clear error message
+  /// Clear error message explicitly.
   void clearError() {
-    state = state.copyWith();
+    state = state.copyWith(errorMessage: null);
   }
 }
 
@@ -220,16 +216,4 @@ Stream<List<NotificationModel>> userNotifications(Ref ref) {
 
   final repository = ref.watch(notificationRepositoryProvider);
   return repository.streamUserNotifications(userId);
-}
-
-/// Provider for unread notification count
-@riverpod
-Stream<int> unreadNotificationCount(Ref ref) {
-  final userId = ref.watch(currentAuthUidProvider).value;
-  if (userId == null) {
-    return Stream.value(0);
-  }
-
-  final repository = ref.watch(notificationRepositoryProvider);
-  return repository.streamUnreadCount(userId);
 }

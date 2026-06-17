@@ -717,7 +717,7 @@ class AddressAutocompleteFieldState
               Text(
                 widget.label!,
                 style: TextStyle(
-                  fontSize: 12.5.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
                   color: hasError ? AppColors.error : AppColors.textSecondary,
                 ),
@@ -805,7 +805,7 @@ class AddressAutocompleteFieldState
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 15.sp,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w700,
                             color: hasValue
                                 ? AppColors.textPrimary
@@ -999,7 +999,7 @@ class AddressAutocompleteFieldState
                         child: Text(
                           _errorText!,
                           style: TextStyle(
-                            fontSize: 11.5.sp,
+                            fontSize: 11.sp,
                             height: 1.25,
                             fontWeight: FontWeight.w500,
                             color: AppColors.error,
@@ -1097,7 +1097,7 @@ class _InlineSearchBoxState extends State<_InlineSearchBox> {
               enabled: widget.enabled,
               textInputAction: TextInputAction.search,
               style: TextStyle(
-                fontSize: 14.5.sp,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
@@ -1173,7 +1173,7 @@ class _InlineCurrentLocationOption extends StatelessWidget {
           color: accent.withValues(alpha: 0.065),
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-color: accent.withValues(alpha: 0.16),
+            color: accent.withValues(alpha: 0.16),
           ),
         ),
         child: Row(
@@ -1209,7 +1209,7 @@ color: accent.withValues(alpha: 0.16),
                         ? 'Getting your location...'
                         : 'Use current location',
                     style: TextStyle(
-                      fontSize: 13.5.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                     ),
@@ -1220,7 +1220,7 @@ color: accent.withValues(alpha: 0.16),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 11.5.sp,
+                      fontSize: 11.sp,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
                     ),
@@ -1260,7 +1260,7 @@ class _InlineMapToggle extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 12.h),
         decoration: BoxDecoration(
-color: accent.withValues(alpha: 0.075),
+          color: accent.withValues(alpha: 0.075),
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color: expanded ? accent : accent.withValues(alpha: 0.18),
@@ -1290,7 +1290,7 @@ color: accent.withValues(alpha: 0.075),
                   Text(
                     AppLocalizations.of(context).pickOnMap,
                     style: TextStyle(
-                      fontSize: 13.5.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                     ),
@@ -1301,7 +1301,7 @@ color: accent.withValues(alpha: 0.075),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 11.5.sp,
+                      fontSize: 11.sp,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
                     ),
@@ -1510,7 +1510,7 @@ class _InlineMapExpansion extends StatelessWidget {
                               Text(
                                 AppLocalizations.of(context).finding_address,
                                 style: TextStyle(
-                                  fontSize: 12.5.sp,
+                                  fontSize: 12.sp,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textSecondary,
                                 ),
@@ -1535,7 +1535,7 @@ class _InlineMapExpansion extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 13.5.sp,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.textPrimary,
                                 ),
@@ -1552,7 +1552,7 @@ class _InlineMapExpansion extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 11.5.sp,
+                                  fontSize: 11.sp,
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.textSecondary,
                                 ),
@@ -1791,7 +1791,7 @@ class _SuggestionTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13.8.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                     ),
@@ -1803,7 +1803,7 @@ class _SuggestionTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11.8.sp,
+                        fontSize: 12.sp,
                         height: 1.25,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textSecondary,
@@ -1896,7 +1896,7 @@ class _SelectedAddressPreview extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11.5.sp,
+                        fontSize: 11.sp,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textSecondary,
                       ),
@@ -1927,7 +1927,7 @@ class _SelectedAddressPreview extends StatelessWidget {
               label: Text(
                 AppLocalizations.of(context).use_this_address,
                 style: TextStyle(
-                  fontSize: 13.5.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -1979,7 +1979,7 @@ class _PanelHint extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 13.5.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
@@ -1988,7 +1988,7 @@ class _PanelHint extends StatelessWidget {
                 Text(
                   message,
                   style: TextStyle(
-                    fontSize: 11.8.sp,
+                    fontSize: 12.sp,
                     height: 1.3,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
@@ -2087,7 +2087,7 @@ class _SmallStatusPill extends StatelessWidget {
           Text(
             text,
             style: TextStyle(
-              fontSize: 10.5.sp,
+              fontSize: 10.sp,
               fontWeight: FontWeight.w800,
               color: accent,
             ),

@@ -56,13 +56,13 @@ class EventRepository {
   }
 
   List<String> _premiumEventChatParticipants({
-    required bool creatorIsPremium,
     required String creatorId,
+    required bool creatorIsPremium,
     required bool userIsPremium,
     required String userId,
   }) {
     return <String>{
-      creatorId,
+      if (creatorIsPremium) creatorId,
       if (userIsPremium) userId,
     }.toList();
   }
@@ -79,7 +79,6 @@ class EventRepository {
     required String chatId,
     required EventModel event,
     required List<String> participantIds,
-    required DateTime now,
   }) {
     return {
       'id': chatId,
@@ -130,13 +129,14 @@ class EventRepository {
         toFirestore: (model, _) => model.toJson(),
       );
 
+  /// Returns a new Firestore-generated event document ID without writing anything.
+  String generateEventId() => _eventsCollection.doc().id;
+
   Future<String> createEvent(EventModel event) async {
-    final docRef = _eventsCollection.doc();
-    final eventWithId = event.copyWith(
-      id: docRef.id,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+    final docRef = event.id.isNotEmpty
+        ? _eventsCollection.doc(event.id)
+        : _eventsCollection.doc();
+    final eventWithId = event.copyWith(id: docRef.id);
 
     final recurringInfo = eventWithId.isRecurring
         ? 'recurring=true, pattern=${eventWithId.recurringPattern?.label}, endDate=${eventWithId.recurringEndDate}'
@@ -150,7 +150,14 @@ class EventRepository {
       '$recurringInfo',
     );
 
-    await docRef.set(eventWithId);
+    final rawDocRef = _firestore
+        .collection(AppConstants.eventsCollection)
+        .doc(docRef.id);
+    await rawDocRef.set({
+      ...eventWithId.toJson(),
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
     return docRef.id;
   }
 
@@ -167,27 +174,88 @@ class EventRepository {
         .map((snap) => snap.exists ? snap.data() : null);
   }
 
+  /// Fields a creator is permitted to edit. Deliberately excludes
+  /// `participantIds`, `creatorId` and `rideStatuses` so an edit never clobbers
+  /// concurrent atomic joins/leaves or reassigns ownership (those are mutated
+  /// only via dedicated transactional/array writes).
+  static const _editableEventFields = {
+    'title',
+    'type',
+    'location',
+    'startsAt',
+    'endsAt',
+    'description',
+    'imageUrl',
+    'maxParticipants',
+    'isRecurring',
+    'recurringPattern',
+    'recurringEndDate',
+    'costSplitEnabled',
+  };
+
   Future<void> updateEvent(EventModel event) async {
-    await _eventsCollection.doc(event.id).update({
-      ...event.toJson(),
-      'updatedAt': DateTime.now(),
-    });
+    final rawDocRef = _firestore
+        .collection(AppConstants.eventsCollection)
+        .doc(event.id);
+    final json = event.toJson();
+    final payload = <String, dynamic>{
+      for (final key in _editableEventFields)
+        if (json.containsKey(key)) key: json[key],
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    await rawDocRef.update(payload);
   }
 
   Future<void> deleteEvent(String eventId) async {
+    // Resolve the chat id before the event doc is gone, then deactivate the
+    // associated group chat so it is not orphaned after a hard delete.
+    final event = await getEventById(eventId);
     await _eventsCollection.doc(eventId).delete();
+    if (event != null) {
+      await _deactivateEventChat(event);
+    }
   }
 
   Future<void> cancelEvent(String eventId) async {
-    await _eventsCollection.doc(eventId).update({
+    final event = await getEventById(eventId);
+    await _firestore
+        .collection(AppConstants.eventsCollection)
+        .doc(eventId)
+        .update({
       'isActive': false,
-      'updatedAt': DateTime.now(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
+    if (event != null) {
+      await _deactivateEventChat(event);
+    }
+  }
+
+  /// Deactivates the event group chat (best-effort) so a cancelled/deleted
+  /// event does not leave a live chat behind. Only writes if the chat doc
+  /// already exists; the merge write never resurrects a missing chat.
+  Future<void> _deactivateEventChat(EventModel event) async {
+    final chatId = _resolveEventChatId(event);
+    final chatRef = _firestore
+        .collection(AppConstants.chatsCollection)
+        .doc(chatId);
+    try {
+      final chatSnap = await chatRef.get();
+      if (!chatSnap.exists) return;
+      await chatRef.set(
+        {
+          'isActive': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } on Exception catch (e, st) {
+      // Best-effort: a failure here must not abort the cancel/delete.
+      TalkerService.error('deactivateEventChat failed', e, st);
+    }
   }
 
   Future<void> joinEvent(String eventId, String userId) async {
     final docRef = _eventsCollection.doc(eventId);
-    final now = DateTime.now();
 
     await _firestore.runTransaction((tx) async {
       final snap = await tx.get(docRef);
@@ -196,6 +264,18 @@ class EventRepository {
       }
 
       final event = snap.data()!;
+
+      // Server-side enforcement of the same invariant the UI assumes
+      // (the join button is gated on isUpcoming). The auto-join-on-booking
+      // path bypasses the UI, so a cancelled or already-ended event must be
+      // rejected here too.
+      if (!event.isActive) {
+        throw Exception('This event has been cancelled.');
+      }
+      if (event.hasEnded) {
+        throw Exception('This event has already ended.');
+      }
+
       final participants = List<String>.from(event.participantIds);
 
       if (participants.contains(userId)) {
@@ -209,7 +289,7 @@ class EventRepository {
 
       tx.update(docRef, {
         'participantIds': FieldValue.arrayUnion([userId]),
-        'updatedAt': now,
+        'updatedAt': FieldValue.serverTimestamp(),
       });
     });
   }
@@ -218,7 +298,6 @@ class EventRepository {
     required EventModel event,
     required String userId,
   }) async {
-    final now = DateTime.now();
     final eventRef = _eventsCollection.doc(event.id);
 
     return _firestore.runTransaction((tx) async {
@@ -244,6 +323,8 @@ class EventRepository {
         );
       }
 
+      // creatorIsPremium is checked so the creator is only included
+      // in the participant list when they hold a premium subscription.
       final creatorIsPremium = await _isPremiumSubscriber(
         tx: tx,
         userId: latestEvent.creatorId,
@@ -252,8 +333,8 @@ class EventRepository {
       final chatId = _resolveEventChatId(latestEvent);
 
       final participantIds = _premiumEventChatParticipants(
-        creatorIsPremium: creatorIsPremium,
         creatorId: latestEvent.creatorId,
+        creatorIsPremium: creatorIsPremium,
         userIsPremium: userIsPremium,
         userId: userId,
       );
@@ -277,9 +358,20 @@ class EventRepository {
             chatId: chatId,
             event: latestEvent,
             participantIds: participantIds,
-            now: now,
           ),
         );
+      }
+
+      // Persist the resolved chat id back onto the event so chatGroupId
+      // becomes authoritative (rather than perpetually null and silently
+      // falling back to event.id via _resolveEventChatId). Done inside the
+      // same transaction for atomicity.
+      final configuredChatId = latestEvent.chatGroupId?.trim();
+      if (configuredChatId == null || configuredChatId.isEmpty) {
+        tx.update(eventRef, {
+          'chatGroupId': chatId,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       }
 
       return chatId;
@@ -288,9 +380,9 @@ class EventRepository {
 
   Future<void> leaveEvent(String eventId, String userId) async {
     final docRef = _eventsCollection.doc(eventId);
-    final now = DateTime.now();
 
     await _firestore.runTransaction((tx) async {
+      // All reads must precede all writes inside a Firestore transaction.
       final snap = await tx.get(docRef);
       if (!snap.exists) {
         throw Exception('Event not found.');
@@ -303,10 +395,32 @@ class EventRepository {
         return;
       }
 
+      // Keep the event group-chat membership in sync: a user who leaves the
+      // event must also be removed from its chat, otherwise they keep
+      // receiving messages/notifications. Read the chat doc up front so the
+      // membership removal can be batched with the participant removal below.
+      final chatId = _resolveEventChatId(event);
+      final chatRef = _firestore
+          .collection(AppConstants.chatsCollection)
+          .doc(chatId);
+      final chatSnap = await tx.get(chatRef);
+
       tx.update(docRef, {
         'participantIds': FieldValue.arrayRemove([userId]),
-        'updatedAt': now,
+        'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      // Merge write so it never resurrects a non-existent chat doc.
+      if (chatSnap.exists) {
+        tx.set(
+          chatRef,
+          {
+            'participantIds': FieldValue.arrayRemove([userId]),
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
     });
   }
 
@@ -409,46 +523,32 @@ class EventRepository {
     String userId,
     String status,
   ) async {
-    await _eventsCollection.doc(eventId).update({
+    await _firestore
+        .collection(AppConstants.eventsCollection)
+        .doc(eventId)
+        .update({
       'rideStatuses.$userId': status,
-      'updatedAt': DateTime.now(),
-    });
-  }
-
-  Future<void> linkRideToEvent(String eventId, String rideId) async {
-    await _eventsCollection.doc(eventId).update({
-      'linkedRideIds': FieldValue.arrayUnion([rideId]),
-      'updatedAt': DateTime.now(),
-    });
-  }
-
-  Future<void> unlinkRideFromEvent(String eventId, String rideId) async {
-    await _eventsCollection.doc(eventId).update({
-      'linkedRideIds': FieldValue.arrayRemove([rideId]),
-      'updatedAt': DateTime.now(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
   Future<void> setMeetupPin(String eventId, LocationPoint location) async {
-    await _eventsCollection.doc(eventId).update({
+    await _firestore
+        .collection(AppConstants.eventsCollection)
+        .doc(eventId)
+        .update({
       'meetupPinLocation': location.toJson(),
-      'updatedAt': DateTime.now(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
   Future<void> setChatGroupId(String eventId, String chatGroupId) async {
-    await _eventsCollection.doc(eventId).update({
+    await _firestore
+        .collection(AppConstants.eventsCollection)
+        .doc(eventId)
+        .update({
       'chatGroupId': chatGroupId,
-      'updatedAt': DateTime.now(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
-  }
-
-  Stream<List<EventModel>> streamEventsWithLinkedRides(String eventId) {
-    // This queries events that have at least one linked ride
-    return _eventsCollection
-        .where('linkedRideIds', arrayContains: eventId)
-        .limit(50)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 }

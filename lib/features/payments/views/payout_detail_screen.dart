@@ -6,8 +6,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/utils/currency_formatter.dart';
 import 'package:sport_connect/core/utils/payment_error_handler.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/icon_label_chip.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/payments/models/payment_model.dart';
 import 'package:sport_connect/features/payments/view_models/payment_view_model.dart';
@@ -32,6 +34,7 @@ class _PayoutDetailScreenState extends ConsumerState<PayoutDetailScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.payoutDetails,
         leading: IconButton(
           icon: Icon(Icons.adaptive.arrow_back_rounded),
@@ -286,7 +289,7 @@ class _AmountCard extends StatelessWidget {
           ),
           SizedBox(height: 10.h),
           Text(
-            '€${(payout.amountInCents / 100).toStringAsFixed(2)}',
+            CurrencyFormatter.fromCents(payout.amountInCents),
             style: TextStyle(
               fontSize: 44.sp,
               fontWeight: FontWeight.w800,
@@ -299,14 +302,32 @@ class _AmountCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (payout.isInstantPayout)
-                _Pill(
+                IconLabelChip(
                   icon: Icons.bolt_rounded,
                   label: l10n.instantPayout,
+                  background: Colors.white.withValues(alpha: 0.2),
+                  foreground: Colors.white,
+                  borderRadius: 20,
+                  bordered: false,
+                  iconSize: 13,
+                  gap: 5,
+                  fontWeight: FontWeight.w600,
+                  horizontalPadding: 12,
+                  verticalPadding: 5,
                 ),
               if (payout.isInstantPayout) SizedBox(width: 8.w),
-              _Pill(
+              IconLabelChip(
                 icon: _statusIcon(payout.status),
                 label: _statusLabel(l10n, payout.status),
+                background: Colors.white.withValues(alpha: 0.2),
+                foreground: Colors.white,
+                borderRadius: 20,
+                bordered: false,
+                iconSize: 13,
+                gap: 5,
+                fontWeight: FontWeight.w600,
+                horizontalPadding: 12,
+                verticalPadding: 5,
               ),
             ],
           ),
@@ -330,38 +351,6 @@ class _AmountCard extends StatelessWidget {
     PayoutStatus.inTransit => l.payoutInTransit,
     PayoutStatus.pending => l.statusPending,
   };
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill({required this.icon, required this.label});
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13.sp, color: Colors.white),
-          SizedBox(width: 5.w),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ─── Timeline ─────────────────────────────────────────────────────────────────

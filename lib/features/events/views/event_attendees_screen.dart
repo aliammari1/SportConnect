@@ -10,9 +10,9 @@ import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
+import 'package:sport_connect/features/events/view_models/event_participants_view_model.dart';
 import 'package:sport_connect/features/events/view_models/event_view_model.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_view_model.dart';
-import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
 class EventAttendeesScreen extends ConsumerWidget {
@@ -27,6 +27,7 @@ class EventAttendeesScreen extends ConsumerWidget {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           icon: Icon(Icons.adaptive.arrow_back_rounded, size: 20.sp),
           onPressed: () => context.pop(),
@@ -62,7 +63,7 @@ class EventAttendeesScreen extends ConsumerWidget {
                     Text(
                       l10n.noResultsFound,
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -70,14 +71,27 @@ class EventAttendeesScreen extends ConsumerWidget {
                 ),
               );
             }
+            // Batch-fetch every attendee profile through a single provider
+            // (chunked whereIn) instead of one document listener per card.
+            final profilesAsync = ref.watch(
+              eventParticipantProfilesProvider(
+                eventParticipantProfilesKey(event.participantIds),
+              ),
+            );
+            final profiles = profilesAsync.value ?? const <String, UserModel>{};
+
             return ListView.separated(
               padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
               itemCount: event.participantIds.length,
               separatorBuilder: (_, _) => SizedBox(height: 8.h),
-              itemBuilder: (context, i) => _AttendeeCard(
-                userId: event.participantIds[i],
-                eventId: eventId,
-              ),
+              itemBuilder: (context, i) {
+                final userId = event.participantIds[i];
+                return _AttendeeCard(
+                  userId: userId,
+                  eventId: eventId,
+                  profile: profiles[userId],
+                );
+              },
             );
           },
         ),
@@ -119,16 +133,21 @@ class _AttendeeCurrentUser {
 }
 
 class _AttendeeCard extends ConsumerWidget {
-  const _AttendeeCard({required this.userId, required this.eventId});
+  const _AttendeeCard({
+    required this.userId,
+    required this.eventId,
+    required this.profile,
+  });
 
   final String userId;
   final String eventId;
 
+  /// Resolved profile from the batched [eventParticipantProfilesProvider];
+  /// null while the batch is still loading or if the user document is missing.
+  final UserModel? profile;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(
-      userProfileProvider(userId).select((a) => a.value),
-    );
     final currentUser = ref.watch(
       currentUserProvider.select((value) {
         final user = value.value;

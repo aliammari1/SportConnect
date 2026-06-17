@@ -30,8 +30,40 @@ abstract class RideBooking with _$RideBooking {
     @TimestampConverter() DateTime? paidAt,
     // Pickup OTP — shown to passenger, driver enters this to confirm pickup
     String? pickupOtp,
+    // Per-seat price snapshot captured at booking time (defends against the
+    // driver editing the ride price after a passenger has booked).
+    int? pricePerSeatInCents,
+    // Stamped when the booking is cancelled (by passenger or driver).
+    @TimestampConverter() DateTime? cancelledAt,
   }) = _RideBooking;
+  const RideBooking._();
 
   factory RideBooking.fromJson(Map<String, dynamic> json) =>
       _$RideBookingFromJson(json);
+
+  /// Whether the booking is still awaiting a driver decision.
+  bool get isPending => status == BookingStatus.pending;
+
+  /// Whether the booking has been confirmed by the driver.
+  bool get isAccepted => status == BookingStatus.accepted;
+
+  /// Whether the booking is in a terminal state (no further transitions).
+  bool get isTerminal =>
+      status == BookingStatus.rejected ||
+      status == BookingStatus.cancelled ||
+      status == BookingStatus.completed;
+
+  /// Whether the booking is still "live" (counts against ride seats).
+  bool get isActive =>
+      status == BookingStatus.pending || status == BookingStatus.accepted;
+
+  /// Whether a Stripe payment has been captured for this booking.
+  bool get isPaid => paidAt != null && paymentIntentId != null;
+
+  /// Total amount due for this booking, when a price snapshot is available.
+  int? get totalAmountInCents =>
+      pricePerSeatInCents != null ? pricePerSeatInCents! * seatsBooked : null;
+
+  /// A paid booking is refundable until it has been completed.
+  bool get isRefundable => isPaid && status != BookingStatus.completed;
 }

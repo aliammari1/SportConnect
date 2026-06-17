@@ -507,7 +507,7 @@ class DailyChallengeCard extends StatelessWidget {
                     Text(
                       description,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.textSecondary,
                       ),
                     ),

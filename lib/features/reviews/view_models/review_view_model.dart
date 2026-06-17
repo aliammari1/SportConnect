@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/features/profile/repositories/profile_repository.dart';
+import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
 import 'package:sport_connect/features/reviews/models/review_model.dart';
 import 'package:sport_connect/features/reviews/repositories/review_repository.dart';
 
@@ -41,6 +42,10 @@ class ReviewFormState {
   bool get isValid => rating > 0 && rating <= 5;
 }
 
+/// Sentinel used by [ReviewsListState.copyWith] to distinguish "argument
+/// omitted" (preserve current value) from "explicitly passed null" (clear).
+const Object _sentinel = Object();
+
 /// State for the reviews list screen
 class ReviewsListState {
   const ReviewsListState({
@@ -65,8 +70,8 @@ class ReviewsListState {
     List<ReviewModel>? reviews,
     RatingStats? stats,
     bool? isLoading,
-    String? error,
-    ReviewType? filterType,
+    Object? error = _sentinel,
+    Object? filterType = _sentinel,
     bool? hasMore,
     DocumentSnapshot? nextCursor,
     bool clearCursor = false,
@@ -75,8 +80,14 @@ class ReviewsListState {
       reviews: reviews ?? this.reviews,
       stats: stats ?? this.stats,
       isLoading: isLoading ?? this.isLoading,
-      error: error,
-      filterType: filterType,
+      // Use a sentinel so callers can preserve the existing value (omit the
+      // arg) or explicitly clear it by passing null. Previously these were
+      // reset to null on every copyWith, silently wiping the active filter
+      // (e.g. during loadMore) and the error.
+      error: error == _sentinel ? this.error : error as String?,
+      filterType: filterType == _sentinel
+          ? this.filterType
+          : filterType as ReviewType?,
       hasMore: hasMore ?? this.hasMore,
       nextCursor: clearCursor ? null : (nextCursor ?? this.nextCursor),
     );
@@ -168,6 +179,16 @@ class ReviewFormViewModel extends _$ReviewFormViewModel {
         ),
       );
 
+      // Invalidate the reviewee's review/rating providers so any screen
+      // currently showing their reviews or aggregate rating refetches the
+      // newly-written data. createReview atomically writes both the review doc
+      // and the reviewee's star-bucket aggregate, but these are one-shot
+      // Future providers that otherwise serve stale cached values until a
+      // manual refresh/restart.
+      if (ref.mounted) {
+        invalidateRevieweeProviders(ref, revieweeId: revieweeId, rideId: rideId);
+      }
+
       // Award XP for submitting a review
       if (!ref.mounted) return true;
       try {
@@ -181,13 +202,18 @@ class ReviewFormViewModel extends _$ReviewFormViewModel {
       // Reset form after successful submission
       state = const ReviewFormState();
       return true;
-    } on Exception catch (e) {
+    } catch (e) {
       if (!ref.mounted) return false;
       state = state.copyWith(
         isSubmitting: false,
         error: 'Failed to submit review: $e',
       );
       return false;
+    } finally {
+      // Ensure isSubmitting is always reset if the state was not already updated
+      if (ref.mounted && state.isSubmitting) {
+        state = state.copyWith(isSubmitting: false);
+      }
     }
   }
 }
@@ -309,4 +335,42 @@ class ReviewResponseViewModel extends _$ReviewResponseViewModel {
 Future<List<ReviewModel>> rideReviews(Ref ref, String rideId) async {
   final repo = ref.read(reviewRepositoryProvider);
   return repo.getReviewsForRide(rideId);
+}
+
+/// Provider exposing the rides [userId] participated in (and completed) but has
+/// not yet reviewed the counterpart for. Each entry is a map with rideId,
+/// revieweeId, revieweeName, revieweePhotoUrl, type, rideDate, origin and
+/// destination keys (see [ReviewRepository.getPendingReviews]). Surfaces a
+/// "reviews you owe" list so the review flow is discoverable outside the
+/// post-completion prompt.
+@riverpod
+Future<List<Map<String, dynamic>>> pendingReviews(Ref ref, String userId) {
+  final repo = ref.read(reviewRepositoryProvider);
+  return repo.getPendingReviews(userId);
+}
+
+/// Invalidate every cached provider that reflects [revieweeId]'s reviews or
+/// aggregate rating after a review for them is created or deleted.
+///
+/// Reviews owns the wiring contract for keeping the cross-feature rating in
+/// sync, so both review entry points (passenger->driver via
+/// [ReviewFormViewModel] and driver->passenger flows) must route through this
+/// helper. createReview/deleteReview write the review doc and the reviewee's
+/// star-bucket aggregate atomically, but the consuming providers are one-shot
+/// Futures (notably [userProfileProvider], which has a 5-minute keepAlive
+/// cache) and would otherwise serve stale data until a manual refresh.
+void invalidateRevieweeProviders(
+  Ref ref, {
+  required String revieweeId,
+  String? rideId,
+}) {
+  ref.invalidate(reviewsListViewModelProvider(revieweeId));
+  ref.invalidate(userReviewsProvider(revieweeId));
+  ref.invalidate(userRatingStatsProvider(revieweeId));
+  if (rideId != null) {
+    ref.invalidate(rideReviewsProvider(rideId));
+  }
+  // userProfile feeds the cross-feature asDriver/asRider.rating.average shown
+  // in profile, my_rides and driver_requests screens.
+  ref.invalidate(userProfileProvider(revieweeId));
 }

@@ -20,6 +20,7 @@ import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
+import 'package:sport_connect/core/widgets/rating_value.dart';
 import 'package:sport_connect/core/widgets/misc_feature_widgets.dart';
 import 'package:sport_connect/core/widgets/permission_dialog_helper.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
@@ -28,8 +29,10 @@ import 'package:sport_connect/features/home/view_models/rider_home_view_model.da
 import 'package:sport_connect/features/home/views/widgets/active_trip_banner.dart';
 import 'package:sport_connect/features/home/views/widgets/notification_badge.dart';
 import 'package:sport_connect/features/home/views/widgets/rider_home_feed.dart';
+import 'package:sport_connect/features/notifications/view_models/notification_view_model.dart';
 import 'package:sport_connect/features/rides/models/booking/ride_booking.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
+import 'package:sport_connect/features/rides/repositories/ride_repository.dart';
 import 'package:sport_connect/features/rides/view_models/ride_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
@@ -55,7 +58,6 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
   /// Whether the active-ride guard has already navigated (prevent re-entry).
   bool _hasAutoNavigatedToActiveRide = false;
   bool _isCheckingActiveRide = false;
-  String? _activeRideCheckedForUserId;
 
   // ── Map tile sources ───────────────────────────────────────
   final Map<String, String> _mapStyles = {
@@ -140,17 +142,35 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Select only route-switching fields — GPS data flows via ref.listen, not widget rebuild
-    ref.watch(
-      riderHomeViewModelProvider.select(
-        (s) => (s.locationState, s.showMapView),
-      ),
-    );
-    final vmState = ref.read(riderHomeViewModelProvider);
+    // Watch the full state so map UI fields consumed in _buildMapHome
+    // (currentLocation, nearbyQueryAnchor, searchRadius, showDistanceRadius,
+    // currentZoom, etc.) trigger a rebuild when they change, instead of
+    // rendering stale via ref.read.
+    final vmState = ref.watch(riderHomeViewModelProvider);
     final locationState = vmState.locationState;
 
     final userId = ref.watch(currentAuthUidProvider).value;
-    if (userId != null) unawaited(_checkForActiveRide(userId));
+    // Drive the active-ride check off the bookings stream so it only
+    // re-evaluates when bookings actually change — not on every GPS-driven
+    // rebuild (which previously re-ran an N+1 of Firestore reads each frame).
+    if (userId != null) {
+      // Evaluate the current bookings immediately (WidgetRef.listen does not
+      // support fireImmediately), then react to subsequent changes.
+      final currentBookings =
+          ref.read(bookingsByPassengerProvider(userId)).value;
+      if (currentBookings != null) {
+        unawaited(_checkForActiveRide(currentBookings));
+      }
+      ref.listen<AsyncValue<List<RideBooking>>>(
+        bookingsByPassengerProvider(userId),
+        (previous, next) {
+          final bookings = next.value;
+          if (bookings != null) {
+            unawaited(_checkForActiveRide(bookings));
+          }
+        },
+      );
+    }
 
     // Auto-follow map when location changes (only when map is visible)
     ref.listen<RiderHomeState>(riderHomeViewModelProvider, (previous, next) {
@@ -215,27 +235,28 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
     );
   }
 
-  Future<void> _checkForActiveRide(String userId) async {
-    if (_hasAutoNavigatedToActiveRide ||
-        _isCheckingActiveRide ||
-        _activeRideCheckedForUserId == userId) {
+  Future<void> _checkForActiveRide(List<RideBooking> bookings) async {
+    if (_hasAutoNavigatedToActiveRide || _isCheckingActiveRide) {
       return;
     }
 
     _isCheckingActiveRide = true;
-    _activeRideCheckedForUserId = userId;
 
     try {
       if (!mounted || !context.mounted) return;
-      final bookings = await ref.read(
-        bookingsByPassengerProvider(userId).future,
-      );
       final acceptedBookings = bookings.where(
         (booking) => booking.status == BookingStatus.accepted,
       );
 
       for (final booking in acceptedBookings) {
-        final ride = await ref.read(rideStreamProvider(booking.rideId).future);
+        // One-shot fetch instead of reading an autoDispose *stream* provider's
+        // .future transiently: the latter spins up a Firestore subscription
+        // with no keep-alive listener, which Riverpod disposes before its first
+        // emission here, throwing "disposed during loading state". A direct
+        // repository read avoids that churn for this fire-and-check flow.
+        final ride = await ref
+            .read(rideRepositoryProvider)
+            .getRideById(booking.rideId);
         if (!mounted || _hasAutoNavigatedToActiveRide) return;
 
         if (ride != null && ride.status == RideStatus.inProgress) {
@@ -294,7 +315,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
             Text(
               l10n.findRidesNearYou,
               style: TextStyle(
-                fontSize: 26.sp,
+                fontSize: 24.sp,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
@@ -306,7 +327,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
             Text(
               l10n.locationGateDescription,
               style: TextStyle(
-                fontSize: 15.sp,
+                fontSize: 14.sp,
                 color: AppColors.textSecondary,
                 height: 1.5,
               ),
@@ -472,7 +493,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
             Text(
               l10n.locationNotEnabled,
               style: TextStyle(
-                fontSize: 22.sp,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
@@ -497,7 +518,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                 label: Text(
                   l10n.browseByCity,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -544,7 +565,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
             Text(
               l10n.locationPermissionBlocked,
               style: TextStyle(
-                fontSize: 22.sp,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
@@ -571,7 +592,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                 label: Text(
                   l10n.openSettings,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -630,7 +651,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
             Text(
               l10n.locationServicesOff,
               style: TextStyle(
-                fontSize: 22.sp,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
@@ -665,7 +686,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                 label: Text(
                   l10n.openLocationSettings,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -703,7 +724,13 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
   // ─────────────────────────────────────────────────────────────
 
   Widget _buildFeedHome(RiderHomeState vmState) {
-    return RiderHomeFeed(onSearchTap: _showInlineSearchSheet);
+    // Per Flutter's adaptive-layout guidance ("don't gobble up all of the
+    // horizontal space"), constrain the feed to a readable max width and
+    // center it on large screens instead of letting it stretch edge-to-edge
+    // on iPad/desktop.
+    return MaxWidthContainer(
+      child: RiderHomeFeed(onSearchTap: _showInlineSearchSheet),
+    );
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -863,7 +890,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                                 context,
                               ).noRidesAvailableNearby,
                               style: TextStyle(
-                                fontSize: 13.sp,
+                                fontSize: 12.sp,
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -915,7 +942,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                     Text(
                       l10n.loadingRoute,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -969,7 +996,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                   Text(
                     l10n.navHome,
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.primary,
                     ),
@@ -989,8 +1016,14 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
 
   Widget _buildTopControls(AsyncValue<UserModel?> user) {
     final l10n = AppLocalizations.of(context);
-    // Watch unread notifications count from your provider
-    // final unreadCount = ref.watch(unreadNotificationsCountProvider).value ?? 0;
+    // Watch unread notifications count from the user notifications stream.
+    final unreadCount = ref
+        .watch(userNotificationsProvider)
+        .maybeWhen(
+          data: (notifications) =>
+              notifications.where((n) => !n.isRead).length,
+          orElse: () => 0,
+        );
 
     return SafeArea(
       child: Padding(
@@ -1071,7 +1104,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                     ],
                   ),
                   child: NotificationBadge(
-                    count: 0,
+                    count: unreadCount,
                     child: Icon(
                       Icons.notifications_outlined,
                       color: AppColors.textPrimary,
@@ -1472,7 +1505,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                     Text(
                       AppLocalizations.of(context).searchRadius,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
@@ -1493,7 +1526,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                       context,
                     ).valueKm(searchRadius.toStringAsFixed(1)),
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
                     ),
@@ -1653,7 +1686,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                       context,
                     ).valueMin(activeRoute.durationMinutes),
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -1826,7 +1859,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                                     Text(
                                       _formatDateShort(selectedDate),
                                       style: TextStyle(
-                                        fontSize: 13.sp,
+                                        fontSize: 12.sp,
                                         fontWeight: FontWeight.w500,
                                         color: AppColors.textPrimary,
                                       ),
@@ -1942,7 +1975,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                               return Text(
                                 l10n.valueAvailable(filtered.length),
                                 style: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: 12.sp,
                                   color: AppColors.textSecondary,
                                 ),
                               );
@@ -2016,7 +2049,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                                         ? l10n.tryADifferentDate
                                         : l10n.tryExpandingYourSearchRadius,
                                     style: TextStyle(
-                                      fontSize: 13.sp,
+                                      fontSize: 12.sp,
                                       color: AppColors.textSecondary,
                                     ),
                                   ),
@@ -2126,7 +2159,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                             Text(
                               name,
                               style: TextStyle(
-                                fontSize: 15.sp,
+                                fontSize: 14.sp,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
                               ),
@@ -2144,16 +2177,10 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                         SizedBox(height: 2.h),
                         Row(
                           children: [
-                            Icon(
-                              Icons.star_rounded,
-                              color: AppColors.starFilled,
-                              size: 14.sp,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              rating.average.toStringAsFixed(1),
-                              style: TextStyle(
-                                fontSize: 13.sp,
+                            RatingValue(
+                              rating: rating.average,
+                              valueStyle: TextStyle(
+                                fontSize: 12.sp,
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -2167,7 +2194,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                             Text(
                               time,
                               style: TextStyle(
-                                fontSize: 13.sp,
+                                fontSize: 12.sp,
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -2192,7 +2219,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                         (ride.pricePerSeatInCents / 100).toStringAsFixed(2),
                       ),
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primary,
                       ),
@@ -2237,7 +2264,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                             ? ride.origin.address
                             : l10n.pickupPoint,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           color: AppColors.textPrimary,
                         ),
                         maxLines: 1,
@@ -2249,7 +2276,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                             ? ride.destination.address
                             : l10n.destination,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           color: AppColors.textPrimary,
                         ),
                         maxLines: 1,
@@ -2378,7 +2405,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                                 ? ride.origin.address
                                 : l10n.pickupLocation,
                             style: TextStyle(
-                              fontSize: 13.sp,
+                              fontSize: 12.sp,
                               color: AppColors.textPrimary,
                             ),
                             maxLines: 1,
@@ -2390,7 +2417,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                                 ? ride.destination.address
                                 : l10n.destination,
                             style: TextStyle(
-                              fontSize: 13.sp,
+                              fontSize: 12.sp,
                               color: AppColors.textPrimary,
                             ),
                             maxLines: 1,
@@ -2423,22 +2450,13 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                               color: AppColors.textPrimary,
                             ),
                           ),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.star,
-                                color: AppColors.starFilled,
-                                size: 16.sp,
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                rating.average.toStringAsFixed(1),
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
+                          RatingValue(
+                            rating: rating.average,
+                            iconSize: 16,
+                            valueStyle: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ],
                       ),

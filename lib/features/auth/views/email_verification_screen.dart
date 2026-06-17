@@ -18,6 +18,12 @@ class EmailVerificationScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
+    // Start polling / initial verification check after the first frame so the
+    // notifier's build() stays side-effect-free. start() is idempotent.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(emailVerificationViewModelProvider.notifier).start();
+    });
+
     final isEmailVerified = ref.watch(
       emailVerificationViewModelProvider.select((s) => s.isEmailVerified),
     );
@@ -54,6 +60,7 @@ class EmailVerificationScreen extends ConsumerWidget {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.emailVerifyTitle,
       ),
       body: MaxWidthContainer(
@@ -139,7 +146,7 @@ class _VerificationActions extends ConsumerWidget {
           child: Text(
             l10n.useDifferentAccount,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
@@ -182,7 +189,7 @@ class _PendingState extends StatelessWidget {
         Text(
           l10n.emailVerifyHeading,
           style: TextStyle(
-            fontSize: 26.sp,
+            fontSize: 24.sp,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           ),
@@ -192,7 +199,7 @@ class _PendingState extends StatelessWidget {
           l10n.emailVerifySentTo,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 15.sp,
+            fontSize: 14.sp,
             color: AppColors.textSecondary,
             height: 1.5,
           ),
@@ -229,7 +236,7 @@ class _PendingState extends StatelessWidget {
             Text(
               l10n.emailVerifyWaiting,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 color: AppColors.textTertiary,
               ),
             ),
@@ -268,7 +275,7 @@ class _VerifiedState extends StatelessWidget {
         Text(
           l10n.emailVerified,
           style: TextStyle(
-            fontSize: 26.sp,
+            fontSize: 24.sp,
             fontWeight: FontWeight.w800,
             color: AppColors.success,
           ),
@@ -278,7 +285,7 @@ class _VerifiedState extends StatelessWidget {
           l10n.emailVerifiedRedirecting,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 15.sp,
+            fontSize: 14.sp,
             color: AppColors.textSecondary,
           ),
         ).animate().fadeIn(delay: 300.ms),

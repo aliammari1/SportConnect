@@ -8025,6 +8025,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get from_8 => 'From €8';
 
   @override
+  String get onboardingEstimatedEarning => '€16';
+
+  @override
   String get rides_available => 'RIDES AVAILABLE';
 
   @override
@@ -8151,11 +8154,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get get_paid_fornevery_ride =>
-      'Gagnez de l\'argent pour\\nchaque trajet';
+      'Gagnez de l\'argent pour\nchaque trajet';
 
   @override
   String get set_up_eur_payouts_in_minutes_andnreceive_earnings_automatically =>
-      'Configurez les paiements EUR en quelques minutes et\\nrecevez vos gains automatiquement.';
+      'Configurez les paiements EUR en quelques minutes et\nrecevez vos gains automatiquement.';
 
   @override
   String get eur_balance => 'Solde EUR';
@@ -8165,7 +8168,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get why_drivers_love_payouts_onnsportconnect =>
-      'Pourquoi les conducteurs apprécient les paiements sur\\nSportConnect';
+      'Pourquoi les conducteurs apprécient les paiements sur\nSportConnect';
 
   @override
   String get before_you_continue => 'Avant de continuer';
@@ -8182,7 +8185,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get your_account_is_connected_and_yourenall_set_to_receive_earnings =>
-      'Votre compte est connecté et vous êtes\\nprêt à recevoir vos gains.';
+      'Votre compte est connecté et vous êtes\nprêt à recevoir vos gains.';
 
   @override
   String get powered_by => 'Propulsé par';

@@ -86,6 +86,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           icon: Icon(
             Icons.close_rounded,
@@ -365,7 +366,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
         SizedBox(height: 8.h),
         Text(
           AppLocalizations.of(context).eventTapToAddPhoto,
-          style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -490,7 +491,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
           children: [
             Text(
               AppLocalizations.of(context).eventEndLabel,
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
             ),
             SizedBox(width: 8.w),
             Expanded(
@@ -510,7 +511,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
       child: Text(
         AppLocalizations.of(context).eventAddEndTime,
         style: TextStyle(
-          fontSize: 13.sp,
+          fontSize: 12.sp,
           color: AppColors.primary,
           fontWeight: FontWeight.w600,
         ),
@@ -652,7 +653,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                           context,
                         ).select_a_recurrence_pattern,
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: state.recurringPattern != null
                         ? AppColors.textPrimary
                         : AppColors.textTertiary,
@@ -696,7 +697,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                     )
                   : AppLocalizations.of(context).eventRepeatEndDate,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 color: state.recurringEndDate != null
                     ? AppColors.textPrimary
                     : AppColors.textTertiary,
@@ -785,7 +786,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
               Text(
                 _recurrenceLabel(AppLocalizations.of(context), pattern),
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   color: AppColors.textPrimary,
                 ),
@@ -1033,7 +1034,7 @@ class _DateTimeChip extends StatelessWidget {
                 label,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),

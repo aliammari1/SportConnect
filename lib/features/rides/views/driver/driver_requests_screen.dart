@@ -13,8 +13,11 @@ import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/theme/platform_adaptive.dart';
+import 'package:sport_connect/core/utils/currency_formatter.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
+import 'package:sport_connect/core/widgets/app_segmented_tab_view.dart';
+import 'package:sport_connect/core/widgets/icon_label_chip.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_view_model.dart';
@@ -47,11 +50,12 @@ class _DriverRequestsScreenState extends ConsumerState<DriverRequestsScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).rideRequests,
       ),
       body: MaxWidthContainer(
         maxWidth: kMaxWidthForm,
-        child: AdaptiveTabBarView(
+        child: AppSegmentedTabView(
           tabs: [
             if (pendingCount > 0)
               '${AppLocalizations.of(context).pending} ($pendingCount)'
@@ -470,7 +474,10 @@ class _DriverRequestsScreenState extends ConsumerState<DriverRequestsScreen> {
   }
 
   void _handleViewProfile(RideBooking booking) {
-    // Navigate to passenger profile
+    context.pushNamed(
+      AppRoutes.userProfile.name,
+      pathParameters: {'id': booking.passengerId},
+    );
   }
 
   void _handleViewRideDetails(RideBooking booking) {
@@ -534,7 +541,7 @@ class _DriverRequestsScreenState extends ConsumerState<DriverRequestsScreen> {
         },
         extra: passengerProfile,
       );
-    } on Exception {
+    } on Object {
       if (!mounted) return;
 
       context.pop();
@@ -638,7 +645,9 @@ class _PendingBookingCard extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Text(
-                      '€${((pricePerSeatInCents * booking.seatsBooked) / 100).toStringAsFixed(2)}',
+                      CurrencyFormatter.fromCents(
+                        pricePerSeatInCents * booking.seatsBooked,
+                      ),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
@@ -701,7 +710,7 @@ class _PendingBookingCard extends ConsumerWidget {
                                 Text(
                                   passengerRating.toStringAsFixed(1),
                                   style: TextStyle(
-                                    fontSize: 13.sp,
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textPrimary,
                                   ),
@@ -713,7 +722,7 @@ class _PendingBookingCard extends ConsumerWidget {
                                     booking.seatsBooked > 1 ? 's' : '',
                                   ),
                                   style: TextStyle(
-                                    fontSize: 13.sp,
+                                    fontSize: 12.sp,
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
@@ -815,14 +824,14 @@ class _PendingBookingCard extends ConsumerWidget {
                 // Time / seats chips
                 Row(
                   children: [
-                    _InfoChip(
+                    IconLabelChip(
                       icon: Icons.calendar_today_rounded,
                       label: AppLocalizations.of(
                         context,
                       ).dateAtTime(formattedDate, formattedTime),
                     ),
                     SizedBox(width: 8.w),
-                    _InfoChip(
+                    IconLabelChip(
                       icon: Icons.airline_seat_recline_normal_rounded,
                       label:
                           '${booking.seatsBooked} seat${booking.seatsBooked > 1 ? 's' : ''}',
@@ -855,7 +864,7 @@ class _PendingBookingCard extends ConsumerWidget {
                           child: Text(
                             booking.note!,
                             style: TextStyle(
-                              fontSize: 13.sp,
+                              fontSize: 12.sp,
                               color: AppColors.textSecondary,
                               fontStyle: FontStyle.italic,
                             ),
@@ -1005,7 +1014,7 @@ class _AcceptedBookingCard extends ConsumerWidget {
                     Text(
                       passengerName,
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
@@ -1025,7 +1034,9 @@ class _AcceptedBookingCard extends ConsumerWidget {
               ),
               if (pricePerSeatInCents > 0)
                 Text(
-                  '€${((pricePerSeatInCents * booking.seatsBooked) / 100).toStringAsFixed(2)}',
+                  CurrencyFormatter.fromCents(
+                    pricePerSeatInCents * booking.seatsBooked,
+                  ),
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w700,
@@ -1037,7 +1048,7 @@ class _AcceptedBookingCard extends ConsumerWidget {
           SizedBox(height: 12.h),
           Text(
             '$pickupAddress → $dropoffAddress',
-            style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
           ),
           SizedBox(height: 8.h),
           Row(
@@ -1162,7 +1173,7 @@ class _DeclinedBookingCard extends ConsumerWidget {
                 Text(
                   passengerName,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
@@ -1194,35 +1205,6 @@ class _DeclinedBookingCard extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────
 // SHARED HELPERS
 // ─────────────────────────────────────────────────────────────────
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.icon, required this.label});
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14.sp, color: AppColors.textSecondary),
-          SizedBox(width: 6.w),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _DeclineReasonSheet extends StatefulWidget {
   const _DeclineReasonSheet({required this.bookingId, required this.onDecline});
@@ -1319,7 +1301,7 @@ class _DeclineReasonSheetState extends State<_DeclineReasonSheet> {
                           Text(
                             reason,
                             style: TextStyle(
-                              fontSize: 15.sp,
+                              fontSize: 14.sp,
                               fontWeight: state.selectedReason == reason
                                   ? FontWeight.w600
                                   : FontWeight.w500,

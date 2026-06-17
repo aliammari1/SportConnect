@@ -41,7 +41,7 @@ class OfferSummaryRow extends StatelessWidget {
           child: Text(
             value,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
@@ -103,7 +103,7 @@ class OfferStepItem extends StatelessWidget {
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.bold,
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                       ),
                     ),
             ),

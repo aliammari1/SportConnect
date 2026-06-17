@@ -45,7 +45,7 @@ final class ReviewFormViewModelProvider
 }
 
 String _$reviewFormViewModelHash() =>
-    r'fe18c33efd646574ae1968eee419e59d860ecb07';
+    r'357bca7a0f12492f27c36996db83e66679d91969';
 
 /// ViewModel for submitting reviews
 
@@ -311,4 +311,119 @@ final class RideReviewsFamily extends $Family
 
   @override
   String toString() => r'rideReviewsProvider';
+}
+
+/// Provider exposing the rides [userId] participated in (and completed) but has
+/// not yet reviewed the counterpart for. Each entry is a map with rideId,
+/// revieweeId, revieweeName, revieweePhotoUrl, type, rideDate, origin and
+/// destination keys (see [ReviewRepository.getPendingReviews]). Surfaces a
+/// "reviews you owe" list so the review flow is discoverable outside the
+/// post-completion prompt.
+
+@ProviderFor(pendingReviews)
+final pendingReviewsProvider = PendingReviewsFamily._();
+
+/// Provider exposing the rides [userId] participated in (and completed) but has
+/// not yet reviewed the counterpart for. Each entry is a map with rideId,
+/// revieweeId, revieweeName, revieweePhotoUrl, type, rideDate, origin and
+/// destination keys (see [ReviewRepository.getPendingReviews]). Surfaces a
+/// "reviews you owe" list so the review flow is discoverable outside the
+/// post-completion prompt.
+
+final class PendingReviewsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Map<String, dynamic>>>,
+          List<Map<String, dynamic>>,
+          FutureOr<List<Map<String, dynamic>>>
+        >
+    with
+        $FutureModifier<List<Map<String, dynamic>>>,
+        $FutureProvider<List<Map<String, dynamic>>> {
+  /// Provider exposing the rides [userId] participated in (and completed) but has
+  /// not yet reviewed the counterpart for. Each entry is a map with rideId,
+  /// revieweeId, revieweeName, revieweePhotoUrl, type, rideDate, origin and
+  /// destination keys (see [ReviewRepository.getPendingReviews]). Surfaces a
+  /// "reviews you owe" list so the review flow is discoverable outside the
+  /// post-completion prompt.
+  PendingReviewsProvider._({
+    required PendingReviewsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'pendingReviewsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pendingReviewsHash();
+
+  @override
+  String toString() {
+    return r'pendingReviewsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Map<String, dynamic>>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Map<String, dynamic>>> create(Ref ref) {
+    final argument = this.argument as String;
+    return pendingReviews(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PendingReviewsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pendingReviewsHash() => r'997a480f7b0691a2e0c1d5a936a3bfa7ee006b2c';
+
+/// Provider exposing the rides [userId] participated in (and completed) but has
+/// not yet reviewed the counterpart for. Each entry is a map with rideId,
+/// revieweeId, revieweeName, revieweePhotoUrl, type, rideDate, origin and
+/// destination keys (see [ReviewRepository.getPendingReviews]). Surfaces a
+/// "reviews you owe" list so the review flow is discoverable outside the
+/// post-completion prompt.
+
+final class PendingReviewsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<Map<String, dynamic>>>,
+          String
+        > {
+  PendingReviewsFamily._()
+    : super(
+        retry: null,
+        name: r'pendingReviewsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Provider exposing the rides [userId] participated in (and completed) but has
+  /// not yet reviewed the counterpart for. Each entry is a map with rideId,
+  /// revieweeId, revieweeName, revieweePhotoUrl, type, rideDate, origin and
+  /// destination keys (see [ReviewRepository.getPendingReviews]). Surfaces a
+  /// "reviews you owe" list so the review flow is discoverable outside the
+  /// post-completion prompt.
+
+  PendingReviewsProvider call(String userId) =>
+      PendingReviewsProvider._(argument: userId, from: this);
+
+  @override
+  String toString() => r'pendingReviewsProvider';
 }

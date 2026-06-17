@@ -35,13 +35,6 @@ _RideModel _$RideModelFromJson(Map json) => _RideModel(
           ?.map((e) => e as String)
           .toList() ??
       const [],
-  bookings:
-      (json['bookings'] as List<dynamic>?)
-          ?.map(
-            (e) => RideBooking.fromJson(Map<String, dynamic>.from(e as Map)),
-          )
-          .toList() ??
-      const [],
   reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
   averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
   xpReward: (json['xpReward'] as num?)?.toInt() ?? 50,
@@ -51,11 +44,13 @@ _RideModel _$RideModelFromJson(Map json) => _RideModel(
       const [],
   createdAt: const TimestampConverter().fromJson(json['createdAt']),
   updatedAt: const TimestampConverter().fromJson(json['updatedAt']),
+  completedAt: const TimestampConverter().fromJson(json['completedAt']),
+  cancelledAt: const TimestampConverter().fromJson(json['cancelledAt']),
+  cancellationReason: json['cancellationReason'] as String?,
 );
 
 Map<String, dynamic> _$RideModelToJson(_RideModel instance) =>
     <String, dynamic>{
-      'id': instance.id,
       'driverId': instance.driverId,
       'route': instance.route.toJson(),
       'schedule': instance.schedule.toJson(),
@@ -69,7 +64,6 @@ Map<String, dynamic> _$RideModelToJson(_RideModel instance) =>
       'vehicleId': instance.vehicleId,
       'vehicleInfo': instance.vehicleInfo,
       'bookingIds': instance.bookingIds,
-      'bookings': instance.bookings.map((e) => e.toJson()).toList(),
       'reviewCount': instance.reviewCount,
       'averageRating': instance.averageRating,
       'xpReward': instance.xpReward,
@@ -77,6 +71,9 @@ Map<String, dynamic> _$RideModelToJson(_RideModel instance) =>
       'tags': instance.tags,
       'createdAt': const TimestampConverter().toJson(instance.createdAt),
       'updatedAt': const TimestampConverter().toJson(instance.updatedAt),
+      'completedAt': const TimestampConverter().toJson(instance.completedAt),
+      'cancelledAt': const TimestampConverter().toJson(instance.cancelledAt),
+      'cancellationReason': instance.cancellationReason,
     };
 
 const _$RideStatusEnumMap = {

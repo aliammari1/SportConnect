@@ -26,6 +26,7 @@ import 'package:sport_connect/core/widgets/premium_button.dart';
 import 'package:sport_connect/core/widgets/premium_card.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/events/models/event_model.dart';
+import 'package:sport_connect/features/events/view_models/event_participants_view_model.dart';
 import 'package:sport_connect/features/events/view_models/event_view_model.dart';
 import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
@@ -161,25 +162,32 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     final isOwner = _isCreator(event, userId);
     final isJoined = _isParticipant(event, userId);
 
-    return ResponsiveLayoutBuilder(
-      phone: (context) => _buildSingleColumnBody(
-        event,
-        userId,
-        detailState,
-        isPremiumSubscriber,
-        isDriver,
-        isOwner,
-        isJoined,
-      ),
-      tablet: (context) => _buildTabletBody(
-        event,
-        userId,
-        detailState,
-        isPremiumSubscriber,
-        isDriver,
-        isOwner,
-        isJoined,
-      ),
+    // Two-pane only when there's genuine room (landscape iPad ≥ 1100). In
+    // portrait the right pane gets too narrow and its content (e.g. the
+    // participants avatar row) overflows — so use the single-column body.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 1100) {
+          return _buildSingleColumnBody(
+            event,
+            userId,
+            detailState,
+            isPremiumSubscriber,
+            isDriver,
+            isOwner,
+            isJoined,
+          );
+        }
+        return _buildTabletBody(
+          event,
+          userId,
+          detailState,
+          isPremiumSubscriber,
+          isDriver,
+          isOwner,
+          isJoined,
+        );
+      },
     );
   }
 
@@ -266,7 +274,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                     Text(
                       event.description!,
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         height: 1.55,
                         color: AppColors.textSecondary,
                       ),
@@ -573,7 +581,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                           child: Text(
                             event.location.address,
                             style: TextStyle(
-                              fontSize: 13.sp,
+                              fontSize: 12.sp,
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -685,7 +693,17 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
               size: 22.sp,
             ),
             tooltip: AppLocalizations.of(context).eventDelete,
-            onPressed: () => _showDeleteConfirmation(event),
+            onPressed: () async {
+              final confirm = await _confirmDelete();
+              if (!confirm || !mounted) return;
+              unawaited(HapticFeedback.mediumImpact());
+              final deleted = await ref
+                  .read(
+                    eventDetailViewModelProvider(widget.eventId).notifier,
+                  )
+                  .deleteEvent();
+              if (deleted && mounted) context.pop();
+            },
           ),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -787,7 +805,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   Future<void> _showCancelSheet(EventModel event) async {
     final reasonController = TextEditingController();
-    final confirmed = await AppModalSheet.show<bool>(
+    try {
+      final confirmed = await AppModalSheet.show<bool>(
       context: context,
       title: AppLocalizations.of(context).actionCancel,
       maxHeightFactor: 0.7,
@@ -824,7 +843,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
             SizedBox(height: 8.h),
             Text(
               'All ${event.participantIds.length} participant(s) will be notified.',
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
             ),
             SizedBox(height: 16.h),
             TextField(
@@ -867,13 +886,16 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       ),
     );
 
-    if (confirmed != true || !mounted) return;
-    unawaited(HapticFeedback.mediumImpact());
-    final reason = reasonController.text.trim();
-    final cancelled = await ref
-        .read(eventDetailViewModelProvider(widget.eventId).notifier)
-        .cancelEvent(reason: reason.isNotEmpty ? reason : null);
-    if (cancelled && mounted) context.pop();
+      if (confirmed != true || !mounted) return;
+      unawaited(HapticFeedback.mediumImpact());
+      final reason = reasonController.text.trim();
+      final cancelled = await ref
+          .read(eventDetailViewModelProvider(widget.eventId).notifier)
+          .cancelEvent(reason: reason.isNotEmpty ? reason : null);
+      if (cancelled && mounted) context.pop();
+    } finally {
+      reasonController.dispose();
+    }
   }
 
   Future<bool> _confirmDelete() async {
@@ -964,13 +986,15 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   Future<void> _addToCalendar(EventModel event) async {
     try {
-      final start = event.startsAt.toUtc().toIso8601String().replaceAll(
-        RegExp('[-:]'),
-        '',
-      );
+      final start = event.startsAt
+          .toUtc()
+          .toIso8601String()
+          .replaceAll(RegExp(r'\.\d+Z$'), 'Z')
+          .replaceAll(RegExp('[-:]'), '');
       final end = (event.endsAt ?? event.startsAt.add(const Duration(hours: 2)))
           .toUtc()
           .toIso8601String()
+          .replaceAll(RegExp(r'\.\d+Z$'), 'Z')
           .replaceAll(RegExp('[-:]'), '');
       final title = Uri.encodeComponent(event.title);
       final location = Uri.encodeComponent(event.location.address);
@@ -1069,114 +1093,6 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     }
   }
 
-  /// Show delete confirmation dialog before deleting event
-  void _showDeleteConfirmation(EventModel event) {
-    unawaited(
-      showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog.adaptive(
-          title: Text(AppLocalizations.of(context).eventDeleteConfirmTitle),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(AppLocalizations.of(context).eventDeleteWarning),
-              if (event.isRecurring) ...[
-                SizedBox(height: 16.h),
-                Container(
-                  padding: EdgeInsets.all(12.w),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.1),
-                    border: Border.all(color: AppColors.error),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context).recurring_event,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.error,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        AppLocalizations.of(
-                          context,
-                        ).this_event_repeats_deleting_it_will_remove_all_occurrences_past_and_future,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text.rich(
-                        TextSpan(
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontStyle: FontStyle.italic,
-                          ),
-                          text:
-                              '${AppLocalizations.of(context).to_delete_only_specific_occurrences_use_google_calendar_tap_the_event}"${AppLocalizations.of(context).this_event}" (${AppLocalizations.of(context).not_label} "${AppLocalizations.of(context).all_events}").',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(AppLocalizations.of(context).actionCancel),
-            ),
-            TextButton(
-              onPressed: () {
-                context.pop(); // Close dialog
-                unawaited(_deleteEvent(event));
-              },
-              style: TextButton.styleFrom(foregroundColor: AppColors.error),
-              child: Text(AppLocalizations.of(context).actionDelete),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Delete event from Firestore
-  Future<void> _deleteEvent(EventModel event) async {
-    try {
-      // Call the repository to delete the event
-      await ref
-          .read(eventDetailViewModelProvider(event.id).notifier)
-          .deleteEvent();
-
-      if (mounted) {
-        AdaptiveSnackBar.show(
-          context,
-          message: event.isRecurring
-              ? 'Event and all recurring instances deleted'
-              : 'Event deleted',
-          type: AdaptiveSnackBarType.success,
-          duration: const Duration(seconds: 2),
-        );
-
-        // Navigate back after deletion
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) context.pop();
-        });
-      }
-    } on Exception catch (e) {
-      if (mounted) {
-        AdaptiveSnackBar.show(
-          context,
-          message: 'Error deleting event: $e',
-          type: AdaptiveSnackBarType.error,
-          duration: const Duration(seconds: 3),
-        );
-      }
-    }
-  }
 }
 
 // =============================================================================
@@ -1288,34 +1204,12 @@ class _TitleSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Type chip
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-          decoration: BoxDecoration(
-            color: event.type.color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(event.type.icon, size: 14.sp, color: event.type.color),
-              SizedBox(width: 4.w),
-              Text(
-                AppLocalizations.of(context).running,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: event.type.color,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 10.h),
+        // Sport type is already shown on the hero overlay above; avoid
+        // duplicating it here and lead directly with the event title.
         Text(
           event.title,
           style: TextStyle(
-            fontSize: 26.sp,
+            fontSize: 24.sp,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
             height: 1.2,
@@ -1460,7 +1354,7 @@ class _ParticipantChip extends StatelessWidget {
           Text(
             event.participantLabel,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -1481,19 +1375,35 @@ class _ParticipantChip extends StatelessWidget {
   }
 }
 
-class _ParticipantAvatars extends StatelessWidget {
+class _ParticipantAvatars extends ConsumerWidget {
   const _ParticipantAvatars({required this.participantIds});
   final List<String> participantIds;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final displayCount = participantIds.length.clamp(0, 8);
     final overflow = participantIds.length - displayCount;
 
-    return Row(
+    // Resolve only the first N visible avatars through a single batched
+    // provider instead of one Firestore document listener per avatar.
+    final displayIds = participantIds.take(displayCount);
+    final profiles = ref
+            .watch(
+              eventParticipantProfilesProvider(
+                eventParticipantProfilesKey(displayIds),
+              ),
+            )
+            .value ??
+        const <String, UserModel>{};
+
+    return Wrap(
+      spacing: 4.w,
+      runSpacing: 4.h,
       children: [
         ...List.generate(displayCount, (i) {
-          return _ParticipantAvatar(userId: participantIds[i]);
+          return _ParticipantAvatar(
+            photoUrl: profiles[participantIds[i]]?.photoUrl,
+          );
         }),
         if (overflow > 0)
           CircleAvatar(
@@ -1513,31 +1423,26 @@ class _ParticipantAvatars extends StatelessWidget {
   }
 }
 
-class _ParticipantAvatar extends ConsumerWidget {
-  const _ParticipantAvatar({required this.userId});
-  final String userId;
+class _ParticipantAvatar extends StatelessWidget {
+  const _ParticipantAvatar({required this.photoUrl});
+  final String? photoUrl;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final photoUrl = ref
-        .watch(userProfileProvider(userId).select((a) => a.value))
-        ?.photoUrl;
-    return Padding(
-      padding: EdgeInsets.only(right: 4.w),
-      child: CircleAvatar(
-        radius: 18.r,
-        backgroundColor: AppColors.primarySurface,
-        backgroundImage: photoUrl != null
-            ? CachedNetworkImageProvider(photoUrl)
-            : null,
-        child: photoUrl == null
-            ? Icon(
-                Icons.person_rounded,
-                size: 18.sp,
-                color: AppColors.primary,
-              )
-            : null,
-      ),
+  Widget build(BuildContext context) {
+    final url = photoUrl;
+    return CircleAvatar(
+      radius: 18.r,
+      backgroundColor: AppColors.primarySurface,
+      backgroundImage: url != null
+          ? CachedNetworkImageProvider(url)
+          : null,
+      child: url == null
+          ? Icon(
+              Icons.person_rounded,
+              size: 18.sp,
+              color: AppColors.primary,
+            )
+          : null,
     );
   }
 }
@@ -1728,7 +1633,7 @@ class _RideStatusCounter extends StatelessWidget {
             child: Text(
               event.rideStatusSummary,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
               ),
@@ -1795,7 +1700,7 @@ class _RideStatusSelector extends StatelessWidget {
               selected: selected,
               selectedColor: AppColors.primary,
               labelStyle: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w500,
                 color: selected ? Colors.white : AppColors.textPrimary,
               ),
@@ -1899,7 +1804,7 @@ class _EventRidesSection extends ConsumerWidget {
               child: Text(
                 AppLocalizations.of(context).eventCouldNotLoadRides,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   color: AppColors.textSecondary,
                 ),
               ),
@@ -1946,7 +1851,7 @@ class _EventRideTile extends StatelessWidget {
                 Text(
                   '${ride.origin.address} → ${ride.destination.address}',
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
@@ -2102,7 +2007,7 @@ class _MeetupPinSection extends StatelessWidget {
           if (pin != null)
             Text(
               pin.address,
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
             )
           else if (isOwner)
             PremiumButton(
@@ -2115,7 +2020,7 @@ class _MeetupPinSection extends StatelessWidget {
           else
             Text(
               AppLocalizations.of(context).eventNoMeetupPoint,
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textTertiary),
             ),
         ],
       ),

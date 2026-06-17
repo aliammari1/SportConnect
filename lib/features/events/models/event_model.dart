@@ -128,6 +128,48 @@ int _daysInMonth(int year, int month) {
   return DateTime(year, month + 1, 0).day;
 }
 
+/// Per-participant carpool RSVP status for an event.
+///
+/// Backed by the string values persisted in [EventModel.rideStatuses]
+/// (`'driving' | 'need_ride' | 'self_arranged'`). Use [EventRideStatusX.fromValue]
+/// to parse a stored value defensively (unknown/legacy values map to `null`).
+enum EventRideStatus {
+  @JsonValue('driving')
+  driving('driving'),
+  @JsonValue('need_ride')
+  needRide('need_ride'),
+  @JsonValue('self_arranged')
+  selfArranged('self_arranged');
+
+  const EventRideStatus(this.value);
+
+  /// The wire/JSON value persisted in Firestore.
+  final String value;
+}
+
+/// Parsing and display helpers for [EventRideStatus].
+extension EventRideStatusX on EventRideStatus {
+  String get label {
+    switch (this) {
+      case EventRideStatus.driving:
+        return 'Driving';
+      case EventRideStatus.needRide:
+        return 'Needs a ride';
+      case EventRideStatus.selfArranged:
+        return 'Self-arranged';
+    }
+  }
+
+  /// Parse a stored string into an [EventRideStatus], or `null` if unknown.
+  static EventRideStatus? fromValue(String? value) {
+    if (value == null) return null;
+    for (final status in EventRideStatus.values) {
+      if (status.value == value) return status;
+    }
+    return null;
+  }
+}
+
 /// Sport categories with display metadata.
 enum EventType {
   // @JsonValue('football')
@@ -280,8 +322,10 @@ abstract class EventModel with _$EventModel {
 
     // ── Event-Ride Integration fields ──
 
-    /// IDs of rides linked to this event.
-    @Default([]) List<String> linkedRideIds,
+    // Note: the event↔ride link is standardized on `ride.eventId` (queried via
+    // streamRidesByEventId / eventLinkedRidesProvider). The previously
+    // one-directional `linkedRideIds` array was never populated and has been
+    // removed to avoid a permanently-empty dead field.
 
     /// RSVP ride status per participant: { uid: 'driving' | 'need_ride' | 'self_arranged' }.
     @Default({}) Map<String, String> rideStatuses,
@@ -332,15 +376,16 @@ abstract class EventModel with _$EventModel {
 
   /// Number of attendees who are driving and offering seats.
   int get driversCount =>
-      rideStatuses.values.where((s) => s == 'driving').length;
+      rideStatuses.values.where((s) => s == EventRideStatus.driving.value).length;
 
   /// Number of attendees who need a ride.
   int get needRideCount =>
-      rideStatuses.values.where((s) => s == 'need_ride').length;
+      rideStatuses.values.where((s) => s == EventRideStatus.needRide.value).length;
 
   /// Number of attendees who arranged their own transport.
-  int get selfArrangedCount =>
-      rideStatuses.values.where((s) => s == 'self_arranged').length;
+  int get selfArrangedCount => rideStatuses.values
+      .where((s) => s == EventRideStatus.selfArranged.value)
+      .length;
 
   /// Number of attendees who haven't set a ride status yet.
   int get noRideStatusCount => participantIds.length - rideStatuses.length;
@@ -355,18 +400,45 @@ abstract class EventModel with _$EventModel {
   }
 
   /// Whether the event has ended (for "need ride home" button).
-  bool get hasEnded {
-    final end = endsAt ?? startsAt.add(const Duration(hours: 2));
-    return end.isBefore(DateTime.now());
-  }
+  bool get hasEnded => effectiveEndsAt.isBefore(DateTime.now());
 
   /// Whether the event is currently happening.
   bool get isOngoing {
     final now = DateTime.now();
-    final end = endsAt ?? startsAt.add(const Duration(hours: 2));
-    return startsAt.isBefore(now) && end.isAfter(now);
+    return startsAt.isBefore(now) && effectiveEndsAt.isAfter(now);
   }
 
   /// Ride status for a specific user.
   String? rideStatusFor(String userId) => rideStatuses[userId];
+
+  /// Typed ride status for a specific user (`null` if unset or unrecognised).
+  EventRideStatus? rideStatusEnumFor(String userId) =>
+      EventRideStatusX.fromValue(rideStatuses[userId]);
+
+  /// Whether a given user has joined this event.
+  bool isParticipant(String userId) => participantIds.contains(userId);
+
+  /// Whether [userId] is the organiser/creator of this event.
+  bool isCreatedBy(String userId) => creatorId == userId;
+
+  /// Number of attendees who have joined.
+  int get participantCount => participantIds.length;
+
+  /// Whether new participants can still join (active, upcoming and not full).
+  bool get canJoin => isActive && isUpcoming && !isFull;
+
+  /// Effective end time, falling back to a 2h default when [endsAt] is unset.
+  /// Used consistently by [hasEnded] and [isOngoing].
+  DateTime get effectiveEndsAt =>
+      endsAt ?? startsAt.add(const Duration(hours: 2));
+
+  /// Duration of the event using [effectiveEndsAt].
+  Duration get duration => effectiveEndsAt.difference(startsAt);
+
+  /// Whether a recurring series is still ongoing (no end date, or end in future).
+  bool get hasActiveRecurrence {
+    if (!isRecurring) return false;
+    final end = recurringEndDate;
+    return end == null || end.isAfter(DateTime.now());
+  }
 }

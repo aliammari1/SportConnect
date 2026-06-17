@@ -17,6 +17,7 @@ import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
 import 'package:sport_connect/core/widgets/gamification_widgets.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
+import 'package:sport_connect/core/widgets/rating_value.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/events/models/event_model.dart';
 import 'package:sport_connect/features/events/view_models/event_view_model.dart';
@@ -39,17 +40,67 @@ class RiderHomeFeed extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(homeViewModelProvider.select((s) => s.user));
 
+    // Hero (greeting + XP) spans the full width in every layout.
+    final hero = MultiSliver(
+      children: [
+        SliverToBoxAdapter(
+          child: _GreetingHeader(user: user, onSearchTap: onSearchTap),
+        ),
+        SliverToBoxAdapter(child: _GamificationStrip(user: user)),
+      ],
+    );
+
+    // On a tablet in landscape, use the extra width as a two-column dashboard
+    // (rides on the left; events + map on the right) instead of one narrow
+    // column. Phones and tablet-portrait keep the single-column feed unchanged.
+    final size = MediaQuery.sizeOf(context);
+    final isWideLandscape = size.shortestSide >= 600 && size.width > size.height;
+
+    if (isWideLandscape) {
+      return CustomScrollView(
+        slivers: [
+          hero,
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.w),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        _NextRideSection(),
+                        _NearbyRidesSection(),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const _EventsNearYouSection(),
+                        _MapToggleCard(
+                          onTap: () => ref
+                              .read(riderHomeViewModelProvider.notifier)
+                              .showMap(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(child: SizedBox(height: 100.h)),
+        ],
+      );
+    }
+
     return CustomScrollView(
       slivers: [
-        // ── Hero section: Greeting + XP strip ───────────────
-        MultiSliver(
-          children: [
-            SliverToBoxAdapter(
-              child: _GreetingHeader(user: user, onSearchTap: onSearchTap),
-            ),
-            SliverToBoxAdapter(child: _GamificationStrip(user: user)),
-          ],
-        ),
+        hero,
 
         // ── Contextual feed ──────────────────────────────────
         MultiSliver(
@@ -191,7 +242,7 @@ class _GreetingHeader extends StatelessWidget {
                         Text(
                           l10n.whereAreYouGoing,
                           style: TextStyle(
-                            fontSize: 15.sp,
+                            fontSize: 14.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -324,7 +375,9 @@ class _NextRideCard extends ConsumerWidget {
         }
 
         return Padding(
-          padding: adaptiveScreenPadding(context).copyWith(bottom: 8.h, top: 8.h),
+          padding: adaptiveScreenPadding(
+            context,
+          ).copyWith(bottom: 8.h, top: 8.h),
           child: GestureDetector(
             onTap: () {
               unawaited(HapticFeedback.selectionClick());
@@ -341,8 +394,10 @@ class _NextRideCard extends ConsumerWidget {
                   ),
                 );
               } else if (booking.status == BookingStatus.accepted &&
-                  booking.paidAt == null) {
-                // Accepted but payment required → go to payment screen
+                  booking.paidAt == null &&
+                  ride.pricePerSeatInCents > 0) {
+                // Accepted but payment required (priced ride, unpaid) → go to
+                // payment screen. Free rides skip this and go to countdown.
                 context.push(
                   AppRoutes.rideBookingPending.path.replaceFirst(
                     ':rideId',
@@ -458,10 +513,10 @@ class _NextRideCard extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          '${ride.origin.city ?? ride.origin.address} → '
-                          '${ride.destination.city ?? ride.destination.address}',
+                          '${ride.origin.address.isNotEmpty ? ride.origin.address : ride.origin.city ?? ride.origin.address} → '
+                          '${ride.destination.address.isNotEmpty ? ride.destination.address : ride.destination.city ?? ride.destination.address}',
                           style: TextStyle(
-                            fontSize: 17.sp,
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),
@@ -492,20 +547,16 @@ class _NextRideCard extends ConsumerWidget {
                             Text(
                               name,
                               style: TextStyle(
-                                fontSize: 13.sp,
+                                fontSize: 12.sp,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white.withValues(alpha: 0.9),
                               ),
                             ),
                             SizedBox(width: 6.w),
-                            Icon(
-                              Icons.star_rounded,
-                              color: AppColors.starFilled,
-                              size: 14.sp,
-                            ),
-                            Text(
-                              rating.average.toStringAsFixed(1),
-                              style: TextStyle(
+                            RatingValue(
+                              rating: rating.average,
+                              gap: 0,
+                              valueStyle: TextStyle(
                                 fontSize: 12.sp,
                                 color: Colors.white.withValues(alpha: 0.8),
                               ),
@@ -520,7 +571,7 @@ class _NextRideCard extends ConsumerWidget {
                       Text(
                         _formatDepartureShort(ride.departureTime, context),
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
                           color: Colors.white.withValues(alpha: 0.9),
                         ),
@@ -563,17 +614,18 @@ class _NextRideCard extends ConsumerWidget {
 
   String _formatDepartureShort(DateTime dt, BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final localDt = dt.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final departureDay = DateTime(dt.year, dt.month, dt.day);
+    final departureDay = DateTime(localDt.year, localDt.month, localDt.day);
     final time =
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+        '${localDt.hour.toString().padLeft(2, '0')}:${localDt.minute.toString().padLeft(2, '0')}';
 
     if (departureDay == today) return '${l10n.today}, $time';
     if (departureDay == today.add(const Duration(days: 1))) {
       return '${l10n.tomorrow}, $time';
     }
-    return '${dt.day}/${dt.month}, $time';
+    return '${localDt.day}/${localDt.month}, $time';
   }
 }
 
@@ -620,7 +672,7 @@ class _EventsNearYouSection extends ConsumerWidget {
                       child: Text(
                         l10n.seeAll,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
                           color: AppColors.primary,
                         ),
@@ -631,7 +683,11 @@ class _EventsNearYouSection extends ConsumerWidget {
               ),
               SizedBox(height: 10.h),
               SizedBox(
-                height: 130.h,
+                // Headroom so the 2-line title + icon + date row never
+                // overflow when fonts render taller (text scaling / tablet
+                // scaling). The previous 130.h was too tight and produced
+                // overflow stripes on the home events carousel.
+                height: 158.h,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.only(right: 20.w),
@@ -704,7 +760,7 @@ class _EventCard extends StatelessWidget {
             Text(
               event.title,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -799,7 +855,9 @@ class _NearbyRidesSection extends ConsumerWidget {
       data: (rides) {
         if (rides.isEmpty) {
           return Padding(
-            padding: adaptiveScreenPadding(context).copyWith(bottom: 8.h, top: 8.h),
+            padding: adaptiveScreenPadding(
+              context,
+            ).copyWith(bottom: 8.h, top: 8.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -855,7 +913,9 @@ class _NearbyRidesSection extends ConsumerWidget {
         final displayRides = rides.take(5).toList();
 
         return Padding(
-          padding: adaptiveScreenPadding(context).copyWith(bottom: 8.h, top: 8.h),
+          padding: adaptiveScreenPadding(
+            context,
+          ).copyWith(bottom: 8.h, top: 8.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -871,7 +931,7 @@ class _NearbyRidesSection extends ConsumerWidget {
                     child: Text(
                       l10n.seeAll,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
                       ),
@@ -958,7 +1018,9 @@ class _NearbyRideCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        ride.origin.city ?? ride.origin.address,
+                        ride.origin.address.isNotEmpty
+                            ? ride.origin.address
+                            : ride.origin.city ?? ride.origin.address,
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
@@ -969,7 +1031,9 @@ class _NearbyRideCard extends StatelessWidget {
                       ),
                       SizedBox(height: 10.h),
                       Text(
-                        ride.destination.city ?? ride.destination.address,
+                        ride.destination.address.isNotEmpty
+                            ? ride.destination.address
+                            : ride.destination.city ?? ride.destination.address,
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
@@ -996,7 +1060,7 @@ class _NearbyRideCard extends StatelessWidget {
                       (ride.pricePerSeatInCents / 100).toStringAsFixed(2),
                     ),
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
@@ -1026,14 +1090,11 @@ class _NearbyRideCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 4.w),
-                      Icon(
-                        Icons.star_rounded,
-                        color: AppColors.starFilled,
-                        size: 12.sp,
-                      ),
-                      Text(
-                        rating.average.toStringAsFixed(1),
-                        style: TextStyle(
+                      RatingValue(
+                        rating: rating.average,
+                        iconSize: 12,
+                        gap: 0,
+                        valueStyle: TextStyle(
                           fontSize: 11.sp,
                           color: AppColors.textSecondary,
                         ),
@@ -1101,7 +1162,9 @@ class _MapToggleCard extends StatelessWidget {
           onTap();
         },
         child: Container(
-          padding: adaptiveScreenPadding(context).copyWith(bottom: 16.h, top: 16.h),
+          padding: adaptiveScreenPadding(
+            context,
+          ).copyWith(bottom: 16.h, top: 16.h),
           decoration: BoxDecoration(
             color: AppColors.surfaceVariant,
             borderRadius: BorderRadius.circular(16.r),
@@ -1129,7 +1192,7 @@ class _MapToggleCard extends StatelessWidget {
                     Text(
                       l10n.exploreOnMap,
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),

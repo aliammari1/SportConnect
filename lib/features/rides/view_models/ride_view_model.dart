@@ -1539,18 +1539,11 @@ class RideDetailViewModel extends _$RideDetailViewModel {
         // Notification failure is non-fatal
       }
 
-      // Auto-join the linked event when the ride is tied to one.
-      if (ride.eventId != null && ride.eventId!.isNotEmpty) {
-        if (!ref.mounted) return true;
-        try {
-          await ref
-              .read(eventRepositoryProvider)
-              .joinEvent(ride.eventId!, passengerId);
-        } on Exception catch (e, st) {
-          TalkerService.error('Failed to auto-join event on booking', e, st);
-          // Non-fatal: booking still succeeds
-        }
-      }
+      // NOTE: The passenger is auto-joined to the linked event on booking
+      // ACCEPTANCE (see acceptBooking), not on request. Joining on request left
+      // a passenger as an event member for a ride that was later rejected or
+      // cancelled, with no reconciliation. The event<->ride membership now
+      // tracks the accepted booking state instead.
 
       // Award small XP to passenger for booking a ride
       if (!ref.mounted) return true;
@@ -1610,7 +1603,23 @@ class RideDetailViewModel extends _$RideDetailViewModel {
           // Notification failure is non-fatal.
         }
 
-        // 3. Award XP to passenger for confirmed booking
+        // 3. Auto-join the linked event now that the booking is ACCEPTED.
+        // Gating the join on acceptance (rather than on request) ensures the
+        // passenger only becomes an event member for a ride they were actually
+        // accepted on; rejected/cancelled requests never create event
+        // membership. Non-fatal: acceptance still succeeds on failure.
+        if (!ref.mounted) return true;
+        if (ride.eventId != null && ride.eventId!.isNotEmpty) {
+          try {
+            await ref
+                .read(eventRepositoryProvider)
+                .joinEvent(ride.eventId!, booking.passengerId);
+          } on Exception catch (e, st) {
+            TalkerService.error('Failed to auto-join event on accept', e, st);
+          }
+        }
+
+        // 4. Award XP to passenger for confirmed booking
         if (!ref.mounted) return true;
         try {
           final profileRepo = ref.read(profileRepositoryProvider);
@@ -1633,6 +1642,11 @@ class RideDetailViewModel extends _$RideDetailViewModel {
   Future<bool> rejectBooking(String bookingId) async {
     final ride = state.ride.value;
     if (ride == null) return false;
+    // Capture the booking before its status changes so we can reconcile event
+    // membership for the affected passenger afterwards.
+    final rejectedBooking = state.bookings
+        .where((b) => b.id == bookingId)
+        .firstOrNull;
     try {
       state = state.copyWith(isActing: true, actionError: null);
       await ref
@@ -1644,12 +1658,67 @@ class RideDetailViewModel extends _$RideDetailViewModel {
           );
 
       if (!ref.mounted) return true;
+
+      // Reconcile event membership: a rejected booking should not leave the
+      // passenger joined to the linked event. Leave only when they have no
+      // other active (pending/accepted) booking for the same event — see
+      // _leaveEventIfNoOtherBooking.
+      if (rejectedBooking != null &&
+          ride.eventId != null &&
+          ride.eventId!.isNotEmpty) {
+        await _leaveEventIfNoOtherBooking(
+          eventId: ride.eventId!,
+          passengerId: rejectedBooking.passengerId,
+          excludeBookingId: bookingId,
+        );
+      }
+
+      if (!ref.mounted) return true;
       state = state.copyWith(isActing: false, actionError: null);
       return true;
     } on Exception catch (e) {
       if (!ref.mounted) return false;
       state = state.copyWith(isActing: false, actionError: e.toString());
       return false;
+    }
+  }
+
+  /// Removes the passenger from the linked event unless they still hold another
+  /// active (pending or accepted) booking on a ride tied to the same event.
+  ///
+  /// Best-effort: a failure here must never break the reject/cancel flow.
+  Future<void> _leaveEventIfNoOtherBooking({
+    required String eventId,
+    required String passengerId,
+    required String excludeBookingId,
+  }) async {
+    try {
+      final bookingRepo = ref.read(bookingRepositoryProvider);
+      final rideRepo = ref.read(rideRepositoryProvider);
+
+      final passengerBookings = await bookingRepo.getBookingsByPassengerId(
+        passengerId,
+      );
+      if (!ref.mounted) return;
+
+      for (final other in passengerBookings) {
+        if (other.id == excludeBookingId) continue;
+        if (other.status != BookingStatus.pending &&
+            other.status != BookingStatus.accepted) {
+          continue;
+        }
+        final otherRide = await rideRepo.getRideById(other.rideId);
+        if (otherRide?.eventId == eventId) {
+          // Another active booking ties the passenger to this event — keep
+          // their membership.
+          return;
+        }
+        if (!ref.mounted) return;
+      }
+
+      await ref.read(eventRepositoryProvider).leaveEvent(eventId, passengerId);
+    } on Exception catch (e, st) {
+      TalkerService.error('Failed to reconcile event membership', e, st);
     }
   }
 
@@ -2187,8 +2256,13 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
           (position) {
             if (!ref.mounted) return;
 
+            final newPosition = LatLng(position.latitude, position.longitude);
+            // 7F: Accumulate actual driven distance from the previous fix
+            // before currentLocation is overwritten below.
+            _accumulateDistance(newPosition);
+
             state = state.copyWith(
-              currentLocation: LatLng(position.latitude, position.longitude),
+              currentLocation: newPosition,
               userHeading: _sanitizeHeading(position.heading),
               currentSpeedKmh: _speedKmhFrom(position),
               isLoadingLocation: false,
@@ -2207,6 +2281,10 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
               _lastEtaUpdateTime = now;
               _updateDynamicEta(state.currentRide);
               _checkDriverOffRoute(state.currentRide);
+              // 7G/7J: Re-evaluate ride-timeout and departure-delay on the same
+              // debounced cadence as the other periodic location checks.
+              _checkRideTimeout();
+              _checkDepartureDelay();
             }
           },
           onError: (Object error, StackTrace stackTrace) {
@@ -2424,6 +2502,9 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
 
     try {
       state = state.copyWith(isProcessing: true, actionError: null);
+      // 7F: Persist the GPS-accumulated actual distance for fare
+      // reconciliation before marking the ride complete.
+      await _recordActualDistance();
       await ref.read(rideServiceProvider.notifier).completeRide(ride.id);
       if (!ref.mounted) return false;
 
@@ -3698,11 +3779,25 @@ Stream<RideBooking?> bookingStream(Ref ref, String bookingId) {
 ///
 /// Used on the pending-booking screen where the passenger polls for
 /// status changes before being auto-navigated.
-@Riverpod(keepAlive: true)
+///
+/// Auto-disposes (no keepAlive) so a sign-out/sign-in does not retain the
+/// previous user's Firestore subscription, and watches [currentAuthUidProvider]
+/// so it bails out and re-runs whenever the authenticated user changes —
+/// preventing one account from observing another account's bookings.
+@riverpod
 Stream<List<RideBooking>> bookingsByPassenger(
   Ref ref,
   String passengerId,
 ) async* {
+  // Guard against leaking another user's bookings: only stream when the
+  // authenticated uid matches the requested passenger. Watching the provider
+  // also invalidates this stream automatically on auth change.
+  final authUid = await ref.watch(currentAuthUidProvider.future);
+  if (authUid == null || authUid != passengerId) {
+    yield const <RideBooking>[];
+    return;
+  }
+
   final bookingRepository = ref.watch(bookingRepositoryProvider);
 
   // Emit immediately so the provider has a first value.

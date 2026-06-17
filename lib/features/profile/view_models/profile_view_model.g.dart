@@ -422,7 +422,7 @@ final class ProfileEditViewModelProvider
 }
 
 String _$profileEditViewModelHash() =>
-    r'90154ffd2302acfbc4533a14ec731e75dedd0c73';
+    r'b219b484c56f3ef12bb43c3d0bb13db9b8404cc2';
 
 /// Profile Edit View Model
 
@@ -585,7 +585,7 @@ final class SocialActionsViewModelProvider
 }
 
 String _$socialActionsViewModelHash() =>
-    r'78b11c3970218886ea0adb08c78ef62360d08517';
+    r'f06690270e91218bff3de247a6c8b00920a98cd3';
 
 /// Social Actions View Model
 

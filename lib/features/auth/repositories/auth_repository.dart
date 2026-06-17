@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:sport_connect/core/config/app_config.dart';
 import 'package:sport_connect/core/constants/app_constants.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/services/firebase_service.dart';
@@ -117,7 +118,15 @@ class AuthRepository {
       );
 
       if (credential.user != null) {
-        return await getUserData(credential.user!.uid);
+        final userData = await getUserData(credential.user!.uid);
+        if (userData != null && userData.isBanned) {
+          await _firebaseService.auth.signOut();
+          throw const AuthException(
+            code: 'account-disabled',
+            message: 'Your account has been suspended. Please contact support.',
+          );
+        }
+        return userData;
       }
     } on FirebaseAuthException catch (e) {
       TalkerService.error('Sign in error: ${e.code}');
@@ -169,11 +178,17 @@ class AuthRepository {
           selectedRoleIntent: role.name,
         );
 
-        await _usersCollection.doc(uid).set(userModel);
+        // Write user document and onboardingPath atomically via a single set to
+        // avoid a partial write that would misroute the user on next launch.
         await _firebaseService.firestore
             .collection(AppConstants.usersCollection)
             .doc(uid)
-            .set({'onboardingPath': role.name}, SetOptions(merge: true));
+            .set({
+              ...userModel.toJson(),
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+              'onboardingPath': role.name,
+            });
         await credential.user!.updateDisplayName(username);
 
         if (photoUrl != null) {
@@ -193,6 +208,19 @@ class AuthRepository {
     } on Exception catch (e, st) {
       if (credential?.user != null) {
         TalkerService.warning('Rolling back user creation due to error');
+        // Best-effort: remove any Firestore doc already written at line 182 so
+        // the rollback does not leave an orphaned users/{uid} document whose
+        // Auth account no longer exists.
+        try {
+          await _firebaseService.firestore
+              .collection(AppConstants.usersCollection)
+              .doc(credential!.user!.uid)
+              .delete();
+        } on Exception catch (cleanupError) {
+          TalkerService.warning(
+            'Failed to roll back Firestore user doc (best-effort): $cleanupError',
+          );
+        }
         await credential!.user!.delete();
       }
       TalkerService.error('Register error', e, st);
@@ -356,22 +384,28 @@ class AuthRepository {
 
       // User's chats: remove the user from participantIds.
       // Chat deletion is blocked by security rules.
+      // Collect the chat references now (read phase); the participant-removal
+      // writes are deferred until AFTER the Auth account is deleted so an early
+      // deletion failure does not leave other users' chats mutated.
       final chatsQuery = await _firebaseService.firestore
           .collection(AppConstants.chatsCollection)
           .where('participantIds', arrayContains: uid)
           .get();
-      for (final chatDoc in chatsQuery.docs) {
-        final chatMessagesQuery = await chatDoc.reference
-            .collection(AppConstants.messagesCollection)
-            .where('senderId', isEqualTo: uid)
-            .get();
-        refs.addAll(chatMessagesQuery.docs.map((d) => d.reference));
-
-        await chatDoc.reference.update({
-          'participantIds': FieldValue.arrayRemove([uid]),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+      final chatRefsToUpdate = <DocumentReference>[];
+      // Run the per-chat message queries in parallel rather than sequentially
+      // (avoids an N+1 chain of round-trips for users in many chats).
+      final chatMessageSnaps = await Future.wait(
+        chatsQuery.docs.map(
+          (chatDoc) => chatDoc.reference
+              .collection(AppConstants.messagesCollection)
+              .where('senderId', isEqualTo: uid)
+              .get(),
+        ),
+      );
+      for (final snap in chatMessageSnaps) {
+        refs.addAll(snap.docs.map((d) => d.reference));
       }
+      chatRefsToUpdate.addAll(chatsQuery.docs.map((d) => d.reference));
 
       // Archive financial records before deletion — retained 10 years per
       // article L.123-22 of the French Code de commerce (legal obligation).
@@ -390,16 +424,102 @@ class AuthRepository {
             .collection(collection)
             .where(field, isEqualTo: uid)
             .get();
-        for (final doc in snap.docs) {
-          await _firebaseService.firestore
-              .collection(AppConstants.archivedTransactionsCollection)
-              .doc(doc.id)
-              .set({
+        if (snap.docs.isEmpty) return;
+        // Batch the archive writes (in chunks of 499 to respect the 500-op
+        // Firestore batch limit) instead of one sequential await per doc.
+        const batchLimit = 499;
+        for (var i = 0; i < snap.docs.length; i += batchLimit) {
+          final chunk = snap.docs.sublist(
+            i,
+            i + batchLimit > snap.docs.length
+                ? snap.docs.length
+                : i + batchLimit,
+          );
+          final batch = _firebaseService.firestore.batch();
+          for (final doc in chunk) {
+            batch.set(
+              _firebaseService.firestore
+                  .collection(AppConstants.archivedTransactionsCollection)
+                  .doc(doc.id),
+              {
                 ...doc.data(),
                 'originalCollection': collection,
                 'archivedAt': FieldValue.serverTimestamp(),
                 'archivedReason': 'account_deletion',
-              }, SetOptions(merge: true));
+              },
+              SetOptions(merge: true),
+            );
+          }
+          await batch.commit();
+        }
+      }
+
+      // FIX A-1 / A-6: Revoke the Apple token and delete the Auth account
+      // FIRST, before any irreversible Firestore/Storage cleanup. This ensures
+      // that a cancelled Apple prompt or a 'requires-recent-login' failure
+      // aborts the whole deletion while the user's data is still intact, rather
+      // than leaving an orphaned Auth account whose data was already wiped.
+
+      // Revoke the Apple auth token before deleting the account, as required
+      // by Apple App Store Guidelines §5.1.1 for apps that support Sign in with
+      // Apple. Without this, the Apple session remains active after deletion.
+      final hasAppleProvider = user.providerData.any(
+        (info) => info.providerId == 'apple.com',
+      );
+      if (hasAppleProvider) {
+        try {
+          final rawNonce = _generateNonce();
+          final nonce = _sha256ofString(rawNonce);
+          final appleCredential = await SignInWithApple.getAppleIDCredential(
+            scopes: const [],
+            nonce: nonce,
+          );
+          await _firebaseService.auth.revokeTokenWithAuthorizationCode(
+            appleCredential.authorizationCode,
+          );
+        } on SignInWithAppleAuthorizationException catch (e) {
+          // If the user cancels the Apple prompt, abort the deletion.
+          if (e.code == AuthorizationErrorCode.canceled) {
+            throw const AuthException(
+              code: 'apple-sign-in-canceled',
+              message: 'Sign-in was cancelled.',
+            );
+          }
+          TalkerService.warning('Apple token revocation failed (best-effort): $e');
+        } on Exception catch (e) {
+          TalkerService.warning('Apple token revocation failed (best-effort): $e');
+        }
+      }
+
+      // Delete the Auth account first. If this throws (e.g.
+      // 'requires-recent-login') the catch block below surfaces the error and
+      // no user data has been touched yet, so the operation is safely retryable
+      // after re-authentication.
+      await user.delete();
+
+      // Auth deletion succeeded — now perform the (best-effort) data cleanup.
+      // archive financial records, then delete the remaining documents.
+
+      // Remove the user from the chats they participated in. Batch the updates
+      // (chunks of 499 to respect the 500-op Firestore batch limit) instead of
+      // a sequential await per chat.
+      if (chatRefsToUpdate.isNotEmpty) {
+        const chatBatchLimit = 499;
+        for (var i = 0; i < chatRefsToUpdate.length; i += chatBatchLimit) {
+          final chunk = chatRefsToUpdate.sublist(
+            i,
+            i + chatBatchLimit > chatRefsToUpdate.length
+                ? chatRefsToUpdate.length
+                : i + chatBatchLimit,
+          );
+          final batch = _firebaseService.firestore.batch();
+          for (final chatRef in chunk) {
+            batch.update(chatRef, {
+              'participantIds': FieldValue.arrayRemove([uid]),
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+          }
+          await batch.commit();
         }
       }
 
@@ -442,7 +562,6 @@ class AuthRepository {
       }
       final googleSignIn = GoogleSignIn.instance;
       await googleSignIn.signOut();
-      await user.delete();
 
       TalkerService.info('User account and data deleted: $uid');
     } on FirebaseAuthException catch (e) {
@@ -653,6 +772,47 @@ class AuthRepository {
     } on Exception catch (e, st) {
       TalkerService.error('Apple sign in error', e, st);
       rethrow;
+    }
+  }
+
+  /// Best practice (Apple): on launch, verify the user's Sign in with Apple
+  /// credential is still valid. If the user revoked access for this app (e.g.
+  /// via iOS Settings → Apple ID → Sign in with Apple), sign them out so they
+  /// re-authenticate.
+  ///
+  /// Conservative & best-effort: only acts on a definitive [CredentialState.revoked]
+  /// (never on the ambiguous `notFound`, which is normal on a device where the
+  /// user didn't natively sign in), is skipped on non-Apple platforms, and is
+  /// skipped against the Auth emulator (the native Apple API can't validate
+  /// emulator/test identifiers). Reads the Apple user identifier directly from
+  /// the Firebase user's `apple.com` provider data — no extra local storage.
+  Future<void> verifyAppleCredentialState() async {
+    if (AppConfig.useEmulators) return;
+    if (!Platform.isIOS && !Platform.isMacOS) return;
+
+    final user = _firebaseService.auth.currentUser;
+    if (user == null) return;
+
+    String? appleUserId;
+    for (final info in user.providerData) {
+      if (info.providerId == 'apple.com' &&
+          info.uid != null &&
+          info.uid!.isNotEmpty) {
+        appleUserId = info.uid;
+        break;
+      }
+    }
+    if (appleUserId == null) return;
+
+    try {
+      final state = await SignInWithApple.getCredentialState(appleUserId);
+      if (state == CredentialState.revoked) {
+        TalkerService.info('Apple credential revoked — signing out.');
+        await _firebaseService.auth.signOut();
+      }
+    } on Exception catch (e) {
+      // Never block the app if the platform check fails.
+      TalkerService.warning('Apple credential-state check failed: $e');
     }
   }
 
@@ -881,15 +1041,13 @@ class AuthRepository {
   AuthException _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
-        return AuthException(
-          code: e.code,
-          message: 'No user found with this email',
-        );
       case 'wrong-password':
-        return AuthException(code: e.code, message: 'Wrong password');
       case 'invalid-credential':
+        // Return a single generic message for all credential errors to prevent
+        // email enumeration — an attacker must not be able to tell whether the
+        // email or password was wrong.
         return AuthException(
-          code: e.code,
+          code: 'invalid-credential',
           message: 'Invalid email or password',
         );
       case 'email-already-in-use':
@@ -1101,7 +1259,15 @@ class AuthRepository {
     final user = _firebaseService.auth.currentUser;
     if (user == null) return false;
     await user.reload();
-    return _firebaseService.auth.currentUser?.emailVerified ?? false;
+    final refreshedUser = _firebaseService.auth.currentUser;
+    final verified = refreshedUser?.emailVerified ?? false;
+    // FIX A-7: Force an ID-token refresh once verification is detected so that
+    // request.auth.token.email_verified becomes true immediately for
+    // Security-Rules-gated reads, instead of waiting for the ~hourly refresh.
+    if (verified && refreshedUser != null) {
+      await refreshedUser.getIdToken(true);
+    }
+    return verified;
   }
 
   /// Reload the current Firebase Auth user to refresh cached properties

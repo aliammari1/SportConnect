@@ -13,6 +13,7 @@ import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/app_spacing.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/app_segmented_tab_view.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
 import 'package:sport_connect/core/widgets/premium_card.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
@@ -48,6 +49,7 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           icon: Icon(
             Icons.adaptive.arrow_back_rounded,
@@ -60,7 +62,7 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen> {
       ),
       body: MaxWidthContainer(
         maxWidth: kMaxWidthContent,
-        child: AdaptiveTabBarView(
+        child: AppSegmentedTabView(
           tabs: [l10n.myEventsCreatedTab, l10n.myEventsJoinedTab],
           selectedColor: Colors.white,
           backgroundColor: AppColors.primary,
@@ -162,12 +164,12 @@ class _EventListView extends StatelessWidget {
       itemBuilder: (context, index) {
         final event = events[index];
         return _MyEventCard(
-          event: event,
-          dateLabel: AppLocaleFormatters.formatMediumDateTime(
-            context,
-            event.startsAt.toLocal(),
-          ),
-        )
+              event: event,
+              dateLabel: AppLocaleFormatters.formatMediumDateTime(
+                context,
+                event.startsAt.toLocal(),
+              ),
+            )
             .animate()
             .fadeIn(
               delay: Duration(milliseconds: 40 * index.clamp(0, 12)),
@@ -218,7 +220,7 @@ class _MyEventCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
@@ -230,6 +232,28 @@ class _MyEventCard extends StatelessWidget {
                     fontSize: 12.sp,
                     color: AppColors.textSecondary,
                   ),
+                ),
+                SizedBox(height: 4.h),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_rounded,
+                      size: 14.sp,
+                      color: AppColors.textTertiary,
+                    ),
+                    SizedBox(width: 4.w),
+                    Expanded(
+                      child: Text(
+                        event.location.city ?? event.location.address,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 4.h),
                 Row(
@@ -331,7 +355,7 @@ class _EmptyTab extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 15.sp,
+                fontSize: 14.sp,
                 color: AppColors.textSecondary,
               ),
             ),

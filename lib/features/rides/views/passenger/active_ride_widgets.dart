@@ -92,7 +92,7 @@ class ActivePhaseBadge extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w700,
               color: Colors.white,
             ),
@@ -209,7 +209,7 @@ class RideStatusStep extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 15.sp,
+            fontSize: 14.sp,
             fontWeight: isCompleted ? FontWeight.w600 : FontWeight.w400,
             color: isCompleted
                 ? AppColors.textPrimary
@@ -331,7 +331,7 @@ class RouteDeviationAlert extends StatelessWidget {
                 Text(
                   l10n.routeDeviationDetected,
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.error,
                   ),
@@ -389,7 +389,7 @@ class TripProgressBar extends StatelessWidget {
               Text(
                 'Trip Progress',
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                 ),
@@ -397,7 +397,7 @@ class TripProgressBar extends StatelessWidget {
               Text(
                 '${progress * 100}%',
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primary,
                 ),
@@ -494,7 +494,7 @@ class MiniRouteRow extends StatelessWidget {
           child: Text(
             text,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
             ),

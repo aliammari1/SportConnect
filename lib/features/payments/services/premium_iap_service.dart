@@ -167,7 +167,6 @@ class PremiumIapService extends _$PremiumIapService {
 
   Future<Map<PremiumPlan, ProductDetails>> _fetchAndroidAvailablePlans() async {
     final productId = PremiumPlan.monthly.googlePlayProductId;
-    final isAvailable = await _iap.isAvailable();
 
     final response = await _iap.queryProductDetails({productId});
 

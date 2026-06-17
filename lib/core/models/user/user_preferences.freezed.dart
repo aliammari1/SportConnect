@@ -208,8 +208,8 @@ return $default(_that.language);case _:
 /// @nodoc
 @JsonSerializable()
 
-class _UserPreferences implements UserPreferences {
-  const _UserPreferences({this.language = AppLocale.french});
+class _UserPreferences extends UserPreferences {
+  const _UserPreferences({this.language = AppLocale.french}): super._();
   factory _UserPreferences.fromJson(Map<String, dynamic> json) => _$UserPreferencesFromJson(json);
 
 @override@JsonKey() final  AppLocale language;

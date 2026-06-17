@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/utils/currency_formatter.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
@@ -110,7 +111,9 @@ class _RideBookingPendingScreenState
 
   Widget _buildLoading() {
     return const AdaptiveScaffold(
-      appBar: AdaptiveAppBar(),
+      appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
+      ),
       body: SkeletonLoader(),
     );
   }
@@ -118,6 +121,7 @@ class _RideBookingPendingScreenState
   Widget _buildError(String message) {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).bookingRequestTitle,
       ),
       body: Center(
@@ -151,6 +155,7 @@ class _RideBookingPendingScreenState
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).bookingRequestTitle,
       ),
       body: MaxWidthContainer(
@@ -191,7 +196,7 @@ class _RideBookingPendingScreenState
                     ? AppLocalizations.of(context).bookingAcceptedTitle
                     : AppLocalizations.of(context).requestSentTitle,
                 style: TextStyle(
-                  fontSize: 26.sp,
+                  fontSize: 24.sp,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
@@ -601,7 +606,9 @@ class _RideBookingPendingScreenState
                 color: AppColors.success,
               ),
               Text(
-                '€${(ride.pricing.pricePerSeatInCents / 100).toStringAsFixed(2)}/seat',
+                CurrencyFormatter.perUnitFromCents(
+                  ride.pricing.pricePerSeatInCents,
+                ),
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: AppColors.textSecondary,
@@ -629,7 +636,7 @@ class _RideBookingPendingScreenState
           SizedBox(width: 8.w),
           Text(
             AppLocalizations.of(context).expiresInLabel,
-            style: TextStyle(fontSize: 13.sp, color: AppColors.warningDark),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.warningDark),
           ),
           Text(
             expiryText,

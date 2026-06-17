@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -14,7 +16,9 @@ import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
+import 'package:sport_connect/core/widgets/app_segmented_tab_view.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
+import 'package:sport_connect/features/messaging/models/message_model.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_view_model.dart';
 import 'package:sport_connect/features/notifications/models/notification_model.dart';
 import 'package:sport_connect/features/notifications/view_models/notification_view_model.dart';
@@ -33,6 +37,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   NotificationModel? _selectedNotification;
+
+  /// IDs of notifications whose entrance animation has already played. The list
+  /// is driven by a live Firestore stream, so every emission (mark-as-read, new
+  /// notification, archive) rebuilds the list; without this gate the staggered
+  /// entrance animation would re-run for every visible tile on each emission.
+  final Set<String> _animatedIds = <String>{};
 
   void _showStatusSnackBar(String message, {required Color backgroundColor}) {
     if (!context.mounted) return;
@@ -153,7 +163,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     }
 
     final userId = vmState.userId!;
-    return vmState.notifications.when(
+    // Read the live notifications stream directly from its provider rather than
+    // a mirrored copy on the view-model, per Riverpod guidance to have the UI
+    // consume the provider directly (avoids a duplicated/drifting state layer).
+    final notificationsAsync = ref.watch(userNotificationsProvider);
+    return notificationsAsync.when(
       data: (notifications) => _buildContent(notifications, userId),
       loading: () => AdaptiveScaffold(
         appBar: _buildAppBar(0),
@@ -380,7 +394,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ),
         ),
         Expanded(
-          child: AdaptiveTabBarView(
+          child: AppSegmentedTabView(
             tabs: [
               if (unreadCount > 0)
                 '${AppLocalizations.of(context).unread} ($unreadCount)'
@@ -414,6 +428,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         : AppLocalizations.of(context).settingsNotifications;
 
     return AdaptiveAppBar(
+      useNativeToolbar: false,
       title: title,
       leading: IconButton(
         tooltip: AppLocalizations.of(context).goBackTooltip,
@@ -561,15 +576,28 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         itemCount: notifications.length,
         itemBuilder: (context, index) {
           final notification = notifications[index];
-          return _NotificationTile(
-                notification: notification,
-                isSelected: _selectedNotification?.id == notification.id,
-                onTap: () => onNotificationTap(notification),
-                onDismiss: () => _dismissNotification(notification.id),
-              )
+          final tile = _NotificationTile(
+            notification: notification,
+            isSelected: _selectedNotification?.id == notification.id,
+            onTap: () => onNotificationTap(notification),
+            onDismiss: () => _dismissNotification(notification.id),
+          );
+
+          // Only play the entrance animation the first time a notification is
+          // seen. On subsequent stream emissions the tile renders without
+          // re-animating, avoiding the multi-second staggered re-animation
+          // pitfall in a live-stream-backed ListView.builder.
+          if (_animatedIds.contains(notification.id)) {
+            return tile;
+          }
+          _animatedIds.add(notification.id);
+
+          // Cap the stagger so later items don't fade in seconds late.
+          final delay = Duration(milliseconds: 40 * (index < 8 ? index : 8));
+          return tile
               .animate()
-              .fadeIn(delay: Duration(milliseconds: 50 * index))
-              .slideX(begin: 0.1, delay: Duration(milliseconds: 50 * index));
+              .fadeIn(delay: delay)
+              .slideX(begin: 0.1, delay: delay);
         },
       ),
     );
@@ -577,9 +605,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   void _selectNotificationForTablet(NotificationModel notification) {
     if (!notification.isRead) {
-      ref
-          .read(notificationViewModelProvider.notifier)
-          .markAsRead(notification.id);
+      unawaited(
+        ref
+            .read(notificationViewModelProvider.notifier)
+            .markAsRead(notification.id),
+      );
     }
     setState(
       () => _selectedNotification = notification.copyWith(isRead: true),
@@ -624,7 +654,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        notification.type.name,
+                        _notificationTypeLabel(notification.type),
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w700,
@@ -689,24 +719,29 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 ],
               ),
             ),
-            SizedBox(height: AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _openNotificationDestination(notification),
-                icon: const Icon(Icons.open_in_new_rounded),
-                label: Text(l10n.open),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(48),
-                  padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.r),
+            // Only surface the prominent "Open" action when the notification
+            // actually has a navigable destination; otherwise the button would
+            // be a visible no-op (e.g. gamification/system notifications).
+            if (_hasNotificationDestination(notification)) ...[
+              SizedBox(height: AppSpacing.lg),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _openNotificationDestination(notification),
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  label: Text(l10n.open),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(48),
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16.r),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -741,6 +776,42 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   void _openNotificationDestination(NotificationModel notification) {
     _handleNotificationTap(notification);
+  }
+
+  /// Whether [_handleNotificationTap] can actually navigate somewhere for this
+  /// notification. Mirrors the cases (and their reference/sender guards) in
+  /// [_handleNotificationTap] so the "Open" button is only shown when tapping it
+  /// would lead somewhere.
+  bool _hasNotificationDestination(NotificationModel notification) {
+    switch (notification.type) {
+      case NotificationType.rideBookingRequest:
+        return true;
+      case NotificationType.rideBookingAccepted:
+      case NotificationType.eventCancelled:
+      case NotificationType.rideBookingCancelled:
+      case NotificationType.rideBookingRejected:
+      case NotificationType.rideStartingSoon:
+      case NotificationType.rideStarted:
+      case NotificationType.rideCompleted:
+      case NotificationType.rideCancelled:
+      case NotificationType.rideUpdated:
+      case NotificationType.newMessage:
+      case NotificationType.newGroupMessage:
+        return notification.referenceId != null;
+      case NotificationType.newFollower:
+      case NotificationType.followAccepted:
+        return notification.senderId != null;
+      case NotificationType.levelUp:
+      case NotificationType.achievementUnlocked:
+      case NotificationType.streakMilestone:
+      case NotificationType.leaderboardRank:
+      case NotificationType.xpEarned:
+      case NotificationType.accountVerified:
+      case NotificationType.profileIncomplete:
+      case NotificationType.systemAlert:
+      case NotificationType.promotion:
+        return false;
+    }
   }
 
   void _handleNotificationTap(NotificationModel notification) {
@@ -841,8 +912,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           photoUrl: photoUrl,
         );
 
+        // Route to the correct chat screen based on chat type (mirrors the FCM
+        // push router): ride/event group chats use the group screen, everything
+        // else uses the 1:1 detail screen.
+        final routeName = switch (chat.type) {
+          ChatType.rideGroup => AppRoutes.chatGroup.name,
+          ChatType.eventGroup => AppRoutes.chatGroup.name,
+          _ => AppRoutes.chatDetail.name,
+        };
+
         context.pushNamed(
-          AppRoutes.chatDetail.name,
+          routeName,
           pathParameters: {'id': chatId},
           extra: receiverUser,
         );
@@ -855,6 +935,28 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       );
     }
   }
+}
+
+/// Converts a [NotificationType] enum value into a human-readable, Title Case
+/// label (e.g. `rideBookingRequest` -> "Ride Booking Request") so the detail
+/// pane never surfaces raw camelCase developer identifiers.
+String _notificationTypeLabel(NotificationType type) {
+  final name = type.name;
+  final buffer = StringBuffer();
+  for (var i = 0; i < name.length; i++) {
+    final char = name[i];
+    if (i == 0) {
+      buffer.write(char.toUpperCase());
+    } else if (char.toUpperCase() == char && char.toLowerCase() != char) {
+      // Uppercase letter marks a new word in lowerCamelCase.
+      buffer
+        ..write(' ')
+        ..write(char);
+    } else {
+      buffer.write(char);
+    }
+  }
+  return buffer.toString();
 }
 
 IconData _notificationTypeIcon(NotificationType type) {
@@ -1002,7 +1104,7 @@ class _NotificationTile extends StatelessWidget {
                     Text(
                       notification.body,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.textSecondary,
                       ),
                       maxLines: 2,

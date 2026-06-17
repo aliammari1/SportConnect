@@ -14,6 +14,7 @@ import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/utils/currency_formatter.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
@@ -145,6 +146,7 @@ class _RideCountdownScreenState extends ConsumerState<RideCountdownScreen> {
   }) {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: title,
       ),
       body: body,
@@ -220,6 +222,7 @@ class _RideCountdownScreenState extends ConsumerState<RideCountdownScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).yourRide,
       ),
       body: MaxWidthContainer(
@@ -249,7 +252,7 @@ class _RideCountdownScreenState extends ConsumerState<RideCountdownScreen> {
                 Text(
                       _formatDuration(uiState.timeUntilDeparture),
                       style: TextStyle(
-                        fontSize: 44.sp,
+                        fontSize: 40.sp,
                         fontWeight: FontWeight.bold,
                         color: isImminent
                             ? AppColors.warning
@@ -275,7 +278,7 @@ class _RideCountdownScreenState extends ConsumerState<RideCountdownScreen> {
                     Text(
                       AppLocalizations.of(context).rideStartedMessage,
                       style: TextStyle(
-                        fontSize: 22.sp,
+                        fontSize: 20.sp,
                         fontWeight: FontWeight.bold,
                         color: AppColors.success,
                       ),
@@ -907,7 +910,7 @@ class _RideCountdownScreenState extends ConsumerState<RideCountdownScreen> {
               Container(width: 1.w, height: 32.h, color: AppColors.divider),
               _buildInfoItem(
                 icon: Icons.payments_outlined,
-                value: '€${(totalPrice / 100).toStringAsFixed(2)}',
+                value: CurrencyFormatter.fromCents(totalPrice),
                 label: AppLocalizations.of(context).totalLabel,
               ),
             ],
@@ -925,7 +928,7 @@ class _RideCountdownScreenState extends ConsumerState<RideCountdownScreen> {
                 Text(
                   AppLocalizations.of(context).estimatedArrivalLabel,
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: AppColors.textSecondary,
                   ),
                 ),

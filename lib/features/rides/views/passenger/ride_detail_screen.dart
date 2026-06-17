@@ -10,7 +10,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:sport_connect/core/animations/feedback_animations.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/constants/app_constants.dart';
 import 'package:sport_connect/core/models/location/location_point.dart';
@@ -266,7 +265,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                                   ride.eventName ??
                                       AppLocalizations.of(context).eventLabel,
                                   style: TextStyle(
-                                    fontSize: 13.sp,
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.primary,
                                   ),
@@ -653,7 +652,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                               Text(
                                 AppLocalizations.of(context).loadingRoute,
                                 style: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: 12.sp,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
                                 ),
@@ -675,7 +674,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                                   uiState.routeInfo!.formattedDuration,
                                 ),
                                 style: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: 12.sp,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
                                 ),
@@ -884,7 +883,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                               child: DriverRatingWidget(
                                 driverId: ride.driverId,
                                 style: TextStyle(
-                                  fontSize: 13.sp,
+                                  fontSize: 12.sp,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.xpGold,
                                 ),
@@ -1027,7 +1026,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                       context,
                     ).valueTotalSeats(ride.availableSeats),
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -1278,7 +1277,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                               acceptedBookings.length,
                             ),
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -1891,7 +1890,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: bgColor,
                     ),
@@ -2446,58 +2445,4 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
     }
   }
 
-  /// Book ride - creates a pending booking and navigates to the pending screen.
-  /// Payment (if applicable) is collected after the driver accepts.
-  Future<void> _bookRide(RideModel ride) async {
-    final uiState = ref.read(rideDetailUiViewModelProvider(widget.rideId));
-    final user = ref.read(currentUserProvider).value;
-    if (user == null) {
-      _showSnackBar(AppLocalizations.of(context).pleaseLogInToBook);
-      return;
-    }
-
-    unawaited(HapticFeedback.heavyImpact());
-    _uiNotifier.setBooking(true);
-
-    try {
-      final success = await ref
-          .read(rideDetailViewModelProvider(widget.rideId).notifier)
-          .bookRide(
-            passengerId: user.uid,
-            seats: uiState.selectedSeats,
-            pickupLocation: uiState.pickupLocation,
-          );
-
-      if (!mounted) return;
-      _uiNotifier.setBooking(false);
-
-      if (success) {
-        await FeedbackAnimations.showBookingConfirmation(
-          context,
-          rideInfo:
-              '${ride.origin.city ?? ride.origin.address} → ${ride.destination.city ?? ride.destination.address}',
-          dateTime: AppLocaleFormatters.formatMonthDayTime(
-            context,
-            ride.departureTime,
-          ),
-        );
-        if (!mounted) return;
-        context.push(
-          AppRoutes.rideBookingPending.path.replaceFirst(':rideId', ride.id),
-        );
-      } else {
-        await FeedbackAnimations.showError(
-          context,
-          message: AppLocalizations.of(context).failedToBookRidePlease,
-        );
-      }
-    } on Exception catch (e) {
-      if (!mounted) return;
-      _uiNotifier.setBooking(false);
-      await FeedbackAnimations.showError(
-        context,
-        message: AppLocalizations.of(context).errorValue(e),
-      );
-    }
-  }
 }

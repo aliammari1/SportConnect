@@ -45,7 +45,7 @@ final class NotificationViewModelProvider
 }
 
 String _$notificationViewModelHash() =>
-    r'a9f5e45368b9054bb417947ef99913be78ac5315';
+    r'a220da6d502d08b3643e79356f8ba5461b06ba2b';
 
 /// ViewModel for notifications screen
 
@@ -112,42 +112,3 @@ final class UserNotificationsProvider
 }
 
 String _$userNotificationsHash() => r'9898eec51299a56db7d31259fc73e87d47303316';
-
-/// Provider for unread notification count
-
-@ProviderFor(unreadNotificationCount)
-final unreadNotificationCountProvider = UnreadNotificationCountProvider._();
-
-/// Provider for unread notification count
-
-final class UnreadNotificationCountProvider
-    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
-    with $FutureModifier<int>, $StreamProvider<int> {
-  /// Provider for unread notification count
-  UnreadNotificationCountProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'unreadNotificationCountProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$unreadNotificationCountHash();
-
-  @$internal
-  @override
-  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
-
-  @override
-  Stream<int> create(Ref ref) {
-    return unreadNotificationCount(ref);
-  }
-}
-
-String _$unreadNotificationCountHash() =>
-    r'5360dfd1118f92d04fd307d0bdf90051c3697ebe';

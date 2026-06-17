@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Achievement {
 
- String get id; String get title; String get description; String get iconName; int get xpReward; bool get isUnlocked;@TimestampConverter() DateTime? get unlockedAt;
+ String get id; String get title; String get description; String get iconName; int get xpReward; bool get isUnlocked;@TimestampConverter() DateTime? get unlockedAt;// Progress-style achievements (optional, backward-compatible).
+ int get progress; int? get target;
 /// Create a copy of Achievement
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +29,16 @@ $AchievementCopyWith<Achievement> get copyWith => _$AchievementCopyWithImpl<Achi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Achievement&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.iconName, iconName) || other.iconName == iconName)&&(identical(other.xpReward, xpReward) || other.xpReward == xpReward)&&(identical(other.isUnlocked, isUnlocked) || other.isUnlocked == isUnlocked)&&(identical(other.unlockedAt, unlockedAt) || other.unlockedAt == unlockedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Achievement&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.iconName, iconName) || other.iconName == iconName)&&(identical(other.xpReward, xpReward) || other.xpReward == xpReward)&&(identical(other.isUnlocked, isUnlocked) || other.isUnlocked == isUnlocked)&&(identical(other.unlockedAt, unlockedAt) || other.unlockedAt == unlockedAt)&&(identical(other.progress, progress) || other.progress == progress)&&(identical(other.target, target) || other.target == target));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,description,iconName,xpReward,isUnlocked,unlockedAt);
+int get hashCode => Object.hash(runtimeType,id,title,description,iconName,xpReward,isUnlocked,unlockedAt,progress,target);
 
 @override
 String toString() {
-  return 'Achievement(id: $id, title: $title, description: $description, iconName: $iconName, xpReward: $xpReward, isUnlocked: $isUnlocked, unlockedAt: $unlockedAt)';
+  return 'Achievement(id: $id, title: $title, description: $description, iconName: $iconName, xpReward: $xpReward, isUnlocked: $isUnlocked, unlockedAt: $unlockedAt, progress: $progress, target: $target)';
 }
 
 
@@ -48,7 +49,7 @@ abstract mixin class $AchievementCopyWith<$Res>  {
   factory $AchievementCopyWith(Achievement value, $Res Function(Achievement) _then) = _$AchievementCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String description, String iconName, int xpReward, bool isUnlocked,@TimestampConverter() DateTime? unlockedAt
+ String id, String title, String description, String iconName, int xpReward, bool isUnlocked,@TimestampConverter() DateTime? unlockedAt, int progress, int? target
 });
 
 
@@ -65,7 +66,7 @@ class _$AchievementCopyWithImpl<$Res>
 
 /// Create a copy of Achievement
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = null,Object? iconName = null,Object? xpReward = null,Object? isUnlocked = null,Object? unlockedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = null,Object? iconName = null,Object? xpReward = null,Object? isUnlocked = null,Object? unlockedAt = freezed,Object? progress = null,Object? target = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -74,7 +75,9 @@ as String,iconName: null == iconName ? _self.iconName : iconName // ignore: cast
 as String,xpReward: null == xpReward ? _self.xpReward : xpReward // ignore: cast_nullable_to_non_nullable
 as int,isUnlocked: null == isUnlocked ? _self.isUnlocked : isUnlocked // ignore: cast_nullable_to_non_nullable
 as bool,unlockedAt: freezed == unlockedAt ? _self.unlockedAt : unlockedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,progress: null == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
+as int,target: freezed == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -159,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String description,  String iconName,  int xpReward,  bool isUnlocked, @TimestampConverter()  DateTime? unlockedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String description,  String iconName,  int xpReward,  bool isUnlocked, @TimestampConverter()  DateTime? unlockedAt,  int progress,  int? target)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Achievement() when $default != null:
-return $default(_that.id,_that.title,_that.description,_that.iconName,_that.xpReward,_that.isUnlocked,_that.unlockedAt);case _:
+return $default(_that.id,_that.title,_that.description,_that.iconName,_that.xpReward,_that.isUnlocked,_that.unlockedAt,_that.progress,_that.target);case _:
   return orElse();
 
 }
@@ -180,10 +183,10 @@ return $default(_that.id,_that.title,_that.description,_that.iconName,_that.xpRe
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String description,  String iconName,  int xpReward,  bool isUnlocked, @TimestampConverter()  DateTime? unlockedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String description,  String iconName,  int xpReward,  bool isUnlocked, @TimestampConverter()  DateTime? unlockedAt,  int progress,  int? target)  $default,) {final _that = this;
 switch (_that) {
 case _Achievement():
-return $default(_that.id,_that.title,_that.description,_that.iconName,_that.xpReward,_that.isUnlocked,_that.unlockedAt);case _:
+return $default(_that.id,_that.title,_that.description,_that.iconName,_that.xpReward,_that.isUnlocked,_that.unlockedAt,_that.progress,_that.target);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +203,10 @@ return $default(_that.id,_that.title,_that.description,_that.iconName,_that.xpRe
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String description,  String iconName,  int xpReward,  bool isUnlocked, @TimestampConverter()  DateTime? unlockedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String description,  String iconName,  int xpReward,  bool isUnlocked, @TimestampConverter()  DateTime? unlockedAt,  int progress,  int? target)?  $default,) {final _that = this;
 switch (_that) {
 case _Achievement() when $default != null:
-return $default(_that.id,_that.title,_that.description,_that.iconName,_that.xpReward,_that.isUnlocked,_that.unlockedAt);case _:
+return $default(_that.id,_that.title,_that.description,_that.iconName,_that.xpReward,_that.isUnlocked,_that.unlockedAt,_that.progress,_that.target);case _:
   return null;
 
 }
@@ -214,8 +217,8 @@ return $default(_that.id,_that.title,_that.description,_that.iconName,_that.xpRe
 /// @nodoc
 @JsonSerializable()
 
-class _Achievement implements Achievement {
-  const _Achievement({required this.id, required this.title, required this.description, required this.iconName, required this.xpReward, this.isUnlocked = false, @TimestampConverter() this.unlockedAt});
+class _Achievement extends Achievement {
+  const _Achievement({required this.id, required this.title, required this.description, required this.iconName, required this.xpReward, this.isUnlocked = false, @TimestampConverter() this.unlockedAt, this.progress = 0, this.target}): super._();
   factory _Achievement.fromJson(Map<String, dynamic> json) => _$AchievementFromJson(json);
 
 @override final  String id;
@@ -225,6 +228,9 @@ class _Achievement implements Achievement {
 @override final  int xpReward;
 @override@JsonKey() final  bool isUnlocked;
 @override@TimestampConverter() final  DateTime? unlockedAt;
+// Progress-style achievements (optional, backward-compatible).
+@override@JsonKey() final  int progress;
+@override final  int? target;
 
 /// Create a copy of Achievement
 /// with the given fields replaced by the non-null parameter values.
@@ -239,16 +245,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Achievement&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.iconName, iconName) || other.iconName == iconName)&&(identical(other.xpReward, xpReward) || other.xpReward == xpReward)&&(identical(other.isUnlocked, isUnlocked) || other.isUnlocked == isUnlocked)&&(identical(other.unlockedAt, unlockedAt) || other.unlockedAt == unlockedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Achievement&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.iconName, iconName) || other.iconName == iconName)&&(identical(other.xpReward, xpReward) || other.xpReward == xpReward)&&(identical(other.isUnlocked, isUnlocked) || other.isUnlocked == isUnlocked)&&(identical(other.unlockedAt, unlockedAt) || other.unlockedAt == unlockedAt)&&(identical(other.progress, progress) || other.progress == progress)&&(identical(other.target, target) || other.target == target));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,description,iconName,xpReward,isUnlocked,unlockedAt);
+int get hashCode => Object.hash(runtimeType,id,title,description,iconName,xpReward,isUnlocked,unlockedAt,progress,target);
 
 @override
 String toString() {
-  return 'Achievement(id: $id, title: $title, description: $description, iconName: $iconName, xpReward: $xpReward, isUnlocked: $isUnlocked, unlockedAt: $unlockedAt)';
+  return 'Achievement(id: $id, title: $title, description: $description, iconName: $iconName, xpReward: $xpReward, isUnlocked: $isUnlocked, unlockedAt: $unlockedAt, progress: $progress, target: $target)';
 }
 
 
@@ -259,7 +265,7 @@ abstract mixin class _$AchievementCopyWith<$Res> implements $AchievementCopyWith
   factory _$AchievementCopyWith(_Achievement value, $Res Function(_Achievement) _then) = __$AchievementCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String description, String iconName, int xpReward, bool isUnlocked,@TimestampConverter() DateTime? unlockedAt
+ String id, String title, String description, String iconName, int xpReward, bool isUnlocked,@TimestampConverter() DateTime? unlockedAt, int progress, int? target
 });
 
 
@@ -276,7 +282,7 @@ class __$AchievementCopyWithImpl<$Res>
 
 /// Create a copy of Achievement
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = null,Object? iconName = null,Object? xpReward = null,Object? isUnlocked = null,Object? unlockedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = null,Object? iconName = null,Object? xpReward = null,Object? isUnlocked = null,Object? unlockedAt = freezed,Object? progress = null,Object? target = freezed,}) {
   return _then(_Achievement(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -285,7 +291,9 @@ as String,iconName: null == iconName ? _self.iconName : iconName // ignore: cast
 as String,xpReward: null == xpReward ? _self.xpReward : xpReward // ignore: cast_nullable_to_non_nullable
 as int,isUnlocked: null == isUnlocked ? _self.isUnlocked : isUnlocked // ignore: cast_nullable_to_non_nullable
 as bool,unlockedAt: freezed == unlockedAt ? _self.unlockedAt : unlockedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,progress: null == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
+as int,target: freezed == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

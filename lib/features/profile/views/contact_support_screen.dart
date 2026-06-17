@@ -146,6 +146,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.contactSupport,
         leading: IconButton(
           tooltip: l10n.goBackTooltip,
@@ -200,7 +201,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
                       Text(
                         l10n.howCanWeHelp,
                         style: TextStyle(
-                          fontSize: 15.sp,
+                          fontSize: 14.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
@@ -270,8 +271,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
                 .setSubject(control.value ?? ''),
             validationMessages: {
               ValidationMessage.required: (_) => l10n.supportSubjectRequired,
-              ValidationMessage.minLength: (_) =>
-                  l10n.supportSubjectMinLength,
+              ValidationMessage.minLength: (_) => l10n.supportSubjectMinLength,
             },
             labelText: l10n.subjectLabel,
             hintText: l10n.subjectHint,
@@ -299,8 +299,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
                 .setMessage(control.value ?? ''),
             validationMessages: {
               ValidationMessage.required: (_) => l10n.supportMessageRequired,
-              ValidationMessage.minLength: (_) =>
-                  l10n.supportMessageMinLength,
+              ValidationMessage.minLength: (_) => l10n.supportMessageMinLength,
             },
             hintText: l10n.messageFieldHint,
           ).animate().fadeIn(delay: 300.ms),
@@ -336,7 +335,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
                               ContactSupportViewModel.maxAttachments,
                             ),
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         color: supportState.attachedFiles.isEmpty
                             ? AppColors.textTertiary
                             : AppColors.textPrimary,

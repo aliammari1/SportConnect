@@ -783,7 +783,7 @@ final class RideDetailViewModelProvider
 }
 
 String _$rideDetailViewModelHash() =>
-    r'945bf42273ac6499a9ee2cf20675656c9073d0e9';
+    r'a0c18e25419b4f4d9477e9eae6a934cdab42901c';
 
 /// Single Ride Detail View Model — views watch only this, never separate
 /// stream/booking providers directly.
@@ -894,7 +894,7 @@ final class ActiveRideViewModelProvider
 }
 
 String _$activeRideViewModelHash() =>
-    r'dbd32227d64bc8d21d9555c7a58d458b2ea28704';
+    r'8c6130967b12e8df4b418faa3268744a4fa1a866';
 
 /// ViewModel for active-ride screens — views watch only this provider.
 
@@ -1601,6 +1601,11 @@ final class BookingStreamFamily extends $Family
 ///
 /// Used on the pending-booking screen where the passenger polls for
 /// status changes before being auto-navigated.
+///
+/// Auto-disposes (no keepAlive) so a sign-out/sign-in does not retain the
+/// previous user's Firestore subscription, and watches [currentAuthUidProvider]
+/// so it bails out and re-runs whenever the authenticated user changes —
+/// preventing one account from observing another account's bookings.
 
 @ProviderFor(bookingsByPassenger)
 final bookingsByPassengerProvider = BookingsByPassengerFamily._();
@@ -1609,6 +1614,11 @@ final bookingsByPassengerProvider = BookingsByPassengerFamily._();
 ///
 /// Used on the pending-booking screen where the passenger polls for
 /// status changes before being auto-navigated.
+///
+/// Auto-disposes (no keepAlive) so a sign-out/sign-in does not retain the
+/// previous user's Firestore subscription, and watches [currentAuthUidProvider]
+/// so it bails out and re-runs whenever the authenticated user changes —
+/// preventing one account from observing another account's bookings.
 
 final class BookingsByPassengerProvider
     extends
@@ -1624,13 +1634,18 @@ final class BookingsByPassengerProvider
   ///
   /// Used on the pending-booking screen where the passenger polls for
   /// status changes before being auto-navigated.
+  ///
+  /// Auto-disposes (no keepAlive) so a sign-out/sign-in does not retain the
+  /// previous user's Firestore subscription, and watches [currentAuthUidProvider]
+  /// so it bails out and re-runs whenever the authenticated user changes —
+  /// preventing one account from observing another account's bookings.
   BookingsByPassengerProvider._({
     required BookingsByPassengerFamily super.from,
     required String super.argument,
   }) : super(
          retry: null,
          name: r'bookingsByPassengerProvider',
-         isAutoDispose: false,
+         isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -1669,12 +1684,17 @@ final class BookingsByPassengerProvider
 }
 
 String _$bookingsByPassengerHash() =>
-    r'7b46f32c9e286c66e13a58a2b49c539ebb62ca7e';
+    r'262f56a95ae45320a507271fc417f1eaca5f1a73';
 
 /// Real-time stream of all bookings for a given passenger.
 ///
 /// Used on the pending-booking screen where the passenger polls for
 /// status changes before being auto-navigated.
+///
+/// Auto-disposes (no keepAlive) so a sign-out/sign-in does not retain the
+/// previous user's Firestore subscription, and watches [currentAuthUidProvider]
+/// so it bails out and re-runs whenever the authenticated user changes —
+/// preventing one account from observing another account's bookings.
 
 final class BookingsByPassengerFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<RideBooking>>, String> {
@@ -1684,13 +1704,18 @@ final class BookingsByPassengerFamily extends $Family
         name: r'bookingsByPassengerProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: false,
+        isAutoDispose: true,
       );
 
   /// Real-time stream of all bookings for a given passenger.
   ///
   /// Used on the pending-booking screen where the passenger polls for
   /// status changes before being auto-navigated.
+  ///
+  /// Auto-disposes (no keepAlive) so a sign-out/sign-in does not retain the
+  /// previous user's Firestore subscription, and watches [currentAuthUidProvider]
+  /// so it bails out and re-runs whenever the authenticated user changes —
+  /// preventing one account from observing another account's bookings.
 
   BookingsByPassengerProvider call(String passengerId) =>
       BookingsByPassengerProvider._(argument: passengerId, from: this);

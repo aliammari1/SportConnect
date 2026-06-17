@@ -236,7 +236,7 @@ class PremiumListTile extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(
-                          fontSize: 15.sp,
+                          fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
                         ),
@@ -246,7 +246,7 @@ class PremiumListTile extends StatelessWidget {
                         Text(
                           subtitle!,
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -408,7 +408,7 @@ class PremiumInfoBanner extends StatelessWidget {
                 Text(
                   message,
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     color: AppColors.textSecondary,
                     height: 1.4,
                   ),
@@ -420,7 +420,7 @@ class PremiumInfoBanner extends StatelessWidget {
                     child: Text(
                       actionLabel!,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w700,
                         color: _color,
                       ),
@@ -538,7 +538,7 @@ class PremiumStatsCard extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
             ),
@@ -644,7 +644,7 @@ class PremiumEmptyState extends StatelessWidget {
                   child: Text(
                     actionLabel!,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),

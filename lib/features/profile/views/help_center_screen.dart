@@ -20,106 +20,106 @@ class HelpCenterScreen extends ConsumerWidget {
   const HelpCenterScreen({super.key});
 
   List<_FAQCategory> _faqCategories(AppLocalizations l10n) => [
-        _FAQCategory(
-          title: l10n.getting_started,
-          icon: Icons.rocket_launch_rounded,
-          color: const Color(0xFF4CAF50),
-          questions: [
-            _FAQ(
-              l10n.helpCenterGettingStartedCreateAccountQuestion,
-              l10n.helpCenterGettingStartedCreateAccountAnswer,
-            ),
-            _FAQ(
-              l10n.helpCenterGettingStartedSwitchRoleQuestion,
-              l10n.helpCenterGettingStartedSwitchRoleAnswer,
-            ),
-            _FAQ(
-              l10n.helpCenterGettingStartedFreeQuestion,
-              l10n.helpCenterGettingStartedFreeAnswer,
-            ),
-          ],
+    _FAQCategory(
+      title: l10n.getting_started,
+      icon: Icons.rocket_launch_rounded,
+      color: const Color(0xFF4CAF50),
+      questions: [
+        _FAQ(
+          l10n.helpCenterGettingStartedCreateAccountQuestion,
+          l10n.helpCenterGettingStartedCreateAccountAnswer,
         ),
-        _FAQCategory(
-          title: l10n.rides_booking,
-          icon: Icons.directions_car_rounded,
-          color: const Color(0xFF2196F3),
-          questions: [
-            _FAQ(
-              l10n.helpCenterRidesBookingQuestion,
-              l10n.helpCenterRidesBookingAnswer,
-            ),
-            _FAQ(
-              l10n.helpCenterRidesCancelQuestion,
-              l10n.helpCenterRidesCancelAnswer,
-            ),
-            _FAQ(
-              l10n.helpCenterRidesMatchingQuestion,
-              l10n.helpCenterRidesMatchingAnswer,
-            ),
-            _FAQ(
-              l10n.helpCenterRidesLateQuestion,
-              l10n.helpCenterRidesLateAnswer,
-            ),
-          ],
+        _FAQ(
+          l10n.helpCenterGettingStartedSwitchRoleQuestion,
+          l10n.helpCenterGettingStartedSwitchRoleAnswer,
         ),
-        _FAQCategory(
-          title: l10n.payments,
-          icon: Icons.payment_rounded,
-          color: const Color(0xFFFF9800),
-          questions: [
-            _FAQ(
-              l10n.helpCenterPaymentsQuestion,
-              l10n.helpCenterPaymentsAnswer,
-            ),
-            _FAQ(
-              l10n.helpCenterPayoutsQuestion,
-              l10n.helpCenterPayoutsAnswer,
-            ),
-            _FAQ(
-              l10n.helpCenterFeesQuestion,
-              l10n.helpCenterFeesAnswer,
-            ),
-          ],
+        _FAQ(
+          l10n.helpCenterGettingStartedFreeQuestion,
+          l10n.helpCenterGettingStartedFreeAnswer,
         ),
-        _FAQCategory(
-          title: l10n.safety_trust,
-          icon: Icons.shield_rounded,
-          color: const Color(0xFFF44336),
-          questions: [
-            _FAQ(
-              l10n.helpCenterSafetyQuestion,
-              l10n.helpCenterSafetyAnswer,
-            ),
-            _FAQ(
-              l10n.helpCenterSafetyReportQuestion,
-              l10n.helpCenterSafetyReportAnswer,
-            ),
-            _FAQ(
-              l10n.helpCenterSafetyShareQuestion,
-              l10n.helpCenterSafetyShareAnswer,
-            ),
-          ],
+      ],
+    ),
+    _FAQCategory(
+      title: l10n.rides_booking,
+      icon: Icons.directions_car_rounded,
+      color: const Color(0xFF2196F3),
+      questions: [
+        _FAQ(
+          l10n.helpCenterRidesBookingQuestion,
+          l10n.helpCenterRidesBookingAnswer,
         ),
-        _FAQCategory(
-          title: l10n.account_profile,
-          icon: Icons.person_rounded,
-          color: const Color(0xFF9C27B0),
-          questions: [
-            _FAQ(
-              l10n.helpCenterAccountVerifyQuestion,
-              l10n.helpCenterAccountVerifyAnswer,
-            ),
-            _FAQ(
-              l10n.helpCenterAccountDeleteQuestion,
-              l10n.helpCenterAccountDeleteAnswer,
-            ),
-            _FAQ(
-              l10n.helpCenterAccountEmailQuestion,
-              l10n.helpCenterAccountEmailAnswer,
-            ),
-          ],
+        _FAQ(
+          l10n.helpCenterRidesCancelQuestion,
+          l10n.helpCenterRidesCancelAnswer,
         ),
-      ];
+        _FAQ(
+          l10n.helpCenterRidesMatchingQuestion,
+          l10n.helpCenterRidesMatchingAnswer,
+        ),
+        _FAQ(
+          l10n.helpCenterRidesLateQuestion,
+          l10n.helpCenterRidesLateAnswer,
+        ),
+      ],
+    ),
+    _FAQCategory(
+      title: l10n.payments,
+      icon: Icons.payment_rounded,
+      color: const Color(0xFFFF9800),
+      questions: [
+        _FAQ(
+          l10n.helpCenterPaymentsQuestion,
+          l10n.helpCenterPaymentsAnswer,
+        ),
+        _FAQ(
+          l10n.helpCenterPayoutsQuestion,
+          l10n.helpCenterPayoutsAnswer,
+        ),
+        _FAQ(
+          l10n.helpCenterFeesQuestion,
+          l10n.helpCenterFeesAnswer,
+        ),
+      ],
+    ),
+    _FAQCategory(
+      title: l10n.safety_trust,
+      icon: Icons.shield_rounded,
+      color: const Color(0xFFF44336),
+      questions: [
+        _FAQ(
+          l10n.helpCenterSafetyQuestion,
+          l10n.helpCenterSafetyAnswer,
+        ),
+        _FAQ(
+          l10n.helpCenterSafetyReportQuestion,
+          l10n.helpCenterSafetyReportAnswer,
+        ),
+        _FAQ(
+          l10n.helpCenterSafetyShareQuestion,
+          l10n.helpCenterSafetyShareAnswer,
+        ),
+      ],
+    ),
+    _FAQCategory(
+      title: l10n.account_profile,
+      icon: Icons.person_rounded,
+      color: const Color(0xFF9C27B0),
+      questions: [
+        _FAQ(
+          l10n.helpCenterAccountVerifyQuestion,
+          l10n.helpCenterAccountVerifyAnswer,
+        ),
+        _FAQ(
+          l10n.helpCenterAccountDeleteQuestion,
+          l10n.helpCenterAccountDeleteAnswer,
+        ),
+        _FAQ(
+          l10n.helpCenterAccountEmailQuestion,
+          l10n.helpCenterAccountEmailAnswer,
+        ),
+      ],
+    ),
+  ];
 
   List<_FAQCategory> _filteredCategories(
     String searchQuery,
@@ -157,6 +157,7 @@ class HelpCenterScreen extends ConsumerWidget {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.settingsHelpCenter,
         leading: IconButton(
           tooltip: l10n.goBackTooltip,
@@ -167,58 +168,58 @@ class HelpCenterScreen extends ConsumerWidget {
       body: MaxWidthContainer(
         maxWidth: kMaxWidthContent,
         child: SingleChildScrollView(
-        padding: adaptiveScreenPadding(context),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 8.h),
+          padding: adaptiveScreenPadding(context),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 8.h),
 
-            // Search bar
-            _buildSearchBar(
-              context,
-              ref,
-              uiState,
-            ).animate().fadeIn(duration: 300.ms),
+              // Search bar
+              _buildSearchBar(
+                context,
+                ref,
+                uiState,
+              ).animate().fadeIn(duration: 300.ms),
 
-            SizedBox(height: 20.h),
+              SizedBox(height: 20.h),
 
-            // Quick actions
-            _buildQuickActions(
-              context,
-              l10n,
-            ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05),
+              // Quick actions
+              _buildQuickActions(
+                context,
+                l10n,
+              ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05),
 
-            SizedBox(height: 28.h),
+              SizedBox(height: 28.h),
 
-            // FAQ sections
-            Text(
-              l10n.frequentlyAskedQuestions,
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ).animate().fadeIn(delay: 200.ms),
+              // FAQ sections
+              Text(
+                l10n.frequentlyAskedQuestions,
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ).animate().fadeIn(delay: 200.ms),
 
-            SizedBox(height: 16.h),
+              SizedBox(height: 16.h),
 
-            ...filteredCategories.asMap().entries.map((entry) {
-              return _buildFAQSection(context, entry.value)
-                  .animate()
-                  .fadeIn(
-                    delay: Duration(milliseconds: 250 + (entry.key * 100)),
-                  )
-                  .slideY(begin: 0.03);
-            }),
+              ...filteredCategories.asMap().entries.map((entry) {
+                return _buildFAQSection(context, entry.value)
+                    .animate()
+                    .fadeIn(
+                      delay: Duration(milliseconds: 250 + (entry.key * 100)),
+                    )
+                    .slideY(begin: 0.03);
+              }),
 
-            if (filteredCategories.isEmpty)
-              _buildEmptySearch(context).animate().fadeIn(duration: 300.ms),
+              if (filteredCategories.isEmpty)
+                _buildEmptySearch(context).animate().fadeIn(duration: 300.ms),
 
-            SizedBox(height: 32.h),
-          ],
+              SizedBox(height: 32.h),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -313,7 +314,7 @@ class HelpCenterScreen extends ConsumerWidget {
                 label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
                   color: color,
                 ),
@@ -353,7 +354,7 @@ class HelpCenterScreen extends ConsumerWidget {
           title: Text(
             category.title,
             style: TextStyle(
-              fontSize: 15.sp,
+              fontSize: 14.sp,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
@@ -385,7 +386,7 @@ class HelpCenterScreen extends ConsumerWidget {
           title: Text(
             faq.question,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
             ),
@@ -394,7 +395,7 @@ class HelpCenterScreen extends ConsumerWidget {
             Text(
               faq.answer,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 color: AppColors.textSecondary,
                 height: 1.5,
               ),
@@ -428,7 +429,7 @@ class HelpCenterScreen extends ConsumerWidget {
             SizedBox(height: 4.h),
             Text(
               AppLocalizations.of(context).tryDifferentKeywordsOrContactSupport,
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textTertiary),
             ),
           ],
         ),

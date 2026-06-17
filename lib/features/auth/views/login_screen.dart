@@ -297,7 +297,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           Text(
             l10n.signInToContinueYour,
             style: TextStyle(
-              fontSize: 34.sp,
+              fontSize: 32.sp,
               height: 1.1,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
@@ -355,14 +355,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         ),
         SizedBox(height: 16.h),
 
-        // App name — plain Text, no changes needed.
-        Text(
-          AppLocalizations.of(context).sportconnect,
-          style: TextStyle(
-            fontSize: 28.sp,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-            letterSpacing: 0,
+        // App name — FittedBox prevents wrapping in narrow tablet login cards.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            AppLocalizations.of(context).sportconnect,
+            style: TextStyle(
+              fontSize: 28.sp,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              letterSpacing: 0,
+            ),
+            maxLines: 1,
+            softWrap: false,
           ),
         ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
       ],
@@ -388,7 +393,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         SizedBox(height: 8.h),
         Text(
           AppLocalizations.of(context).signInToContinueYour,
-          style: TextStyle(fontSize: 15.sp, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
           textAlign: TextAlign.center,
         ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
       ],
@@ -471,7 +476,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           ),
           child: Text(
             AppLocalizations.of(context).authForgotPassword,
-            style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
           ),
         ),
       ],
@@ -573,8 +578,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     // Keep the child text as the only accessible label to avoid duplicate
     // screen-reader announcements for the sign-up action.
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
           l10n.donTHaveAnAccount,
@@ -673,8 +679,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         case 'account-disabled':
           return l10n.your_account_has_been_suspended_please_contact_support;
         case 'user-not-found':
-          return l10n.loginErrorUserNotFound;
-        case 'wrong-password' || 'invalid-credential':
+        case 'wrong-password':
+        case 'invalid-credential':
+          // Collapse all credential errors into a single generic message to
+          // prevent email enumeration attacks.
           return l10n.loginErrorWrongPassword;
         case 'too-many-requests':
           return l10n.loginErrorTooManyRequests;
@@ -689,10 +697,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       }
     }
     final errorStr = error.toString().toLowerCase();
-    if (errorStr.contains('user-not-found')) {
-      return l10n.loginErrorUserNotFound;
-    } else if (errorStr.contains('wrong-password') ||
+    if (errorStr.contains('user-not-found') ||
+        errorStr.contains('wrong-password') ||
         errorStr.contains('invalid-credential')) {
+      // Single generic message for all credential errors — prevents email
+      // enumeration by not distinguishing unknown email from wrong password.
       return l10n.loginErrorWrongPassword;
     } else if (errorStr.contains('too-many-requests')) {
       return l10n.loginErrorTooManyRequests;
@@ -757,7 +766,7 @@ class _LoginValueTile extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),

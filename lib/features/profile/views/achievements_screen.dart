@@ -9,6 +9,7 @@ import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/widgets/app_segmented_tab_view.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/profile/models/leaderboard_entry.dart';
 import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
@@ -88,7 +89,7 @@ class _AchievementsContent extends StatelessWidget {
             l10n: l10n,
           ),
         ],
-        body: AdaptiveTabBarView(
+        body: AppSegmentedTabView(
           tabs: [l10n.badges, l10n.challenges, l10n.leaderboard],
           selectedColor: Colors.white,
           backgroundColor: AppColors.primary,
@@ -467,21 +468,16 @@ class _BadgesTab extends StatelessWidget {
         'silver',
         totalRides < 10 ? totalRides / 10 : null,
       ),
-      _BadgeData(
-        l10n.badgeEcoHero,
-        l10n.badgeEcoHeroDesc,
-        Icons.eco_rounded,
-        unlockedBadges.contains('eco_hero'),
-        'gold',
-        0.6,
-      ),
-      _BadgeData(
-        l10n.badgeSocialButterfly,
-        l10n.badgeSocialButterflyDesc,
-        Icons.people_rounded,
-        unlockedBadges.contains('social_butterfly'),
-        'silver',
-      ),
+      // NOTE: Only badges with real, backend-awardable criteria are shown.
+      // ProfileRepository.evaluateAchievements awards exactly:
+      //   first_ride, road_tripper, speed_demon, road_master, marathon_driver
+      // road_warrior is additionally driven by a numeric UI fallback
+      // (totalRides >= 10). The previously listed eco_hero / social_butterfly /
+      // perfect_score / night_owl / early_bird / verified_pro badges had NO
+      // grant path (no criteria in evaluateAchievements and unlockAchievement
+      // had no callers) and some displayed hardcoded fake progress (0.6 / 0.3 /
+      // 0.45) that never advanced, so they were removed until real awarding
+      // logic exists.
       _BadgeData(
         l10n.badgeRoadTripper,
         l10n.badgeRoadTripperDesc,
@@ -498,13 +494,6 @@ class _BadgesTab extends StatelessWidget {
         'gold',
       ),
       _BadgeData(
-        l10n.badgePerfectScore,
-        l10n.badgePerfectScoreDesc,
-        Icons.star_rounded,
-        unlockedBadges.contains('perfect_score'),
-        'platinum',
-      ),
-      _BadgeData(
         l10n.badgeRoadMaster,
         l10n.badgeRoadMasterDesc,
         Icons.route_rounded,
@@ -513,35 +502,12 @@ class _BadgesTab extends StatelessWidget {
         totalRides < 100 ? totalRides / 100 : null,
       ),
       _BadgeData(
-        l10n.badgeNightOwl,
-        l10n.badgeNightOwlDesc,
-        Icons.nightlight_rounded,
-        unlockedBadges.contains('night_owl'),
-        'silver',
-        0.3,
-      ),
-      _BadgeData(
-        l10n.badgeEarlyBird,
-        l10n.badgeEarlyBirdDesc,
-        Icons.wb_sunny_rounded,
-        unlockedBadges.contains('early_bird'),
-        'bronze',
-        0.45,
-      ),
-      _BadgeData(
         l10n.badgeMarathonDriver,
         l10n.badgeMarathonDriverDesc,
         Icons.straighten_rounded,
         totalDistance >= 1000 || unlockedBadges.contains('marathon_driver'),
         'diamond',
         totalDistance < 1000 ? totalDistance / 1000 : null,
-      ),
-      _BadgeData(
-        l10n.badgeVerifiedPro,
-        l10n.badgeVerifiedProDesc,
-        Icons.verified_rounded,
-        unlockedBadges.contains('verified_pro'),
-        'silver',
       ),
     ];
   }
@@ -737,7 +703,7 @@ class _BadgeCard extends StatelessWidget {
             Text(
               data.description,
               style: TextStyle(
-                fontSize: 9.sp,
+                fontSize: 10.sp,
                 color: locked
                     ? AppColors.textTertiary
                     : AppColors.textSecondary,
@@ -760,7 +726,7 @@ class _BadgeCard extends StatelessWidget {
                 child: Text(
                   _tierLabel(l10n, data.tier).toUpperCase(),
                   style: TextStyle(
-                    fontSize: 8.sp,
+                    fontSize: 10.sp,
                     fontWeight: FontWeight.w800,
                     color: tierColor,
                     letterSpacing: 0.5,
@@ -991,7 +957,7 @@ class _ChallengeCard extends StatelessWidget {
                       child: Text(
                         data.name,
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
@@ -1436,7 +1402,7 @@ class _LeaderboardRow extends StatelessWidget {
                 Text(
                   entry.username,
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
@@ -1460,13 +1426,13 @@ class _LeaderboardRow extends StatelessWidget {
               Text(
                 _formatNumber(entry.totalXP),
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
               ),
               Text(
-                l10n.valueRides(entry.ridesThisMonth),
+                l10n.valueRides(entry.totalRides),
                 style: TextStyle(
                   fontSize: 10.sp,
                   color: AppColors.textTertiary,
@@ -1518,7 +1484,7 @@ class _StatItem extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 9.sp,
+              fontSize: 10.sp,
               color: Colors.white.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
@@ -1673,6 +1639,7 @@ class _AchievementsLoadingShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.badges,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
@@ -1702,6 +1669,7 @@ class _AchievementsErrorShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: l10n.badges,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),

@@ -701,27 +701,30 @@ class _DriverOnboardingScreenState
           _previousStep(vmState, skipProfileStep: skipProfileStep),
       child: AdaptiveScaffold(
         appBar: AdaptiveAppBar(
-          leading: effectiveStep > 0
-              ? IconButton(
-                  tooltip: l10n.previousStepTooltip,
-                  onPressed: () =>
-                      _previousStep(vmState, skipProfileStep: skipProfileStep),
-                  icon: Icon(
-                    Icons.adaptive.arrow_back_rounded,
-                    color: AppColors.textPrimary,
-                    size: 20.sp,
-                  ),
-                )
-              : IconButton(
-                  tooltip: l10n.goBackTooltip,
-                  onPressed: () => context.go(AppRoutes.roleSelection.path),
-                  icon: Icon(
-                    Icons.adaptive.arrow_back_rounded,
-                    color: AppColors.textPrimary,
-                    size: 20.sp,
-                  ),
-                ),
-          title: l10n.driverSetup,
+          // Disable the iOS 26 native Liquid Glass toolbar: with no title it
+          // renders an empty white glass pill, and the package warns it breaks
+          // GoRouter. The standard translucent CupertinoNavigationBar is clean.
+          useNativeToolbar: false,
+          leading: IconButton(
+            padding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            tooltip: effectiveStep > 0
+                ? l10n.previousStepTooltip
+                : l10n.goBackTooltip,
+            onPressed: () => effectiveStep > 0
+                ? _previousStep(vmState, skipProfileStep: skipProfileStep)
+                : context.go(AppRoutes.roleSelection.path),
+            icon: Icon(
+              Icons.adaptive.arrow_back_rounded,
+              color: AppColors.textPrimary,
+              size: 22.sp,
+            ),
+          ),
+          // Title intentionally omitted: the body already shows a prominent
+          // "Complete Your Profile" header plus the step progress indicator,
+          // and the iOS 26 nav bar renders a leading title that overlaps the
+          // back button. The back action + account switcher are enough here.
           actions: [
             AdaptiveAppBarAction(
               iosSymbol: 'person.crop.circle.badge.arrow.forward',
@@ -731,26 +734,37 @@ class _DriverOnboardingScreenState
           ],
         ),
         body: SafeArea(
-          top: false,
-          child: ResponsiveLayoutBuilder(
-            phone: (_) => MaxWidthContainer(
-              maxWidth: kMaxWidthForm,
-              child: _buildCompactBody(
-                vmState,
-                currentUser,
-                skipProfileStep: skipProfileStep,
-                effectiveStep: effectiveStep,
-              ),
-            ),
-            tablet: (_) => MaxWidthContainer(
-              maxWidth: _kDriverOnboardingWideMaxWidth,
-              child: _buildWideBody(
-                vmState,
-                currentUser,
-                skipProfileStep: skipProfileStep,
-                effectiveStep: effectiveStep,
-              ),
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Only use the two-column "wide" layout when there is genuinely
+              // enough width — i.e. a tablet in landscape. iPad portrait
+              // (~820pt) and phones use the single-column form so it is never
+              // crushed into an unreadable two-column squeeze.
+              final useWide =
+                  MediaQuery.sizeOf(context).shortestSide >=
+                      Breakpoints.compact &&
+                  constraints.maxWidth >= 900;
+              if (useWide) {
+                return MaxWidthContainer(
+                  maxWidth: _kDriverOnboardingWideMaxWidth,
+                  child: _buildWideBody(
+                    vmState,
+                    currentUser,
+                    skipProfileStep: skipProfileStep,
+                    effectiveStep: effectiveStep,
+                  ),
+                );
+              }
+              return MaxWidthContainer(
+                maxWidth: kMaxWidthForm,
+                child: _buildCompactBody(
+                  vmState,
+                  currentUser,
+                  skipProfileStep: skipProfileStep,
+                  effectiveStep: effectiveStep,
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -817,6 +831,7 @@ class _DriverOnboardingScreenState
                   child: _DriverOnboardingAside(
                     currentUser: currentUser,
                     effectiveStep: effectiveStep,
+                    skipProfileStep: skipProfileStep,
                   ),
                 ),
               ],
@@ -1275,29 +1290,33 @@ class _DriverOnboardingScreenState
                   color: AppColors.primary.withValues(alpha: 0.2),
                 ),
               ),
-              child: ReactiveCheckboxListTile(
-                formControlName: _PF.terms,
-                controlAffinity: ListTileControlAffinity.leading,
-                activeColor: AppColors.primary,
-                title: Text.rich(
-                  TextSpan(
-                    text: l10n.i_agree_to_the,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: AppColors.textSecondary,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: l10n.terms_conditions,
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () => context.push(AppRoutes.terms.path),
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
-                        ),
+              clipBehavior: Clip.antiAlias,
+              child: Material(
+                type: MaterialType.transparency,
+                child: ReactiveCheckboxListTile(
+                  formControlName: _PF.terms,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  activeColor: AppColors.primary,
+                  title: Text.rich(
+                    TextSpan(
+                      text: l10n.i_agree_to_the,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textSecondary,
                       ),
-                    ],
+                      children: [
+                        TextSpan(
+                          text: l10n.terms_conditions,
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => context.push(AppRoutes.terms.path),
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1484,7 +1503,7 @@ class _DriverOnboardingScreenState
         child: Text(
           initials,
           style: TextStyle(
-            fontSize: 15.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w800,
             color: Colors.white,
           ),
@@ -1929,10 +1948,12 @@ class _DriverOnboardingAside extends StatelessWidget {
   const _DriverOnboardingAside({
     required this.currentUser,
     required this.effectiveStep,
+    required this.skipProfileStep,
   });
 
   final UserModel? currentUser;
   final int effectiveStep;
+  final bool skipProfileStep;
 
   @override
   Widget build(BuildContext context) {
@@ -2020,7 +2041,7 @@ class _DriverOnboardingAside extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 17.sp,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
                         ),
@@ -2047,7 +2068,10 @@ class _DriverOnboardingAside extends StatelessWidget {
               borderRadius: BorderRadius.circular(999.r),
             ),
             child: Text(
-              l10n.stepOf(effectiveStep + 1, 3),
+              l10n.stepOf(
+                skipProfileStep ? effectiveStep : effectiveStep + 1,
+                skipProfileStep ? 2 : 3,
+              ),
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
@@ -2069,7 +2093,7 @@ class _DriverOnboardingAside extends StatelessWidget {
           Text(
             subtitle,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               color: AppColors.textSecondary,
               height: 1.55,
             ),
@@ -2097,7 +2121,7 @@ class _DriverOnboardingAside extends StatelessWidget {
                 _ => l10n.youCanStillOfferRides,
               },
               style: TextStyle(
-                fontSize: 12.5.sp,
+                fontSize: 12.sp,
                 color: AppColors.textSecondary,
                 height: 1.5,
               ),
@@ -2133,7 +2157,7 @@ class _AsideBullet extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
               height: 1.4,

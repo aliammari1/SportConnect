@@ -103,8 +103,15 @@ class RideService extends _$RideService {
 
     await repo.updateRide(cancelled);
 
-    // Cancel all pending/accepted bookings for this ride
+    // Cancel all pending/accepted bookings for this ride.
+    //
+    // Each cancellation runs in its own transaction (capacity release is atomic
+    // per booking inside the repository). Previously a mid-loop failure left
+    // some passengers with accepted bookings against a cancelled ride and only
+    // logged the error. We now collect per-booking failures and surface them so
+    // the caller can retry, rather than silently swallowing all of them.
     if (!ref.mounted) return;
+    final failedBookingIds = <String>[];
     try {
       final bookingRepo = ref.read(bookingRepositoryProvider);
       final bookings = await bookingRepo.getBookingsByRideId(
@@ -114,15 +121,47 @@ class RideService extends _$RideService {
       for (final booking in bookings) {
         if (booking.status == BookingStatus.pending ||
             booking.status == BookingStatus.accepted) {
-          await repo.cancelBooking(rideId: rideId, bookingId: booking.id);
+          try {
+            await repo.cancelBooking(rideId: rideId, bookingId: booking.id);
+            // A paid+accepted booking on a driver-cancelled ride must be
+            // refunded. Refunds are owned by the Stripe webhook / cloud
+            // function; log the paid booking so the refund seam has a durable
+            // signal and the gap is visible until a structured refund marker
+            // exists on the booking model.
+            if (booking.status == BookingStatus.accepted &&
+                booking.paymentIntentId != null &&
+                booking.paidAt != null) {
+              TalkerService.warning(
+                'Driver-cancelled ride $rideId has a PAID booking '
+                '${booking.id} (paymentIntentId=${booking.paymentIntentId}) — '
+                'refund required.',
+              );
+            }
+          } on Exception catch (e, st) {
+            failedBookingIds.add(booking.id);
+            TalkerService.error(
+              'Failed to cancel booking ${booking.id} for ride $rideId',
+              e,
+              st,
+            );
+          }
         }
       }
-    } on Exception catch (e) {
-      TalkerService.error('Failed to cancel bookings for ride $rideId: $e');
+    } on Exception catch (e, st) {
+      TalkerService.error('Failed to load bookings for ride $rideId', e, st);
+      rethrow;
     }
 
     // Notify all passengers about the cancellation
     await _notifyPassengersOfCancellation(ride: ride, reason: reason);
+
+    if (failedBookingIds.isNotEmpty) {
+      throw StateError(
+        'Ride $rideId was cancelled but ${failedBookingIds.length} booking(s) '
+        'could not be cancelled: ${failedBookingIds.join(', ')}. '
+        'Please retry to release their seats.',
+      );
+    }
   }
 
   /// Complete a ride, award XP and record driver stats.
@@ -142,12 +181,14 @@ class RideService extends _$RideService {
       throw ArgumentError('Only in-progress rides can be completed');
     }
 
-    // Mark ride as completed in Firestore
-    await repo.completeRide(rideId);
-
-    // Mark all accepted bookings as completed and collect passenger IDs
-    if (!ref.mounted) return;
+    // Collect accepted passenger IDs BEFORE completing so we know who to reward
+    // even though repo.completeRide will atomically mark them all as completed
+    // (F-06: the batch write inside completeRide handles booking status updates).
     final completedPassengerIds = <String>[];
+    // Map each completed passenger to the seats they personally booked so we
+    // can credit each passenger only what they actually paid (not the whole
+    // ride total). Defaults to 1 seat if missing.
+    final passengerSeatsBooked = <String, int>{};
     try {
       final bookingRepo = ref.read(bookingRepositoryProvider);
       final bookings = await bookingRepo.getBookingsByRideId(
@@ -156,17 +197,19 @@ class RideService extends _$RideService {
       );
       for (final booking in bookings) {
         if (booking.status == BookingStatus.accepted) {
-          await repo.updateBookingStatus(
-            rideId: rideId,
-            bookingId: booking.id,
-            newStatus: BookingStatus.completed,
-          );
           completedPassengerIds.add(booking.passengerId);
+          passengerSeatsBooked[booking.passengerId] =
+              booking.seatsBooked > 0 ? booking.seatsBooked : 1;
         }
       }
     } on Exception catch (e) {
-      TalkerService.error('Failed to update booking statuses: $e');
+      TalkerService.error('Failed to fetch booking statuses: $e');
     }
+
+    // Mark ride as completed in Firestore (atomically updates all accepted
+    // bookings to 'completed' in the same WriteBatch — see F-06).
+    await repo.completeRide(rideId);
+
     if (!ref.mounted) return;
 
     // FIX RC-1: Only award XP when the ride was genuinely completed with at
@@ -183,8 +226,17 @@ class RideService extends _$RideService {
     try {
       final xp = calculateXpReward(ride);
       final distanceKm = ride.route.distanceKm ?? 0.0;
+      // Aggregate over the SEATS actually booked by the completed passengers,
+      // not capacity.booked. capacity.booked can include seats reserved for
+      // bookings that were not completed, and completedPassengerIds counts
+      // passengers (not seats); summing per-passenger seatsBooked keeps the
+      // whole-ride estimate consistent with the per-passenger credits below.
+      final totalCompletedSeats = passengerSeatsBooked.values.fold<int>(
+        0,
+        (sum, seats) => sum + seats,
+      );
       final estimatedFareInCents =
-          ride.pricing.pricePerSeatInCents * ride.capacity.booked;
+          ride.pricing.pricePerSeatInCents * totalCompletedSeats;
       // Driver earnings are owned by Stripe webhook aggregation from the
       // payments collection. Do not write gross fare estimates here.
 
@@ -213,7 +265,8 @@ class RideService extends _$RideService {
           asDriver: false,
           distance: distanceKm,
           fareAmountPaidInCents:
-              ride.pricing.pricePerSeatInCents * ride.capacity.booked,
+              ride.pricing.pricePerSeatInCents *
+              (passengerSeatsBooked[passengerId] ?? 1),
         );
         if (passengerLevelUp != null) {
           await notificationRepo.sendLevelUpNotification(

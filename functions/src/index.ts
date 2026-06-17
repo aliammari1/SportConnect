@@ -2150,22 +2150,28 @@ export const createConnectedAccount = onCall(
 
       let createdAccount: StripeAccount;
       try {
-        createdAccount = await stripe.accounts.create({
-          type: "express",
-          country: stripeCountry,
-          email,
-          capabilities: {
-            card_payments: { requested: true },
-            transfers: { requested: true },
+        createdAccount = await stripe.accounts.create(
+          {
+            type: "express",
+            country: stripeCountry,
+            email,
+            capabilities: {
+              card_payments: { requested: true },
+              transfers: { requested: true },
+            },
+            business_type: "individual",
+            business_profile: {
+              mcc: "4121",
+              product_description:
+                "Carpooling driver on SportConnect - providing shared ride services to passengers for cost-sharing commutes and sports events",
+            },
+            metadata: { userId, userType: "driver" },
           },
-          business_type: "individual",
-          business_profile: {
-            mcc: "4121",
-            product_description:
-              "Carpooling driver on SportConnect - providing shared ride services to passengers for cost-sharing commutes and sports events",
-          },
-          metadata: { userId, userType: "driver" },
-        });
+          // Deterministic idempotency key keyed on the driver: a retry or a
+          // concurrent invocation (rate limit allows 3/hour) returns the SAME
+          // Express account instead of creating a duplicate orphaned account.
+          { idempotencyKey: `connect_acct_${userId}` },
+        );
       } catch (stripeError: unknown) {
         const e = stripeError as {
           message?: string;
@@ -3301,7 +3307,13 @@ export const approveRefundRequest = onCall(
       source: "sportconnect_admin_refund",
       requestedByUid: request.auth.uid,
       refundRequestId,
-      idempotencyKey: `admin_refund_${refundRequestId}_${amountInCents ?? "remaining"}`,
+      // Bind the idempotency key to the refund-request identity only — NOT to the
+      // operator-supplied amount. Keying on the variable amount let an operator
+      // who first refunded "remaining" then submit an explicit amount obtain a
+      // fresh key and trigger a second Stripe refund before the first webhook
+      // flipped status to "refunded". The in-transaction status/remaining checks
+      // in createStripeRefundForPayment remain the source of truth for amounts.
+      idempotencyKey: `admin_refund_${refundRequestId}`,
     });
 
     await refundRequestRef.set(
@@ -3487,7 +3499,10 @@ export const approveDisputeRefund = onCall(
       reason: "dispute_resolution",
       source: "sportconnect_dispute_refund",
       requestedByUid: request.auth.uid,
-      idempotencyKey: `dispute_refund_${disputeId}_${amountInCents ?? "remaining"}`,
+      // Bind the idempotency key to the dispute identity only — NOT to the
+      // operator-supplied amount — so a second submission with a different amount
+      // cannot bypass idempotency and trigger a duplicate Stripe refund.
+      idempotencyKey: `dispute_refund_${disputeId}`,
     });
 
     await disputeRef.set(
@@ -4733,17 +4748,41 @@ export const stripeWebhook = onRequest(
               // Increment driver_connected_accounts.pendingBalance optimistically.
               // Stripe keeps funds as "pending" until the normal payout schedule.
               // This gives the driver a live view without calling the Stripe API.
+              //
+              // Idempotency: a webhook retry (or a charge.* event firing for the
+              // same payment) re-runs this branch. Gate the increment on a
+              // per-payment `pendingBalanceCredited` flag set atomically in the
+              // same transaction as the credit, so the driver is credited at most
+              // once regardless of how many times the event is delivered.
               const connectedRef = db
                 .collection("driver_connected_accounts")
                 .doc(driverId);
-              const connectedSnap = await connectedRef.get();
-              if (connectedSnap.exists) {
-                await connectedRef.update({
-                  pendingBalance: FieldValue.increment(driverEarnings),
-                  pendingBalanceInCents: FieldValue.increment(
-                    driverEarningsInCents,
-                  ),
-                  updatedAt: FieldValue.serverTimestamp(),
+              const paymentDocRef = payments.docs[0]?.ref;
+              if (paymentDocRef) {
+                await db.runTransaction(async (tx) => {
+                  const [paymentSnap, connectedSnap] = await Promise.all([
+                    tx.get(paymentDocRef),
+                    tx.get(connectedRef),
+                  ]);
+                  if (!connectedSnap.exists) return;
+                  if (paymentSnap.data()?.pendingBalanceCredited === true) {
+                    return;
+                  }
+                  tx.update(connectedRef, {
+                    pendingBalance: FieldValue.increment(driverEarnings),
+                    pendingBalanceInCents: FieldValue.increment(
+                      driverEarningsInCents,
+                    ),
+                    updatedAt: FieldValue.serverTimestamp(),
+                  });
+                  tx.set(
+                    paymentDocRef,
+                    {
+                      pendingBalanceCredited: true,
+                      pendingBalanceCreditedAt: FieldValue.serverTimestamp(),
+                    },
+                    { merge: true },
+                  );
                 });
               }
             } catch (notifyError) {

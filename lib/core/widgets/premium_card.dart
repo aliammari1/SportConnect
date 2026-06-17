@@ -276,7 +276,7 @@ class FeaturedCard extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 22.sp,
+                        fontSize: 20.sp,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),

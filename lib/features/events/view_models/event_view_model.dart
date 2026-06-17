@@ -383,8 +383,38 @@ class CreateEventFormViewModel extends _$CreateEventFormViewModel {
 
     final repo = ref.read(eventRepositoryProvider);
     final imageFile = state.imageFile;
+
+    // Pre-generate the event ID so we can upload the cover image before
+    // writing the Firestore document (fail-fast: if upload fails the event
+    // is never created in a partial state).
+    final eventId = repo.generateEventId();
+
+    state = state.copyWith(isSubmitting: true);
+
+    String? imageUrl;
+    if (imageFile != null) {
+      state = state.copyWith(isUploadingImage: true);
+      try {
+        imageUrl = await repo.uploadEventImage(eventId, imageFile);
+        if (!ref.mounted) return null;
+      } on Exception catch (e, st) {
+        TalkerService.error('createEvent image upload failed', e, st);
+        if (!ref.mounted) return null;
+        state = state.copyWith(
+          isSubmitting: false,
+          isUploadingImage: false,
+          error: 'Unable to upload cover image. Please try again.',
+        );
+        return null;
+      } finally {
+        if (ref.mounted) {
+          state = state.copyWith(isUploadingImage: false);
+        }
+      }
+    }
+
     final draft = EventModel(
-      id: '',
+      id: eventId,
       creatorId: authUser.uid,
       title: state.title.trim(),
       type: state.type,
@@ -401,47 +431,15 @@ class CreateEventFormViewModel extends _$CreateEventFormViewModel {
       recurringPattern: state.recurringPattern,
       recurringEndDate: state.recurringEndDate,
       costSplitEnabled: state.costSplitEnabled,
+      imageUrl: imageUrl,
     );
 
-    state = state.copyWith(isSubmitting: true);
-
     try {
-      final eventId = await repo.createEvent(draft);
+      await repo.createEvent(draft);
       if (!ref.mounted) return null;
 
-      var created = draft.copyWith(id: eventId);
-      String? warningMessage;
-
-      if (imageFile != null) {
-        state = state.copyWith(isUploadingImage: true);
-        try {
-          final imageUrl = await repo.uploadEventImage(eventId, imageFile);
-          if (!ref.mounted) return null;
-
-          created = created.copyWith(imageUrl: imageUrl);
-          await repo.updateEvent(created);
-          if (!ref.mounted) return null;
-        } on Exception catch (e, st) {
-          TalkerService.error('createEvent image upload failed', e, st);
-          warningMessage =
-              'Event created, but the cover image could not be uploaded.';
-        } finally {
-          if (ref.mounted) {
-            state = state.copyWith(isUploadingImage: false);
-          }
-        }
-      }
-
-      if (!ref.mounted) return null;
-
-      state = state.copyWith(
-        isSubmitting: false,
-        warningMessage: warningMessage,
-      );
-      return CreateEventSubmissionResult(
-        event: created,
-        warningMessage: warningMessage,
-      );
+      state = state.copyWith(isSubmitting: false);
+      return CreateEventSubmissionResult(event: draft);
     } on Exception catch (e, st) {
       TalkerService.error('createEvent submit failed', e, st);
       if (!ref.mounted) return null;
@@ -1180,23 +1178,10 @@ class EventDetailViewModel extends _$EventDetailViewModel {
   }
 
   /// Ensures the event group chat exists and contains the requesting user.
+  /// Premium entitlement is enforced server-side inside the repository
+  /// transaction; no client-side cache check is performed here to avoid
+  /// stale-state disagreements.
   Future<String?> ensureEventGroupChat(EventModel event, String userId) async {
-    final currentUser = ref.read(currentUserProvider).value;
-    final isPremiumSubscriber = switch (currentUser) {
-      final RiderModel rider => rider.isPremium,
-      final DriverModel driver => driver.isPremium,
-      _ => false,
-    };
-
-    if (!isPremiumSubscriber) {
-      if (!ref.mounted) return null;
-      state = state.copyWith(
-        error:
-            'Event group chat is available to Premium subscribers only. Upgrade to join attendee chat.',
-      );
-      return null;
-    }
-
     try {
       return await ref
           .read(eventRepositoryProvider)
@@ -1204,9 +1189,7 @@ class EventDetailViewModel extends _$EventDetailViewModel {
     } on Exception catch (e, st) {
       TalkerService.error('ensureEventGroupChat failed', e, st);
       if (!ref.mounted) return null;
-      state = state.copyWith(
-        error: 'Unable to open event chat. Please try again.',
-      );
+      state = state.copyWith(error: e.toString());
       return null;
     }
   }
@@ -1270,25 +1253,30 @@ class EventDetailViewModel extends _$EventDetailViewModel {
       if (event.participantIds.isNotEmpty) {
         final organizer = ref.read(currentUserProvider).value;
         final notifRepo = ref.read(notificationRepositoryProvider);
-        for (final uid in event.participantIds) {
-          if (uid == organizer?.uid) continue;
-          try {
-            await notifRepo.sendEventCancelled(
-              toUserId: uid,
-              organizerName:
-                  organizer?.username ?? event.organizerName ?? 'Organizer',
-              organizerPhoto: organizer?.photoUrl,
-              eventId: eventId,
-              eventTitle: event.title,
-              reason: reason,
-            );
-          } on Exception catch (e) {
-            TalkerService.error(
-              'Failed to send cancellation notification to $uid',
-              e,
-            );
-          }
-        }
+        // Dispatch concurrently so fan-out latency does not grow linearly with
+        // attendee count; each send is isolated so one failure does not abort
+        // the rest.
+        await Future.wait([
+          for (final uid in event.participantIds)
+            if (uid != organizer?.uid)
+              notifRepo
+                  .sendEventCancelled(
+                    toUserId: uid,
+                    organizerName: organizer?.username ??
+                        event.organizerName ??
+                        'Organizer',
+                    organizerPhoto: organizer?.photoUrl,
+                    eventId: eventId,
+                    eventTitle: event.title,
+                    reason: reason,
+                  )
+                  .catchError((Object e) {
+                    TalkerService.error(
+                      'Failed to send cancellation notification to $uid',
+                      e,
+                    );
+                  }),
+        ]);
       }
 
       if (!ref.mounted) return false;
@@ -1358,29 +1346,6 @@ class EventDetailViewModel extends _$EventDetailViewModel {
         isLoading: false,
         error: 'Unable to update ride status.',
       );
-      return false;
-    }
-  }
-
-  /// Links a ride to this event (#21 Event-Linked Carpools).
-  Future<bool> linkRide(String rideId) async {
-    state = state.copyWith(
-      isLoading: true,
-      clearError: true,
-      clearSuccess: true,
-    );
-    try {
-      await ref.read(eventRepositoryProvider).linkRideToEvent(eventId, rideId);
-      if (!ref.mounted) return false;
-      state = state.copyWith(
-        isLoading: false,
-        successMessage: 'Ride linked to event!',
-      );
-      return true;
-    } on Exception catch (e, st) {
-      TalkerService.error('linkRide failed', e, st);
-      if (!ref.mounted) return false;
-      state = state.copyWith(isLoading: false, error: 'Unable to link ride.');
       return false;
     }
   }

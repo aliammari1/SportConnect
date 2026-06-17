@@ -1,5 +1,6 @@
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -64,6 +65,19 @@ const double kMaxWidthWide = 900;
 /// Maximum width for dialogs and bottom sheets on tablets.
 /// Prevents them from stretching edge-to-edge on iPad.
 const double kMaxWidthDialog = 600;
+
+/// Single source of truth for when a master-detail screen renders TWO panes.
+///
+/// Two side-by-side panes only fit comfortably from ~landscape-iPad width up
+/// (a 13" iPad is 1024-1032pt in portrait, ~1366pt in landscape), so below
+/// this we use a single pane and push the detail as a page.
+///
+/// IMPORTANT: every screen that renders [AdaptiveMasterDetailScaffold] MUST
+/// gate its tap/selection handler on this same value. If a screen decides
+/// "two-pane" at a smaller width than the scaffold actually renders two panes,
+/// taps set the selected-detail state but no detail pane exists — leaving the
+/// user stuck on the list with nothing happening.
+const double kTwoPaneMinWidth = 1100;
 
 // ═══════════════════════════════════════════════════════════════════
 // SCREEN TYPE DETECTION
@@ -214,8 +228,12 @@ class MaxWidthContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Align(
       alignment: alignment,
+      // `.w` ties the column width to the ScreenUtil design scale, which is
+      // capped at phone size on phones (no change) but ~1.5× on tablets — so
+      // the column grows in step with the 1.5×-scaled content instead of
+      // clipping it inside a phone-width column.
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: maxWidth),
+        constraints: BoxConstraints(maxWidth: maxWidth.w),
         child: child,
       ),
     );

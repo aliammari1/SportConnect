@@ -8,18 +8,24 @@ part of 'home_view_model.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// ViewModel for the home screen with full business logic extraction
-/// Manages navigation, map state, location tracking, and routing
+/// ViewModel for the home screen.
+///
+/// Exposes the current authenticated user for the home surfaces. Map,
+/// location and routing concerns are owned by `RiderHomeViewModel`.
 
 @ProviderFor(HomeViewModel)
 final homeViewModelProvider = HomeViewModelProvider._();
 
-/// ViewModel for the home screen with full business logic extraction
-/// Manages navigation, map state, location tracking, and routing
+/// ViewModel for the home screen.
+///
+/// Exposes the current authenticated user for the home surfaces. Map,
+/// location and routing concerns are owned by `RiderHomeViewModel`.
 final class HomeViewModelProvider
     extends $NotifierProvider<HomeViewModel, HomeState> {
-  /// ViewModel for the home screen with full business logic extraction
-  /// Manages navigation, map state, location tracking, and routing
+  /// ViewModel for the home screen.
+  ///
+  /// Exposes the current authenticated user for the home surfaces. Map,
+  /// location and routing concerns are owned by `RiderHomeViewModel`.
   HomeViewModelProvider._()
     : super(
         from: null,
@@ -47,10 +53,12 @@ final class HomeViewModelProvider
   }
 }
 
-String _$homeViewModelHash() => r'b19cafbe7cb0d6cd6ebe0552d0a9872dc62b06ea';
+String _$homeViewModelHash() => r'008072fef03e59d1d1ef4e815743923ee4b3aa4d';
 
-/// ViewModel for the home screen with full business logic extraction
-/// Manages navigation, map state, location tracking, and routing
+/// ViewModel for the home screen.
+///
+/// Exposes the current authenticated user for the home surfaces. Map,
+/// location and routing concerns are owned by `RiderHomeViewModel`.
 
 abstract class _$HomeViewModel extends $Notifier<HomeState> {
   HomeState build();

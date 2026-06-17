@@ -26,6 +26,12 @@ service firebase.storage {
              && firestore.get(/databases/(default)/documents/vehicles/$(vehicleId)).data.ownerId == request.auth.uid;
     }
 
+    function isRideDriver(rideId) {
+      return isAuthenticated()
+             && firestore.exists(/databases/(default)/documents/rides/$(rideId))
+             && firestore.get(/databases/(default)/documents/rides/$(rideId)).data.driverId == request.auth.uid;
+    }
+
     function isChatParticipant(chatId) {
       return isAuthenticated()
              && firestore.exists(/databases/(default)/documents/chats/$(chatId))
@@ -60,7 +66,12 @@ service firebase.storage {
     }
 
     function isValidAttachment() {
-      return isAuthenticated() && request.resource.size < 10 * 1024 * 1024;
+      return isAuthenticated()
+             && request.resource.size < 10 * 1024 * 1024
+             && (
+               request.resource.contentType.matches('image/.*')
+               || request.resource.contentType.matches('application/pdf')
+             );
     }
 
     // User profile photos
@@ -102,7 +113,9 @@ service firebase.storage {
     // Ride photos (for drop-off/pick-up verification)
     match /rides/{rideId}/photos/{fileName} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && isValidImage();
+      // Only the ride's driver may upload verification photos, so photo-based
+      // dispute proof cannot be forged/overwritten by unrelated users.
+      allow write: if isRideDriver(rideId) && isValidImage();
     }
 
     // Dispute attachments

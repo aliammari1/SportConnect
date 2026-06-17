@@ -79,7 +79,13 @@ class PermissionDialogHelper {
     );
   }
 
-  /// Core rationale dialog builder.
+  /// Core pre-permission primer.
+  ///
+  /// Rendered as a width-capped centred card (not a narrow system
+  /// AlertDialog), so it stays readable and never overflows on tablets/iPad
+  /// while following the platform best practice of priming the user with a
+  /// clear feature headline + benefit and two unambiguous choices
+  /// ("Not now" / "Continue") BEFORE the OS permission prompt.
   static Future<bool> _showRationale(
     BuildContext context, {
     required IconData icon,
@@ -87,74 +93,102 @@ class PermissionDialogHelper {
     required String title,
     required String message,
   }) async {
+    final l10n = AppLocalizations.of(context);
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog.adaptive(
-        backgroundColor: AppColors.surface.withValues(
-          alpha: PlatformAdaptive.dialogAlpha,
-        ),
+      builder: (ctx) => Dialog(
+        backgroundColor: AppColors.surface,
+        insetPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(PlatformAdaptive.dialogRadius),
         ),
-        title: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(10.w),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14.r),
-                border: PlatformAdaptive.isApple
-                    ? Border.all(
-                        color: iconColor.withValues(alpha: 0.08),
-                        width: 0.5,
-                      )
-                    : null,
-              ),
-              child: Icon(icon, color: iconColor, size: 24.sp),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+        child: ConstrainedBox(
+          // Cap the width so the primer is a tidy centred card on iPad
+          // instead of stretching or cramming into a narrow system dialog.
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Padding(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(14.w),
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 28.sp),
                 ),
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          message,
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: AppColors.textSecondary,
-            height: 1.5,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(AppLocalizations.of(context).actionCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                  PlatformAdaptive.buttonRadiusMd,
+                SizedBox(height: 18.h),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    height: 1.2,
+                  ),
                 ),
-              ),
-            ),
-            child: Text(
-              AppLocalizations.of(context).actionContinue,
-              style: TextStyle(fontSize: 14.sp),
+                SizedBox(height: 10.h),
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textSecondary,
+                          side: const BorderSide(color: AppColors.border),
+                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              PlatformAdaptive.buttonRadiusMd,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          l10n.actionCancel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              PlatformAdaptive.buttonRadiusMd,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          l10n.actionContinue,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
     return result ?? false;

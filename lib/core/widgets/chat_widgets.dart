@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
 /// Unread badge count (#57)
@@ -61,30 +64,39 @@ class LocationPinBubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Map placeholder
-            Container(
-              height: 100.h,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Icon(
-                      Icons.map_rounded,
-                      size: 40.sp,
-                      color: AppColors.primary.withValues(alpha: 0.3),
+            // Static map preview centered on the shared coordinates.
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10.r),
+              child: SizedBox(
+                height: 100.h,
+                child: IgnorePointer(
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(latitude, longitude),
+                      initialZoom: 15,
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.none,
+                      ),
                     ),
+                    children: [
+                      const AppMapTileLayer(),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: LatLng(latitude, longitude),
+                            width: 32.w,
+                            height: 32.w,
+                            child: Icon(
+                              Icons.location_on_rounded,
+                              size: 32.sp,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  Center(
-                    child: Icon(
-                      Icons.location_on_rounded,
-                      size: 32.sp,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
             SizedBox(height: 6.h),
@@ -100,7 +112,7 @@ class LocationPinBubble extends StatelessWidget {
                   child: Text(
                     label ?? l10n.sharedLocation,
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface,
                     ),

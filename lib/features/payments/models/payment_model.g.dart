@@ -128,6 +128,7 @@ _PaymentTransaction _$PaymentTransactionFromJson(Map json) =>
       refundedAt: const TimestampConverter().fromJson(json['refundedAt']),
       failureReason: json['failureReason'] as String?,
       refundReason: json['refundReason'] as String?,
+      refundedAmountInCents: (json['refundedAmountInCents'] as num?)?.toInt(),
       metadata:
           (json['metadata'] as Map?)?.map((k, e) => MapEntry(k as String, e)) ??
           const {},
@@ -163,6 +164,7 @@ Map<String, dynamic> _$PaymentTransactionToJson(
   'refundedAt': const TimestampConverter().toJson(instance.refundedAt),
   'failureReason': instance.failureReason,
   'refundReason': instance.refundReason,
+  'refundedAmountInCents': instance.refundedAmountInCents,
   'metadata': instance.metadata,
 };
 

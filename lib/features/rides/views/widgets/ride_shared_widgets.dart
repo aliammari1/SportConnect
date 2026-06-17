@@ -161,7 +161,7 @@ class RideDetailInfoRow extends StatelessWidget {
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
@@ -216,7 +216,7 @@ class RideAmenityChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w500,
               color: isAllowed ? AppColors.success : AppColors.textTertiary,
             ),

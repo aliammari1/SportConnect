@@ -15,7 +15,4 @@ _UserPreferences _$UserPreferencesFromJson(Map json) => _UserPreferences(
 Map<String, dynamic> _$UserPreferencesToJson(_UserPreferences instance) =>
     <String, dynamic>{'language': _$AppLocaleEnumMap[instance.language]!};
 
-const _$AppLocaleEnumMap = {
-  AppLocale.english: 'english',
-  AppLocale.french: 'french',
-};
+const _$AppLocaleEnumMap = {AppLocale.english: 'en', AppLocale.french: 'fr'};

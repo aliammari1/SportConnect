@@ -15,6 +15,7 @@ class EmptyStateWidget extends StatelessWidget {
     this.subtitle,
     this.actionLabel,
     this.onAction,
+    this.actionIcon,
     this.iconColor,
     this.compact = false,
   });
@@ -27,12 +28,13 @@ class EmptyStateWidget extends StatelessWidget {
   }) {
     final l10n = AppLocalizations.of(context);
     return EmptyStateWidget(
-        icon: Icons.directions_car_outlined,
-        title: l10n.no_rides_found,
-        subtitle: l10n.emptyNoRidesSubtitle,
-        actionLabel: onSearch != null ? l10n.searchRides : null,
-        onAction: onSearch,
-      );
+      icon: Icons.directions_car_outlined,
+      title: l10n.no_rides_found,
+      subtitle: l10n.emptyNoRidesSubtitle,
+      actionLabel: onSearch != null ? l10n.searchRides : null,
+      onAction: onSearch,
+      actionIcon: Icons.search_rounded,
+    );
   }
 
   factory EmptyStateWidget.noEvents(
@@ -41,39 +43,39 @@ class EmptyStateWidget extends StatelessWidget {
   }) {
     final l10n = AppLocalizations.of(context);
     return EmptyStateWidget(
-        icon: Icons.event_outlined,
-        title: l10n.no_events_yet,
-        subtitle: l10n.emptyNoEventsSubtitle,
-        actionLabel: onCreate != null ? l10n.eventCreateButton : null,
-        onAction: onCreate,
-      );
+      icon: Icons.event_outlined,
+      title: l10n.no_events_yet,
+      subtitle: l10n.emptyNoEventsSubtitle,
+      actionLabel: onCreate != null ? l10n.eventCreateButton : null,
+      onAction: onCreate,
+    );
   }
 
   factory EmptyStateWidget.noMessages(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return EmptyStateWidget(
-    icon: Icons.chat_bubble_outline_rounded,
-    title: l10n.noMessagesYet,
-    subtitle: l10n.emptyNoMessagesSubtitle,
-  );
+      icon: Icons.chat_bubble_outline_rounded,
+      title: l10n.noMessagesYet,
+      subtitle: l10n.emptyNoMessagesSubtitle,
+    );
   }
 
   factory EmptyStateWidget.noNotifications(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return EmptyStateWidget(
-    icon: Icons.notifications_none_rounded,
-    title: l10n.all_caught_up,
-    subtitle: l10n.emptyNoNotificationsSubtitle,
-  );
+      icon: Icons.notifications_none_rounded,
+      title: l10n.all_caught_up,
+      subtitle: l10n.emptyNoNotificationsSubtitle,
+    );
   }
 
   factory EmptyStateWidget.noReviews(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return EmptyStateWidget(
-    icon: Icons.star_outline_rounded,
-    title: l10n.no_reviews_yet,
-    subtitle: l10n.emptyNoReviewsSubtitle,
-  );
+      icon: Icons.star_outline_rounded,
+      title: l10n.no_reviews_yet,
+      subtitle: l10n.emptyNoReviewsSubtitle,
+    );
   }
 
   factory EmptyStateWidget.noVehicles(
@@ -82,42 +84,46 @@ class EmptyStateWidget extends StatelessWidget {
   }) {
     final l10n = AppLocalizations.of(context);
     return EmptyStateWidget(
-        icon: Icons.garage_outlined,
-        title: l10n.noVehiclesAdded,
-        subtitle: l10n.emptyNoVehiclesSubtitle,
-        actionLabel: onAdd != null ? l10n.addVehicleButton : null,
-        onAction: onAdd,
-      );
+      icon: Icons.garage_outlined,
+      title: l10n.noVehiclesAdded,
+      subtitle: l10n.emptyNoVehiclesSubtitle,
+      actionLabel: onAdd != null ? l10n.addVehicleButton : null,
+      onAction: onAdd,
+    );
   }
 
   factory EmptyStateWidget.noBookings(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return EmptyStateWidget(
-    icon: Icons.bookmark_outline_rounded,
-    title: l10n.no_bookings_yet,
-    subtitle: l10n.emptyNoBookingsSubtitle,
-  );
+      icon: Icons.bookmark_outline_rounded,
+      title: l10n.no_bookings_yet,
+      subtitle: l10n.emptyNoBookingsSubtitle,
+    );
   }
 
   factory EmptyStateWidget.noResults(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return EmptyStateWidget(
-    icon: Icons.search_off_rounded,
-    title: l10n.noResultsFound,
-    subtitle: l10n.emptyNoResultsSubtitle,
-  );
+      icon: Icons.search_off_rounded,
+      title: l10n.noResultsFound,
+      subtitle: l10n.emptyNoResultsSubtitle,
+    );
   }
 
-  factory EmptyStateWidget.error(BuildContext context, {VoidCallback? onRetry}) {
+  factory EmptyStateWidget.error(
+    BuildContext context, {
+    VoidCallback? onRetry,
+  }) {
     final l10n = AppLocalizations.of(context);
     return EmptyStateWidget(
-    icon: Icons.error_outline_rounded,
-    title: l10n.somethingWentWrong,
-    subtitle: l10n.please_try_again,
-    actionLabel: onRetry != null ? l10n.retry : null,
-    onAction: onRetry,
-    iconColor: AppColors.error,
-  );
+      icon: Icons.error_outline_rounded,
+      title: l10n.somethingWentWrong,
+      subtitle: l10n.please_try_again,
+      actionLabel: onRetry != null ? l10n.retry : null,
+      onAction: onRetry,
+      actionIcon: Icons.refresh_rounded,
+      iconColor: AppColors.error,
+    );
   }
 
   final IconData icon;
@@ -125,6 +131,10 @@ class EmptyStateWidget extends StatelessWidget {
   final String? subtitle;
   final String? actionLabel;
   final VoidCallback? onAction;
+
+  /// Icon for the action button. Defaults to [Icons.add_rounded] for create
+  /// flows; presets pass a contextually correct icon (e.g. search, refresh).
+  final IconData? actionIcon;
   final Color? iconColor;
   final bool compact;
 
@@ -194,7 +204,7 @@ class EmptyStateWidget extends StatelessWidget {
               SizedBox(height: 20.h),
               TextButton.icon(
                 onPressed: onAction,
-                icon: const Icon(Icons.add_rounded, size: 18),
+                icon: Icon(actionIcon ?? Icons.add_rounded, size: 18),
                 label: Text(
                   actionLabel!,
                   style: TextStyle(

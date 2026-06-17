@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
@@ -22,7 +23,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   late Animation<double> _progressAnim;
 
-  static const Color _white = Color(0xFFFFFFFF);
   static const Color _bg = Color(0xFFF7FAF8);
   static const Color _bgAlt = Color(0xFFEFF7F2);
   static const Color _green = Color(0xFF2D9B6F);
@@ -100,19 +100,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           _buildBrandBlock(context, l10n, center: true),
           const Spacer(),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 52.w),
-            child: Text(
-              l10n.shareRidesRunTogetherGo,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w400,
-                color: _textSub,
-                height: 1.55,
-                letterSpacing: 0,
-              ),
-            ),
-          )
+                padding: EdgeInsets.symmetric(horizontal: 52.w),
+                child: Text(
+                  l10n.shareRidesRunTogetherGo,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w400,
+                    color: _textSub,
+                    height: 1.55,
+                    letterSpacing: 0,
+                  ),
+                ),
+              )
               .animate(controller: _entryController)
               .fadeIn(delay: 500.ms, duration: 500.ms),
           SizedBox(height: 44.h),
@@ -150,18 +150,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       _buildBrandBlock(context, l10n),
                       SizedBox(height: 20.h),
                       ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 520),
-                        child: Text(
-                          l10n.shareRidesRunTogetherGo,
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w400,
-                            color: _textSub,
-                            height: 1.5,
-                            letterSpacing: 0,
-                          ),
-                        ),
-                      )
+                            constraints: const BoxConstraints(maxWidth: 520),
+                            child: Text(
+                              l10n.shareRidesRunTogetherGo,
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w400,
+                                color: _textSub,
+                                height: 1.5,
+                                letterSpacing: 0,
+                              ),
+                            ),
+                          )
                           .animate(controller: _entryController)
                           .fadeIn(delay: 500.ms, duration: 500.ms)
                           .slideY(begin: 0.08, end: 0),
@@ -197,51 +197,51 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       crossAxisAlignment: alignment,
       children: [
         Text(
-          l10n.sportconnect,
-          textAlign: textAlign,
-          style: TextStyle(
-            fontSize: center ? 34.sp : 44.sp,
-            fontWeight: FontWeight.w800,
-            color: _textMain,
-            letterSpacing: 0,
-            height: 1,
-          ),
-        )
+              l10n.sportconnect,
+              textAlign: textAlign,
+              style: TextStyle(
+                fontSize: center ? 34.sp : 44.sp,
+                fontWeight: FontWeight.w800,
+                color: _textMain,
+                letterSpacing: 0,
+                height: 1,
+              ),
+            )
             .animate(controller: _entryController)
             .fadeIn(delay: 200.ms, duration: 500.ms)
             .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
         SizedBox(height: 12.h),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-          decoration: BoxDecoration(
-            color: _greenLight.withValues(alpha: 0.78),
-            borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(color: _green.withValues(alpha: 0.25)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 6.w,
-                height: 6.w,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _green,
-                ),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: _greenLight.withValues(alpha: 0.78),
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: _green.withValues(alpha: 0.25)),
               ),
-              SizedBox(width: 6.w),
-              Text(
-                l10n.carpoolingForRunners,
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.w600,
-                  color: _green,
-                  letterSpacing: 0,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6.w,
+                    height: 6.w,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _green,
+                    ),
+                  ),
+                  SizedBox(width: 6.w),
+                  Text(
+                    l10n.carpoolingForRunners,
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w600,
+                      color: _green,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        )
+            )
             .animate(controller: _entryController)
             .fadeIn(delay: 350.ms, duration: 500.ms),
       ],
@@ -273,7 +273,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   child: Icon(
                     Icons.route_rounded,
                     size: 24.sp,
-                    color: _white,
+                    color: AppColors.textOnPrimary,
                   ),
                 ),
                 SizedBox(width: 14.w),
@@ -358,7 +358,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w700,
                   color: _textMain,
                   letterSpacing: 0,
@@ -383,33 +383,33 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   Widget _buildLogo() {
     return Container(
-      width: 88.w,
-      height: 88.w,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: _green,
-        boxShadow: [
-          BoxShadow(
-            color: _greenDeep.withValues(alpha: 0.18),
-            blurRadius: 32,
-            offset: const Offset(0, 10),
+          width: 88.w,
+          height: 88.w,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _green,
+            boxShadow: [
+              BoxShadow(
+                color: _greenDeep.withValues(alpha: 0.18),
+                blurRadius: 32,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: _green.withValues(alpha: 0.22),
+                blurRadius: 16,
+                spreadRadius: -4,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          BoxShadow(
-            color: _green.withValues(alpha: 0.22),
-            blurRadius: 16,
-            spreadRadius: -4,
-            offset: const Offset(0, 4),
+          child: Center(
+            child: Icon(
+              Icons.directions_run_rounded,
+              size: 42.sp,
+              color: AppColors.textOnPrimary,
+            ),
           ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          Icons.directions_run_rounded,
-          size: 42.sp,
-          color: _white,
-        ),
-      ),
-    )
+        )
         .animate(controller: _entryController)
         .fadeIn(duration: 600.ms, curve: Curves.easeOut)
         .scale(
@@ -425,54 +425,55 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       children: [
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 48.w),
-          child: AnimatedBuilder(
-            animation: _progressAnim,
-            builder: (context, _) {
-              return Stack(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 2.5.h,
-                    decoration: BoxDecoration(
-                      color: _greenLight,
-                      borderRadius: BorderRadius.circular(2.r),
-                    ),
-                  ),
-                  FractionallySizedBox(
-                    widthFactor: _progressAnim.value,
-                    child: Container(
-                      height: 2.5.h,
-                      decoration: BoxDecoration(
-                        color: _green,
-                        borderRadius: BorderRadius.circular(2.r),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _green.withValues(alpha: 0.35),
-                            blurRadius: 6,
+          child:
+              AnimatedBuilder(
+                    animation: _progressAnim,
+                    builder: (context, _) {
+                      return Stack(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            height: 2.5.h,
+                            decoration: BoxDecoration(
+                              color: _greenLight,
+                              borderRadius: BorderRadius.circular(2.r),
+                            ),
+                          ),
+                          FractionallySizedBox(
+                            widthFactor: _progressAnim.value,
+                            child: Container(
+                              height: 2.5.h,
+                              decoration: BoxDecoration(
+                                color: _green,
+                                borderRadius: BorderRadius.circular(2.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: _green.withValues(alpha: 0.35),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          )
-              .animate(controller: _entryController)
-              .fadeIn(delay: 700.ms, duration: 400.ms),
+                      );
+                    },
+                  )
+                  .animate(controller: _entryController)
+                  .fadeIn(delay: 700.ms, duration: 400.ms),
         ),
 
         SizedBox(height: 14.h),
 
         Text(
-          AppLocalizations.of(context).loading,
-          style: TextStyle(
-            fontSize: 10.sp,
-            fontWeight: FontWeight.w500,
-            color: _textSub,
-            letterSpacing: 0,
-          ),
-        )
+              AppLocalizations.of(context).loading,
+              style: TextStyle(
+                fontSize: 10.sp,
+                fontWeight: FontWeight.w500,
+                color: _textSub,
+                letterSpacing: 0,
+              ),
+            )
             .animate(controller: _entryController)
             .fadeIn(delay: 800.ms, duration: 400.ms),
       ],

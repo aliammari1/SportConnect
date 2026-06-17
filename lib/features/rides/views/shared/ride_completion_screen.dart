@@ -898,7 +898,7 @@ class _RideCompletionScreenState extends ConsumerState<RideCompletionScreen> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
@@ -1092,7 +1092,7 @@ class _RideCompletionScreenState extends ConsumerState<RideCompletionScreen> {
                             rating.average.toStringAsFixed(1),
                           ),
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             color: AppColors.textSecondary,
                           ),
                         ),

@@ -1,4 +1,4 @@
-appId: com.sportconnect.sport_connect
+appId: ${APP_ID}
 ---
 # ============================================
 # Auth Journey: Login Flow
@@ -10,6 +10,17 @@ appId: com.sportconnect.sport_connect
 - launchApp:
     clearState: true
     label: Launch SportConnect fresh
+
+# clearState resets the onboarding-completed flag, so the onboarding carousel
+# shows on first launch (after the splash). Wait for it to render, then skip
+# it (top-right) to reach the login screen.
+- extendedWaitUntil:
+    visible: "Skip"
+    timeout: 20000
+    label: Wait for onboarding to appear
+- tapOn:
+    text: "Skip"
+    label: Skip onboarding
 
 # Step 1: Wait for splash to complete and login screen to appear
 - extendedWaitUntil:

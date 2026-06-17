@@ -14,6 +14,7 @@ import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart';
+import 'package:sport_connect/core/widgets/app_segmented_tab_view.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
 import 'package:sport_connect/core/widgets/premium_text_field.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
@@ -124,7 +125,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             ),
           ),
           Expanded(
-            child: AdaptiveTabBarView(
+            child: AppSegmentedTabView(
               tabs: [l10n.direct, l10n.groups, l10n.rides],
               selectedColor: Colors.white,
               backgroundColor: AppColors.primary,
@@ -165,10 +166,12 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     );
   }
 
-  bool get _usesTwoPaneLayout => context.screenWidth >= Breakpoints.medium;
+  // Must match AdaptiveMasterDetailScaffold's threshold, else a tap sets the
+  // detail with no pane to show it in (stuck on the list on iPad portrait).
+  bool get _usesTwoPaneLayout => context.screenWidth >= kTwoPaneMinWidth;
 
   UserModel _receiverForChat(ChatModel chat, String currentUserId) {
-    final title = chat.getChatTitle(currentUserId);
+    final title = _chatTitle(chat, currentUserId);
     final photoUrl = chat.getChatPhoto(currentUserId);
     final otherParticipant = chat.getOtherParticipant(currentUserId);
     final fallbackId = chat.participantIds.firstWhere(
@@ -251,7 +254,12 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 8.h),
+        // Match the horizontal inset of the search field and chat tiles
+        // (adaptiveScreenPadding) so the title left edge aligns with the
+        // content beneath it on tablet breakpoints, not just on phone.
+        padding: adaptiveScreenPadding(
+          context,
+        ).copyWith(top: 24.h, bottom: 8.h),
         child: Text(
           AppLocalizations.of(context).messages,
           style: TextStyle(
@@ -410,7 +418,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
       if (blockedIds.contains(otherId)) return false;
 
       if (searchQuery.isEmpty) return true;
-      return c.getChatTitle(currentUserId).toLowerCase().contains(searchQuery);
+      return _chatTitle(c, currentUserId).toLowerCase().contains(searchQuery);
     }).toList();
   }
 
@@ -460,13 +468,17 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             onRetry: () => ref.invalidate(userChatsProvider(currentUserId)),
           ),
           data: (chats) {
+            // MSG-010: Include rideGroup in the Groups tab so users find all
+            // their group conversations here. rideGroup also appears in the
+            // Rides tab for context-specific access.
             final groupChats = chats.where((c) {
-              if (c.type != ChatType.eventGroup && c.type != ChatType.support) {
+              if (c.type != ChatType.eventGroup &&
+                  c.type != ChatType.support &&
+                  c.type != ChatType.rideGroup) {
                 return false;
               }
               if (searchQuery.isEmpty) return true;
-              return c
-                  .getChatTitle(currentUserId)
+              return _chatTitle(c, currentUserId)
                   .toLowerCase()
                   .contains(
                     searchQuery,
@@ -525,8 +537,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             final rideChats = chats.where((c) {
               if (c.type != ChatType.rideGroup) return false;
               if (searchQuery.isEmpty) return true;
-              return c
-                  .getChatTitle(currentUserId)
+              return _chatTitle(c, currentUserId)
                   .toLowerCase()
                   .contains(
                     searchQuery,
@@ -652,7 +663,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             SizedBox(width: 10.w),
             Text(
               AppLocalizations.of(context).peopleResults,
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -683,7 +694,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
               Text(
                 AppLocalizations.of(context).peopleResults,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textSecondary,
                 ),
@@ -984,8 +995,25 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
   // ── Chat tile ────────────────────────────────────────────────────────────
 
+  /// Resolves a chat's display title, translating the model's English fallback
+  /// labels (Ride Chat / Event Chat / Support / Unknown) through
+  /// AppLocalizations for the France-first market. Named group chats keep their
+  /// own [groupName]; only the generic fallbacks are localized here.
+  String _chatTitle(ChatModel chat, String currentUserId) {
+    final l10n = AppLocalizations.of(context);
+    return switch (chat.type) {
+      ChatType.rideGroup => chat.groupName ?? '${l10n.rides} · ${l10n.chat}',
+      ChatType.eventGroup => chat.groupName ?? l10n.eventGroupChat,
+      ChatType.support => l10n.support,
+      _ =>
+        chat.groupName ??
+            chat.getOtherParticipant(currentUserId)?.username ??
+            l10n.unknown,
+    };
+  }
+
   Widget _buildChatTile(ChatModel chat, String currentUserId) {
-    final title = chat.getChatTitle(currentUserId);
+    final title = _chatTitle(chat, currentUserId);
     final photoUrl = chat.getChatPhoto(currentUserId);
     final unreadCount = chat.getUnreadCount(currentUserId);
     final lastMessage =

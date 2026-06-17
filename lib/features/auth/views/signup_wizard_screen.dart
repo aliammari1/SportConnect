@@ -46,9 +46,6 @@ class _StepTheme {
   final String label;
 }
 
-const _kBg = Color(0xFFF8FAF9);
-const _kAccent = Color(0xFF40916C);
-const _kCard = Color(0xFFFFFFFF);
 const _kText = Color(0xFF1A1A1A);
 
 DateTime _adultCutoffDate({int years = 18}) {
@@ -81,23 +78,23 @@ String _localizedSignupValidationError(
 // UX: 3 steps
 const _stepThemes = [
   _StepTheme(
-    bg: _kBg,
-    accent: _kAccent,
-    card: _kCard,
+    bg: AppColors.background,
+    accent: AppColors.primary,
+    card: AppColors.cardBg,
     text: _kText,
     label: 'Account Setup',
   ),
   _StepTheme(
-    bg: _kBg,
-    accent: _kAccent,
-    card: _kCard,
+    bg: AppColors.background,
+    accent: AppColors.primary,
+    card: AppColors.cardBg,
     text: _kText,
     label: 'Identity',
   ),
   _StepTheme(
-    bg: _kBg,
-    accent: _kAccent,
-    card: _kCard,
+    bg: AppColors.background,
+    accent: AppColors.primary,
+    card: AppColors.cardBg,
     text: _kText,
     label: 'Profile',
   ),
@@ -224,7 +221,15 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
         return;
       }
 
-      final age = DateTime.now().difference(uiState.dateOfBirth!).inDays ~/ 365;
+      // Use calendar-year subtraction with month/day correction to correctly
+      // handle leap years and boundary dates for legal age verification.
+      final dob = uiState.dateOfBirth!;
+      final now = DateTime.now();
+      var age = now.year - dob.year;
+      if (now.month < dob.month ||
+          (now.month == dob.month && now.day < dob.day)) {
+        age--;
+      }
       if (age < 18) {
         _showError(AppLocalizations.of(context).authDobMinAge);
         return;
@@ -537,8 +542,8 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
               height: 4.h,
               decoration: BoxDecoration(
                 color: i <= wizardUiState.currentStep
-                    ? _kAccent
-                    : _kAccent.withOpacity(0.18),
+                    ? AppColors.primary
+                    : AppColors.primary.withOpacity(0.18),
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
@@ -675,14 +680,17 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
       index: currentStep,
       children: [
         SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 24.h),
           child: _buildStep1(theme),
         ),
         SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 24.h),
           child: _buildStep2(theme),
         ),
         SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 24.h),
           child: _buildStep3(theme),
         ),
@@ -858,7 +866,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
             l10n.iWantTo,
             style: TextStyle(
               fontFamily: 'Syne',
-              fontSize: 22.sp,
+              fontSize: 20.sp,
               fontWeight: FontWeight.w800,
               color: theme.text,
             ),
@@ -1023,7 +1031,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
             l10n.addAProfilePhoto,
             style: TextStyle(
               fontFamily: 'Syne',
-              fontSize: 15.sp,
+              fontSize: 14.sp,
               fontWeight: FontWeight.w700,
               color: theme.text,
             ),
@@ -1054,11 +1062,11 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                   l10n.emailValue(
                     _forms[0].control('email').value as String? ?? '',
                   ),
-                  style: TextStyle(fontSize: 13.sp, color: theme.text),
+                  style: TextStyle(fontSize: 12.sp, color: theme.text),
                 ),
                 Text(
                   l10n.roleValue(wizardUiState.selectedRole.displayName),
-                  style: TextStyle(fontSize: 13.sp, color: theme.text),
+                  style: TextStyle(fontSize: 12.sp, color: theme.text),
                 ),
               ],
             ),
@@ -1085,7 +1093,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
     return Container(
       padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
       decoration: const BoxDecoration(
-        color: _kBg,
+        color: AppColors.background,
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
@@ -1162,23 +1170,6 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                 ),
               ),
             ),
-            if (isLast) ...[
-              SizedBox(height: 8.h),
-              TextButton(
-                onPressed: isDisabled ? null : _handleSignup,
-                style: TextButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 48),
-                ),
-                child: Text(
-                  AppLocalizations.of(context).skip_for_now,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: theme.text.withOpacity(0.6),
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -1208,7 +1199,7 @@ class _SecurityBadge extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(fontSize: 13.sp, color: accent),
+            style: TextStyle(fontSize: 12.sp, color: accent),
           ),
         ),
       ],
@@ -1409,7 +1400,7 @@ class _DobPickerState extends State<_DobPicker>
                               ? dateFormatter.format(widget.selected!)
                               : l10n.authDobPrompt,
                           style: TextStyle(
-                            fontSize: 15.sp,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                             color: hasValue
                                 ? textCol
@@ -1763,7 +1754,7 @@ class _PasswordStrengthBar extends StatelessWidget {
   }
 }
 
-class _TermsCard extends StatelessWidget {
+class _TermsCard extends StatefulWidget {
   const _TermsCard({
     required this.agreed,
     required this.accent,
@@ -1778,22 +1769,64 @@ class _TermsCard extends StatelessWidget {
   final VoidCallback onPrivacyTap;
 
   @override
+  State<_TermsCard> createState() => _TermsCardState();
+}
+
+class _TermsCardState extends State<_TermsCard> {
+  // GestureRecognizers extend ChangeNotifier and hold native resources — they
+  // must be disposed. Creating them here and disposing in dispose() prevents
+  // the leak that occurs when they are allocated inside build().
+  late final TapGestureRecognizer _termsRecognizer;
+  late final TapGestureRecognizer _privacyRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsRecognizer = TapGestureRecognizer()..onTap = widget.onTermsTap;
+    _privacyRecognizer = TapGestureRecognizer()..onTap = widget.onPrivacyTap;
+  }
+
+  @override
+  void didUpdateWidget(_TermsCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.onTermsTap != widget.onTermsTap) {
+      _termsRecognizer.onTap = widget.onTermsTap;
+    }
+    if (oldWidget.onPrivacyTap != widget.onPrivacyTap) {
+      _privacyRecognizer.onTap = widget.onPrivacyTap;
+    }
+  }
+
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => Semantics(
     label:
         '${AppLocalizations.of(context).iAgreeToThe}'
         '${AppLocalizations.of(context).termsOfServiceTitle}'
         '${AppLocalizations.of(context).andConnector}'
         '${AppLocalizations.of(context).privacyPolicyTitle}',
-    checked: agreed,
+    checked: widget.agreed,
     child: GestureDetector(
-      onTap: onToggle,
+      onTap: widget.onToggle,
       child: AnimatedContainer(
         duration: 200.ms,
         padding: EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: agreed ? accent.withOpacity(0.1) : Colors.transparent,
+          color: widget.agreed
+              ? widget.accent.withOpacity(0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: agreed ? accent : accent.withOpacity(0.3)),
+          border: Border.all(
+            color: widget.agreed
+                ? widget.accent
+                : widget.accent.withOpacity(0.3),
+          ),
         ),
         child: Row(
           children: [
@@ -1802,11 +1835,11 @@ class _TermsCard extends StatelessWidget {
               width: 24.w,
               height: 24.w,
               decoration: BoxDecoration(
-                color: agreed ? accent : Colors.transparent,
+                color: widget.agreed ? widget.accent : Colors.transparent,
                 borderRadius: BorderRadius.circular(6.r),
-                border: Border.all(color: accent, width: 2),
+                border: Border.all(color: widget.accent, width: 2),
               ),
-              child: agreed
+              child: widget.agreed
                   ? Icon(Icons.check_rounded, size: 15.sp, color: Colors.white)
                   : null,
             ),
@@ -1815,29 +1848,29 @@ class _TermsCard extends StatelessWidget {
               child: RichText(
                 text: TextSpan(
                   style: TextStyle(
-                    fontSize: 13.sp,
-                    color: accent.withOpacity(0.8),
+                    fontSize: 12.sp,
+                    color: widget.accent.withOpacity(0.8),
                   ),
                   children: [
                     TextSpan(text: AppLocalizations.of(context).iAgreeToThe),
                     TextSpan(
                       text: AppLocalizations.of(context).termsOfServiceTitle,
                       style: TextStyle(
-                        color: accent,
+                        color: widget.accent,
                         fontWeight: FontWeight.w700,
                         decoration: TextDecoration.underline,
                       ),
-                      recognizer: TapGestureRecognizer()..onTap = onTermsTap,
+                      recognizer: _termsRecognizer,
                     ),
                     TextSpan(text: AppLocalizations.of(context).andConnector),
                     TextSpan(
                       text: AppLocalizations.of(context).privacyPolicyTitle,
                       style: TextStyle(
-                        color: accent,
+                        color: widget.accent,
                         fontWeight: FontWeight.w700,
                         decoration: TextDecoration.underline,
                       ),
-                      recognizer: TapGestureRecognizer()..onTap = onPrivacyTap,
+                      recognizer: _privacyRecognizer,
                     ),
                   ],
                 ),
@@ -1900,7 +1933,7 @@ class _TabletStepTile extends StatelessWidget {
                   : Text(
                       '$index',
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w800,
                         color: active ? Colors.white : accent,
                       ),
@@ -1916,7 +1949,7 @@ class _TabletStepTile extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontFamily: 'Syne',
-                    fontSize: 15.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                     color: Colors.black87,
                   ),
@@ -1925,7 +1958,7 @@ class _TabletStepTile extends StatelessWidget {
                 Text(
                   description,
                   style: TextStyle(
-                    fontSize: 12.5.sp,
+                    fontSize: 12.sp,
                     height: 1.35,
                     color: Colors.black54,
                   ),

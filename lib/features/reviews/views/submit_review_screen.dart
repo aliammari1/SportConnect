@@ -49,6 +49,7 @@ class _SubmitReviewScreenState extends ConsumerState<SubmitReviewScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         title: AppLocalizations.of(context).leaveAReview,
       ),
       body: state.isSubmitting
@@ -57,37 +58,55 @@ class _SubmitReviewScreenState extends ConsumerState<SubmitReviewScreen> {
               maxWidth: kMaxWidthFormNarrow,
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(16.r),
-              child: Column(
-                children: [
-                  // User being reviewed
-                  _buildUserCard()
-                      .animate()
-                      .fadeIn(duration: 300.ms)
-                      .slideY(begin: 0.1, end: 0),
+                child: Column(
+                  children: [
+                    // User being reviewed
+                    _buildUserCard()
+                        .animate()
+                        .fadeIn(duration: 300.ms)
+                        .slideY(begin: 0.1, end: 0),
 
-                  SizedBox(height: 32.h),
+                    SizedBox(height: 32.h),
 
-                  // Rating selector
-                  Text(
-                    AppLocalizations.of(context).howWasYourExperience,
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  _buildRatingSelector(
-                    state,
-                    viewModel,
-                  ).animate().fadeIn(delay: 100.ms, duration: 300.ms),
-
-                  SizedBox(height: 32.h),
-
-                  // Tag selection
-                  if (availableTags.isNotEmpty) ...[
+                    // Rating selector
                     Text(
-                      AppLocalizations.of(context).whatStoodOut,
+                      AppLocalizations.of(context).howWasYourExperience,
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    _buildRatingSelector(
+                      state,
+                      viewModel,
+                    ).animate().fadeIn(delay: 100.ms, duration: 300.ms),
+
+                    SizedBox(height: 32.h),
+
+                    // Tag selection
+                    if (availableTags.isNotEmpty) ...[
+                      Text(
+                        AppLocalizations.of(context).whatStoodOut,
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      _buildTagSelector(
+                        availableTags,
+                        state,
+                        viewModel,
+                      ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
+                      SizedBox(height: 24.h),
+                    ],
+
+                    // Comment field
+                    Text(
+                      AppLocalizations.of(context).additionalCommentsOptional,
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w500,
@@ -95,98 +114,82 @@ class _SubmitReviewScreenState extends ConsumerState<SubmitReviewScreen> {
                       ),
                     ),
                     SizedBox(height: 12.h),
-                    _buildTagSelector(
-                      availableTags,
-                      state,
+                    _buildCommentField(
                       viewModel,
-                    ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
+                    ).animate().fadeIn(delay: 300.ms, duration: 300.ms),
+
                     SizedBox(height: 24.h),
-                  ],
 
-                  // Comment field
-                  Text(
-                    AppLocalizations.of(context).additionalCommentsOptional,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  _buildCommentField(
-                    viewModel,
-                  ).animate().fadeIn(delay: 300.ms, duration: 300.ms),
-
-                  SizedBox(height: 24.h),
-
-                  // Error message
-                  if (state.error != null)
-                    Container(
-                      margin: EdgeInsets.only(bottom: 16.h),
-                      padding: EdgeInsets.all(12.r),
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            color: AppColors.error,
-                            size: 20.r,
-                          ),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: Text(
-                              state.error!,
-                              style: TextStyle(
-                                color: AppColors.error,
-                                fontSize: 14.sp,
+                    // Error message
+                    if (state.error != null)
+                      Container(
+                        margin: EdgeInsets.only(bottom: 16.h),
+                        padding: EdgeInsets.all(12.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: AppColors.error,
+                              size: 20.r,
+                            ),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                state.error!,
+                                style: TextStyle(
+                                  color: AppColors.error,
+                                  fontSize: 14.sp,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
 
-                  // Submit button
-                  if (!state.isValid && state.rating == 0)
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 8.h),
+                    // Submit button
+                    if (!state.isValid && state.rating == 0)
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 8.h),
+                        child: Text(
+                          AppLocalizations.of(
+                            context,
+                          ).pleaseSelectRatingToSubmit,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ),
+                    PremiumButton(
+                      text: AppLocalizations.of(context).submitReviewButton,
+                      onPressed: state.isValid && !state.isSubmitting
+                          ? () => _submitReview(viewModel)
+                          : null,
+                      isLoading: state.isSubmitting,
+                      fullWidth: true,
+                    ).animate().fadeIn(delay: 400.ms, duration: 300.ms),
+
+                    SizedBox(height: 16.h),
+
+                    // Skip button
+                    TextButton(
+                      onPressed: () => context.pop(),
                       child: Text(
-                        AppLocalizations.of(context).pleaseSelectRatingToSubmit,
+                        AppLocalizations.of(context).skipForNow,
                         style: TextStyle(
-                          fontSize: 12.sp,
                           color: AppColors.textTertiary,
+                          fontSize: 14.sp,
                         ),
                       ),
                     ),
-                  PremiumButton(
-                    text: AppLocalizations.of(context).submitReviewButton,
-                    onPressed: state.isValid && !state.isSubmitting
-                        ? () => _submitReview(viewModel)
-                        : null,
-                    isLoading: state.isSubmitting,
-                    fullWidth: true,
-                  ).animate().fadeIn(delay: 400.ms, duration: 300.ms),
-
-                  SizedBox(height: 16.h),
-
-                  // Skip button
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: Text(
-                      AppLocalizations.of(context).skipForNow,
-                      style: TextStyle(
-                        color: AppColors.textTertiary,
-                        fontSize: 14.sp,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
     );
   }
 
@@ -323,7 +326,7 @@ class _SubmitReviewScreenState extends ConsumerState<SubmitReviewScreen> {
                   tag.label,
                   style: TextStyle(
                     color: isSelected ? Colors.white : AppColors.textSecondary,
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: isSelected
                         ? FontWeight.w600
                         : FontWeight.normal,
@@ -341,7 +344,7 @@ class _SubmitReviewScreenState extends ConsumerState<SubmitReviewScreen> {
     return TextField(
       onChanged: (value) {
         // Sanitize: don't accept whitespace-only comments
-        final trimmed = value.trimLeft();
+        final trimmed = value.trim();
         viewModel.setComment(trimmed);
       },
       maxLines: 4,

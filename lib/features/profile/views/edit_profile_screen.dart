@@ -21,6 +21,8 @@ import 'package:sport_connect/core/widgets/address_autocomplete_field.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/custom_button.dart';
 import 'package:sport_connect/core/widgets/expertise_picker.dart';
+import 'package:sport_connect/core/widgets/form_card.dart';
+import 'package:sport_connect/core/widgets/form_section_header.dart';
 import 'package:sport_connect/core/widgets/intl_phone_input.dart';
 import 'package:sport_connect/core/widgets/permission_dialog_helper.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
@@ -84,17 +86,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (!mounted) return;
       ref.read(profileEditViewModelProvider(user.uid).notifier).markChanged();
     });
-    // Defer provider state mutation — modifying a provider inside build() is
-    // forbidden by Riverpod and causes the "Tried to modify a provider while
-    // the widget tree was building" error.
-    unawaited(
-      Future.microtask(() {
-        if (!mounted) return;
-        ref
-            .read(profileEditViewModelProvider(user.uid).notifier)
-            .initFromUser(user);
-      }),
-    );
+    // _hydrate is invoked from a post-frame callback (not during build), so the
+    // FormGroup patch, stream subscription, and provider mutation below all run
+    // outside the build phase and cannot trigger "modify a provider while the
+    // widget tree was building".
+    ref
+        .read(profileEditViewModelProvider(user.uid).notifier)
+        .initFromUser(user);
   }
 
   // ─── Save ──────────────────────────────────────────────────────────────────
@@ -336,12 +334,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final l10n = AppLocalizations.of(context);
     final user = ref.watch(currentUserProvider.select((a) => a.value));
 
+    // Hydration mutates the FormGroup, opens a stream subscription, and mutates
+    // a provider — all side effects that must not run synchronously inside
+    // build(). Schedule it for after this frame so it runs once a non-null user
+    // is available, whether the provider was already resolved on first build or
+    // resolves on a later rebuild.
     if (user != null && !_initialized) {
-      _hydrate(user);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _initialized) return;
+        _hydrate(user);
+      });
     }
 
-    if (_user != null) {
-      ref.listen(profileEditViewModelProvider(_user!.uid), (prev, next) {
+    // Register the save-result listener unconditionally. The uid is derived
+    // from the watched user (falling back to the lazily-hydrated _user) so the
+    // listener is declared every build and no isSaved/error transition is
+    // missed before _user is set.
+    final listenUid = user?.uid ?? _user?.uid;
+    if (listenUid != null) {
+      ref.listen(profileEditViewModelProvider(listenUid), (prev, next) {
         if (!context.mounted) return;
         if (next.isSaved && prev?.isSaved != true) {
           AdaptiveSnackBar.show(
@@ -367,6 +378,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
+        useNativeToolbar: false,
         leading: IconButton(
           tooltip: l10n.goBackTooltip,
           onPressed: () async {
@@ -489,36 +501,40 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     bool isDriver, {
     bool wrapInForm = true,
   }) {
-    final l10n = AppLocalizations.of(context);
-
-    final content = ResponsiveLayoutBuilder(
-      phone: (_) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: _formSectionChildren(context, user, editState, isDriver),
-      ),
-      tablet: (_) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: _leftFormSectionChildren(context, user, editState),
-            ),
-          ),
-          SizedBox(width: 20.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: _rightFormSectionChildren(
-                context,
-                user,
-                editState,
-                isDriver,
+    // Two-column form only in landscape-width (≥ 1100); portrait iPad uses a
+    // single column so the fields aren't squeezed into a narrow half-pane.
+    final content = LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 1100) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: _formSectionChildren(context, user, editState, isDriver),
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _leftFormSectionChildren(context, user, editState),
               ),
             ),
-          ),
-        ],
-      ),
+            SizedBox(width: 20.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _rightFormSectionChildren(
+                  context,
+                  user,
+                  editState,
+                  isDriver,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
 
     if (!wrapInForm) return content;
@@ -546,12 +562,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final l10n = AppLocalizations.of(context);
 
     return [
-      _SectionHeader(
+      FormSectionHeader(
         icon: Icons.person_outline_rounded,
         title: l10n.personalInformation,
+        padding: EdgeInsets.only(left: 4.w),
       ),
       SizedBox(height: 12.h),
-      _Card(
+      FormCard(
         children: [
           AdaptiveReactiveTextField(
             formControlName: 'name',
@@ -611,12 +628,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ],
       ),
       SizedBox(height: 24.h),
-      _SectionHeader(
+      FormSectionHeader(
         icon: Icons.tune_rounded,
         title: l10n.aboutYou,
+        padding: EdgeInsets.only(left: 4.w),
       ),
       SizedBox(height: 12.h),
-      _Card(
+      FormCard(
         children: [
           AddressAutocompleteField(
             key: _addressKey,
@@ -656,12 +674,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   ) {
     final l10n = AppLocalizations.of(context);
     final children = <Widget>[
-      _SectionHeader(
+      FormSectionHeader(
         icon: Icons.badge_outlined,
         title: l10n.demographics,
+        padding: EdgeInsets.only(left: 4.w),
       ),
       SizedBox(height: 12.h),
-      _Card(
+      FormCard(
         children: [
           _PickerTile(
             icon: Icons.wc_rounded,
@@ -694,14 +713,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       children
         ..add(SizedBox(height: 24.h))
         ..add(
-          _SectionHeader(
+          FormSectionHeader(
             icon: Icons.directions_car_outlined,
             title: l10n.driverSettings,
+            padding: EdgeInsets.only(left: 4.w),
           ),
         )
         ..add(SizedBox(height: 12.h))
         ..add(
-          _Card(
+          FormCard(
             children: [
               _PickerTile(
                 icon: Icons.directions_car_rounded,
@@ -765,7 +785,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   Text(
                     l10n.myVehicles,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
@@ -774,7 +794,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   Text(
                     '$vehicleCount ${l10n.active}',
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 12.sp,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -788,41 +808,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required String label,
-    required IconData icon,
-    Widget? suffix,
-    Color? fillColor,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, color: AppColors.primary, size: 20.sp),
-      suffixIcon: suffix,
-      filled: true,
-      fillColor: fillColor ?? AppColors.primary.withValues(alpha: 0.06),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14.r),
-        borderSide: BorderSide(
-          color: AppColors.primary.withValues(alpha: 0.2),
-        ),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14.r),
-        borderSide: BorderSide(
-          color: AppColors.primary.withValues(alpha: 0.2),
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14.r),
-        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-      ),
-      labelStyle: TextStyle(
-        fontSize: 13.sp,
-        color: AppColors.textSecondary,
       ),
     );
   }
@@ -884,7 +869,7 @@ class _AvatarHeader extends StatelessWidget {
           Text(
             l10n.changePhoto,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
             ),
@@ -978,7 +963,7 @@ class _ProfileOverviewCard extends StatelessWidget {
           Text(
             user.email,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               color: AppColors.textSecondary,
             ),
           ),
@@ -986,70 +971,12 @@ class _ProfileOverviewCard extends StatelessWidget {
           Text(
             l10n.settingsEditProfileDesc,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               color: AppColors.textSecondary,
               height: 1.5,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.icon, required this.title});
-
-  final IconData icon;
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(left: 4.w),
-      child: Row(
-        children: [
-          Icon(icon, size: 16.sp, color: AppColors.primary),
-          SizedBox(width: 8.w),
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Card extends StatelessWidget {
-  const _Card({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
       ),
     );
   }
@@ -1102,7 +1029,7 @@ class _PickerTile extends StatelessWidget {
                   Text(
                     value,
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1164,7 +1091,7 @@ class _PhotoActionTile extends StatelessWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                   color: destructive ? AppColors.error : AppColors.textPrimary,
                 ),
@@ -1246,7 +1173,7 @@ class _GenderOption extends StatelessWidget {
               Text(
                 _displayLabel(context, label),
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   color: selected ? AppColors.primary : AppColors.textPrimary,
                 ),

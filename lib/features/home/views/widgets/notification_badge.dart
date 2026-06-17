@@ -35,7 +35,7 @@ class NotificationBadge extends StatelessWidget {
               count > 99 ? '99+' : '$count',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 9.sp,
+                fontSize: 10.sp,
                 fontWeight: FontWeight.w700,
               ),
               textAlign: TextAlign.center,

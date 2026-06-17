@@ -254,7 +254,7 @@ class _PremiumFeedbackOverlayState extends State<_PremiumFeedbackOverlay> {
                                 child: Text(
                                   config.primaryActionLabel!,
                                   style: TextStyle(
-                                    fontSize: 15.sp,
+                                    fontSize: 14.sp,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -384,7 +384,7 @@ class _DetailsPill extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: color,
-                fontSize: 13.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w800,
               ),
             ),
