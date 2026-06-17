@@ -213,6 +213,36 @@ service cloud.firestore {
         request.resource.data.rating == resource.data.rating;
     }
 
+    // True when every star bucket on the (possibly missing) rating map is zero,
+    // i.e. a brand-new, un-forged reputation. Used by the role-finalization
+    // branch below so converting a pending account cannot seed a fake rating.
+    function isFreshRating(data) {
+      return ratingBucket(data, 'fiveStars') == 0 &&
+        ratingBucket(data, 'fourStars') == 0 &&
+        ratingBucket(data, 'threeStars') == 0 &&
+        ratingBucket(data, 'twoStars') == 0 &&
+        ratingBucket(data, 'oneStars') == 0;
+    }
+
+    // Role finalization: a pending account converting itself into a real
+    // rider/driver profile. This is a full-document overwrite that legitimately
+    // INTRODUCES server-owned fields (isPremium, rating) the pending doc never
+    // had, so isOwnerProfileUpdate()'s equality checks can't model it (comparing
+    // a present value against a missing field always fails). The security intent
+    // is preserved explicitly: premium can only land as false (no self-grant),
+    // the moderation flag is carried over unchanged (no ban evasion), and the
+    // rating must be fresh/zeroed (no reputation forgery).
+    function isRoleFinalization() {
+      return resource.data.get('role', '') == 'pending' &&
+        (
+          request.resource.data.role == 'rider' ||
+          request.resource.data.role == 'driver'
+        ) &&
+        request.resource.data.get('isPremium', false) == false &&
+        request.resource.data.isBanned == resource.data.isBanned &&
+        isFreshRating(request.resource.data);
+    }
+
     function isCreatorEventEdit() {
       return changedKeys().hasOnly([
         'title',
@@ -245,7 +275,7 @@ service cloud.firestore {
 
       allow create: if isOwner(userId);
 
-      allow update: if (isOwner(userId) && isOwnerProfileUpdate()) ||
+      allow update: if (isOwner(userId) && (isOwnerProfileUpdate() || isRoleFinalization())) ||
         (
           // Cross-user rating aggregate: only a single legitimate star-bucket
           // increment/decrement is allowed, so a client cannot forge arbitrary
