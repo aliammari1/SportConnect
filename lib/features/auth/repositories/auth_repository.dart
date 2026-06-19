@@ -312,6 +312,13 @@ class AuthRepository {
     }
   }
 
+  /// Clears ONLY the Google provider session (not the Firebase session), so the
+  /// Google account chooser reappears on the next sign-in. Used by the
+  /// onboarding account-switch flow to let the user pick a different account
+  /// while keeping the current Firebase user signed in until the new credential
+  /// replaces it (so a cancelled switch is a no-op, not a sign-out).
+  Future<void> signOutGoogleProvider() => _signOutGoogleBestEffort();
+
   /// Delete user account and all associated data
 
   Future<void> deleteAccount() async {
@@ -882,20 +889,6 @@ class AuthRepository {
       TalkerService.info('User stats updated for $userId');
     } on Exception catch (e, st) {
       TalkerService.error('Update user stats error', e, st);
-      rethrow;
-    }
-  }
-
-  /// Update user role (rider/driver)
-
-  Future<void> updateUserRole(String userId, UserRole role) async {
-    try {
-      await _usersCollection.doc(userId).update({
-        'role': role.name,
-      });
-      TalkerService.info('User role updated to ${role.name} for $userId');
-    } on Exception catch (e, st) {
-      TalkerService.error('Update user role error', e, st);
       rethrow;
     }
   }

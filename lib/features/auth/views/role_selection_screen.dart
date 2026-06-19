@@ -42,7 +42,11 @@ class RoleSelectionScreen extends ConsumerWidget {
           next.errorMessage != previous?.errorMessage) {
         AdaptiveSnackBar.show(
           context,
-          message: l10n.roleSelectionError,
+          // Surface the actual reason (already mapped to a user-facing message
+          // by userFacingError in the view model) rather than a generic banner,
+          // so failures like permission-denied are diagnosable instead of an
+          // opaque "Something went wrong".
+          message: next.errorMessage ?? l10n.roleSelectionError,
           type: AdaptiveSnackBarType.error,
         );
       }
@@ -66,10 +70,9 @@ class RoleSelectionScreen extends ConsumerWidget {
             .read(authActionsViewModelProvider.notifier)
             .switchGoogleAccountForOnboarding();
         if (!context.mounted) return;
-        if (!switched) {
-          context.go(AppRoutes.onboarding.path);
-          return;
-        }
+        // Cancelled: the original session is still intact (no sign-out
+        // happened), so stay on role selection rather than navigating away.
+        if (!switched) return;
         context.go(AppRoutes.roleSelection.path);
       } on AuthException catch (e) {
         if (!context.mounted) return;
@@ -94,10 +97,9 @@ class RoleSelectionScreen extends ConsumerWidget {
             .read(authActionsViewModelProvider.notifier)
             .switchAppleAccountForOnboarding();
         if (!context.mounted) return;
-        if (!switched) {
-          context.go(AppRoutes.onboarding.path);
-          return;
-        }
+        // Cancelled: the original session is still intact (no sign-out
+        // happened), so stay on role selection rather than navigating away.
+        if (!switched) return;
         context.go(AppRoutes.roleSelection.path);
       } on AuthException catch (e) {
         if (!context.mounted) return;
@@ -207,30 +209,16 @@ class RoleSelectionScreen extends ConsumerWidget {
 
                 SizedBox(height: 32.h),
 
-                // Info text
-                Text(
-                  l10n.youCanChangeYourRole,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                ).animate().fadeIn(duration: 500.ms, delay: 400.ms),
-
-                SizedBox(height: 16.h),
-
                 Align(
                   alignment: Alignment.centerRight,
                   child: Wrap(
                     spacing: 8.w,
                     children: [
-                      PremiumButton(
-                        onPressed: vmState.isLoading
-                            ? null
-                            : changeGoogleAccount,
-                        icon: Icons.switch_account_rounded,
-                        text: l10n.changeGoogleAccount,
-                        style: PremiumButtonStyle.outline,
-                      ),
+                      // Mirror the login screen's social options: Apple
+                      // platforms sign in with Apple (no Google), every other
+                      // platform signs in with Google. Showing "Change Google
+                      // account" on iOS/macOS is misleading because no Google
+                      // sign-in is offered there.
                       if (Platform.isIOS || Platform.isMacOS)
                         PremiumButton(
                           onPressed: vmState.isLoading
@@ -238,6 +226,15 @@ class RoleSelectionScreen extends ConsumerWidget {
                               : changeAppleAccount,
                           icon: Icons.switch_account_rounded,
                           text: l10n.changeAppleAccount,
+                          style: PremiumButtonStyle.outline,
+                        )
+                      else
+                        PremiumButton(
+                          onPressed: vmState.isLoading
+                              ? null
+                              : changeGoogleAccount,
+                          icon: Icons.switch_account_rounded,
+                          text: l10n.changeGoogleAccount,
                           style: PremiumButtonStyle.outline,
                         ),
                     ],

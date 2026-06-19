@@ -1217,12 +1217,6 @@ abstract class AppLocalizations {
   /// Text from Text in role_selection_screen.dart
   ///
   /// In en, this message translates to:
-  /// **'You can change your role later in settings'**
-  String get youCanChangeYourRole;
-
-  /// Text from Text in role_selection_screen.dart
-  ///
-  /// In en, this message translates to:
   /// **'How will you use SportConnect?'**
   String get howWillYouUseSportconnect;
 

@@ -498,10 +498,6 @@
   "@iMADriver": {
     "description": "Text from _buildRoleCard.title in role_selection_screen.dart"
   },
-  "youCanChangeYourRole": "Vous pouvez changer votre rôle plus tard dans les paramètres",
-  "@youCanChangeYourRole": {
-    "description": "Text from Text in role_selection_screen.dart"
-  },
   "howWillYouUseSportconnect": "Comment utiliserez-vous SportConnect ?",
   "@howWillYouUseSportconnect": {
     "description": "Text from Text in role_selection_screen.dart"

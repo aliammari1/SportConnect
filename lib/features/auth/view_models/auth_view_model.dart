@@ -252,12 +252,19 @@ class AuthActionsViewModel extends _$AuthActionsViewModel {
   }
 
   /// Used during onboarding when a user wants to pick a different Google
-  /// account. Signs out first so the account picker is shown.
+  /// account.
+  ///
+  /// Does NOT sign out of Firebase first: [signInWithGoogle]'s
+  /// `signInWithCredential` replaces the current Firebase user on success, so a
+  /// cancelled switch must leave the existing session intact (signing out first
+  /// would strand the user on /login). Only the Google provider session is
+  /// cleared so the account chooser reappears and a different account can be
+  /// picked.
   ///
   /// Returns `true` if sign-in succeeds, `false` if the picker is cancelled.
   Future<bool> switchGoogleAccountForOnboarding() async {
-    await signOut();
     try {
+      await ref.read(authRepositoryProvider).signOutGoogleProvider();
       await signInWithGoogle();
       return true;
     } on AuthException catch (e) {
@@ -269,11 +276,15 @@ class AuthActionsViewModel extends _$AuthActionsViewModel {
   }
 
   /// Used during onboarding when a user wants to pick a different Apple
-  /// account. Signs out first so Apple sign-in can be re-started.
+  /// account.
+  ///
+  /// Does NOT sign out first: the Apple sheet appears regardless, and
+  /// [signInWithApple]'s `signInWithCredential` switches the Firebase user on
+  /// success. A cancel then leaves the current session intact instead of
+  /// logging the user out and stranding them on /login.
   ///
   /// Returns `true` if sign-in succeeds, `false` if the sheet is cancelled.
   Future<bool> switchAppleAccountForOnboarding() async {
-    await signOut();
     try {
       await signInWithApple();
       return true;
@@ -297,10 +308,6 @@ class AuthActionsViewModel extends _$AuthActionsViewModel {
 
   Future<void> sendPasswordResetEmail(String email) {
     return ref.read(authRepositoryProvider).sendPasswordResetEmail(email);
-  }
-
-  Future<void> updateUserRole(String uid, UserRole role) {
-    return ref.read(authRepositoryProvider).updateUserRole(uid, role);
   }
 
   Future<void> reauthenticateWithPassword(String password) {

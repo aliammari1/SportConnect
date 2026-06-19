@@ -207,10 +207,29 @@ service cloud.firestore {
     // (entitlement and moderation state) and the rating aggregate are owned by
     // trusted server code and cannot be set from the client to prevent premium
     // self-grant, ban evasion, and reputation forgery.
+    //
+    // Uses .get(field, default) rather than a bare dot dereference so the rule
+    // also works for 'pending' accounts, whose document legitimately omits
+    // isPremium and rating (PendingUserModel never serializes them). A bare
+    // request.resource.data.isPremium on such a doc raises an evaluation error
+    // that DENIES the write — which is what blocked Sign in with Apple users on
+    // the role-selection screen (they self-update selectedRoleIntent /
+    // onboardingPath while role is still 'pending'). The security intent is
+    // unchanged: this is an equality gate (new == old), so a client can only
+    // ever re-write a field to the value it already holds. Introducing
+    // isPremium=true (or any forged rating) makes new != old (true != false,
+    // forged-map != {}) and is still denied.
+    //
+    // The role is also immutable on this branch: a user's role never changes
+    // after it is set. The ONLY sanctioned role write is the one-time
+    // pending -> rider/driver conversion handled by isRoleFinalization(); every
+    // other owner self-update (role-intent save, profile edits, fcmToken, etc.)
+    // must keep role identical, so rider<->driver switching is impossible.
     function isOwnerProfileUpdate() {
-      return request.resource.data.isPremium == resource.data.isPremium &&
-        request.resource.data.isBanned == resource.data.isBanned &&
-        request.resource.data.rating == resource.data.rating;
+      return request.resource.data.get('role', '') == resource.data.get('role', '') &&
+        request.resource.data.get('isPremium', false) == resource.data.get('isPremium', false) &&
+        request.resource.data.get('isBanned', false) == resource.data.get('isBanned', false) &&
+        request.resource.data.get('rating', {}) == resource.data.get('rating', {});
     }
 
     // True when every star bucket on the (possibly missing) rating map is zero,
@@ -225,13 +244,16 @@ service cloud.firestore {
     }
 
     // Role finalization: a pending account converting itself into a real
-    // rider/driver profile. This is a full-document overwrite that legitimately
-    // INTRODUCES server-owned fields (isPremium, rating) the pending doc never
-    // had, so isOwnerProfileUpdate()'s equality checks can't model it (comparing
-    // a present value against a missing field always fails). The security intent
-    // is preserved explicitly: premium can only land as false (no self-grant),
-    // the moderation flag is carried over unchanged (no ban evasion), and the
-    // rating must be fresh/zeroed (no reputation forgery).
+    // rider/driver profile. This is the ONLY branch that may change `role`
+    // (isOwnerProfileUpdate() pins role as immutable), and it is a full-document
+    // overwrite that legitimately INTRODUCES server-owned fields (isPremium,
+    // rating) the pending doc never had — so isOwnerProfileUpdate()'s equality
+    // checks can't model it (the introduced fresh rating map differs from the
+    // pending doc's absent one). The security intent is preserved explicitly:
+    // premium can only land as false (no self-grant), the moderation flag is
+    // carried over unchanged (no ban evasion), and the rating must be
+    // fresh/zeroed (no reputation forgery). Because resource.data.role must be
+    // 'pending', this is a one-time conversion and can never run again.
     function isRoleFinalization() {
       return resource.data.get('role', '') == 'pending' &&
         (

@@ -613,10 +613,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get iMADriver => 'I\'m a Driver';
 
   @override
-  String get youCanChangeYourRole =>
-      'You can change your role later in settings';
-
-  @override
   String get howWillYouUseSportconnect => 'How will you use SportConnect?';
 
   @override
