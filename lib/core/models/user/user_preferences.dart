@@ -8,7 +8,14 @@ part 'user_preferences.g.dart';
 @freezed
 abstract class UserPreferences with _$UserPreferences {
   const factory UserPreferences({
-    @Default(AppLocale.french) AppLocale language,
+    // unknownEnumValue guards against legacy/bad documents that persisted the
+    // Dart enum *name* ("french") instead of its wire value ("fr"). Without it,
+    // $enumDecodeNullable throws on the unrecognised value and the whole
+    // UserModel.fromJson fails — which strands login on an infinite spinner
+    // (App Store 2.1). Unknown values now fall back to the default locale.
+    @Default(AppLocale.french)
+    @JsonKey(unknownEnumValue: AppLocale.french)
+    AppLocale language,
   }) = _UserPreferences;
 
   const UserPreferences._();

@@ -46,7 +46,11 @@ RiderModel _$RiderModelFromJson(Map json) => RiderModel(
           Map<String, dynamic>.from(json['preferences'] as Map),
         ),
   expertise:
-      $enumDecodeNullable(_$ExpertiseEnumMap, json['expertise']) ??
+      $enumDecodeNullable(
+        _$ExpertiseEnumMap,
+        json['expertise'],
+        unknownValue: Expertise.rookie,
+      ) ??
       Expertise.rookie,
   stripeCustomerId: json['stripeCustomerId'] as String?,
   isStripeCustomerCreated: json['isStripeCustomerCreated'] as bool? ?? false,
@@ -134,7 +138,11 @@ DriverModel _$DriverModelFromJson(Map json) => DriverModel(
           Map<String, dynamic>.from(json['preferences'] as Map),
         ),
   expertise:
-      $enumDecodeNullable(_$ExpertiseEnumMap, json['expertise']) ??
+      $enumDecodeNullable(
+        _$ExpertiseEnumMap,
+        json['expertise'],
+        unknownValue: Expertise.rookie,
+      ) ??
       Expertise.rookie,
   vehicleIds:
       (json['vehicleIds'] as List<dynamic>?)
@@ -187,7 +195,11 @@ PendingUserModel _$PendingUserModelFromJson(Map json) => PendingUserModel(
   phoneNumber: json['phoneNumber'] as String?,
   dateOfBirth: const TimestampConverter().fromJson(json['dateOfBirth']),
   expertise:
-      $enumDecodeNullable(_$ExpertiseEnumMap, json['expertise']) ??
+      $enumDecodeNullable(
+        _$ExpertiseEnumMap,
+        json['expertise'],
+        unknownValue: Expertise.rookie,
+      ) ??
       Expertise.rookie,
   isEmailVerified: json['isEmailVerified'] as bool? ?? false,
   isBanned: json['isBanned'] as bool? ?? false,

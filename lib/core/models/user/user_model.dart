@@ -51,7 +51,9 @@ sealed class UserModel with _$UserModel {
     @Default(UserPreferences()) UserPreferences preferences,
 
     // Expertise
-    @Default(Expertise.rookie) Expertise expertise,
+    @Default(Expertise.rookie)
+    @JsonKey(unknownEnumValue: Expertise.rookie)
+    Expertise expertise,
 
     String? stripeCustomerId,
     @Default(false) bool isStripeCustomerCreated,
@@ -98,7 +100,9 @@ sealed class UserModel with _$UserModel {
     @Default(UserPreferences()) UserPreferences preferences,
 
     // Expertise
-    @Default(Expertise.rookie) Expertise expertise,
+    @Default(Expertise.rookie)
+    @JsonKey(unknownEnumValue: Expertise.rookie)
+    Expertise expertise,
 
     // Driver-specific: Vehicle IDs
     @Default([]) List<String> vehicleIds,
@@ -119,7 +123,9 @@ sealed class UserModel with _$UserModel {
     String? photoUrl,
     String? phoneNumber,
     @TimestampConverter() DateTime? dateOfBirth,
-    @Default(Expertise.rookie) Expertise expertise,
+    @Default(Expertise.rookie)
+    @JsonKey(unknownEnumValue: Expertise.rookie)
+    Expertise expertise,
     @Default(false) bool isEmailVerified,
     @Default(false) bool isBanned,
     @Default('') String fcmToken,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/models/user/models.dart';
@@ -28,7 +30,34 @@ Stream<UserModel?> currentUser(Ref ref) async* {
     return;
   }
 
-  yield* repository.getUserDataStream(uid);
+  // The router treats this stream sitting in `loading` (a signed-in Firebase
+  // user with no profile value/error yet) as `isFirestoreStillLoading` and
+  // refuses to navigate — so if the very first snapshot never arrives (a
+  // blocked App Check token, an unreachable backend) the app is stranded on an
+  // infinite loading spinner (App Store 2.1). Cap only the FIRST emission: a
+  // healthy snapshots() listener emits once and then stays idle indefinitely,
+  // so idle timeouts after the first value are ignored to keep live updates
+  // flowing. On a first-emission timeout we surface an error, which unblocks
+  // the router (it falls back to the login screen) instead of hanging.
+  var hasEmitted = false;
+  yield* repository
+      .getUserDataStream(uid)
+      .map((user) {
+        hasEmitted = true;
+        return user;
+      })
+      .timeout(
+        const Duration(seconds: 20),
+        onTimeout: (sink) {
+          if (!hasEmitted) {
+            sink
+              ..addError(
+                TimeoutException('Loading your profile took too long.'),
+              )
+              ..close();
+          }
+        },
+      );
 }
 
 @Riverpod(keepAlive: true)

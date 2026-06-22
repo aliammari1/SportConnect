@@ -8,7 +8,11 @@ part of 'user_preferences.dart';
 
 _UserPreferences _$UserPreferencesFromJson(Map json) => _UserPreferences(
   language:
-      $enumDecodeNullable(_$AppLocaleEnumMap, json['language']) ??
+      $enumDecodeNullable(
+        _$AppLocaleEnumMap,
+        json['language'],
+        unknownValue: AppLocale.french,
+      ) ??
       AppLocale.french,
 );
 

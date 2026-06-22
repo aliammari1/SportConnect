@@ -15,7 +15,12 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserPreferences {
 
- AppLocale get language;
+// unknownEnumValue guards against legacy/bad documents that persisted the
+// Dart enum *name* ("french") instead of its wire value ("fr"). Without it,
+// $enumDecodeNullable throws on the unrecognised value and the whole
+// UserModel.fromJson fails — which strands login on an infinite spinner
+// (App Store 2.1). Unknown values now fall back to the default locale.
+@JsonKey(unknownEnumValue: AppLocale.french) AppLocale get language;
 /// Create a copy of UserPreferences
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +53,7 @@ abstract mixin class $UserPreferencesCopyWith<$Res>  {
   factory $UserPreferencesCopyWith(UserPreferences value, $Res Function(UserPreferences) _then) = _$UserPreferencesCopyWithImpl;
 @useResult
 $Res call({
- AppLocale language
+@JsonKey(unknownEnumValue: AppLocale.french) AppLocale language
 });
 
 
@@ -153,7 +158,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AppLocale language)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(unknownEnumValue: AppLocale.french)  AppLocale language)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserPreferences() when $default != null:
 return $default(_that.language);case _:
@@ -174,7 +179,7 @@ return $default(_that.language);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AppLocale language)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(unknownEnumValue: AppLocale.french)  AppLocale language)  $default,) {final _that = this;
 switch (_that) {
 case _UserPreferences():
 return $default(_that.language);case _:
@@ -194,7 +199,7 @@ return $default(_that.language);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AppLocale language)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(unknownEnumValue: AppLocale.french)  AppLocale language)?  $default,) {final _that = this;
 switch (_that) {
 case _UserPreferences() when $default != null:
 return $default(_that.language);case _:
@@ -209,10 +214,15 @@ return $default(_that.language);case _:
 @JsonSerializable()
 
 class _UserPreferences extends UserPreferences {
-  const _UserPreferences({this.language = AppLocale.french}): super._();
+  const _UserPreferences({@JsonKey(unknownEnumValue: AppLocale.french) this.language = AppLocale.french}): super._();
   factory _UserPreferences.fromJson(Map<String, dynamic> json) => _$UserPreferencesFromJson(json);
 
-@override@JsonKey() final  AppLocale language;
+// unknownEnumValue guards against legacy/bad documents that persisted the
+// Dart enum *name* ("french") instead of its wire value ("fr"). Without it,
+// $enumDecodeNullable throws on the unrecognised value and the whole
+// UserModel.fromJson fails — which strands login on an infinite spinner
+// (App Store 2.1). Unknown values now fall back to the default locale.
+@override@JsonKey(unknownEnumValue: AppLocale.french) final  AppLocale language;
 
 /// Create a copy of UserPreferences
 /// with the given fields replaced by the non-null parameter values.
@@ -247,7 +257,7 @@ abstract mixin class _$UserPreferencesCopyWith<$Res> implements $UserPreferences
   factory _$UserPreferencesCopyWith(_UserPreferences value, $Res Function(_UserPreferences) _then) = __$UserPreferencesCopyWithImpl;
 @override @useResult
 $Res call({
- AppLocale language
+@JsonKey(unknownEnumValue: AppLocale.french) AppLocale language
 });
 
 
