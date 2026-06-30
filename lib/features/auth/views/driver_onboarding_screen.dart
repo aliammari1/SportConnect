@@ -18,7 +18,6 @@ import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/utils/user_facing_error.dart';
 import 'package:sport_connect/core/widgets/address_autocomplete_field.dart';
-import 'package:sport_connect/core/widgets/dob_picker.dart';
 import 'package:sport_connect/core/widgets/expertise_picker.dart';
 import 'package:sport_connect/core/widgets/gender_segmented_field.dart';
 import 'package:sport_connect/core/widgets/glass_panel.dart';
@@ -36,26 +35,12 @@ import 'package:sport_connect/l10n/generated/app_localizations.dart';
 abstract final class _PF {
   static const name = 'name';
   static const gender = 'gender';
-  static const dob = 'dob';
+  static const ageConfirmed = 'ageConfirmed';
   static const expertise = 'expertise';
   static const terms = 'terms';
 }
 
-DateTime _dateOnly(DateTime value) =>
-    DateTime(value.year, value.month, value.day);
-
-DateTime _adultCutoffDate({int years = 18}) {
-  final today = DateTime.now();
-  return DateTime(today.year - years, today.month, today.day);
-}
-
 const _kDriverOnboardingWideMaxWidth = 1180.0;
-
-bool _isAtLeastAge(DateTime value, {int years = 18}) {
-  final birthDate = _dateOnly(value);
-  final cutoff = _adultCutoffDate(years: years);
-  return !birthDate.isAfter(cutoff);
-}
 
 String? _normalizeGenderValue(String? value) {
   switch (value?.trim().toLowerCase()) {
@@ -155,16 +140,9 @@ class _DriverOnboardingScreenState
         ],
       ),
       _PF.gender: FormControl<String>(validators: [Validators.required]),
-      _PF.dob: FormControl<DateTime>(
-        validators: [
-          Validators.required,
-          Validators.delegate((control) {
-            final value = control.value as DateTime?;
-            if (value == null) return null;
-            if (!_isAtLeastAge(value)) return {'minAge': true};
-            return null;
-          }),
-        ],
+      _PF.ageConfirmed: FormControl<bool>(
+        value: false,
+        validators: [Validators.requiredTrue],
       ),
       _PF.expertise: FormControl<Expertise>(
         value: Expertise.rookie,
@@ -390,24 +368,16 @@ class _DriverOnboardingScreenState
   void _populateProfileFields(UserModel user) {
     final existingName = _profileForm.control(_PF.name).value as String?;
     final existingGender = _profileForm.control(_PF.gender).value as String?;
-    final existingDob = _profileForm.control(_PF.dob).value as DateTime?;
     final patchedName = user.username.trim();
     final patchedGender = switch (user) {
       DriverModel(:final gender) => _normalizeGenderValue(gender),
       RiderModel(:final gender) => _normalizeGenderValue(gender),
       _ => null,
     };
-    final patchedDob = switch (user) {
-      DriverModel(:final dateOfBirth) => dateOfBirth,
-      RiderModel(:final dateOfBirth) => dateOfBirth,
-      PendingUserModel(:final dateOfBirth) => dateOfBirth,
-      _ => null,
-    };
 
     _profileForm.patchValue({
       _PF.name: patchedName.isNotEmpty ? patchedName : existingName,
       _PF.gender: patchedGender ?? existingGender,
-      _PF.dob: patchedDob ?? existingDob,
       _PF.expertise: user.expertise,
     });
   }
@@ -427,7 +397,6 @@ class _DriverOnboardingScreenState
     if (currentUser == null) return;
 
     final vmState = ref.read(onboardingViewModelProvider);
-    final dateOfBirth = values[_PF.dob] as DateTime?;
     final phoneInputValue = _phoneKey.currentState?.fullNumber;
     final phoneNumber = (phoneInputValue?.trim().isNotEmpty ?? false)
         ? phoneInputValue!.trim()
@@ -438,7 +407,6 @@ class _DriverOnboardingScreenState
       'phoneNumber': phoneNumber,
       'address': _addressKey.currentState?.text.trim() ?? '',
       'gender': values[_PF.gender] as String?,
-      'dateOfBirth': dateOfBirth == null ? null : _dateOnly(dateOfBirth),
       'expertise':
           ((values[_PF.expertise] as Expertise?) ?? Expertise.rookie).name,
     };
@@ -573,8 +541,6 @@ class _DriverOnboardingScreenState
         .setupDraftFor(uid, UserRole.driver);
     if (draft.isEmpty) return;
 
-    final dobText = draft['dateOfBirth'] as String?;
-    final dateOfBirth = dobText == null ? null : DateTime.tryParse(dobText);
     final expertiseText = draft['expertise'] as String?;
     final expertise = switch (expertiseText) {
       'intermediate' => Expertise.intermediate,
@@ -587,7 +553,6 @@ class _DriverOnboardingScreenState
     _profileForm.patchValue({
       _PF.name: draft['name'] as String?,
       _PF.gender: draft['gender'] as String?,
-      _PF.dob: dateOfBirth,
       _PF.expertise: expertise,
     });
     _vehicleForm.patchValue({
@@ -614,7 +579,6 @@ class _DriverOnboardingScreenState
   Future<void> _saveSetupDraft(String uid) {
     final profileValues = _profileForm.value;
     final vehicleValues = _vehicleForm.value;
-    final dateOfBirth = profileValues[_PF.dob] as DateTime?;
     return ref.read(onboardingViewModelProvider.notifier).saveSetupDraft(
       uid,
       UserRole.driver,
@@ -622,7 +586,6 @@ class _DriverOnboardingScreenState
         'currentStep': ref.read(onboardingViewModelProvider).driverCurrentStep,
         'name': (profileValues[_PF.name] as String?)?.trim(),
         'gender': profileValues[_PF.gender] as String?,
-        'dateOfBirth': dateOfBirth?.toIso8601String(),
         'expertise': (profileValues[_PF.expertise] as Expertise?)?.name,
         'phoneNumber': _phoneKey.currentState?.fullNumber,
         'address': _addressKey.currentState?.text.trim(),
@@ -661,7 +624,7 @@ class _DriverOnboardingScreenState
           notifier.markDriverProfilePopulated();
           _populateProfileFields(user);
         } else {
-          // Keep name/gender/dob in sync if user data arrives slightly later.
+          // Keep name/gender in sync if user data arrives slightly later.
           _populateProfileFields(user);
         }
 
@@ -1172,15 +1135,6 @@ class _DriverOnboardingScreenState
                             l10n.driverGenderRequired,
                       },
                     ),
-                    SizedBox(height: 14.h),
-                    DateOfBirthField(
-                      formControlName: _PF.dob,
-                      label: l10n.authDateOfBirth,
-                      validationMessages: {
-                        ValidationMessage.required: (_) => l10n.authDobError,
-                        'minAge': (_) => l10n.authDobMinAge,
-                      },
-                    ),
                   ],
                 )
                 .animate()
@@ -1282,6 +1236,69 @@ class _DriverOnboardingScreenState
             SizedBox(height: 20.h),
 
             // ── Terms ────────────────────────────────────────────────────
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Material(
+                type: MaterialType.transparency,
+                child: ReactiveCheckboxListTile(
+                  formControlName: _PF.ageConfirmed,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  activeColor: AppColors.primary,
+                  title: Text(
+                    l10n.ageConfirmation,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+            ).animate().fadeIn(duration: 300.ms, delay: 360.ms),
+
+            ReactiveFormConsumer(
+              builder: (context, form, _) {
+                final ageCtrl = form.control(_PF.ageConfirmed);
+                final showError = ageCtrl.touched && ageCtrl.invalid;
+                return AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: showError
+                      ? Padding(
+                          key: const ValueKey('age-error'),
+                          padding: EdgeInsets.only(top: 6.h, left: 14.w),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline_rounded,
+                                size: 14.sp,
+                                color: AppColors.error,
+                              ),
+                              SizedBox(width: 6.w),
+                              Expanded(
+                                child: Text(
+                                  l10n.ageConfirmationRequired,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: AppColors.error,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(key: ValueKey('age-ok')),
+                );
+              },
+            ),
+
+            SizedBox(height: 8.h),
+
             Container(
               decoration: BoxDecoration(
                 color: AppColors.surface.withValues(alpha: 0.5),

@@ -5134,6 +5134,8 @@
   "user": "User",
   "weakpassword": "weak-password",
   "you_must_accept_the_terms_to_continue": "You must accept the terms to continue.",
+  "ageConfirmation": "I confirm I am at least 18 years old",
+  "ageConfirmationRequired": "You must confirm you are at least 18 years old to continue.",
   "from_your_signin_account": "From your sign-in account",
   "help_riders_recognize_your_car_at_pickup": "Help riders recognize your car at pickup.",
   "other_color": "Other color",

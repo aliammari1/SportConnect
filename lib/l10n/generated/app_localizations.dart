@@ -12842,6 +12842,18 @@ abstract class AppLocalizations {
   /// **'You must accept the terms to continue.'**
   String get you_must_accept_the_terms_to_continue;
 
+  /// No description provided for @ageConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'I confirm I am at least 18 years old'**
+  String get ageConfirmation;
+
+  /// No description provided for @ageConfirmationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'You must confirm you are at least 18 years old to continue.'**
+  String get ageConfirmationRequired;
+
   /// No description provided for @from_your_signin_account.
   ///
   /// In en, this message translates to:

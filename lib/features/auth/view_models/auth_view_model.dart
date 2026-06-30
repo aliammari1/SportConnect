@@ -20,7 +20,6 @@ class SignupWizardUiState {
     this.agreedToTerms = false,
     this.selectedRole = UserRole.rider,
     this.profileImage,
-    this.dateOfBirth,
     this.phoneNumber,
     this.expertise = Expertise.rookie,
   });
@@ -32,7 +31,6 @@ class SignupWizardUiState {
   final bool agreedToTerms;
   final UserRole selectedRole;
   final File? profileImage;
-  final DateTime? dateOfBirth;
   final String? phoneNumber;
   final Expertise expertise;
 
@@ -45,8 +43,6 @@ class SignupWizardUiState {
     UserRole? selectedRole,
     File? profileImage,
     bool clearProfileImage = false,
-    DateTime? dateOfBirth,
-    bool clearDateOfBirth = false,
     String? phoneNumber,
     Expertise? expertise,
   }) {
@@ -61,7 +57,6 @@ class SignupWizardUiState {
       profileImage: clearProfileImage
           ? null
           : (profileImage ?? this.profileImage),
-      dateOfBirth: clearDateOfBirth ? null : (dateOfBirth ?? this.dateOfBirth),
       phoneNumber: phoneNumber ?? this.phoneNumber,
       expertise: expertise ?? this.expertise,
     );
@@ -108,10 +103,6 @@ class SignupWizardUiViewModel extends _$SignupWizardUiViewModel {
       profileImage: image,
       clearProfileImage: image == null,
     );
-  }
-
-  void setDateOfBirth(DateTime value) {
-    state = state.copyWith(dateOfBirth: value);
   }
 
   void setPhoneNumber(String? phoneNumber) {

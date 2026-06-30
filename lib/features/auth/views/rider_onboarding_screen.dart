@@ -19,7 +19,6 @@ import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/utils/user_facing_error.dart';
 import 'package:sport_connect/core/widgets/address_autocomplete_field.dart';
 import 'package:sport_connect/core/widgets/custom_button.dart';
-import 'package:sport_connect/core/widgets/dob_picker.dart';
 import 'package:sport_connect/core/widgets/expertise_picker.dart';
 import 'package:sport_connect/core/widgets/gender_segmented_field.dart';
 import 'package:sport_connect/core/widgets/glass_panel.dart';
@@ -33,23 +32,9 @@ import 'package:sport_connect/l10n/generated/app_localizations.dart';
 abstract final class _FormFields {
   static const name = 'name';
   static const gender = 'gender';
-  static const dob = 'dob';
+  static const ageConfirmed = 'ageConfirmed';
   static const expertise = 'expertise';
   static const terms = 'terms';
-}
-
-DateTime _dateOnly(DateTime value) =>
-    DateTime(value.year, value.month, value.day);
-
-DateTime _adultCutoffDate({int years = 18}) {
-  final today = DateTime.now();
-  return DateTime(today.year - years, today.month, today.day);
-}
-
-bool _isAtLeastAge(DateTime value, {int years = 18}) {
-  final birthDate = _dateOnly(value);
-  final cutoff = _adultCutoffDate(years: years);
-  return !birthDate.isAfter(cutoff);
 }
 
 String? _normalizeGenderValue(String? value) {
@@ -99,16 +84,9 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
     _FormFields.gender: FormControl<String>(
       validators: [Validators.required],
     ),
-    _FormFields.dob: FormControl<DateTime>(
-      validators: [
-        Validators.required,
-        Validators.delegate((control) {
-          final value = control.value as DateTime?;
-          if (value == null) return null;
-          if (!_isAtLeastAge(value)) return {'minAge': true};
-          return null;
-        }),
-      ],
+    _FormFields.ageConfirmed: FormControl<bool>(
+      value: false,
+      validators: [Validators.requiredTrue],
     ),
     _FormFields.expertise: FormControl<Expertise>(
       value: Expertise.rookie,
@@ -170,8 +148,6 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
         .setupDraftFor(uid, UserRole.rider);
     if (draft.isEmpty) return;
 
-    final dobText = draft['dateOfBirth'] as String?;
-    final dateOfBirth = dobText == null ? null : DateTime.tryParse(dobText);
     final expertiseText = draft['expertise'] as String?;
     final expertise = switch (expertiseText) {
       'intermediate' => Expertise.intermediate,
@@ -184,7 +160,6 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
     _form.patchValue({
       _FormFields.name: draft['name'] as String?,
       _FormFields.gender: draft['gender'] as String?,
-      _FormFields.dob: dateOfBirth,
       _FormFields.expertise: expertise,
       _FormFields.terms: draft['termsAccepted'] as bool?,
     });
@@ -194,14 +169,12 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
 
   Future<void> _saveSetupDraft(String uid) {
     final values = _form.value;
-    final dateOfBirth = values[_FormFields.dob] as DateTime?;
     return ref.read(onboardingViewModelProvider.notifier).saveSetupDraft(
       uid,
       UserRole.rider,
       {
         'name': (values[_FormFields.name] as String?)?.trim(),
         'gender': values[_FormFields.gender] as String?,
-        'dateOfBirth': dateOfBirth?.toIso8601String(),
         'expertise': (values[_FormFields.expertise] as Expertise?)?.name,
         'termsAccepted': values[_FormFields.terms] as bool?,
         'phoneNumber': _phoneKey.currentState?.fullNumber,
@@ -226,7 +199,6 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
   void _populateProfileFields(UserModel user) {
     final existingName = _form.control(_FormFields.name).value as String?;
     final existingGender = _form.control(_FormFields.gender).value as String?;
-    final existingDob = _form.control(_FormFields.dob).value as DateTime?;
 
     final patchedName = user.username.trim();
 
@@ -236,17 +208,9 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
       _ => null,
     };
 
-    final patchedDob = switch (user) {
-      final RiderModel rider => rider.dateOfBirth,
-      final DriverModel driver => driver.dateOfBirth,
-      final PendingUserModel pending => pending.dateOfBirth,
-      _ => null,
-    };
-
     _form.patchValue({
       _FormFields.name: patchedName.isNotEmpty ? patchedName : existingName,
       _FormFields.gender: patchedGender ?? existingGender,
-      _FormFields.dob: patchedDob ?? existingDob,
       _FormFields.expertise: user.expertise,
     });
   }
@@ -440,8 +404,8 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
       if (_form.control(_FormFields.gender).invalid) {
         errors.add(AppLocalizations.of(context).gender);
       }
-      if (_form.control(_FormFields.dob).invalid) {
-        errors.add(AppLocalizations.of(context).authDateOfBirth);
+      if (_form.control(_FormFields.ageConfirmed).invalid) {
+        errors.add(AppLocalizations.of(context).ageConfirmation);
       }
       if (_form.control(_FormFields.expertise).invalid) {
         errors.add(AppLocalizations.of(context).expertiseLevel);
@@ -484,7 +448,6 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
     unawaited(HapticFeedback.mediumImpact());
 
     final values = _form.value;
-    final dateOfBirth = values[_FormFields.dob] as DateTime?;
     final phoneInputValue = _phoneKey.currentState?.fullNumber;
     final phoneNumber = (phoneInputValue?.trim().isNotEmpty ?? false)
         ? phoneInputValue!.trim()
@@ -498,7 +461,6 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
       'phoneNumber': phoneNumber,
       'address': _addressKey.currentState?.text.trim(),
       'gender': values[_FormFields.gender] as String?,
-      'dateOfBirth': dateOfBirth == null ? null : _dateOnly(dateOfBirth),
       'expertise':
           ((values[_FormFields.expertise] as Expertise?) ?? Expertise.rookie)
               .name,
@@ -856,16 +818,6 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
                                             l10n.driverGenderRequired,
                                       },
                                     ),
-                                    SizedBox(height: 14.h),
-                                    DateOfBirthField(
-                                      formControlName: _FormFields.dob,
-                                      label: l10n.authDateOfBirth,
-                                      validationMessages: {
-                                        ValidationMessage.required: (_) =>
-                                            l10n.authDobError,
-                                        'minAge': (_) => l10n.authDobMinAge,
-                                      },
-                                    ),
                                   ],
                                 )
                                 .animate()
@@ -960,6 +912,80 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
                                 .slideY(begin: 0.04, end: 0),
 
                             SizedBox(height: 24.h),
+
+                            Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.surface.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.15,
+                                  ),
+                                ),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: Material(
+                                type: MaterialType.transparency,
+                                child: ReactiveCheckboxListTile(
+                                  formControlName: _FormFields.ageConfirmed,
+                                  controlAffinity:
+                                      ListTileControlAffinity.leading,
+                                  activeColor: AppColors.primary,
+                                  title: Text(
+                                    l10n.ageConfirmation,
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            ReactiveFormConsumer(
+                              builder: (context, form, _) {
+                                final ageCtrl = form.control(
+                                  _FormFields.ageConfirmed,
+                                );
+                                final showError =
+                                    ageCtrl.touched && ageCtrl.invalid;
+                                return AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 200),
+                                  child: showError
+                                      ? Padding(
+                                          key: const ValueKey('age-error'),
+                                          padding: EdgeInsets.only(
+                                            top: 6.h,
+                                            left: 14.w,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.error_outline_rounded,
+                                                size: 14.sp,
+                                                color: AppColors.error,
+                                              ),
+                                              SizedBox(width: 6.w),
+                                              Expanded(
+                                                child: Text(
+                                                  l10n.ageConfirmationRequired,
+                                                  style: TextStyle(
+                                                    fontSize: 12.sp,
+                                                    color: AppColors.error,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : const SizedBox.shrink(
+                                          key: ValueKey('age-ok'),
+                                        ),
+                                );
+                              },
+                            ),
+
+                            SizedBox(height: 8.h),
 
                             Container(
                               decoration: BoxDecoration(

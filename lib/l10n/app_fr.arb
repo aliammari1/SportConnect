@@ -5128,6 +5128,8 @@
   "user": "Utilisateur",
   "weakpassword": "weak-password",
   "you_must_accept_the_terms_to_continue": "Vous devez accepter les conditions pour continuer.",
+  "ageConfirmation": "Je confirme avoir au moins 18 ans",
+  "ageConfirmationRequired": "Vous devez confirmer avoir au moins 18 ans pour continuer.",
   "from_your_signin_account": "Depuis votre compte de connexion",
   "help_riders_recognize_your_car_at_pickup": "Aidez les passagers à reconnaître votre voiture au point de prise en charge.",
   "other_color": "Autre couleur",

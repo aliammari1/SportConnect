@@ -162,11 +162,19 @@ class RouteGuardService {
       return null;
     }
 
-    if (isLoggedIn &&
-        hasVerifiableEmail &&
-        !isEmailVerified &&
-        currentPath != AppRoutes.emailVerification.path) {
-      return AppRoutes.emailVerification.path;
+    if (isLoggedIn && hasVerifiableEmail && !isEmailVerified) {
+      // An unverified user must verify their email before anything else —
+      // including picking a role. Send them to the verification screen, and
+      // once they're there return null (stay) instead of falling through to
+      // the pending-user block below. A brand-new account is still
+      // `pending`, so without this short-circuit that block would redirect
+      // /email-verification → /role-selection, which immediately redirects
+      // back here — tripping GoRouter's redirect-loop detector and dumping
+      // the user on an error page right after sign-up.
+      if (currentPath != AppRoutes.emailVerification.path) {
+        return AppRoutes.emailVerification.path;
+      }
+      return null;
     }
 
     if (currentPath == AppRoutes.roleSelection.path && isLoggedIn) {

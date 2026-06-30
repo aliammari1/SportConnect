@@ -7125,6 +7125,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vous devez accepter les conditions pour continuer.';
 
   @override
+  String get ageConfirmation => 'Je confirme avoir au moins 18 ans';
+
+  @override
+  String get ageConfirmationRequired =>
+      'Vous devez confirmer avoir au moins 18 ans pour continuer.';
+
+  @override
   String get from_your_signin_account => 'Depuis votre compte de connexion';
 
   @override

@@ -13,7 +13,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
@@ -47,11 +46,6 @@ class _StepTheme {
 }
 
 const _kText = Color(0xFF1A1A1A);
-
-DateTime _adultCutoffDate({int years = 18}) {
-  final today = DateTime.now();
-  return DateTime(today.year - years, today.month, today.day);
-}
 
 List<String> _signupStepLabels(AppLocalizations l10n) => [
   l10n.account_setup,
@@ -211,29 +205,10 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
       return;
     }
 
-    // Step 1 validation: Phone & DOB
+    // Step 1 validation: Phone
     if (uiState.currentStep == 1) {
       final phoneError = _phoneKey.currentState?.validate();
       if (phoneError != null) return;
-
-      if (uiState.dateOfBirth == null) {
-        _showError(AppLocalizations.of(context).authDobError);
-        return;
-      }
-
-      // Use calendar-year subtraction with month/day correction to correctly
-      // handle leap years and boundary dates for legal age verification.
-      final dob = uiState.dateOfBirth!;
-      final now = DateTime.now();
-      var age = now.year - dob.year;
-      if (now.month < dob.month ||
-          (now.month == dob.month && now.day < dob.day)) {
-        age--;
-      }
-      if (age < 18) {
-        _showError(AppLocalizations.of(context).authDobMinAge);
-        return;
-      }
     }
 
     // Move to next step or complete
@@ -277,7 +252,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
           username: (step0Values['name'] as String? ?? '').trim(),
           role: uiState.selectedRole,
           phone: uiState.phoneNumber,
-          dateOfBirth: uiState.dateOfBirth,
+          dateOfBirth: null,
           profileImage: uiState.profileImage,
           expertise: uiState.expertise,
         );
@@ -330,8 +305,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
         final msg = error is AuthException
             ? error.message
             : error.toString().replaceFirst('Exception: ', '');
-        final safeMessage = msg.isNotEmpty ? msg : l10n.signUpFailedPleaseTry;
-        _showError(safeMessage);
+        if (msg.isNotEmpty) _showError(msg);
       }
     });
 
@@ -347,10 +321,9 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
             _showError(l10n.accountExistsError);
             return;
           }
-          _showError(e.message);
+          if (e.message.isNotEmpty) _showError(e.message);
           return;
         }
-        _showError(l10n.signUpFailedPleaseTry);
       }
     });
 
@@ -927,18 +900,6 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
           ),
           SizedBox(height: 14.h),
 
-          // DOB picker
-          _DobPicker(
-            selected: wizardUiState.dateOfBirth,
-            accent: theme.accent,
-            textColor: theme.text,
-            cardBg: theme.card,
-            onPicked: (d) => ref
-                .read(signupWizardUiViewModelProvider.notifier)
-                .setDateOfBirth(d),
-          ),
-          SizedBox(height: 16.h),
-
           // Expertise level
           ReactiveExpertisePicker(
             formControlName: 'expertise',
@@ -1246,387 +1207,6 @@ class _StyledField extends StatelessWidget {
     prefixIcon: Icon(icon, color: theme.accent, size: 20.sp),
     suffixIcon: suffix,
   );
-}
-
-// ─── Custom Inline DOB Picker ─────────────────────────────────────────────────
-
-class _DobPicker extends StatefulWidget {
-  const _DobPicker({
-    required this.selected,
-    required this.accent,
-    required this.textColor,
-    required this.cardBg,
-    required this.onPicked,
-  });
-  final DateTime? selected;
-  final Color accent;
-  final Color textColor;
-  final Color cardBg;
-  final ValueChanged<DateTime> onPicked;
-
-  @override
-  State<_DobPicker> createState() => _DobPickerState();
-}
-
-class _DobPickerState extends State<_DobPicker>
-    with SingleTickerProviderStateMixin {
-  bool _expanded = false;
-  late AnimationController _expandCtrl;
-  late Animation<double> _expandAnim;
-
-  late FixedExtentScrollController _dayCtrl;
-  late FixedExtentScrollController _monthCtrl;
-  late FixedExtentScrollController _yearCtrl;
-
-  static const double _itemH = 42;
-  static const int _visibleItems = 3;
-
-  late int _day;
-  late int _month;
-  late int _year;
-
-  int get _daysInMonth => DateTime(_year, _month + 1 + 1, 0).day;
-
-  List<String> _monthNames(BuildContext context) {
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    return List.generate(
-      12,
-      (index) => DateFormat.MMM(locale).format(DateTime(2000, index + 1)),
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    final adultCutoff = _adultCutoffDate();
-    final rawInit =
-        widget.selected ?? DateTime(DateTime.now().year - 25, 6, 15);
-    final init = rawInit.isAfter(adultCutoff) ? adultCutoff : rawInit;
-    _day = init.day;
-    _month = init.month - 1;
-    _year = init.year;
-
-    _dayCtrl = FixedExtentScrollController(initialItem: _day - 1);
-    _monthCtrl = FixedExtentScrollController(initialItem: _month);
-    _yearCtrl = FixedExtentScrollController(initialItem: _year - 1920);
-
-    _expandCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 320),
-    );
-    _expandAnim = CurvedAnimation(
-      parent: _expandCtrl,
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  @override
-  void dispose() {
-    _expandCtrl.dispose();
-    _dayCtrl.dispose();
-    _monthCtrl.dispose();
-    _yearCtrl.dispose();
-    super.dispose();
-  }
-
-  void _toggle() {
-    setState(() => _expanded = !_expanded);
-    unawaited(_expanded ? _expandCtrl.forward() : _expandCtrl.reverse());
-    unawaited(HapticFeedback.selectionClick());
-  }
-
-  void _emit() {
-    final adultCutoff = _adultCutoffDate();
-    final clampedDay = _day.clamp(1, _daysInMonth);
-    final picked = DateTime(_year, _month + 1, clampedDay);
-    widget.onPicked(picked.isAfter(adultCutoff) ? adultCutoff : picked);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasValue = widget.selected != null;
-    final accent = widget.accent;
-    final textCol = widget.textColor;
-    final cardBg = widget.cardBg;
-    final l10n = AppLocalizations.of(context);
-    final monthNames = _monthNames(context);
-    final localeTag = Localizations.localeOf(context).toLanguageTag();
-    final dateFormatter = DateFormat.yMMMd(localeTag);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // ── Trigger row ──────────────────────────────────────────────
-        Semantics(
-          button: true,
-          label: l10n.authDateOfBirth,
-          hint: hasValue ? l10n.selected : l10n.authDobPrompt,
-          child: GestureDetector(
-            onTap: _toggle,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 260),
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-              decoration: BoxDecoration(
-                color: accent.withOpacity(0.06),
-                borderRadius: _expanded
-                    ? BorderRadius.vertical(top: Radius.circular(14.r))
-                    : BorderRadius.circular(14.r),
-                border: Border.all(
-                  color: _expanded || hasValue
-                      ? accent
-                      : accent.withOpacity(0.2),
-                  width: _expanded ? 2 : 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.cake_outlined, color: accent, size: 20.sp),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.authDateOfBirth,
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w600,
-                            color: accent.withOpacity(0.75),
-                          ),
-                        ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          hasValue
-                              ? dateFormatter.format(widget.selected!)
-                              : l10n.authDobPrompt,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: hasValue
-                                ? textCol
-                                : textCol.withOpacity(0.38),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  AnimatedRotation(
-                    turns: _expanded ? 0.5 : 0.0,
-                    duration: const Duration(milliseconds: 260),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: accent,
-                      size: 24.sp,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        // ── Expandable wheel panel ────────────────────────────────────
-        SizeTransition(
-          sizeFactor: _expandAnim,
-          child: Container(
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(14.r),
-              ),
-              border: Border(
-                left: BorderSide(color: accent, width: 2),
-                right: BorderSide(color: accent, width: 2),
-                bottom: BorderSide(color: accent, width: 2),
-              ),
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
-                  child: Row(
-                    children: [
-                      Expanded(child: _colLabel('DAY', accent)),
-                      Expanded(child: _colLabel(l10n.dayLabel, accent)),
-                      Expanded(child: _colLabel(l10n.monthLabel, accent)),
-                      Expanded(child: _colLabel(l10n.year, accent)),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: _itemH * _visibleItems,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        top: _itemH * (_visibleItems ~/ 2),
-                        left: 10.w,
-                        right: 10.w,
-                        height: _itemH,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: accent.withOpacity(0.11),
-                            borderRadius: BorderRadius.circular(10.r),
-                            border: Border.all(color: accent.withOpacity(0.3)),
-                          ),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ListWheelScrollView.useDelegate(
-                              controller: _dayCtrl,
-                              itemExtent: _itemH,
-                              physics: const FixedExtentScrollPhysics(),
-                              onSelectedItemChanged: (i) {
-                                setState(() => _day = i + 1);
-                                _emit();
-                              },
-                              childDelegate: ListWheelChildBuilderDelegate(
-                                childCount: 31,
-                                builder: (_, i) => _wheelCell(
-                                  '${i + 1}',
-                                  i == _day - 1,
-                                  accent,
-                                  textCol,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: ListWheelScrollView.useDelegate(
-                              controller: _monthCtrl,
-                              itemExtent: _itemH,
-                              physics: const FixedExtentScrollPhysics(),
-                              onSelectedItemChanged: (i) {
-                                setState(() => _month = i);
-                                _emit();
-                              },
-                              childDelegate: ListWheelChildBuilderDelegate(
-                                childCount: 12,
-                                builder: (_, i) => _wheelCell(
-                                  monthNames[i],
-                                  i == _month,
-                                  accent,
-                                  textCol,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: ListWheelScrollView.useDelegate(
-                              controller: _yearCtrl,
-                              itemExtent: _itemH,
-                              physics: const FixedExtentScrollPhysics(),
-                              onSelectedItemChanged: (i) {
-                                setState(() => _year = 1920 + i);
-                                _emit();
-                              },
-                              childDelegate: ListWheelChildBuilderDelegate(
-                                childCount: _adultCutoffDate().year - 1920 + 1,
-                                builder: (_, i) => _wheelCell(
-                                  '${1920 + i}',
-                                  (1920 + i) == _year,
-                                  accent,
-                                  textCol,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: _itemH * 0.85,
-                        child: IgnorePointer(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [cardBg, cardBg.withOpacity(0)],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: _itemH * 0.85,
-                        child: IgnorePointer(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [cardBg, cardBg.withOpacity(0)],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 10.h),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 14.h),
-                  child: TextButton(
-                    onPressed: () {
-                      _emit();
-                      _toggle();
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: accent,
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                    ),
-                    child: Text(
-                      l10n.confirm_date,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _colLabel(String label, Color accent) => Text(
-    label,
-    textAlign: TextAlign.center,
-    style: TextStyle(
-      fontSize: 10.sp,
-      fontWeight: FontWeight.w700,
-      color: accent.withOpacity(0.55),
-      letterSpacing: 1.4,
-    ),
-  );
-
-  Widget _wheelCell(String label, bool selected, Color accent, Color textCol) =>
-      Center(
-        child: AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 140),
-          style: TextStyle(
-            fontSize: selected ? 17.sp : 13.sp,
-            fontWeight: selected ? FontWeight.w800 : FontWeight.w400,
-            color: selected ? accent : textCol.withOpacity(0.35),
-          ),
-          child: Text(label),
-        ),
-      );
 }
 
 class _Divider extends StatelessWidget {

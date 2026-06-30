@@ -42,7 +42,7 @@ final class SignupWizardUiViewModelProvider
 }
 
 String _$signupWizardUiViewModelHash() =>
-    r'9d3423d32cbad60d3b623110982b2d4e99f96cd5';
+    r'b6157cee935b53d8f920aba0d68553accb5e1c60';
 
 abstract class _$SignupWizardUiViewModel
     extends $Notifier<SignupWizardUiState> {
