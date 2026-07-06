@@ -1755,6 +1755,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gender => 'Genre';
 
   @override
+  String get genderOptional => 'Genre (Facultatif)';
+
+  @override
   String get birthday => 'Date de naissance';
 
   @override
@@ -3783,9 +3786,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get driverCityRequired => 'Veuillez entrer votre ville';
-
-  @override
-  String get driverGenderRequired => 'Veuillez sélectionner votre genre.';
 
   @override
   String get expertiseLevel => 'Niveau d\'expertise';

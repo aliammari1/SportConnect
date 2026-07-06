@@ -3218,6 +3218,12 @@ abstract class AppLocalizations {
   /// **'Gender'**
   String get gender;
 
+  /// Label for the optional gender field in the rider/driver onboarding forms
+  ///
+  /// In en, this message translates to:
+  /// **'Gender (Optional)'**
+  String get genderOptional;
+
   /// Text from _buildActionTile.label in edit_profile_screen.dart
   ///
   /// In en, this message translates to:
@@ -6835,12 +6841,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please enter your city'**
   String get driverCityRequired;
-
-  /// No description provided for @driverGenderRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Please select your gender.'**
-  String get driverGenderRequired;
 
   /// No description provided for @expertiseLevel.
   ///

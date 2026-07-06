@@ -139,7 +139,7 @@ class _DriverOnboardingScreenState
           }),
         ],
       ),
-      _PF.gender: FormControl<String>(validators: [Validators.required]),
+      _PF.gender: FormControl<String>(),
       _PF.ageConfirmed: FormControl<bool>(
         value: false,
         validators: [Validators.requiredTrue],
@@ -1127,13 +1127,10 @@ class _DriverOnboardingScreenState
                   children: [
                     GenderSegmentedField(
                       formControlName: _PF.gender,
-                      label: l10n.gender,
+                      label: l10n.genderOptional,
                       maleLabel: l10n.genderMale,
                       femaleLabel: l10n.genderFemale,
-                      validationMessages: {
-                        ValidationMessage.required: (_) =>
-                            l10n.driverGenderRequired,
-                      },
+                      validationMessages: const {},
                     ),
                   ],
                 )

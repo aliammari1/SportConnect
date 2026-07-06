@@ -1808,6 +1808,7 @@
   "@gender": {
     "description": "Text from _buildActionTile.label in edit_profile_screen.dart"
   },
+  "genderOptional": "Genre (Facultatif)",
   "birthday": "Date de naissance",
   "@birthday": {
     "description": "Text from _buildActionTile.label in edit_profile_screen.dart"
@@ -3692,7 +3693,6 @@
   "driverCityLabel": "Ville",
   "driverCityHint": "Où êtes-vous basé ?",
   "driverCityRequired": "Veuillez entrer votre ville",
-  "driverGenderRequired": "Veuillez sélectionner votre genre.",
   "expertiseLevel": "Niveau d'expertise",
   "expertiseLevelRequired": "Veuillez sélectionner votre niveau d'expertise.",
   "driverInterestsRequired": "Veuillez sélectionner au moins un intérêt.",

@@ -1813,6 +1813,10 @@
   "@gender": {
     "description": "Text from _buildActionTile.label in edit_profile_screen.dart"
   },
+  "genderOptional": "Gender (Optional)",
+  "@genderOptional": {
+    "description": "Label for the optional gender field in the rider/driver onboarding forms"
+  },
   "birthday": "Birthday",
   "@birthday": {
     "description": "Text from _buildActionTile.label in edit_profile_screen.dart"
@@ -3697,7 +3701,6 @@
   "driverCityLabel": "City",
   "driverCityHint": "Where are you based?",
   "driverCityRequired": "Please enter your city",
-  "driverGenderRequired": "Please select your gender.",
   "expertiseLevel": "Expertise Level",
   "expertiseLevelRequired": "Please select your expertise level.",
   "driverInterestsRequired": "Please select at least one interest.",

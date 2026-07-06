@@ -81,9 +81,7 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
         }),
       ],
     ),
-    _FormFields.gender: FormControl<String>(
-      validators: [Validators.required],
-    ),
+    _FormFields.gender: FormControl<String>(),
     _FormFields.ageConfirmed: FormControl<bool>(
       value: false,
       validators: [Validators.requiredTrue],
@@ -400,9 +398,6 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
 
       if (needsManualName && _form.control(_FormFields.name).invalid) {
         errors.add(AppLocalizations.of(context).authFullName);
-      }
-      if (_form.control(_FormFields.gender).invalid) {
-        errors.add(AppLocalizations.of(context).gender);
       }
       if (_form.control(_FormFields.ageConfirmed).invalid) {
         errors.add(AppLocalizations.of(context).ageConfirmation);
@@ -810,13 +805,10 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
                                   children: [
                                     GenderSegmentedField(
                                       formControlName: _FormFields.gender,
-                                      label: l10n.gender,
+                                      label: l10n.genderOptional,
                                       maleLabel: l10n.genderMale,
                                       femaleLabel: l10n.genderFemale,
-                                      validationMessages: {
-                                        ValidationMessage.required: (_) =>
-                                            l10n.driverGenderRequired,
-                                      },
+                                      validationMessages: const {},
                                     ),
                                   ],
                                 )
