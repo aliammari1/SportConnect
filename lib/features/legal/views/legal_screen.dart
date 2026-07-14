@@ -360,8 +360,14 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
         public et dans les conversations
       </li>
       <li>
-        <strong>Date de naissance</strong> — pour vérifier que vous avez au
-        moins 18 ans
+        <strong>Confirmation d'âge</strong> — vous déclarez avoir au moins 18
+        ans lors de la création de votre compte ; nous ne vérifions pas cette
+        information de manière indépendante via une pièce d'identité ou une
+        date de naissance lors de l'inscription
+      </li>
+      <li>
+        <strong>Date de naissance</strong> — facultative ; vous pouvez
+        l'ajouter ultérieurement dans votre profil
       </li>
       <li>
         <strong>Genre</strong> — facultatif ; utilisé pour activer la préférence
@@ -372,8 +378,18 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
         vérification d'identité et la coordination de trajets
       </li>
       <li>
+        <strong>Adresse</strong> — facultative ; si renseignée, utilisée pour
+        personnaliser les suggestions de trajets et d'événements à proximité
+        et affichée sur votre profil
+      </li>
+      <li>
         <strong>Photo de profil</strong> — facultative ; visible par les autres
         utilisateurs
+      </li>
+      <li>
+        <strong>Niveau d'expérience (conduite/pratique)</strong> — par défaut
+        « Débutant », modifiable à tout moment ; utilisé uniquement pour la
+        personnalisation de l'inscription, pas pour la mise en relation
       </li>
       <li>
         <strong>Mot de passe</strong> — stocké sous forme hachée par Firebase
@@ -459,6 +475,14 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
       <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank"
         >politique de confidentialité</a
       >.
+    </p>
+
+    <p>
+      Lorsque vous partagez votre position dans une conversation, les
+      coordonnées sont converties en adresse lisible via le service de
+      cartographie intégré à votre appareil (Apple Maps sur iOS, Google Maps
+      sur Android), qui peut faire appel à ses propres serveurs, en complément
+      du service Nominatim utilisé pour la recherche d'adresses.
     </p>
 
     <h3>2.4 Données de trajets et d'événements</h3>
@@ -974,12 +998,23 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
       <li>Tous les trajets créés en qualité de conducteur</li>
       <li>Toutes les réservations effectuées en qualité de passager</li>
       <li>
-        Données financières de conducteur et lien avec le compte Stripe Connect
+        Votre accès de connexion Google et/ou Apple est révoqué, en plus de la
+        suppression de votre compte SportConnect
+      </li>
+      <li>
+        Votre profil client Stripe (moyens de paiement) est supprimé. Votre
+        compte Stripe Connect conducteur est clôturé une fois votre solde
+        entièrement réglé et en l'absence de litige en cours ; si un virement
+        ou un litige est en attente, la clôture intervient une fois celui-ci
+        résolu, conformément aux exigences de notre prestataire de paiement
       </li>
       <li>Tous les avis rédigés sur d'autres utilisateurs</li>
       <li>Tous les messages envoyés</li>
       <li>Informations de véhicule et documents associés</li>
-      <li>Participation à l'ensemble des conversations</li>
+      <li>
+        Participation à l'ensemble des conversations, événements et
+        notifications
+      </li>
     </ul>
     <p><strong>Données conservées après la clôture du compte :</strong></p>
     <ul>
@@ -1006,10 +1041,12 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
     <h2>10. Mineurs</h2>
     <p>
       SportConnect n'est pas destiné aux personnes âgées de moins de 18 ans.
-      Nous vérifions l'âge lors de l'inscription. Si nous constatons qu'un
-      utilisateur de moins de 18 ans a créé un compte, nous le supprimerons dans
-      les meilleurs délais. Si vous pensez qu'un mineur s'est inscrit,
-      contactez-nous à
+      Vous devez confirmer avoir au moins 18 ans lors de la création de votre
+      compte ; il s'agit d'une déclaration sur l'honneur, non vérifiée de
+      manière indépendante via une pièce d'identité ou une date de naissance.
+      Si nous constatons qu'un utilisateur de moins de 18 ans a créé un
+      compte, nous le supprimerons dans les meilleurs délais. Si vous pensez
+      qu'un mineur s'est inscrit, contactez-nous à
       <a href="mailto:support@sportaxitrip.com">support@sportaxitrip.com</a>.
     </p>
 
@@ -1064,7 +1101,7 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
         suppression de compte)
       </li>
       <li>
-        Limitation à 5 Mo des fichiers téléchargés
+        Limitation à 5–10 Mo des fichiers téléchargés selon le type de fichier
       </li>
     </ul>
     <p>
@@ -1210,7 +1247,13 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
         public profile and in conversations
       </li>
       <li>
-        <strong>Date of birth</strong> — to verify you are at least 18 years old
+        <strong>Age confirmation</strong> — you self-declare that you are at
+        least 18 years old when creating an account; we do not independently
+        verify this via an ID document or date of birth at signup
+      </li>
+      <li>
+        <strong>Date of birth</strong> — optional; you may add this later in
+        your profile
       </li>
       <li>
         <strong>Gender</strong> — optional; used to enable the
@@ -1221,7 +1264,16 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
         and ride coordination
       </li>
       <li>
+        <strong>Address</strong> — optional; if provided, used to personalise
+        nearby-ride and nearby-event suggestions and displayed on your profile
+      </li>
+      <li>
         <strong>Profile photo</strong> — optional; visible to other users
+      </li>
+      <li>
+        <strong>Riding/driving experience level</strong> — defaults to
+        "Rookie" and can be changed at any time; used for onboarding
+        personalisation only, not for ride matching
       </li>
       <li>
         <strong>Password</strong> — stored in hashed form by Firebase
@@ -1298,6 +1350,14 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
       address search queries are sent to their servers in accordance with their
       <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank"
         >privacy policy</a>.
+    </p>
+
+    <p>
+      When you share your location in a chat conversation, the coordinates are
+      converted into a readable address using your device's built-in mapping
+      service (Apple Maps on iOS, Google Maps on Android), which may involve
+      their own servers, in addition to the Nominatim service used for address
+      search.
     </p>
 
     <h3>2.4 Ride and Event Data</h3>
@@ -1469,7 +1529,7 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
         retention obligations</td>
       </tr>
       <tr>
-        <td>Background location during active rides</td>
+        <td>Location during active rides</td>
         <td>Necessary to advance ride status in real time</td>
       </tr>
       <tr>
@@ -1696,13 +1756,6 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
         <td>Until the associated message or account is deleted</td>
       </tr>
       <tr>
-        <td>Background location (geofencing events)</td>
-        <td>
-          <strong>Maximum 18 hours</strong> after the event, then automatically
-          deleted
-        </td>
-      </tr>
-      <tr>
         <td>Analytics data</td>
         <td>
           Per Google Analytics retention settings (14 months by default)
@@ -1776,11 +1829,21 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
       <li>Profile, account information, profile photo, and cover image</li>
       <li>All rides created as a driver</li>
       <li>All bookings made as a passenger</li>
-      <li>Driver financial data and Stripe Connect account link</li>
+      <li>
+        Your Google and/or Apple sign-in access is revoked, in addition to
+        your SportConnect account being deleted
+      </li>
+      <li>
+        Your Stripe customer profile (payment methods) is deleted. Your Stripe
+        Connect driver account is closed once your balance is fully settled
+        and no dispute is open; if a payout or dispute is pending, closure is
+        completed once it resolves, consistent with payment-processor
+        requirements
+      </li>
       <li>All reviews written about other users</li>
       <li>All sent messages</li>
       <li>Vehicle information and associated documents</li>
-      <li>Participation in all conversations</li>
+      <li>Participation in all conversations, events, and notifications</li>
     </ul>
     <p><strong>Data retained after account closure:</strong></p>
     <ul>
@@ -1805,8 +1868,10 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
 
     <h2>10. Minors</h2>
     <p>
-      SportConnect is not intended for persons under 18 years of age. We verify
-      age at registration. If we discover that a user under 18 has created an
+      SportConnect is not intended for persons under 18 years of age. You must
+      confirm you are at least 18 when creating an account; this is a
+      self-declaration and is not independently verified via an ID document or
+      date of birth. If we discover that a user under 18 has created an
       account, we will delete it promptly. If you believe a minor has
       registered, contact us at
       <a href="mailto:support@sportaxitrip.com">support@sportaxitrip.com</a>.
@@ -1857,7 +1922,7 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
         Re-authentication required for sensitive operations (payments, account
         deletion)
       </li>
-      <li>Uploaded files limited to 5 MB</li>
+      <li>Uploaded files are limited to 5–10 MB depending on the type of file</li>
     </ul>
     <p>
       No system is 100% secure. If you suspect unauthorised access to your

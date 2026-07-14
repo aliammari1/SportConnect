@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/config/routes/route_params.dart';
 import 'package:sport_connect/features/admin/views/admin_dashboard_screen.dart';
+import 'package:sport_connect/features/notifications/views/notification_preferences_screen.dart';
 import 'package:sport_connect/features/notifications/views/notifications_screen.dart';
 import 'package:sport_connect/features/payments/views/driver_stripe_onboarding_screen.dart';
 import 'package:sport_connect/features/payments/views/manage_payment_methods_screen.dart';
@@ -118,6 +119,21 @@ class ProfileRoutes {
             : MaterialPage(
                 key: state.pageKey,
                 child: const NotificationsScreen(),
+              ),
+      ),
+
+      // Notification Preferences
+      GoRoute(
+        path: AppRoutes.notificationPreferences.path,
+        name: AppRoutes.notificationPreferences.name,
+        pageBuilder: (context, state) => PlatformInfo.isIOS
+            ? CupertinoPage(
+                key: state.pageKey,
+                child: const NotificationPreferencesScreen(),
+              )
+            : MaterialPage(
+                key: state.pageKey,
+                child: const NotificationPreferencesScreen(),
               ),
       ),
 

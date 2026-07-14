@@ -229,11 +229,31 @@ class RideRepository {
 
   Future<void> cancelRide(String rideId, String reason) async {
     try {
-      await _ridesCollection.doc(rideId).update({
+      final batch = _firestore.batch();
+      batch.update(_ridesCollection.doc(rideId), {
         'status': RideStatus.cancelled.name,
         'cancellationReason': reason,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      // Also cancel any still-pending (not yet accepted) booking requests for
+      // this ride so they immediately stop appearing as live requests (e.g.
+      // in the driver's "Pending" tab) rather than relying solely on the
+      // `onRideCancelled` Cloud Function's own cascade to catch up
+      // asynchronously. Accepted/paid bookings are intentionally left to that
+      // Cloud Function, since it also owns the refund flow for them.
+      final pendingBookings = await _rideBookingsCollection
+          .where('rideId', isEqualTo: rideId)
+          .where('status', isEqualTo: BookingStatus.pending.name)
+          .get();
+      for (final doc in pendingBookings.docs) {
+        batch.update(doc.reference, {
+          'status': BookingStatus.cancelled.name,
+          'respondedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      await batch.commit();
     } finally {
       await clearLiveLocation(rideId);
     }
@@ -634,8 +654,7 @@ class RideRepository {
           rideUpdates['capacity.booked'] = FieldValue.increment(-seatsBooked);
           // Freeing an accepted seat reopens a `full` ride. Mirror of the
           // active→full transition in the accept branch above.
-          if (rideData != null &&
-              rideData['status'] == RideStatus.full.name) {
+          if (rideData != null && rideData['status'] == RideStatus.full.name) {
             rideUpdates['status'] = RideStatus.active.name;
           }
         }
@@ -836,8 +855,7 @@ class RideRepository {
       final stillAccepted = bookingSnaps
           .where(
             (s) =>
-                s.exists &&
-                s.data()?['status'] == BookingStatus.accepted.name,
+                s.exists && s.data()?['status'] == BookingStatus.accepted.name,
           )
           .toList();
 
@@ -1091,12 +1109,11 @@ class RideRepository {
       final snap = await txn.get(rideRef);
       if (!snap.exists) return;
       final data = snap.data()!;
-      final existing =
-          List<Map<String, dynamic>>.from(
-            (data['route']?['waypoints'] as List? ?? []).map(
-              (e) => Map<String, dynamic>.from(e as Map),
-            ),
-          );
+      final existing = List<Map<String, dynamic>>.from(
+        (data['route']?['waypoints'] as List? ?? []).map(
+          (e) => Map<String, dynamic>.from(e as Map),
+        ),
+      );
       existing.add(waypoint);
       for (var i = 0; i < existing.length; i++) {
         existing[i]['order'] = i;
@@ -1119,12 +1136,11 @@ class RideRepository {
       final snap = await txn.get(rideRef);
       if (!snap.exists) return;
       final data = snap.data()!;
-      final existing =
-          List<Map<String, dynamic>>.from(
-            (data['route']?['waypoints'] as List? ?? []).map(
-              (e) => Map<String, dynamic>.from(e as Map),
-            ),
-          );
+      final existing = List<Map<String, dynamic>>.from(
+        (data['route']?['waypoints'] as List? ?? []).map(
+          (e) => Map<String, dynamic>.from(e as Map),
+        ),
+      );
       if (waypointIndex < 0 || waypointIndex >= existing.length) return;
       existing.removeAt(waypointIndex);
       for (var i = 0; i < existing.length; i++) {

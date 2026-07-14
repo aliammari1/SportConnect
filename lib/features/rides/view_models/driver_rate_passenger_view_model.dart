@@ -167,7 +167,7 @@ class DriverPassengerRatingViewModel extends _$DriverPassengerRatingViewModel {
         isSubmitted: true,
         clearError: true,
       );
-    } on Exception catch (e) {
+    } catch (e) {
       if (!ref.mounted) return;
       state = state.copyWith(
         isSubmitting: false,

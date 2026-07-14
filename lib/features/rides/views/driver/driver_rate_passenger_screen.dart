@@ -43,6 +43,13 @@ class DriverRatePassengerScreen extends ConsumerStatefulWidget {
 
 class _DriverRatePassengerScreenState
     extends ConsumerState<DriverRatePassengerScreen> {
+  // Tracks passengers already rated during this on-screen session so the
+  // selectable list can exclude them and the screen can decide when every
+  // passenger on the ride has been rated. Session-local only — the view
+  // model (out of scope for this change) does not persist a rated/unrated
+  // flag per booking.
+  final Set<String> _ratedBookingIds = {};
+
   @override
   void dispose() {
     super.dispose();
@@ -63,13 +70,19 @@ class _DriverRatePassengerScreenState
         )
         .toList();
 
-    if (bookings.isNotEmpty) {
+    // Passengers already rated this session are excluded from the
+    // selectable list so the driver is guided toward whoever is left.
+    final unratedBookings = bookings
+        .where((b) => !_ratedBookingIds.contains(b.id))
+        .toList();
+
+    if (unratedBookings.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref
             .read(
               driverPassengerRatingViewModelProvider(widget.rideId).notifier,
             )
-            .syncBookings(bookings);
+            .syncBookings(unratedBookings);
       });
     }
 
@@ -89,12 +102,36 @@ class _DriverRatePassengerScreenState
       if (next.isSubmitted &&
           previous?.isSubmitted != true &&
           context.mounted) {
+        final justRatedBookingId = next.selectedBookingId;
+        if (justRatedBookingId != null) {
+          setState(() => _ratedBookingIds.add(justRatedBookingId));
+        }
+
         AdaptiveSnackBar.show(
           context,
           message: AppLocalizations.of(context).ratingSubmittedThankYou,
           type: AdaptiveSnackBarType.success,
         );
-        context.go(AppRoutes.driverRides.path);
+
+        final remaining = bookings
+            .where((b) => !_ratedBookingIds.contains(b.id))
+            .toList();
+
+        if (remaining.isEmpty) {
+          // Every passenger on this ride has been rated.
+          context.go(AppRoutes.driverRides.path);
+          return;
+        }
+
+        // More passengers still need a rating: reset the form and advance
+        // to the next unrated one instead of leaving the screen.
+        ref
+            .read(
+              driverPassengerRatingViewModelProvider(widget.rideId).notifier,
+            )
+          ..selectBooking(remaining.first)
+          ..setRating(0)
+          ..setComment('');
       }
     });
 
@@ -110,7 +147,7 @@ class _DriverRatePassengerScreenState
             ),
           );
         }
-        return _buildContent(ride, bookings, formState);
+        return _buildContent(ride, unratedBookings, formState);
       },
       loading: () => _buildAdaptiveScaffold(
         body: const SkeletonLoader(

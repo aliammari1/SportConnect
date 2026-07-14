@@ -52,6 +52,13 @@ enum TransactionType {
 
 enum StripeCapabilityStatus { active, inactive, pending }
 
+/// Coarse categorization of what type of information Stripe still needs from
+/// a driver whose connected account has outstanding requirements. Lets the UI
+/// tell a driver specifically whether they're missing an identity document,
+/// banking details, or tax information, instead of only a generic
+/// "additional information needed" message.
+enum StripeRequirementCategory { identity, banking, tax, other }
+
 enum StripeDisabledReason {
   actionRequiredRequestedCapabilities,
   listed,
@@ -294,6 +301,32 @@ abstract class DriverConnectedAccount with _$DriverConnectedAccount {
   bool get hasFutureRequirements =>
       futureRequirements.currentlyDue.isNotEmpty ||
       futureRequirements.pastDue.isNotEmpty;
+
+  /// Best-effort categorization of the most relevant outstanding requirement
+  /// (past-due and currently-due combined) so the UI can surface a specific
+  /// "what's missing" message — identity document, banking (IBAN), or tax
+  /// details — instead of only a generic message. Falls back to [other] when
+  /// nothing recognizable is pending or the requirement codes don't match a
+  /// known category.
+  StripeRequirementCategory get primaryPendingRequirementCategory {
+    final due = [...requirements.pastDue, ...requirements.currentlyDue];
+    bool matchesAny(Iterable<String> needles) =>
+        due.any((code) => needles.any(code.contains));
+
+    if (matchesAny(const [
+      'verification.document',
+      'verification.additional_document',
+    ])) {
+      return StripeRequirementCategory.identity;
+    }
+    if (matchesAny(const ['external_account'])) {
+      return StripeRequirementCategory.banking;
+    }
+    if (matchesAny(const ['id_number', 'tax_id'])) {
+      return StripeRequirementCategory.tax;
+    }
+    return StripeRequirementCategory.other;
+  }
 
   bool get canReceivePayouts => payoutsEnabled && availableBalanceInCents > 0;
 

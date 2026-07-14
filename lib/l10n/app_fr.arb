@@ -17,6 +17,21 @@
   "settingsChatMessagesDesc": "Notifications pour les nouveaux messages",
   "settingsMarketingTips": "Marketing et conseils",
   "settingsMarketingTipsDesc": "Recevoir des conseils et des offres promotionnelles",
+  "settingsNotificationCategories": "Types de notifications",
+  "settingsSocialNotifications": "Notifications sociales",
+  "settingsSocialNotificationsDesc": "Nouveaux abonnés et demandes de connexion",
+  "settingsGamificationNotifications": "Succès et niveaux",
+  "settingsGamificationNotificationsDesc": "Passages de niveau, succès et mises à jour du classement",
+  "settingsQuietHours": "Heures silencieuses",
+  "settingsQuietHoursDesc": "Désactiver les notifications pendant les heures définies",
+  "settingsQuietHoursStart": "Heure de début",
+  "settingsQuietHoursEnd": "Heure de fin",
+  "settingsEmailNotifications": "Notifications par e-mail",
+  "settingsEmailNotificationsDesc": "Recevoir des mises à jour par e-mail",
+  "settingsEmailRideSummary": "Résumés de trajet",
+  "settingsEmailRideSummaryDesc": "Recevoir un résumé par e-mail après chaque trajet",
+  "settingsEmailWeeklyDigest": "Résumé hebdomadaire",
+  "settingsEmailWeeklyDigestDesc": "Un récapitulatif hebdomadaire de votre activité",
   "settingsAppearance": "Apparence",
   "settingsDarkMode": "Mode sombre",
   "settingsDarkModeDesc": "Passer au thème sombre",
@@ -36,6 +51,7 @@
   "settingsAccount": "Compte",
   "settingsEditProfile": "Modifier le profil",
   "settingsEditProfileDesc": "Mettre à jour vos informations de profil",
+  "settingsVehiclesTitle": "Véhicules",
   "settingsPaymentMethods": "Moyens de paiement",
   "settingsPaymentMethodsDesc": "Gérer vos options de paiement",
   "managePaymentMethodsDesc": "Ajoutez, supprimez ou modifiez vos moyens de paiement enregistrés pour un paiement plus rapide.",
@@ -418,6 +434,7 @@
   "@youCanStillOfferRides": {
     "description": "Text from Text in driver_onboarding_screen.dart"
   },
+  "driverStripePayoutRequiredMessage": "Vous devrez terminer cette étape avant de pouvoir publier des trajets ou recevoir des paiements.",
   "sportconnect": "SportConnect",
   "@sportconnect": {
     "description": "Text from Text in login_screen.dart"
@@ -1194,6 +1211,9 @@
   "@stripeAccountConnectedSuccessfully": {
     "description": "Text from Text in driver_stripe_onboarding_screen.dart"
   },
+  "stripeAdditionalInfoIdentity": "Nous avons encore besoin d'une pièce d'identité ou d'un passeport valide pour vérifier votre identité.",
+  "stripeAdditionalInfoBanking": "Nous avons encore besoin des coordonnées de votre compte bancaire (IBAN) pour configurer les paiements.",
+  "stripeAdditionalInfoTax": "Nous avons encore besoin de vos informations fiscales pour finaliser la configuration de votre compte.",
   "errorLoadingPageValue": "Erreur de chargement de la page : {value}",
   "@errorLoadingPageValue": {
     "description": "Text from Text in driver_stripe_onboarding_screen.dart"
@@ -2102,6 +2122,8 @@
   "@paymentInformation": {
     "description": "Text from _buildDeleteWarningItem in settings_screen.dart"
   },
+  "deleteAccountSignInRevoked": "Accès de connexion Google et Apple, révoqué immédiatement",
+  "deleteAccountStripeClosureNotice": "Données de paiement Stripe — votre compte de paiement chauffeur est clôturé une fois le solde en attente et les litiges éventuels résolus",
   "typeDeleteToConfirm": "Tapez \"DELETE\" pour confirmer :",
   "@typeDeleteToConfirm": {
     "description": "Text from Text in settings_screen.dart"
@@ -2862,6 +2884,11 @@
   "@rideCancelledSuccessfully": {
     "description": "Text from Text in active_ride_screen.dart"
   },
+  "cancellationPolicyRealRule": "Remboursement intégral si vous annulez avant le départ. Aucun remboursement une fois le trajet commencé.",
+  "rideCancelledRefundPending": "Trajet annulé — le remboursement sera traité sous 5 à 10 jours ouvrés.",
+  "rideCancelledNoRefund": "Trajet annulé — aucun remboursement ne s'applique car le trajet avait déjà commencé.",
+  "rideCancelledFullRefundPending": "Trajet annulé — les passagers seront intégralement remboursés sous 5 à 10 jours ouvrés.",
+  "rideCancelledPartialRefundPending": "Trajet annulé — les passagers seront partiellement remboursés (frais de plateforme exclus) sous 5 à 10 jours ouvrés.",
   "failedToCancelRideValue": "Échec de l'annulation du trajet : {value}",
   "@failedToCancelRideValue": {
     "description": "Text from Text in active_ride_screen.dart"
@@ -3869,6 +3896,8 @@
       }
     }
   },
+  "eventCancelParticipantsNotice": "Tous les {count} participant(s) seront notifiés.",
+  "eventCancelNoParticipantsNotice": "Personne n'a encore rejoint l'événement, il sera donc supprimé immédiatement.",
   "eventSeatsLeftCount": "{count} restant(s)",
   "@eventSeatsLeftCount": {
     "placeholders": {
@@ -4628,6 +4657,7 @@
   "incidentType": "Type d'incident",
   "describeWhatHappened": "Décrivez ce qui s'est passé...",
   "submitReport": "Soumettre le signalement",
+  "failedToSubmitReportTryAgain": "Échec de l'envoi du signalement. Veuillez réessayer.",
   "amountPaid": "Montant payé : {amount}",
   "@amountPaid": {
     "placeholders": {
@@ -5153,10 +5183,10 @@
   "green": "Vert",
   "beige_brown": "Beige / marron",
   "address": "Adresse",
+  "addressOptional": "Adresse (Facultatif)",
   "save_driver_profile_and_continue": "Enregistrer le profil conducteur et continuer",
   "champagne_pearl_white_bordeaux": "Champagne, blanc perle, bordeaux...",
   "invalid_value": "Valeur invalide",
-  "address_is_required": "L'adresse est requise",
   "personalInfo": "Infos personnelles",
   "contactAndAddress": "Contact et adresse",
   "drivingDetails": "Détails de conduite",
@@ -5651,8 +5681,8 @@
   "unlock_smart_matching_priority_rides_more": "Unlock smart matching, priority rides & more",
   "notification_permission": "Notification Permission",
   "reallow_push_notifications_for_this_device": "Re-allow push notifications for this device",
-  "analytics_crash_reports": "Analytics & Crash Reports",
-  "allow_anonymous_usage_data_and_crash_reports": "Allow anonymous usage data and crash reports",
+  "analytics_crash_reports": "Analyses et rapports de crash",
+  "allow_anonymous_usage_data_and_crash_reports": "Autoriser les données d'utilisation anonymes et les rapports de crash",
   "data_processing_notice": "Data Processing Notice",
   "how_we_collect_use_and_protect_your_data": "How we collect, use, and protect your data",
   "withdraw_consent": "Withdraw Consent",
@@ -6047,6 +6077,8 @@
       }
     }
   },
+  "notificationEventUpdatedTitle": "Événement mis à jour",
+  "notificationEventUpdatedBody": "{organizerName} a mis à jour \"{eventTitle}\" : {changeSummary}",
   "notificationRideReferenceType": "ride",
   "notificationChatReferenceType": "chat",
   "notificationEventReferenceType": "event",

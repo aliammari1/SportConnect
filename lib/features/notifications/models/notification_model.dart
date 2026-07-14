@@ -34,6 +34,7 @@ enum NotificationType {
 
   // Event notifications
   eventCancelled,
+  eventUpdated,
 
   // System
   accountVerified,
@@ -142,6 +143,8 @@ abstract class NotificationModel with _$NotificationModel {
         return 'campaign';
       case NotificationType.eventCancelled:
         return 'event_busy';
+      case NotificationType.eventUpdated:
+        return 'edit_calendar';
     }
   }
 
@@ -214,6 +217,7 @@ abstract class NotificationModel with _$NotificationModel {
       case NotificationType.xpEarned:
         return NotificationCategory.gamification;
       case NotificationType.eventCancelled:
+      case NotificationType.eventUpdated:
         return NotificationCategory.event;
       case NotificationType.accountVerified:
       case NotificationType.profileIncomplete:
@@ -312,6 +316,7 @@ abstract class NotificationPreferences with _$NotificationPreferences {
       case NotificationType.xpEarned:
         return NotificationCategory.gamification;
       case NotificationType.eventCancelled:
+      case NotificationType.eventUpdated:
         return NotificationCategory.event;
       case NotificationType.accountVerified:
       case NotificationType.profileIncomplete:

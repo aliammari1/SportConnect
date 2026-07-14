@@ -114,7 +114,7 @@ final class EditEventFormViewModelProvider
 }
 
 String _$editEventFormViewModelHash() =>
-    r'886ddc5be2653d06f5b172ed9aa5effa2fbbe230';
+    r'b4eaa44681639a66c562c7a9117af4553b644d27';
 
 final class EditEventFormViewModelFamily extends $Family
     with
@@ -266,7 +266,7 @@ final class EventDetailViewModelProvider
 }
 
 String _$eventDetailViewModelHash() =>
-    r'e6571a4290ce5936dd2038b8c29ec0bf780ac13b';
+    r'6c41ad7d7c14f6b0beb17e4f9d4a81b54a231b32';
 
 final class EventDetailViewModelFamily extends $Family
     with

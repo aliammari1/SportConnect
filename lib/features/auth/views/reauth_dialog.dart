@@ -198,24 +198,7 @@ class _ReauthBottomSheetState extends ConsumerState<_ReauthBottomSheet> {
 
                 SizedBox(height: 12.h),
 
-                // Google re-auth option
-                SizedBox(
-                  width: double.infinity,
-                  child: PremiumButton(
-                    text: l10n.reauthWithGoogle,
-                    onPressed: vmState.isLoading
-                        ? null
-                        : () => ref
-                              .read(reauthViewModelProvider.notifier)
-                              .reauthWithGoogle(),
-                    style: PremiumButtonStyle.secondary,
-                    icon: Icons.g_mobiledata_rounded,
-                  ),
-                ),
-
                 if (Platform.isIOS || Platform.isMacOS) ...[
-                  SizedBox(height: 12.h),
-
                   // Apple re-auth option
                   SizedBox(
                     width: double.infinity,
@@ -230,7 +213,23 @@ class _ReauthBottomSheetState extends ConsumerState<_ReauthBottomSheet> {
                       icon: Icons.apple_rounded,
                     ),
                   ),
+                  SizedBox(height: 12.h),
                 ],
+
+                // Google re-auth option
+                SizedBox(
+                  width: double.infinity,
+                  child: PremiumButton(
+                    text: l10n.reauthWithGoogle,
+                    onPressed: vmState.isLoading
+                        ? null
+                        : () => ref
+                              .read(reauthViewModelProvider.notifier)
+                              .reauthWithGoogle(),
+                    style: PremiumButtonStyle.secondary,
+                    icon: Icons.g_mobiledata_rounded,
+                  ),
+                ),
 
                 SizedBox(height: 8.h),
 

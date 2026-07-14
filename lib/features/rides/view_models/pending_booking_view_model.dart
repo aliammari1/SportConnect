@@ -375,7 +375,7 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
         loadingRouteKey: null,
         isLoadingOsrmRoute: false,
       );
-    } on Exception catch (e, st) {
+    } catch (e, st) {
       TalkerService.error(
         'Error loading pending booking OSRM route',
         e,
@@ -518,7 +518,7 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
               paymentIntentId: paymentIntentId,
             );
         reconciled = true;
-      } on Exception catch (e, st) {
+      } catch (e, st) {
         // The Stripe charge has already been captured, but persisting the
         // captured paymentIntentId to the booking failed. Log the orphaned
         // intent for manual reconciliation; never silently swallow it.
@@ -589,7 +589,7 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
       _enqueueEffect(
         PendingBookingEffect.snackbar('Payment failed: ${error.message}'),
       );
-    } on Exception catch (e, st) {
+    } catch (e, st) {
       TalkerService.error('Pending booking payment failed', e, st);
       if (!ref.mounted) {
         return;
@@ -629,7 +629,7 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
         isCancelling: false,
       );
       _enqueueEffect(const PendingBookingEffect.navigateMyRides());
-    } on Exception catch (e, st) {
+    } catch (e, st) {
       if (!ref.mounted) return;
       TalkerService.error(
         'Pending booking cancellation failed',

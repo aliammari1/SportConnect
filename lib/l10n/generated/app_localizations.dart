@@ -188,6 +188,96 @@ abstract class AppLocalizations {
   /// **'Receive tips and promotional offers'**
   String get settingsMarketingTipsDesc;
 
+  /// Section header in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Notification Types'**
+  String get settingsNotificationCategories;
+
+  /// Text from _buildSwitchTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Social Notifications'**
+  String get settingsSocialNotifications;
+
+  /// Text from _buildSwitchTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'New followers and connection requests'**
+  String get settingsSocialNotificationsDesc;
+
+  /// Text from _buildSwitchTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Achievements & Levels'**
+  String get settingsGamificationNotifications;
+
+  /// Text from _buildSwitchTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Level ups, achievements, and leaderboard updates'**
+  String get settingsGamificationNotificationsDesc;
+
+  /// Section header and switch tile title in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet Hours'**
+  String get settingsQuietHours;
+
+  /// Text from _buildSwitchTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Silence notifications during set hours'**
+  String get settingsQuietHoursDesc;
+
+  /// Text from _buildTimeTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Start Time'**
+  String get settingsQuietHoursStart;
+
+  /// Text from _buildTimeTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'End Time'**
+  String get settingsQuietHoursEnd;
+
+  /// Section header and switch tile title in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Email Notifications'**
+  String get settingsEmailNotifications;
+
+  /// Text from _buildSwitchTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Receive updates via email'**
+  String get settingsEmailNotificationsDesc;
+
+  /// Text from _buildSwitchTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Ride Summaries'**
+  String get settingsEmailRideSummary;
+
+  /// Text from _buildSwitchTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Get an email summary after each ride'**
+  String get settingsEmailRideSummaryDesc;
+
+  /// Text from _buildSwitchTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Digest'**
+  String get settingsEmailWeeklyDigest;
+
+  /// Text from _buildSwitchTile in notification_preferences_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'A weekly recap of your activity'**
+  String get settingsEmailWeeklyDigestDesc;
+
   /// No description provided for @settingsAppearance.
   ///
   /// In en, this message translates to:
@@ -301,6 +391,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Update your profile information'**
   String get settingsEditProfileDesc;
+
+  /// Text from _buildNavTile in settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicles'**
+  String get settingsVehiclesTitle;
 
   /// No description provided for @settingsPaymentMethods.
   ///
@@ -1093,6 +1189,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can still offer rides without setting up payouts, but you won\'t be able to receive payments until you complete this step.'**
   String get youCanStillOfferRides;
+
+  /// Text from Text in driver_onboarding_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll need to complete this step before you can post rides or receive payments.'**
+  String get driverStripePayoutRequiredMessage;
 
   /// Text from Text in login_screen.dart
   ///
@@ -2257,6 +2359,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stripe account connected successfully!'**
   String get stripeAccountConnectedSuccessfully;
+
+  /// Text from _additionalInfoMessage in driver_stripe_onboarding_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'We still need a valid ID or passport to verify your identity.'**
+  String get stripeAdditionalInfoIdentity;
+
+  /// Text from _additionalInfoMessage in driver_stripe_onboarding_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'We still need your bank account (IBAN) details to set up payouts.'**
+  String get stripeAdditionalInfoBanking;
+
+  /// Text from _additionalInfoMessage in driver_stripe_onboarding_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'We still need your tax details to finish setting up your account.'**
+  String get stripeAdditionalInfoTax;
 
   /// Text from Text in driver_stripe_onboarding_screen.dart
   ///
@@ -3668,6 +3788,18 @@ abstract class AppLocalizations {
   /// **'Payment information'**
   String get paymentInformation;
 
+  /// Text from _buildDeleteWarningItem in settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in access from Google and Apple, revoked immediately'**
+  String get deleteAccountSignInRevoked;
+
+  /// Text from _buildDeleteWarningItem in settings_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Stripe payment data — your driver payout account closes once any pending balance and disputes are resolved'**
+  String get deleteAccountStripeClosureNotice;
+
   /// Text from Text in settings_screen.dart
   ///
   /// In en, this message translates to:
@@ -4807,6 +4939,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ride cancelled successfully'**
   String get rideCancelledSuccessfully;
+
+  /// Text from Text in ride_booking_review_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Full refund if you cancel before the ride starts. No refund once the ride is in progress.'**
+  String get cancellationPolicyRealRule;
+
+  /// Text from AdaptiveSnackBar.show in rider_view_ride_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Ride cancelled — refund will be processed within 5-10 business days.'**
+  String get rideCancelledRefundPending;
+
+  /// Text from AdaptiveSnackBar.show in rider_view_ride_screen.dart and active_ride_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Ride cancelled — no refund applies as the ride had already started.'**
+  String get rideCancelledNoRefund;
+
+  /// Text from AdaptiveSnackBar.show in cancellation_reason_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Ride cancelled — passengers will be fully refunded within 5-10 business days.'**
+  String get rideCancelledFullRefundPending;
+
+  /// Text from AdaptiveSnackBar.show in cancellation_reason_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Ride cancelled — passengers will be partially refunded (platform fee excluded) within 5-10 business days.'**
+  String get rideCancelledPartialRefundPending;
 
   /// Text from Text in active_ride_screen.dart
   ///
@@ -7561,6 +7723,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Participants ({count})'**
   String eventParticipantsCount(int count);
+
+  /// Text from _showCancelSheet in event_detail_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'All {count} participant(s) will be notified.'**
+  String eventCancelParticipantsNotice(int count);
+
+  /// Text from _showCancelSheet in event_detail_screen.dart
+  ///
+  /// In en, this message translates to:
+  /// **'No one has joined yet, so this event will be removed immediately.'**
+  String get eventCancelNoParticipantsNotice;
 
   /// No description provided for @eventSeatsLeftCount.
   ///
@@ -10610,6 +10784,12 @@ abstract class AppLocalizations {
   /// **'Submit Report'**
   String get submitReport;
 
+  /// Text from IncidentReportSheet._handleSubmit in safety_widgets.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit report. Please try again.'**
+  String get failedToSubmitReportTryAgain;
+
   /// No description provided for @amountPaid.
   ///
   /// In en, this message translates to:
@@ -12992,6 +13172,12 @@ abstract class AppLocalizations {
   /// **'Address'**
   String get address;
 
+  /// Label for the optional address field in the rider/driver onboarding forms
+  ///
+  /// In en, this message translates to:
+  /// **'Address (Optional)'**
+  String get addressOptional;
+
   /// No description provided for @save_driver_profile_and_continue.
   ///
   /// In en, this message translates to:
@@ -13009,12 +13195,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid value'**
   String get invalid_value;
-
-  /// No description provided for @address_is_required.
-  ///
-  /// In en, this message translates to:
-  /// **'Address is required'**
-  String get address_is_required;
 
   /// No description provided for @personalInfo.
   ///
@@ -17171,6 +17351,22 @@ abstract class AppLocalizations {
   String notificationEventCancelledBody(
     String organizerName,
     String eventTitle,
+  );
+
+  /// Text from sendEventUpdated in notification_repository.dart
+  ///
+  /// In en, this message translates to:
+  /// **'Event Updated'**
+  String get notificationEventUpdatedTitle;
+
+  /// Text from sendEventUpdated in notification_repository.dart
+  ///
+  /// In en, this message translates to:
+  /// **'{organizerName} updated \"{eventTitle}\": {changeSummary}'**
+  String notificationEventUpdatedBody(
+    String organizerName,
+    String eventTitle,
+    String changeSummary,
   );
 
   /// No description provided for @notificationRideReferenceType.

@@ -201,9 +201,19 @@ class CancellationReasonScreen extends ConsumerWidget {
 
         if (next.isSubmitted && previous?.isSubmitted != true) {
           unawaited(HapticFeedback.mediumImpact());
+          // Tell the user what actually happens to affected passengers' money
+          // instead of a generic "cancelled successfully" that says nothing
+          // about it. This screen only ever cancels the WHOLE ride
+          // (RideActionsViewModel.cancelRide → onRideCancelled in
+          // functions/src/index.ts), which — unlike the simpler per-booking
+          // onBookingCancelled rule — issues a PARTIAL refund (driver's
+          // share, platform fee retained) rather than none at all when the
+          // ride had already started, so the copy reflects that distinction.
           AdaptiveSnackBar.show(
             context,
-            message: l10n.rideCancelledSuccessfully,
+            message: next.wasInProgress
+                ? l10n.rideCancelledPartialRefundPending
+                : l10n.rideCancelledFullRefundPending,
             type: AdaptiveSnackBarType.success,
           );
           context.pop(true);

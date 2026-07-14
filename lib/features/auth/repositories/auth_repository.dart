@@ -17,6 +17,7 @@ import 'package:sport_connect/core/services/push_notification_service.dart';
 import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/features/auth/models/auth_exception.dart';
 import 'package:sport_connect/features/auth/models/social_sign_in_result.dart';
+import 'package:sport_connect/features/vehicles/repositories/vehicle_repository.dart';
 
 part 'auth_repository.g.dart';
 
@@ -25,6 +26,7 @@ AuthRepository authRepository(Ref ref) {
   return AuthRepository(
     ref.watch(firebaseServiceProvider),
     ref.watch(pushNotificationServiceProvider),
+    ref.watch(vehicleRepositoryProvider),
   );
 }
 
@@ -78,9 +80,14 @@ class AuthRepository {
   ///
   /// Defaults to production Firebase instances when no arguments are provided.
   /// Pass custom instances in tests to enable mocking.
-  AuthRepository(this._firebaseService, this._pushNotificationService);
+  AuthRepository(
+    this._firebaseService,
+    this._pushNotificationService,
+    this._vehicleRepository,
+  );
   final FirebaseService _firebaseService;
   final PushNotificationService _pushNotificationService;
+  final VehicleRepository _vehicleRepository;
 
   CollectionReference<UserModel> get _usersCollection => _firebaseService
       .firestore
@@ -330,6 +337,17 @@ class AuthRepository {
 
       final uid = user.uid;
 
+      // FIX A-9: Capture the driver's vehicle IDs (if any) now, before the
+      // user's own Firestore doc is deleted later in this flow (it is queued
+      // for deletion in `refs` below and only actually removed after the Auth
+      // account is deleted) — so the best-effort vehicle cleanup further down
+      // still has something to iterate over even though it also runs in the
+      // post-Auth-deletion phase.
+      final currentUserModel = await getUserData(uid);
+      final vehicleIdsToDelete = currentUserModel is DriverModel
+          ? currentUserModel.vehicleIds
+          : const <String>[];
+
       // FIX A-1: Block deletion if the user has a ride currently in progress.
       // Orphaning an active ride leaves passengers with no driver and no refund.
       final activeRideQuery = await _firebaseService.firestore
@@ -492,9 +510,13 @@ class AuthRepository {
               message: 'Sign-in was cancelled.',
             );
           }
-          TalkerService.warning('Apple token revocation failed (best-effort): $e');
+          TalkerService.warning(
+            'Apple token revocation failed (best-effort): $e',
+          );
         } on Exception catch (e) {
-          TalkerService.warning('Apple token revocation failed (best-effort): $e');
+          TalkerService.warning(
+            'Apple token revocation failed (best-effort): $e',
+          );
         }
       }
 
@@ -551,6 +573,25 @@ class AuthRepository {
         await batch.commit();
       }
 
+      // FIX A-9: Best-effort delete of the driver's vehicles (Firestore doc +
+      // Storage images), reusing VehicleRepository.deleteVehicle so the image
+      // cleanup logic isn't duplicated here. Runs per-vehicle in its own
+      // try/catch so one vehicle failing (e.g. still linked to an active/full/
+      // draft ride, which the earlier in-progress-only check above does not
+      // cover) doesn't block cleanup of the rest. The onAuthUserDeleted Cloud
+      // Function is the safety net for anything skipped here.
+      for (final vehicleId in vehicleIdsToDelete) {
+        try {
+          await _vehicleRepository.deleteVehicle(vehicleId);
+        } on Exception catch (e, st) {
+          TalkerService.error(
+            'Vehicle cleanup failed for $vehicleId (best-effort)',
+            e,
+            st,
+          );
+        }
+      }
+
       // Clean up storage (profile images)
       try {
         final storagePrefixes = ['users/$uid/profile', 'users/$uid/cover'];
@@ -567,8 +608,22 @@ class AuthRepository {
           'Storage cleanup failed (best-effort): ${e.code}',
         );
       }
-      final googleSignIn = GoogleSignIn.instance;
-      await googleSignIn.signOut();
+      // FIX A-10: Use disconnect() rather than signOut(). signOut() only
+      // clears the local session — it does NOT revoke the Google OAuth grant
+      // server-side, unlike the Apple revocation above. disconnect() revokes
+      // the granted scopes server-side (and signs the local session out as
+      // part of that), which is the Google equivalent of what Apple's
+      // revokeTokenWithAuthorizationCode already does. Unlike Apple, there is
+      // no prior App Store rejection requiring this to be a hard blocker, so a
+      // failure here is logged (not silently swallowed) but does not abort an
+      // otherwise-successful account deletion.
+      try {
+        await GoogleSignIn.instance.disconnect();
+      } on Exception catch (e) {
+        TalkerService.warning(
+          'Google account disconnect failed (best-effort): $e',
+        );
+      }
 
       TalkerService.info('User account and data deleted: $uid');
     } on FirebaseAuthException catch (e) {

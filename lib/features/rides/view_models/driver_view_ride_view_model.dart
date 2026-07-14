@@ -78,7 +78,7 @@ class DriverRideScreenUiViewModel extends _$DriverRideScreenUiViewModel {
         osrmRoutePoints: routeInfo?.coordinates,
         isLoadingOsrmRoute: false,
       );
-    } on Exception {
+    } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(isLoadingOsrmRoute: false);
     }
@@ -110,7 +110,7 @@ class DriverRideScreenUiViewModel extends _$DriverRideScreenUiViewModel {
             seats: ride.remainingSeats,
             departureTime: ride.departureTime,
           );
-    } on Exception {
+    } catch (_) {
       return 'https://${AppConstants.hostingDomain}/ride/${ride.id}';
     }
   }

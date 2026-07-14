@@ -685,26 +685,6 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
               pathParameters: {'id': event.id},
             ),
           ),
-        if (isOwner)
-          IconButton(
-            icon: Icon(
-              Icons.delete_rounded,
-              color: Colors.red.shade300,
-              size: 22.sp,
-            ),
-            tooltip: AppLocalizations.of(context).eventDelete,
-            onPressed: () async {
-              final confirm = await _confirmDelete();
-              if (!confirm || !mounted) return;
-              unawaited(HapticFeedback.mediumImpact());
-              final deleted = await ref
-                  .read(
-                    eventDetailViewModelProvider(widget.eventId).notifier,
-                  )
-                  .deleteEvent();
-              if (deleted && mounted) context.pop();
-            },
-          ),
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: _HeroBanner(event: event),
@@ -758,8 +738,16 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   }
 
   // ------------------------------------------------------------------
-  // Owner action buttons (Edit + Cancel + Delete)
+  // Owner action buttons (Edit + Cancel)
   // ------------------------------------------------------------------
+  //
+  // "Cancel" is the single participant-facing removal action: it always
+  // notifies every joined participant (or, when nobody besides the
+  // organizer has joined, hard-deletes the event internally since there is
+  // no one to notify). A separate hard-"Delete" action used to exist here
+  // but was removed because, from a participant's perspective, it had the
+  // exact same effect as Cancel while skipping the notification entirely —
+  // see [EventDetailViewModel.cancelEvent].
   Widget _buildOwnerActions(EventModel event, EventDetailState detailState) {
     return Column(
       children: [
@@ -777,27 +765,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
         PremiumButton(
           text: AppLocalizations.of(context).actionCancel,
           icon: Icons.event_busy_rounded,
-          style: PremiumButtonStyle.ghost,
-          fullWidth: true,
-          isLoading: detailState.isDeleting,
-          onPressed: () => _showCancelSheet(event),
-        ),
-        SizedBox(height: 12.h),
-        PremiumButton(
-          text: AppLocalizations.of(context).eventDelete,
-          icon: Icons.delete_outline_rounded,
           style: PremiumButtonStyle.danger,
           fullWidth: true,
           isLoading: detailState.isDeleting,
-          onPressed: () async {
-            final confirm = await _confirmDelete();
-            if (!confirm || !mounted) return;
-            unawaited(HapticFeedback.mediumImpact());
-            final deleted = await ref
-                .read(eventDetailViewModelProvider(widget.eventId).notifier)
-                .deleteEvent();
-            if (deleted && mounted) context.pop();
-          },
+          onPressed: () => _showCancelSheet(event),
         ),
       ],
     );
@@ -805,6 +776,9 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   Future<void> _showCancelSheet(EventModel event) async {
     final reasonController = TextEditingController();
+    final otherParticipantCount = event.participantIds
+        .where((id) => id != event.creatorId)
+        .length;
     try {
       final confirmed = await AppModalSheet.show<bool>(
       context: context,
@@ -842,7 +816,13 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
             ),
             SizedBox(height: 8.h),
             Text(
-              'All ${event.participantIds.length} participant(s) will be notified.',
+              otherParticipantCount > 0
+                  ? AppLocalizations.of(
+                      context,
+                    ).eventCancelParticipantsNotice(otherParticipantCount)
+                  : AppLocalizations.of(
+                      context,
+                    ).eventCancelNoParticipantsNotice,
               style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
             ),
             SizedBox(height: 16.h),
@@ -896,30 +876,6 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     } finally {
       reasonController.dispose();
     }
-  }
-
-  Future<bool> _confirmDelete() async {
-    final l10n = AppLocalizations.of(context);
-    return await showDialog<bool>(
-          context: context,
-          barrierLabel: l10n.eventDeleteConfirmTitle,
-          builder: (ctx) => AlertDialog.adaptive(
-            title: Text(l10n.eventDeleteConfirmTitle),
-            content: Text(l10n.eventDeleteWarning),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: Text(l10n.actionCancel),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                style: TextButton.styleFrom(foregroundColor: AppColors.error),
-                child: Text(l10n.actionDelete),
-              ),
-            ],
-          ),
-        ) ??
-        false;
   }
 
   /// Opens map to set post-event meetup pin (#30).

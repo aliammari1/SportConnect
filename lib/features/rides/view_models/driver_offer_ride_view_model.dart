@@ -458,7 +458,7 @@ class DriverOfferRideViewModel extends _$DriverOfferRideViewModel {
         eventName: event?.title ?? state.eventName,
         isLoadingSelectedEvent: false,
       );
-    } on Exception {
+    } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(isLoadingSelectedEvent: false);
     }
@@ -507,7 +507,7 @@ class DriverOfferRideViewModel extends _$DriverOfferRideViewModel {
         routeDistanceKm: routeInfo?.distanceKm,
         routeDurationMinutes: routeInfo?.durationMinutes.round(),
       );
-    } on Exception {
+    } catch (_) {
       // Fallback: no route preview, just reset loading state
       if (!ref.mounted) return;
       state = state.copyWith(isLoadingRoute: false);
@@ -716,7 +716,7 @@ class DriverOfferRideViewModel extends _$DriverOfferRideViewModel {
 
       state = state.copyWith(isSubmitting: false);
       return rideId;
-    } on Exception catch (e) {
+    } catch (e) {
       if (!ref.mounted) return null;
       state = state.copyWith(
         isSubmitting: false,

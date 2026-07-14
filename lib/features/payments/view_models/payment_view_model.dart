@@ -27,6 +27,7 @@ class DriverStripeOnboardingFlowState {
     this.onboardingUrl,
     this.errorMessage,
     this.successMessage,
+    this.pendingRequirementCategory,
   });
   final bool isLoading;
   final bool showWebView;
@@ -37,6 +38,10 @@ class DriverStripeOnboardingFlowState {
   final String? onboardingUrl;
   final String? errorMessage;
   final String? successMessage;
+  // Set only when a completed onboarding attempt is still missing
+  // requirements; lets the UI say specifically what's missing (identity doc /
+  // banking / tax info) instead of only a generic "additional info" message.
+  final StripeRequirementCategory? pendingRequirementCategory;
 
   DriverStripeOnboardingFlowState copyWith({
     bool? isLoading,
@@ -48,9 +53,11 @@ class DriverStripeOnboardingFlowState {
     String? onboardingUrl,
     String? errorMessage,
     String? successMessage,
+    StripeRequirementCategory? pendingRequirementCategory,
     bool clearOnboardingUrl = false,
     bool clearError = false,
     bool clearSuccess = false,
+    bool clearPendingRequirementCategory = false,
   }) {
     return DriverStripeOnboardingFlowState(
       isLoading: isLoading ?? this.isLoading,
@@ -66,6 +73,9 @@ class DriverStripeOnboardingFlowState {
       successMessage: clearSuccess
           ? null
           : (successMessage ?? this.successMessage),
+      pendingRequirementCategory: clearPendingRequirementCategory
+          ? null
+          : (pendingRequirementCategory ?? this.pendingRequirementCategory),
     );
   }
 }
@@ -520,6 +530,7 @@ class DriverStripeOnboardingFlowViewModel
       isLoading: true,
       clearError: true,
       clearSuccess: true,
+      clearPendingRequirementCategory: true,
     );
 
     try {
@@ -668,10 +679,16 @@ class DriverStripeOnboardingFlowViewModel
           result.detailsSubmitted &&
           result.capabilities.transfers.name == 'active';
 
+      final pendingCategory = isReady
+          ? null
+          : result?.primaryPendingRequirementCategory;
+
       state = state.copyWith(
         isVerifying: false,
         isConnected: isReady,
         successMessage: isReady ? successMessage : additionalInfoMessage,
+        pendingRequirementCategory: pendingCategory,
+        clearPendingRequirementCategory: pendingCategory == null,
         showWebView: false,
         webViewProgress: 0,
         clearOnboardingUrl: true,
@@ -692,6 +709,7 @@ class DriverStripeOnboardingFlowViewModel
         showWebView: false,
         webViewProgress: 0,
         clearOnboardingUrl: true,
+        clearPendingRequirementCategory: true,
       );
     }
   }

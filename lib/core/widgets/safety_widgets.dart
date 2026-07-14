@@ -15,12 +15,16 @@ class IncidentReportSheet extends StatefulWidget {
     super.key,
   });
   final String rideId;
-  final ValueChanged<IncidentReport> onSubmit;
+
+  /// Persists the report. Must complete (or throw) before the sheet closes —
+  /// the sheet only shows success and dismisses once this resolves, and
+  /// surfaces an inline error (without dismissing) if it throws.
+  final Future<void> Function(IncidentReport report) onSubmit;
 
   static Future<void> show(
     BuildContext context, {
     required String rideId,
-    required ValueChanged<IncidentReport> onSubmit,
+    required Future<void> Function(IncidentReport report) onSubmit,
   }) {
     return AppModalSheet.show<void>(
       context: context,
@@ -43,11 +47,41 @@ class _IncidentReportSheetState extends State<IncidentReportSheet> {
   IncidentType? _selectedType;
   final _descriptionController = TextEditingController();
   IncidentSeverity _severity = IncidentSeverity.low;
+  bool _isSubmitting = false;
+  String? _submitError;
 
   @override
   void dispose() {
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleSubmit() async {
+    if (_selectedType == null || _isSubmitting) return;
+    unawaited(HapticFeedback.mediumImpact());
+    setState(() {
+      _isSubmitting = true;
+      _submitError = null;
+    });
+
+    final report = IncidentReport(
+      rideId: widget.rideId,
+      type: _selectedType!,
+      severity: _severity,
+      description: _descriptionController.text.trim(),
+    );
+
+    try {
+      await widget.onSubmit(report);
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _submitError = AppLocalizations.of(context).failedToSubmitReportTryAgain;
+      });
+    }
   }
 
   @override
@@ -118,26 +152,30 @@ class _IncidentReportSheetState extends State<IncidentReportSheet> {
               alignLabelWithHint: true,
             ),
           ),
+          if (_submitError != null) ...[
+            SizedBox(height: 12.h),
+            Text(
+              _submitError!,
+              style: TextStyle(color: AppColors.error, fontSize: 12.sp),
+            ),
+          ],
           SizedBox(height: 20.h),
           // Submit
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _selectedType == null
+              onPressed: _selectedType == null || _isSubmitting
                   ? null
-                  : () {
-                      unawaited(HapticFeedback.mediumImpact());
-                      widget.onSubmit(
-                        IncidentReport(
-                          rideId: widget.rideId,
-                          type: _selectedType!,
-                          severity: _severity,
-                          description: _descriptionController.text.trim(),
-                        ),
-                      );
-                      Navigator.pop(context);
-                    },
-              child: Text(AppLocalizations.of(context).submitReport),
+                  : _handleSubmit,
+              child: _isSubmitting
+                  ? SizedBox(
+                      width: 20.w,
+                      height: 20.w,
+                      child: const CircularProgressIndicator.adaptive(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(AppLocalizations.of(context).submitReport),
             ),
           ),
         ],
@@ -152,7 +190,8 @@ enum IncidentType {
   routeDeviation,
   vehicleIssue,
   noShow,
-  other;
+  other
+  ;
 
   IconData get icon {
     switch (this) {
@@ -175,7 +214,8 @@ enum IncidentType {
 enum IncidentSeverity {
   low,
   medium,
-  high;
+  high
+  ;
 
   String localizedLabel(BuildContext context) {
     final l10n = AppLocalizations.of(context);

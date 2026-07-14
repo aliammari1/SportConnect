@@ -11,6 +11,8 @@ import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/payment_error_handler.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/features/auth/view_models/auth_view_model.dart';
+import 'package:sport_connect/features/payments/models/payment_model.dart';
 import 'package:sport_connect/features/payments/view_models/payment_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
@@ -93,6 +95,81 @@ class _DriverStripeOnboardingScreenState
     _safeGoNamed(returnTo ?? AppRoutes.driverHome.name);
   }
 
+  /// A driver who can't (or won't) finish Stripe onboarding — unsupported
+  /// country, missing documents, a stuck "additional information needed"
+  /// account — must still be able to get help or leave the app. The route
+  /// guard now carves out an exception for settings/support routes, but this
+  /// button is the discoverable, on-screen way out: it's shown on both the
+  /// intro and prep pages, before the driver ever reaches Stripe.
+  Widget _buildHelpMenuButton() {
+    final l10n = AppLocalizations.of(context);
+    return AdaptivePopupMenuButton.widget<String>(
+      items: [
+        AdaptivePopupMenuItem<String>(
+          label: l10n.contactSupport,
+          icon: Icons.support_agent_outlined,
+          value: 'support',
+        ),
+        AdaptivePopupMenuItem<String>(
+          label: l10n.signOut,
+          icon: Icons.logout_rounded,
+          value: 'signOut',
+        ),
+      ],
+      onSelected: (_, entry) {
+        switch (entry.value) {
+          case 'support':
+            context.push(AppRoutes.contactSupport.path);
+          case 'signOut':
+            _confirmSignOut();
+        }
+      },
+      child: const _RoundIconButton(icon: Icons.help_outline_rounded),
+    );
+  }
+
+  void _confirmSignOut() {
+    final l10n = AppLocalizations.of(context);
+    showDialog<void>(
+      context: context,
+      barrierLabel: l10n.settingsLogout,
+      builder: (dialogContext) => AlertDialog.adaptive(
+        title: Text(l10n.settingsLogout),
+        content: Text(l10n.areYouSureYouWant5),
+        actions: [
+          TextButton(
+            onPressed: () => dialogContext.pop(),
+            child: Text(l10n.actionCancel),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              dialogContext.pop();
+              await ref.read(authActionsViewModelProvider.notifier).signOut();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: Text(l10n.settingsLogout),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Maps the server-reported pending-requirement category to a specific
+  /// message so drivers know exactly what's missing, falling back to the
+  /// generic message when the category isn't recognized.
+  String _additionalInfoMessage(
+    StripeRequirementCategory? category,
+    String fallback,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    return switch (category) {
+      StripeRequirementCategory.identity => l10n.stripeAdditionalInfoIdentity,
+      StripeRequirementCategory.banking => l10n.stripeAdditionalInfoBanking,
+      StripeRequirementCategory.tax => l10n.stripeAdditionalInfoTax,
+      _ => fallback,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final onboardingState = ref.watch(
@@ -113,10 +190,23 @@ class _DriverStripeOnboardingScreenState
         if (next.successMessage != null &&
             next.successMessage != previous?.successMessage &&
             context.mounted) {
+          // Onboarding "complete" doesn't always mean the account is ready:
+          // Stripe can come back still missing requirements (e.g. an
+          // unsupported document, missing IBAN). That case reuses
+          // successMessage for the toast text but must never render as a
+          // success-styled snackbar, and should say what's actually missing
+          // when we can tell.
           AdaptiveSnackBar.show(
             context,
-            message: next.successMessage!,
-            type: AdaptiveSnackBarType.success,
+            message: next.isConnected
+                ? next.successMessage!
+                : _additionalInfoMessage(
+                    next.pendingRequirementCategory,
+                    next.successMessage!,
+                  ),
+            type: next.isConnected
+                ? AdaptiveSnackBarType.success
+                : AdaptiveSnackBarType.warning,
           );
         }
 
@@ -174,6 +264,10 @@ class _DriverStripeOnboardingScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [const Spacer(), _buildHelpMenuButton()],
+                  ),
+                  SizedBox(height: 8.h),
                   _buildIntroHero(l10n),
                   SizedBox(height: 28.h),
                   _buildDriverBenefits(),
@@ -562,7 +656,7 @@ class _DriverStripeOnboardingScreenState
           onPressed: () => setState(() => _page = _PayoutSetupPage.intro),
         ),
         const Spacer(),
-        const _RoundIconButton(icon: Icons.shield_outlined),
+        _buildHelpMenuButton(),
       ],
     );
   }

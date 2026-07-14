@@ -3,6 +3,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:printing/printing.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:sport_connect/core/config/stripe_config.dart';
 import 'package:sport_connect/core/models/user/user_model.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/services/pdf_receipt_service.dart';
@@ -97,7 +98,7 @@ class RideCompletionUiViewModel extends _$RideCompletionUiViewModel {
         osrmRoutePoints: routeInfo?.coordinates,
         isLoadingOsrmRoute: false,
       );
-    } on Exception {
+    } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(isLoadingOsrmRoute: false);
     }
@@ -135,7 +136,9 @@ class RideCompletionUiViewModel extends _$RideCompletionUiViewModel {
               .firstOrNull
               ?.seatsBooked ??
           1;
-      final serviceFee = (baseFare * seatsBooked * 0.10).round();
+      final serviceFee =
+          (baseFare * seatsBooked * (StripeConfig.platformFeePercent / 100))
+              .round();
 
       final pdfBytes = await PdfReceiptService.instance.generateRideReceipt(
         rideId: ride.id,
@@ -158,7 +161,7 @@ class RideCompletionUiViewModel extends _$RideCompletionUiViewModel {
       );
       if (!ref.mounted) return;
       state = state.copyWith(isGeneratingPdf: false);
-    } on Exception {
+    } catch (_) {
       try {
         final driverProfile = await ref.read(
           userProfileProvider(ride.driverId).future,
@@ -166,7 +169,8 @@ class RideCompletionUiViewModel extends _$RideCompletionUiViewModel {
         if (!ref.mounted) return;
         final driverName = driverProfile?.username ?? 'Driver';
         final baseFare = ride.pricePerSeatInCents;
-        final serviceFee = (baseFare * 0.10).round();
+        final serviceFee = (baseFare * (StripeConfig.platformFeePercent / 100))
+            .round();
         final total = baseFare + serviceFee;
 
         final receipt =
@@ -193,7 +197,7 @@ $rideIdLabel: ${ride.id}'''
         );
         if (!ref.mounted) return;
         state = state.copyWith(isGeneratingPdf: false);
-      } on Exception catch (e) {
+      } catch (e) {
         if (!ref.mounted) return;
         state = state.copyWith(
           isGeneratingPdf: false,

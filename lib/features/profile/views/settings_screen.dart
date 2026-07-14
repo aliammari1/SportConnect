@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sport_connect/core/config/app_config.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/admin_access_provider.dart';
@@ -115,11 +116,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             SizedBox(height: 32.h),
             _buildSectionHeader(
+              l10n.settingsNotifications,
+              Icons.notifications_outlined,
+            ),
+            SizedBox(height: 12.h),
+            _buildCard([
+              _buildNavTile(
+                title: l10n.notificationPreferences,
+                subtitle: l10n.customizeWhatNotificationsYouReceive,
+                icon: Icons.tune_rounded,
+                onTap: () =>
+                    context.push(AppRoutes.notificationPreferences.path),
+              ),
+            ]),
+
+            SizedBox(height: 32.h),
+            _buildSectionHeader(
               l10n.settingsPrivacySafety,
               Icons.shield_outlined,
             ),
             SizedBox(height: 12.h),
             _buildCard([
+              _buildSwitchTile(
+                title: l10n.analytics_crash_reports,
+                subtitle: l10n.allow_anonymous_usage_data_and_crash_reports,
+                icon: Icons.analytics_outlined,
+                value: settings.analyticsCollectionEnabled,
+                onChanged: (value) async {
+                  await settingsViewModel.setAnalyticsCollectionEnabled(
+                    value: value,
+                  );
+                },
+              ),
+              _buildDivider(),
               _buildNavTile(
                 title: l10n.settingsBlockedUsers,
                 subtitle: l10n.settingsBlockedUsersDesc,
@@ -158,7 +187,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               if (isDriver) ...[
                 _buildDivider(),
                 _buildNavTile(
-                  title: l10n.vehicles,
+                  // (l10n.vehicles is lowercase and used elsewhere as a
+                  // count-based plural noun, e.g. vehicle_management_screen.dart)
+                  title: l10n.settingsVehiclesTitle,
                   subtitle: l10n.manage_your_vehicles,
                   icon: Icons.directions_car_outlined,
                   onTap: () => context.push(AppRoutes.driverVehicles.path),
@@ -271,7 +302,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   child: _buildNavTile(
                     title: l10n.settingsDeleteAccount,
-                    subtitle: l10n.permanentlyRemoveYourDriverProfile,
+                    subtitle: l10n.settingsDeleteAccountDesc,
                     icon: Icons.delete_forever_rounded,
                     onTap: _showDeleteAccountDialog,
                     color: AppColors.error,
@@ -406,6 +437,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Widget _buildSwitchTile({
+    required String title,
+    required IconData icon,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    String? subtitle,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      child: Row(
+        children: [
+          Icon(icon, size: 20.sp, color: AppColors.textSecondary),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                if (subtitle != null && subtitle.isNotEmpty) ...[
+                  SizedBox(height: 2.h),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          AdaptiveSwitch(
+            value: value,
+            activeColor: AppColors.primary,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLanguageTile({
     required AppLocalizations l10n,
     required Locale currentLocale,
@@ -509,7 +588,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         SizedBox(height: 4.h),
         Text(
-          l10n.sportconnectV100,
+          l10n.appVersion(AppConfig.appVersion),
           style: TextStyle(fontSize: 12.sp, color: AppColors.textTertiary),
         ),
       ],
@@ -671,6 +750,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             SizedBox(height: 16.h),
             _buildConsentInfoItem(
+              l10n.analytics_crash_reports,
+              l10n.allow_anonymous_usage_data_and_crash_reports,
+              Icons.analytics_outlined,
+            ),
+            _buildConsentInfoItem(
               l10n.settingsShowLocation,
               l10n.settingsShowLocationDesc,
               Icons.location_off_outlined,
@@ -793,6 +877,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   AppLocalizations.of(
                     dialogContentContext,
                   ).paymentInformation,
+                ),
+                _buildDeleteWarningItem(
+                  AppLocalizations.of(
+                    dialogContentContext,
+                  ).deleteAccountSignInRevoked,
+                ),
+                _buildDeleteWarningItem(
+                  AppLocalizations.of(
+                    dialogContentContext,
+                  ).deleteAccountStripeClosureNotice,
                 ),
                 SizedBox(height: 16.h),
                 Text(

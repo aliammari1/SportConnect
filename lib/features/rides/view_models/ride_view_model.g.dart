@@ -59,7 +59,7 @@ final class RideDetailUiViewModelProvider
 }
 
 String _$rideDetailUiViewModelHash() =>
-    r'fd8b05d6e4374e6da661a6f298cc918efa9e87cc';
+    r'ca6b53b3943a803cc6b5b0d845f1552a8524e892';
 
 final class RideDetailUiViewModelFamily extends $Family
     with
@@ -234,7 +234,7 @@ final class CancellationReasonViewModelProvider
 }
 
 String _$cancellationReasonViewModelHash() =>
-    r'815e2bd25d5171c8bccfd3d174559f070a12a728';
+    r'dd435b2258ce45c75391ebdb3a5205d91b8a79cf';
 
 final class CancellationReasonViewModelFamily extends $Family
     with
@@ -334,7 +334,7 @@ final class DisputeFormViewModelProvider
 }
 
 String _$disputeFormViewModelHash() =>
-    r'f06887c5fce38b2b0f66d6556fc3745ffdffde36';
+    r'8fdf7a9f414be93080f45c004bc5650dc28a5629';
 
 final class DisputeFormViewModelFamily extends $Family
     with
@@ -578,7 +578,7 @@ final class RideFormViewModelProvider
   }
 }
 
-String _$rideFormViewModelHash() => r'6564df2a5d87498d8a585c3e43d874a54078689a';
+String _$rideFormViewModelHash() => r'cba749db2931dc1f761910c12587e7fb51eab731';
 
 /// Ride Form View Model
 
@@ -699,7 +699,7 @@ final class RideSearchViewModelProvider
 }
 
 String _$rideSearchViewModelHash() =>
-    r'7aaf3af54c671506e23cb4a9efcf527677847f7d';
+    r'8155e69a06aea98ad386cbefad9c59dc7b862e7e';
 
 /// Ride Search View Model
 ///
@@ -783,7 +783,7 @@ final class RideDetailViewModelProvider
 }
 
 String _$rideDetailViewModelHash() =>
-    r'a0c18e25419b4f4d9477e9eae6a934cdab42901c';
+    r'cf948c23599ca1f3cba85f5881ab74cd8f3316e7';
 
 /// Single Ride Detail View Model — views watch only this, never separate
 /// stream/booking providers directly.
@@ -894,7 +894,7 @@ final class ActiveRideViewModelProvider
 }
 
 String _$activeRideViewModelHash() =>
-    r'8c6130967b12e8df4b418faa3268744a4fa1a866';
+    r'83514944963a34d79e018f9f7d6c0d4be8a2086e';
 
 /// ViewModel for active-ride screens — views watch only this provider.
 

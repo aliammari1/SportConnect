@@ -34,6 +34,68 @@ class NotificationRepository {
             toFirestore: (notification, _) => notification.toJson(),
           );
 
+  /// Plain (untyped) reference to the users collection, used only for reading
+  /// and writing the [_preferencesField] on the user document. This
+  /// deliberately bypasses the typed `UserModel` converter — `UserModel` is a
+  /// sealed rider/driver/pending union that doesn't declare this field, and
+  /// Firestore documents are schemaless, so a raw map read/write coexists
+  /// safely with it.
+  CollectionReference<Map<String, dynamic>> get _usersCollection =>
+      _firestore.collection(AppConstants.usersCollection);
+
+  /// Field on the user document that stores the serialized
+  /// [NotificationPreferences]. Stored directly on the user doc (rather than a
+  /// subcollection) so it lives alongside `fcmToken` — both are read by
+  /// server-side Cloud Functions when deciding whether/how to send a push.
+  static const String _preferencesField = 'notificationPreferences';
+
+  // ==================== NOTIFICATION PREFERENCES ====================
+
+  NotificationPreferences _preferencesFromUserData(
+    Map<String, dynamic>? data,
+  ) {
+    final raw = data?[_preferencesField];
+    if (raw is! Map<String, dynamic>) return const NotificationPreferences();
+
+    try {
+      return NotificationPreferences.fromJson(raw);
+    } on Exception {
+      // Malformed/legacy data shouldn't crash the preferences screen; fall
+      // back to defaults instead.
+      return const NotificationPreferences();
+    }
+  }
+
+  /// Fetch the current notification preferences for [userId], defaulting to
+  /// [NotificationPreferences]'s defaults if the user has never saved any.
+
+  Future<NotificationPreferences> getPreferences(String userId) async {
+    final doc = await _usersCollection.doc(userId).get();
+    return _preferencesFromUserData(doc.data());
+  }
+
+  /// Stream the user's notification preferences in real time, so edits made
+  /// on another device (or a fresh default on first read) stay in sync.
+
+  Stream<NotificationPreferences> streamPreferences(String userId) {
+    return _usersCollection
+        .doc(userId)
+        .snapshots()
+        .map((doc) => _preferencesFromUserData(doc.data()));
+  }
+
+  /// Persist updated notification preferences for [userId].
+
+  Future<void> updatePreferences(
+    String userId,
+    NotificationPreferences preferences,
+  ) async {
+    await _usersCollection.doc(userId).set(
+      {_preferencesField: preferences.toJson()},
+      SetOptions(merge: true),
+    );
+  }
+
   // ==================== NOTIFICATION OPERATIONS ====================
 
   /// Create a notification
@@ -468,6 +530,38 @@ class NotificationRepository {
         referenceId: eventId,
         referenceType: 'event',
         priority: NotificationPriority.high,
+      ),
+    );
+  }
+
+  /// Send event updated notification to a participant. Mirrors
+  /// [sendEventCancelled]'s shape; used when the organizer edits a
+  /// participant-relevant field (date, time, or location) on an event the
+  /// recipient has joined.
+  Future<void> sendEventUpdated({
+    required String toUserId,
+    required String organizerName,
+    required String eventId,
+    required String eventTitle,
+    required String changeSummary,
+    String? organizerPhoto,
+  }) async {
+    await createNotification(
+      NotificationModel(
+        id: '',
+        userId: toUserId,
+        type: NotificationType.eventUpdated,
+        title: _l10n.notificationEventUpdatedTitle,
+        body: _l10n.notificationEventUpdatedBody(
+          organizerName,
+          eventTitle,
+          changeSummary,
+        ),
+        senderId: organizerName,
+        senderName: organizerName,
+        senderPhotoUrl: organizerPhoto,
+        referenceId: eventId,
+        referenceType: 'event',
       ),
     );
   }

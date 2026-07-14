@@ -67,7 +67,7 @@ class RiderViewRideUiViewModel extends _$RiderViewRideUiViewModel {
           );
       if (!ref.mounted) return;
       state = state.copyWith(routeInfo: info, isLoadingRoute: false);
-    } on Exception {
+    } catch (_) {
       if (!ref.mounted) return;
       state = state.copyWith(isLoadingRoute: false);
     }
@@ -94,7 +94,7 @@ class RiderViewRideUiViewModel extends _$RiderViewRideUiViewModel {
             seats: ride.remainingSeats,
             departureTime: ride.departureTime,
           );
-    } on Exception {
+    } catch (_) {
       return 'https://${AppConstants.hostingDomain}/ride/${ride.id}';
     }
   }

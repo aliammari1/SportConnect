@@ -30,6 +30,7 @@ import 'package:sport_connect/core/widgets/ride_feature_widgets.dart';
 import 'package:sport_connect/core/widgets/safety_widgets.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_view_model.dart';
+import 'package:sport_connect/features/profile/repositories/support_repository.dart';
 import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
 import 'package:sport_connect/features/rides/models/booking/ride_booking.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
@@ -227,7 +228,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomActions(ride),
+      bottomNavigationBar: _buildBottomActions(ride, vmState.isActing),
     );
   }
 
@@ -1364,12 +1365,8 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                       context,
                       passengerName: 'Passenger',
                     );
-                    if (confirmed == true && mounted) {
-                      AdaptiveSnackBar.show(
-                        context,
-                        message: AppLocalizations.of(context).noShowReported,
-                        type: AdaptiveSnackBarType.success,
-                      );
+                    if (confirmed == true) {
+                      await _markPassengerNoShow(ride, booking);
                     }
                   },
                   style: IconButton.styleFrom(
@@ -1388,7 +1385,21 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
     );
   }
 
-  AdaptiveBottomNavigationBar _buildBottomActions(RideModel ride) {
+  AdaptiveBottomNavigationBar _buildBottomActions(
+    RideModel ride,
+    bool isActing,
+  ) {
+    // Mirrors the ride-options overflow sheet's cancel-availability: cancel
+    // is reachable for any non-terminal ride, including inProgress, so a
+    // genuine mid-ride emergency cancellation is reachable without digging
+    // into the "•••" menu (cancellation_reason_screen.dart already supports
+    // driver reasons — driverSafetyConcern/driverEmergency — that only make
+    // sense mid-ride).
+    final canCancel =
+        ride.status == RideStatus.active ||
+        ride.status == RideStatus.full ||
+        ride.status == RideStatus.inProgress;
+
     return AdaptiveBottomNavigationBar(
       bottomNavigationBar: Container(
         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
@@ -1406,30 +1417,48 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
           top: false,
           child: Row(
             children: [
+              if (canCancel) ...[
+                IconButton(
+                  tooltip: AppLocalizations.of(context).cancelRide2,
+                  onPressed: isActing ? null : () => _cancelRide(ride),
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.error.withValues(alpha: 0.1),
+                    foregroundColor: AppColors.error,
+                    padding: EdgeInsets.all(14.w),
+                  ),
+                  icon: const Icon(Icons.cancel_outlined),
+                ),
+                SizedBox(width: 12.w),
+              ],
               Expanded(
                 child: ride.status == RideStatus.inProgress
                     ? PremiumButton(
                         text: AppLocalizations.of(context).activeRide,
-                        onPressed: () => context.push(
-                          '${AppRoutes.driverActiveRide.path}?rideId=${ride.id}',
-                        ),
+                        onPressed: isActing
+                            ? null
+                            : () => context.push(
+                                '${AppRoutes.driverActiveRide.path}?rideId=${ride.id}',
+                              ),
                         style: PremiumButtonStyle.success,
                         icon: Icons.navigation_rounded,
                       )
                     : PremiumButton(
                         text: AppLocalizations.of(context).editRide,
-                        onPressed: () => _editRide(ride),
+                        onPressed: isActing ? null : () => _editRide(ride),
+                        isDisabled: isActing,
                         style: PremiumButtonStyle.secondary,
                         icon: Icons.edit_rounded,
                       ),
               ),
               SizedBox(width: 12.w),
-              if (ride.status == RideStatus.active)
+              if (ride.status == RideStatus.active ||
+                  ride.status == RideStatus.full)
                 Expanded(
                   flex: 2,
                   child: PremiumButton(
                     text: AppLocalizations.of(context).startRide,
-                    onPressed: () => _startRide(ride),
+                    onPressed: isActing ? null : () => _startRide(ride),
+                    isLoading: isActing,
                     icon: Icons.play_arrow_rounded,
                   ),
                 )
@@ -1438,7 +1467,8 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                   flex: 2,
                   child: PremiumButton(
                     text: AppLocalizations.of(context).completeRide,
-                    onPressed: () => _completeRide(ride),
+                    onPressed: isActing ? null : () => _completeRide(ride),
+                    isLoading: isActing,
                     style: PremiumButtonStyle.success,
                     icon: Icons.check_circle_rounded,
                   ),
@@ -1511,18 +1541,13 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                   IncidentReportSheet.show(
                     context,
                     rideId: ride.id,
-                    onSubmit: (report) {
-                      AdaptiveSnackBar.show(
-                        context,
-                        message: AppLocalizations.of(
-                          context,
-                        ).incidentReportSubmitted,
-                      );
-                    },
+                    onSubmit: _submitIncidentReport,
                   );
                 },
               ),
-            if (ride.status == RideStatus.active)
+            if (ride.status == RideStatus.active ||
+                ride.status == RideStatus.full ||
+                ride.status == RideStatus.inProgress)
               AdaptiveListTile(
                 leading: const Icon(
                   Icons.cancel_rounded,
@@ -1974,5 +1999,52 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
       '${AppRoutes.cancellationReason.path.replaceFirst(':id', ride.id)}?isDriver=true',
     );
     if (cancelled == true && mounted) context.pop();
+  }
+
+  /// Persists a driver-filed ride incident report via [SupportRepository]
+  /// (shares the same collection/rules as the profile "report" flow — see
+  /// support_repository.dart). Only resolves on success; [IncidentReportSheet]
+  /// shows its "submitted" state / dismisses itself only after this succeeds,
+  /// and surfaces an inline error without dismissing if it throws.
+  Future<void> _submitIncidentReport(IncidentReport report) async {
+    final currentUser = ref.read(currentUserProvider).value;
+    if (currentUser == null) {
+      throw Exception('Please sign in to submit a report.');
+    }
+    await ref
+        .read(supportRepositoryProvider)
+        .submitReport(
+          reporterId: currentUser.uid,
+          reporterEmail: currentUser.email,
+          type: report.type.name,
+          severity: report.severity.name,
+          description: report.description,
+          rideId: report.rideId,
+        );
+    if (!mounted) return;
+    _showInfoSnackBar(
+      message: AppLocalizations.of(context).incidentReportSubmitted,
+    );
+  }
+
+  /// Records a passenger no-show as a real, queryable booking-status change
+  /// (via [RideActionsViewModel.markPassengerNoShow] → the same repository
+  /// path used by the passenger-side OTP no-show flow), instead of just
+  /// showing a toast with nothing persisted.
+  Future<void> _markPassengerNoShow(RideModel ride, RideBooking booking) async {
+    try {
+      await ref
+          .read(rideActionsViewModelProvider.notifier)
+          .markPassengerNoShow(
+            rideId: ride.id,
+            bookingId: booking.id,
+            passengerId: booking.passengerId,
+          );
+      if (!mounted) return;
+      _showInfoSnackBar(message: AppLocalizations.of(context).noShowReported);
+    } catch (e) {
+      if (!mounted) return;
+      _showErrorMessage('Failed to report no-show. Please try again.');
+    }
   }
 }

@@ -247,7 +247,8 @@ class RouteGuardService {
       }
 
       if (shouldRedirectToSetupPayouts &&
-          currentPath != AppRoutes.driverStripeOnboarding.path) {
+          currentPath != AppRoutes.driverStripeOnboarding.path &&
+          !_isAccountEscapeRoute(currentPath)) {
         return AppRoutes.driverStripeOnboarding.path;
       }
 
@@ -326,6 +327,20 @@ class RouteGuardService {
   bool _isDriverOnboardingRoute(String path) {
     return path == AppRoutes.driverOnboarding.path ||
         path == AppRoutes.driverStripeOnboarding.path;
+  }
+
+  /// Routes a driver stuck in incomplete Stripe payout setup must still be
+  /// able to reach — signing out, contacting support, or deleting their
+  /// account — so an indefinitely-stuck onboarding state (unsupported
+  /// country, missing documents, a permanently "additional information
+  /// needed" account, etc.) never fully locks them out of the app. This does
+  /// NOT weaken the payout requirement itself: ride-posting, earnings, and
+  /// every other screen are still gated behind `shouldRedirectToSetupPayouts`.
+  bool _isAccountEscapeRoute(String path) {
+    return path == AppRoutes.settings.path ||
+        path == AppRoutes.helpCenter.path ||
+        path == AppRoutes.contactSupport.path ||
+        path == AppRoutes.reportIssue.path;
   }
 
   String? _getValidatedRedirectTarget(Uri currentUri) {

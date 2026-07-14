@@ -115,9 +115,23 @@ class FirebaseService {
   ///
   /// Crashlytics collection toggle is also done here because its iOS
   /// implementation may perform async disk I/O.
-  Future<void> activateAppCheck() async {
+  ///
+  /// [analyticsCollectionEnabled] is the user's persisted analytics/crash
+  /// reporting consent choice (see the "Share analytics & crash reports"
+  /// toggle in Settings, backed by `SettingsRepository.analyticsCollectionEnabled`).
+  /// Crashlytics is additionally always disabled in debug builds regardless
+  /// of this preference, so local development crashes never pollute
+  /// production crash data.
+  Future<void> activateAppCheck({
+    bool analyticsCollectionEnabled = true,
+  }) async {
     try {
-      await crashlytics.setCrashlyticsCollectionEnabled(!kDebugMode);
+      await analytics.setAnalyticsCollectionEnabled(
+        analyticsCollectionEnabled,
+      );
+      await crashlytics.setCrashlyticsCollectionEnabled(
+        analyticsCollectionEnabled && !kDebugMode,
+      );
       TalkerService.info('✅ Crashlytics collection configured');
     } on Exception catch (e, st) {
       TalkerService.error('Crashlytics configuration failed', e, st);

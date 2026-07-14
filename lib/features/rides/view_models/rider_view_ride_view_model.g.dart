@@ -60,7 +60,7 @@ final class RiderViewRideUiViewModelProvider
 }
 
 String _$riderViewRideUiViewModelHash() =>
-    r'e606680c5355aaf14eebd8ab9180d1c98efe8643';
+    r'911475fb24a2e79462413a2c74f003acf06911ab';
 
 final class RiderViewRideUiViewModelFamily extends $Family
     with

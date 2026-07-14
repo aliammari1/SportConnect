@@ -4,7 +4,6 @@ import 'dart:math' as math;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/models/location/location_point.dart';
-import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/services/location_service.dart';
 import 'package:sport_connect/core/services/talker_service.dart';
@@ -919,6 +918,9 @@ class EditEventFormViewModel extends _$EditEventFormViewModel {
       await repo.updateEvent(updated);
       if (!ref.mounted) return null;
 
+      await _notifyParticipantsOfRelevantChanges(original, updated);
+      if (!ref.mounted) return null;
+
       _loadedEvent = updated;
       state = EditEventFormState.fromEvent(updated).copyWith(
         savedEvent: updated,
@@ -933,6 +935,55 @@ class EditEventFormViewModel extends _$EditEventFormViewModel {
       );
       return null;
     }
+  }
+
+  /// Notifies every joined participant (excluding the organizer) when an
+  /// edit changes a participant-relevant field — date/time or location.
+  /// Purely cosmetic edits (title wording, description, image, max
+  /// participants, recurrence, cost-split toggle) intentionally do not
+  /// trigger a notification. Failures are isolated per-recipient (mirroring
+  /// [EventDetailViewModel.cancelEvent]'s fan-out) so one bad send can't
+  /// surface as an "update failed" error after the event has already saved.
+  Future<void> _notifyParticipantsOfRelevantChanges(
+    EventModel original,
+    EventModel updated,
+  ) async {
+    final changedLabels = <String>[
+      if (original.startsAt != updated.startsAt ||
+          original.endsAt != updated.endsAt)
+        'date/time',
+      if (original.location != updated.location) 'location',
+    ];
+    if (changedLabels.isEmpty) return;
+
+    final otherParticipantIds = updated.participantIds
+        .where((uid) => uid != updated.creatorId)
+        .toList();
+    if (otherParticipantIds.isEmpty) return;
+
+    final organizer = ref.read(currentUserProvider).value;
+    final notifRepo = ref.read(notificationRepositoryProvider);
+    final changeSummary = changedLabels.join(' and ');
+
+    await Future.wait([
+      for (final uid in otherParticipantIds)
+        notifRepo
+            .sendEventUpdated(
+              toUserId: uid,
+              organizerName:
+                  organizer?.username ?? updated.organizerName ?? 'Organizer',
+              organizerPhoto: organizer?.photoUrl,
+              eventId: updated.id,
+              eventTitle: updated.title,
+              changeSummary: changeSummary,
+            )
+            .catchError((Object e) {
+              TalkerService.error(
+                'Failed to send event-updated notification to $uid',
+                e,
+              );
+            }),
+    ]);
   }
 }
 
@@ -1236,7 +1287,19 @@ class EventDetailViewModel extends _$EventDetailViewModel {
     }
   }
 
-  /// Soft-deletes the event and notifies all participants.
+  /// Removes the event. This is the single participant-facing "remove this
+  /// event" action (there used to be a separate hard-"Delete" action too,
+  /// but it left participants stranded with zero notification, so it was
+  /// folded into this method — see the owner-actions widget in
+  /// event_detail_screen.dart).
+  ///
+  /// * If anyone besides the organizer has joined, the event is
+  ///   soft-cancelled (kept for history, hidden from active listings) and
+  ///   every joined participant is notified via
+  ///   [NotificationRepository.sendEventCancelled].
+  /// * If nobody besides the organizer has joined, there is no one to
+  ///   notify, so the event is hard-deleted instead of leaving an inactive
+  ///   doc behind indefinitely.
   Future<bool> cancelEvent({String? reason}) async {
     state = state.copyWith(isDeleting: true, clearError: true);
     try {
@@ -1246,36 +1309,41 @@ class EventDetailViewModel extends _$EventDetailViewModel {
       if (event == null) throw Exception('Event not found');
       if (!ref.mounted) return false;
 
-      await ref.read(eventRepositoryProvider).cancelEvent(eventId);
-      if (!ref.mounted) return false;
+      final otherParticipantIds = event.participantIds
+          .where((uid) => uid != event.creatorId)
+          .toList();
 
-      // Notify every participant (fire-and-forget; don't let failures block cancel)
-      if (event.participantIds.isNotEmpty) {
+      if (otherParticipantIds.isEmpty) {
+        await ref.read(eventRepositoryProvider).deleteEvent(eventId);
+      } else {
+        await ref.read(eventRepositoryProvider).cancelEvent(eventId);
+        if (!ref.mounted) return false;
+
+        // Notify every joined participant (fire-and-forget; don't let
+        // failures block cancel). Dispatch concurrently so fan-out latency
+        // does not grow linearly with attendee count; each send is isolated
+        // so one failure does not abort the rest.
         final organizer = ref.read(currentUserProvider).value;
         final notifRepo = ref.read(notificationRepositoryProvider);
-        // Dispatch concurrently so fan-out latency does not grow linearly with
-        // attendee count; each send is isolated so one failure does not abort
-        // the rest.
         await Future.wait([
-          for (final uid in event.participantIds)
-            if (uid != organizer?.uid)
-              notifRepo
-                  .sendEventCancelled(
-                    toUserId: uid,
-                    organizerName: organizer?.username ??
-                        event.organizerName ??
-                        'Organizer',
-                    organizerPhoto: organizer?.photoUrl,
-                    eventId: eventId,
-                    eventTitle: event.title,
-                    reason: reason,
-                  )
-                  .catchError((Object e) {
-                    TalkerService.error(
-                      'Failed to send cancellation notification to $uid',
-                      e,
-                    );
-                  }),
+          for (final uid in otherParticipantIds)
+            notifRepo
+                .sendEventCancelled(
+                  toUserId: uid,
+                  organizerName: organizer?.username ??
+                      event.organizerName ??
+                      'Organizer',
+                  organizerPhoto: organizer?.photoUrl,
+                  eventId: eventId,
+                  eventTitle: event.title,
+                  reason: reason,
+                )
+                .catchError((Object e) {
+                  TalkerService.error(
+                    'Failed to send cancellation notification to $uid',
+                    e,
+                  );
+                }),
         ]);
       }
 
@@ -1291,25 +1359,6 @@ class EventDetailViewModel extends _$EventDetailViewModel {
       state = state.copyWith(
         isDeleting: false,
         error: 'Unable to cancel event. Please try again.',
-      );
-      return false;
-    }
-  }
-
-  /// Hard-deletes the event (only creator should call this).
-  Future<bool> deleteEvent() async {
-    state = state.copyWith(isDeleting: true, clearError: true);
-    try {
-      await ref.read(eventRepositoryProvider).deleteEvent(eventId);
-      if (!ref.mounted) return false;
-      state = state.copyWith(isDeleting: false);
-      return true;
-    } on Exception catch (e, st) {
-      TalkerService.error('deleteEvent failed', e, st);
-      if (!ref.mounted) return false;
-      state = state.copyWith(
-        isDeleting: false,
-        error: 'Unable to delete event. Please try again.',
       );
       return false;
     }

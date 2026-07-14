@@ -59,7 +59,7 @@ class RideRequestService extends _$RideRequestService {
       }
       await _sendAcceptedNotification(booking);
       return Success(booking.copyWith(status: BookingStatus.accepted));
-    } on Exception catch (e) {
+    } catch (e) {
       return Failure('Failed to accept booking: $e');
     }
   }
@@ -95,7 +95,7 @@ class RideRequestService extends _$RideRequestService {
       }
       await _sendRejectedNotification(booking, reason);
       return Success(booking.copyWith(status: BookingStatus.rejected));
-    } on Exception catch (e) {
+    } catch (e) {
       return Failure('Failed to reject booking: $e');
     }
   }
@@ -120,7 +120,7 @@ class RideRequestService extends _$RideRequestService {
         rideId: booking.rideId,
         rideName: _formatRideName(ride),
       );
-    } on Exception catch (e) {
+    } catch (e) {
       TalkerService.error('Failed to send accepted notification: $e');
     }
   }
@@ -147,7 +147,7 @@ class RideRequestService extends _$RideRequestService {
         rideName: _formatRideName(ride),
         reason: reason,
       );
-    } on Exception catch (e) {
+    } catch (e) {
       TalkerService.error('Failed to send rejected notification: $e');
     }
   }

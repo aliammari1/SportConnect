@@ -10,6 +10,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
+import 'package:sport_connect/core/config/stripe_config.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
@@ -935,7 +936,12 @@ class _RideCompletionScreenState extends ConsumerState<RideCompletionScreen> {
     final baseFare = isDriver
         ? pricePerSeatInCents * (ride.bookedSeats > 0 ? ride.bookedSeats : 1)
         : pricePerSeatInCents * seatsBooked;
-    final serviceFee = (baseFare * 0.10).roundToDouble();
+    // Use the real platform fee percentage (StripeConfig.platformFeePercent,
+    // mirrored server-side as PLATFORM_FEE_PERCENT in functions/src/index.ts)
+    // instead of a hardcoded 10% — this screen was showing users a materially
+    // incorrect fee (the actual rate is 15%).
+    final feeRate = StripeConfig.platformFeePercent / 100;
+    final serviceFee = (baseFare * feeRate).roundToDouble();
     final total = baseFare + serviceFee;
     final pricePerSeat = pricePerSeatInCents / 100;
 
@@ -1001,7 +1007,9 @@ class _RideCompletionScreenState extends ConsumerState<RideCompletionScreen> {
           ),
           SizedBox(height: 8.h),
           _buildFareRow(
-            l10n.serviceFeeWithRate('10%'),
+            l10n.serviceFeeWithRate(
+              '${StripeConfig.platformFeePercent.toStringAsFixed(0)}%',
+            ),
             AppLocaleFormatters.formatCurrency(context, serviceFee / 100),
           ),
           Divider(height: 24.h),

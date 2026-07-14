@@ -3010,9 +3010,15 @@ class _PassengerActiveRideScreenState
       // duplicate Stripe refund.
 
       if (mounted) {
+        // This screen is only reachable while ride.status == inProgress (the
+        // rider is auto-redirected here the moment the ride starts), so a
+        // cancellation from here always falls under the Cloud Function's
+        // no-refund-mid-ride rule (onBookingCancelled GAP-11) — tell the user
+        // that up front instead of the generic "cancelled successfully",
+        // which previously said nothing about their money.
         AdaptiveSnackBar.show(
           context,
-          message: l10n.rideCancelledSuccessfully,
+          message: l10n.rideCancelledNoRefund,
           type: AdaptiveSnackBarType.success,
         );
         context.pop();

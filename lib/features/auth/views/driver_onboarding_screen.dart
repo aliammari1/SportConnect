@@ -146,7 +146,6 @@ class _DriverOnboardingScreenState
       ),
       _PF.expertise: FormControl<Expertise>(
         value: Expertise.rookie,
-        validators: [Validators.required],
       ),
       _PF.terms: FormControl<bool>(
         value: false,
@@ -1178,7 +1177,7 @@ class _DriverOnboardingScreenState
 
             AddressAutocompleteField(
                   key: _addressKey,
-                  label: l10n.address,
+                  label: l10n.addressOptional,
                   hint: l10n.searchAddressCityOrPlace,
                   initialValue: switch (currentUser) {
                     final DriverModel driver => driver.address,
@@ -1192,12 +1191,6 @@ class _DriverOnboardingScreenState
                     if (uid != null) {
                       unawaited(_saveSetupDraft(uid));
                     }
-                  },
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return l10n.address_is_required;
-                    }
-                    return null;
                   },
                 )
                 .animate()
@@ -2132,7 +2125,11 @@ class _DriverOnboardingAside extends StatelessWidget {
               switch (effectiveStep) {
                 0 => l10n.completeDriverProfileMessage,
                 1 => l10n.color_and_plate_are_the_details_riders_use_at_pickup,
-                _ => l10n.youCanStillOfferRides,
+                // `l10n.youCanStillOfferRides` falsely claimed a driver can
+                // post rides before finishing payout setup — the router
+                // hard-gates every screen behind this step, so that copy
+                // contradicted actual app behavior.
+                _ => l10n.driverStripePayoutRequiredMessage,
               },
               style: TextStyle(
                 fontSize: 12.sp,

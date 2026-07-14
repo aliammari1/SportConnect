@@ -55,6 +55,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsMarketingTipsDesc => 'Receive tips and promotional offers';
 
   @override
+  String get settingsNotificationCategories => 'Notification Types';
+
+  @override
+  String get settingsSocialNotifications => 'Social Notifications';
+
+  @override
+  String get settingsSocialNotificationsDesc =>
+      'New followers and connection requests';
+
+  @override
+  String get settingsGamificationNotifications => 'Achievements & Levels';
+
+  @override
+  String get settingsGamificationNotificationsDesc =>
+      'Level ups, achievements, and leaderboard updates';
+
+  @override
+  String get settingsQuietHours => 'Quiet Hours';
+
+  @override
+  String get settingsQuietHoursDesc => 'Silence notifications during set hours';
+
+  @override
+  String get settingsQuietHoursStart => 'Start Time';
+
+  @override
+  String get settingsQuietHoursEnd => 'End Time';
+
+  @override
+  String get settingsEmailNotifications => 'Email Notifications';
+
+  @override
+  String get settingsEmailNotificationsDesc => 'Receive updates via email';
+
+  @override
+  String get settingsEmailRideSummary => 'Ride Summaries';
+
+  @override
+  String get settingsEmailRideSummaryDesc =>
+      'Get an email summary after each ride';
+
+  @override
+  String get settingsEmailWeeklyDigest => 'Weekly Digest';
+
+  @override
+  String get settingsEmailWeeklyDigestDesc => 'A weekly recap of your activity';
+
+  @override
   String get settingsAppearance => 'Appearance';
 
   @override
@@ -112,6 +160,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsEditProfileDesc => 'Update your profile information';
+
+  @override
+  String get settingsVehiclesTitle => 'Vehicles';
 
   @override
   String get settingsPaymentMethods => 'Payment Methods';
@@ -546,6 +597,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get youCanStillOfferRides =>
       'You can still offer rides without setting up payouts, but you won\'t be able to receive payments until you complete this step.';
+
+  @override
+  String get driverStripePayoutRequiredMessage =>
+      'You\'ll need to complete this step before you can post rides or receive payments.';
 
   @override
   String get sportconnect => 'SportConnect';
@@ -1187,6 +1242,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get stripeAccountConnectedSuccessfully =>
       'Stripe account connected successfully!';
+
+  @override
+  String get stripeAdditionalInfoIdentity =>
+      'We still need a valid ID or passport to verify your identity.';
+
+  @override
+  String get stripeAdditionalInfoBanking =>
+      'We still need your bank account (IBAN) details to set up payouts.';
+
+  @override
+  String get stripeAdditionalInfoTax =>
+      'We still need your tax details to finish setting up your account.';
 
   @override
   String errorLoadingPageValue(Object value) {
@@ -1953,6 +2020,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentInformation => 'Payment information';
 
   @override
+  String get deleteAccountSignInRevoked =>
+      'Sign-in access from Google and Apple, revoked immediately';
+
+  @override
+  String get deleteAccountStripeClosureNotice =>
+      'Stripe payment data — your driver payout account closes once any pending balance and disputes are resolved';
+
+  @override
   String get typeDeleteToConfirm => 'Type \"DELETE\" to confirm:';
 
   @override
@@ -2605,6 +2680,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rideCancelledSuccessfully => 'Ride cancelled successfully';
+
+  @override
+  String get cancellationPolicyRealRule =>
+      'Full refund if you cancel before the ride starts. No refund once the ride is in progress.';
+
+  @override
+  String get rideCancelledRefundPending =>
+      'Ride cancelled — refund will be processed within 5-10 business days.';
+
+  @override
+  String get rideCancelledNoRefund =>
+      'Ride cancelled — no refund applies as the ride had already started.';
+
+  @override
+  String get rideCancelledFullRefundPending =>
+      'Ride cancelled — passengers will be fully refunded within 5-10 business days.';
+
+  @override
+  String get rideCancelledPartialRefundPending =>
+      'Ride cancelled — passengers will be partially refunded (platform fee excluded) within 5-10 business days.';
 
   @override
   String failedToCancelRideValue(Object value) {
@@ -4094,6 +4189,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String eventParticipantsCount(int count) {
     return 'Participants ($count)';
   }
+
+  @override
+  String eventCancelParticipantsNotice(int count) {
+    return 'All $count participant(s) will be notified.';
+  }
+
+  @override
+  String get eventCancelNoParticipantsNotice =>
+      'No one has joined yet, so this event will be removed immediately.';
 
   @override
   String eventSeatsLeftCount(int count) {
@@ -5754,6 +5858,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get submitReport => 'Submit Report';
 
   @override
+  String get failedToSubmitReportTryAgain =>
+      'Failed to submit report. Please try again.';
+
+  @override
   String amountPaid(String amount) {
     return 'Amount paid: $amount';
   }
@@ -7068,6 +7176,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get address => 'Address';
 
   @override
+  String get addressOptional => 'Address (Optional)';
+
+  @override
   String get save_driver_profile_and_continue =>
       'Save driver profile and continue';
 
@@ -7077,9 +7188,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invalid_value => 'Invalid value';
-
-  @override
-  String get address_is_required => 'Address is required';
 
   @override
   String get personalInfo => 'Personal Info';
@@ -9397,6 +9505,18 @@ class AppLocalizationsEn extends AppLocalizations {
     String eventTitle,
   ) {
     return '$organizerName cancelled \"$eventTitle\"';
+  }
+
+  @override
+  String get notificationEventUpdatedTitle => 'Event Updated';
+
+  @override
+  String notificationEventUpdatedBody(
+    String organizerName,
+    String eventTitle,
+    String changeSummary,
+  ) {
+    return '$organizerName updated \"$eventTitle\": $changeSummary';
   }
 
   @override

@@ -159,7 +159,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
       vehicleViewModelProvider.select((state) => state.vehicles),
     );
 
-    // Listen for submission errors to show feedback
+    // Fit the map camera whenever a newly-computed OSRM route arrives.
     ref.listen(
       driverOfferRideViewModelProvider.select((s) => s.osrmRoutePoints),
       (previous, next) {
@@ -178,6 +178,27 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
               ),
             );
           });
+        }
+      },
+    );
+
+    // Listen for submission errors to show feedback — previously
+    // `submissionError` was set by the view model on a failed create/update
+    // but never read anywhere, so ride-posting failures were silently
+    // dropped (the screen's `_createRide` just did `if (rideId == null)
+    // return;`).
+    ref.listen(
+      driverOfferRideViewModelProvider.select((s) => s.submissionError),
+      (previous, next) {
+        if (next != null && next != previous) {
+          AdaptiveSnackBar.show(
+            context,
+            message: next,
+            type: AdaptiveSnackBarType.error,
+          );
+          ref
+              .read(driverOfferRideViewModelProvider.notifier)
+              .clearSubmissionError();
         }
       },
     );

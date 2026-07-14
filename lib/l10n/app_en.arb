@@ -17,6 +17,66 @@
   "settingsChatMessagesDesc": "Notifications for new messages",
   "settingsMarketingTips": "Marketing & Tips",
   "settingsMarketingTipsDesc": "Receive tips and promotional offers",
+  "settingsNotificationCategories": "Notification Types",
+  "@settingsNotificationCategories": {
+    "description": "Section header in notification_preferences_screen.dart"
+  },
+  "settingsSocialNotifications": "Social Notifications",
+  "@settingsSocialNotifications": {
+    "description": "Text from _buildSwitchTile in notification_preferences_screen.dart"
+  },
+  "settingsSocialNotificationsDesc": "New followers and connection requests",
+  "@settingsSocialNotificationsDesc": {
+    "description": "Text from _buildSwitchTile in notification_preferences_screen.dart"
+  },
+  "settingsGamificationNotifications": "Achievements & Levels",
+  "@settingsGamificationNotifications": {
+    "description": "Text from _buildSwitchTile in notification_preferences_screen.dart"
+  },
+  "settingsGamificationNotificationsDesc": "Level ups, achievements, and leaderboard updates",
+  "@settingsGamificationNotificationsDesc": {
+    "description": "Text from _buildSwitchTile in notification_preferences_screen.dart"
+  },
+  "settingsQuietHours": "Quiet Hours",
+  "@settingsQuietHours": {
+    "description": "Section header and switch tile title in notification_preferences_screen.dart"
+  },
+  "settingsQuietHoursDesc": "Silence notifications during set hours",
+  "@settingsQuietHoursDesc": {
+    "description": "Text from _buildSwitchTile in notification_preferences_screen.dart"
+  },
+  "settingsQuietHoursStart": "Start Time",
+  "@settingsQuietHoursStart": {
+    "description": "Text from _buildTimeTile in notification_preferences_screen.dart"
+  },
+  "settingsQuietHoursEnd": "End Time",
+  "@settingsQuietHoursEnd": {
+    "description": "Text from _buildTimeTile in notification_preferences_screen.dart"
+  },
+  "settingsEmailNotifications": "Email Notifications",
+  "@settingsEmailNotifications": {
+    "description": "Section header and switch tile title in notification_preferences_screen.dart"
+  },
+  "settingsEmailNotificationsDesc": "Receive updates via email",
+  "@settingsEmailNotificationsDesc": {
+    "description": "Text from _buildSwitchTile in notification_preferences_screen.dart"
+  },
+  "settingsEmailRideSummary": "Ride Summaries",
+  "@settingsEmailRideSummary": {
+    "description": "Text from _buildSwitchTile in notification_preferences_screen.dart"
+  },
+  "settingsEmailRideSummaryDesc": "Get an email summary after each ride",
+  "@settingsEmailRideSummaryDesc": {
+    "description": "Text from _buildSwitchTile in notification_preferences_screen.dart"
+  },
+  "settingsEmailWeeklyDigest": "Weekly Digest",
+  "@settingsEmailWeeklyDigest": {
+    "description": "Text from _buildSwitchTile in notification_preferences_screen.dart"
+  },
+  "settingsEmailWeeklyDigestDesc": "A weekly recap of your activity",
+  "@settingsEmailWeeklyDigestDesc": {
+    "description": "Text from _buildSwitchTile in notification_preferences_screen.dart"
+  },
   "settingsAppearance": "Appearance",
   "settingsDarkMode": "Dark Mode",
   "settingsDarkModeDesc": "Switch to dark theme",
@@ -36,6 +96,10 @@
   "settingsAccount": "Account",
   "settingsEditProfile": "Edit Profile",
   "settingsEditProfileDesc": "Update your profile information",
+  "settingsVehiclesTitle": "Vehicles",
+  "@settingsVehiclesTitle": {
+    "description": "Text from _buildNavTile in settings_screen.dart"
+  },
   "settingsPaymentMethods": "Payment Methods",
   "settingsPaymentMethodsDesc": "Manage your payment options",
   "managePaymentMethodsDesc": "Add, remove, or update saved payment methods for faster checkout.",
@@ -416,6 +480,10 @@
   },
   "youCanStillOfferRides": "You can still offer rides without setting up payouts, but you won't be able to receive payments until you complete this step.",
   "@youCanStillOfferRides": {
+    "description": "Text from Text in driver_onboarding_screen.dart"
+  },
+  "driverStripePayoutRequiredMessage": "You'll need to complete this step before you can post rides or receive payments.",
+  "@driverStripePayoutRequiredMessage": {
     "description": "Text from Text in driver_onboarding_screen.dart"
   },
   "sportconnect": "SportConnect",
@@ -1193,6 +1261,18 @@
   "stripeAccountConnectedSuccessfully": "Stripe account connected successfully!",
   "@stripeAccountConnectedSuccessfully": {
     "description": "Text from Text in driver_stripe_onboarding_screen.dart"
+  },
+  "stripeAdditionalInfoIdentity": "We still need a valid ID or passport to verify your identity.",
+  "@stripeAdditionalInfoIdentity": {
+    "description": "Text from _additionalInfoMessage in driver_stripe_onboarding_screen.dart"
+  },
+  "stripeAdditionalInfoBanking": "We still need your bank account (IBAN) details to set up payouts.",
+  "@stripeAdditionalInfoBanking": {
+    "description": "Text from _additionalInfoMessage in driver_stripe_onboarding_screen.dart"
+  },
+  "stripeAdditionalInfoTax": "We still need your tax details to finish setting up your account.",
+  "@stripeAdditionalInfoTax": {
+    "description": "Text from _additionalInfoMessage in driver_stripe_onboarding_screen.dart"
   },
   "errorLoadingPageValue": "Error loading page: {value}",
   "@errorLoadingPageValue": {
@@ -2110,6 +2190,14 @@
   "@paymentInformation": {
     "description": "Text from _buildDeleteWarningItem in settings_screen.dart"
   },
+  "deleteAccountSignInRevoked": "Sign-in access from Google and Apple, revoked immediately",
+  "@deleteAccountSignInRevoked": {
+    "description": "Text from _buildDeleteWarningItem in settings_screen.dart"
+  },
+  "deleteAccountStripeClosureNotice": "Stripe payment data — your driver payout account closes once any pending balance and disputes are resolved",
+  "@deleteAccountStripeClosureNotice": {
+    "description": "Text from _buildDeleteWarningItem in settings_screen.dart"
+  },
   "typeDeleteToConfirm": "Type \"DELETE\" to confirm:",
   "@typeDeleteToConfirm": {
     "description": "Text from Text in settings_screen.dart"
@@ -2869,6 +2957,26 @@
   "rideCancelledSuccessfully": "Ride cancelled successfully",
   "@rideCancelledSuccessfully": {
     "description": "Text from Text in active_ride_screen.dart"
+  },
+  "cancellationPolicyRealRule": "Full refund if you cancel before the ride starts. No refund once the ride is in progress.",
+  "@cancellationPolicyRealRule": {
+    "description": "Text from Text in ride_booking_review_screen.dart"
+  },
+  "rideCancelledRefundPending": "Ride cancelled — refund will be processed within 5-10 business days.",
+  "@rideCancelledRefundPending": {
+    "description": "Text from AdaptiveSnackBar.show in rider_view_ride_screen.dart"
+  },
+  "rideCancelledNoRefund": "Ride cancelled — no refund applies as the ride had already started.",
+  "@rideCancelledNoRefund": {
+    "description": "Text from AdaptiveSnackBar.show in rider_view_ride_screen.dart and active_ride_screen.dart"
+  },
+  "rideCancelledFullRefundPending": "Ride cancelled — passengers will be fully refunded within 5-10 business days.",
+  "@rideCancelledFullRefundPending": {
+    "description": "Text from AdaptiveSnackBar.show in cancellation_reason_screen.dart"
+  },
+  "rideCancelledPartialRefundPending": "Ride cancelled — passengers will be partially refunded (platform fee excluded) within 5-10 business days.",
+  "@rideCancelledPartialRefundPending": {
+    "description": "Text from AdaptiveSnackBar.show in cancellation_reason_screen.dart"
   },
   "failedToCancelRideValue": "Failed to cancel ride: {value}",
   "@failedToCancelRideValue": {
@@ -3877,6 +3985,19 @@
       }
     }
   },
+  "eventCancelParticipantsNotice": "All {count} participant(s) will be notified.",
+  "@eventCancelParticipantsNotice": {
+    "description": "Text from _showCancelSheet in event_detail_screen.dart",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "eventCancelNoParticipantsNotice": "No one has joined yet, so this event will be removed immediately.",
+  "@eventCancelNoParticipantsNotice": {
+    "description": "Text from _showCancelSheet in event_detail_screen.dart"
+  },
   "eventSeatsLeftCount": "{count} left",
   "@eventSeatsLeftCount": {
     "placeholders": {
@@ -4637,6 +4758,10 @@
   "incidentType": "Type of incident",
   "describeWhatHappened": "Describe what happened...",
   "submitReport": "Submit Report",
+  "failedToSubmitReportTryAgain": "Failed to submit report. Please try again.",
+  "@failedToSubmitReportTryAgain": {
+    "description": "Text from IncidentReportSheet._handleSubmit in safety_widgets.dart"
+  },
   "amountPaid": "Amount paid: {amount}",
   "@amountPaid": {
     "placeholders": {
@@ -5162,10 +5287,13 @@
   "green": "Green",
   "beige_brown": "Beige / Brown",
   "address": "Address",
+  "addressOptional": "Address (Optional)",
+  "@addressOptional": {
+    "description": "Label for the optional address field in the rider/driver onboarding forms"
+  },
   "save_driver_profile_and_continue": "Save driver profile and continue",
   "champagne_pearl_white_bordeaux": "Champagne, pearl white, bordeaux...",
   "invalid_value": "Invalid value",
-  "address_is_required": "Address is required",
   "personalInfo": "Personal Info",
   "contactAndAddress": "Contact & Address",
   "drivingDetails": "Driving Details",
@@ -6052,6 +6180,25 @@
         "type": "String"
       },
       "eventTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationEventUpdatedTitle": "Event Updated",
+  "@notificationEventUpdatedTitle": {
+    "description": "Text from sendEventUpdated in notification_repository.dart"
+  },
+  "notificationEventUpdatedBody": "{organizerName} updated \"{eventTitle}\": {changeSummary}",
+  "@notificationEventUpdatedBody": {
+    "description": "Text from sendEventUpdated in notification_repository.dart",
+    "placeholders": {
+      "organizerName": {
+        "type": "String"
+      },
+      "eventTitle": {
+        "type": "String"
+      },
+      "changeSummary": {
         "type": "String"
       }
     }

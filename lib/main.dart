@@ -99,7 +99,14 @@ void main() async {
 /// This prevents App Review/users from getting stuck on the native launch
 /// screen if push notifications, Stripe, App Check, or other
 /// network-related startup work is slow.
-Future<void> _initializeAppAfterFirstFrame() async {
+///
+/// [analyticsCollectionEnabled] is the user's persisted analytics/crash
+/// reporting consent choice, read from [SettingsRepository] before this is
+/// called, so Crashlytics/Analytics never gets force-enabled against the
+/// user's Settings choice.
+Future<void> _initializeAppAfterFirstFrame({
+  required bool analyticsCollectionEnabled,
+}) async {
   TalkerService.info('🚀 Starting post-launch initialization...');
 
   // Run non-critical startup tasks in parallel so the app becomes fully
@@ -107,7 +114,9 @@ Future<void> _initializeAppAfterFirstFrame() async {
   await Future.wait<void>([
     // App Check activation makes a network call on production iOS
     // (DeviceCheck). Running it here keeps the native splash short.
-    FirebaseService.instance.activateAppCheck(),
+    FirebaseService.instance.activateAppCheck(
+      analyticsCollectionEnabled: analyticsCollectionEnabled,
+    ),
     _initializePushNotifications(),
     _initializeStripe(),
   ]);
@@ -227,7 +236,13 @@ class _SportConnectAppState extends ConsumerState<SportConnectApp> {
       _initializeDeepLinks(router);
     }
 
-    await _initializeAppAfterFirstFrame();
+    final analyticsCollectionEnabled = ref
+        .read(settingsRepositoryProvider)
+        .analyticsCollectionEnabled;
+
+    await _initializeAppAfterFirstFrame(
+      analyticsCollectionEnabled: analyticsCollectionEnabled,
+    );
 
     if (!mounted) return;
 

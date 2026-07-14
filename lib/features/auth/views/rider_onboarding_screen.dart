@@ -88,7 +88,6 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
     ),
     _FormFields.expertise: FormControl<Expertise>(
       value: Expertise.rookie,
-      validators: [Validators.required],
     ),
     _FormFields.terms: FormControl<bool>(
       value: false,
@@ -858,7 +857,7 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
 
                             AddressAutocompleteField(
                                   key: _addressKey,
-                                  label: l10n.address,
+                                  label: l10n.addressOptional,
                                   hint: l10n.searchAddressCityOrPlace,
                                   initialValue: switch (currentUser) {
                                     final RiderModel rider => rider.address,
@@ -872,12 +871,6 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
                                     if (uid != null) {
                                       unawaited(_saveSetupDraft(uid));
                                     }
-                                  },
-                                  validator: (value) {
-                                    if (value == null || value.trim().isEmpty) {
-                                      return l10n.address_is_required;
-                                    }
-                                    return null;
                                   },
                                 )
                                 .animate()

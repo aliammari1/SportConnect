@@ -18,6 +18,7 @@ import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/adaptive_tap_surface.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
+import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 import 'package:sport_connect/features/rides/view_models/ride_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
@@ -1213,50 +1214,72 @@ class _PriceBreakdownCard extends StatelessWidget {
 class _TrustAndPolicyCard extends StatelessWidget {
   const _TrustAndPolicyCard();
 
+  void _showPolicyDetails(BuildContext context) {
+    AppModalSheet.show<void>(
+      context: context,
+      title: AppLocalizations.of(context).cancellation_policy,
+      maxHeightFactor: 0.4,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 32.h),
+        child: Text(
+          AppLocalizations.of(context).cancellationPolicyRealRule,
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 14.sp,
+            height: 1.45,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _PremiumCard(
-      child: Row(
-        children: [
-          const _SoftIcon(
-            icon: Icons.verified_user_rounded,
-            color: AppColors.primary,
-            background: AppColors.primarySurface,
-          ),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppLocalizations.of(context).cancellation_policy,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  AppLocalizations.of(
-                    context,
-                  ).you_can_cancel_before_the_driver_accepts_your_request,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12.sp,
-                    height: 1.35,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+    return AdaptiveTapSurface(
+      borderRadius: BorderRadius.circular(28.r),
+      onTap: () => _showPolicyDetails(context),
+      child: _PremiumCard(
+        child: Row(
+          children: [
+            const _SoftIcon(
+              icon: Icons.verified_user_rounded,
+              color: AppColors.primary,
+              background: AppColors.primarySurface,
             ),
-          ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: AppColors.textSecondary,
-            size: 24.sp,
-          ),
-        ],
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context).cancellation_policy,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    AppLocalizations.of(context).cancellationPolicyRealRule,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12.sp,
+                      height: 1.35,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+              size: 24.sp,
+            ),
+          ],
+        ),
       ),
     ).animate().fadeIn(duration: 340.ms, delay: 190.ms).slideY(begin: 0.08);
   }

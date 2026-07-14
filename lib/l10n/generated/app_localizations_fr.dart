@@ -57,6 +57,57 @@ class AppLocalizationsFr extends AppLocalizations {
       'Recevoir des conseils et des offres promotionnelles';
 
   @override
+  String get settingsNotificationCategories => 'Types de notifications';
+
+  @override
+  String get settingsSocialNotifications => 'Notifications sociales';
+
+  @override
+  String get settingsSocialNotificationsDesc =>
+      'Nouveaux abonnés et demandes de connexion';
+
+  @override
+  String get settingsGamificationNotifications => 'Succès et niveaux';
+
+  @override
+  String get settingsGamificationNotificationsDesc =>
+      'Passages de niveau, succès et mises à jour du classement';
+
+  @override
+  String get settingsQuietHours => 'Heures silencieuses';
+
+  @override
+  String get settingsQuietHoursDesc =>
+      'Désactiver les notifications pendant les heures définies';
+
+  @override
+  String get settingsQuietHoursStart => 'Heure de début';
+
+  @override
+  String get settingsQuietHoursEnd => 'Heure de fin';
+
+  @override
+  String get settingsEmailNotifications => 'Notifications par e-mail';
+
+  @override
+  String get settingsEmailNotificationsDesc =>
+      'Recevoir des mises à jour par e-mail';
+
+  @override
+  String get settingsEmailRideSummary => 'Résumés de trajet';
+
+  @override
+  String get settingsEmailRideSummaryDesc =>
+      'Recevoir un résumé par e-mail après chaque trajet';
+
+  @override
+  String get settingsEmailWeeklyDigest => 'Résumé hebdomadaire';
+
+  @override
+  String get settingsEmailWeeklyDigestDesc =>
+      'Un récapitulatif hebdomadaire de votre activité';
+
+  @override
   String get settingsAppearance => 'Apparence';
 
   @override
@@ -116,6 +167,9 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get settingsEditProfileDesc =>
       'Mettre à jour vos informations de profil';
+
+  @override
+  String get settingsVehiclesTitle => 'Véhicules';
 
   @override
   String get settingsPaymentMethods => 'Moyens de paiement';
@@ -559,6 +613,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get youCanStillOfferRides =>
       'Vous pouvez toujours offrir des trajets sans configurer les paiements, mais vous ne pourrez pas recevoir de paiements tant que vous n\'aurez pas terminé cette étape.';
+
+  @override
+  String get driverStripePayoutRequiredMessage =>
+      'Vous devrez terminer cette étape avant de pouvoir publier des trajets ou recevoir des paiements.';
 
   @override
   String get sportconnect => 'SportConnect';
@@ -1217,6 +1275,18 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get stripeAccountConnectedSuccessfully =>
       'Compte Stripe connecté avec succès !';
+
+  @override
+  String get stripeAdditionalInfoIdentity =>
+      'Nous avons encore besoin d\'une pièce d\'identité ou d\'un passeport valide pour vérifier votre identité.';
+
+  @override
+  String get stripeAdditionalInfoBanking =>
+      'Nous avons encore besoin des coordonnées de votre compte bancaire (IBAN) pour configurer les paiements.';
+
+  @override
+  String get stripeAdditionalInfoTax =>
+      'Nous avons encore besoin de vos informations fiscales pour finaliser la configuration de votre compte.';
 
   @override
   String errorLoadingPageValue(Object value) {
@@ -1999,6 +2069,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get paymentInformation => 'Informations de paiement';
 
   @override
+  String get deleteAccountSignInRevoked =>
+      'Accès de connexion Google et Apple, révoqué immédiatement';
+
+  @override
+  String get deleteAccountStripeClosureNotice =>
+      'Données de paiement Stripe — votre compte de paiement chauffeur est clôturé une fois le solde en attente et les litiges éventuels résolus';
+
+  @override
   String get typeDeleteToConfirm => 'Tapez \"DELETE\" pour confirmer :';
 
   @override
@@ -2659,6 +2737,26 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rideCancelledSuccessfully => 'Trajet annulé avec succès';
+
+  @override
+  String get cancellationPolicyRealRule =>
+      'Remboursement intégral si vous annulez avant le départ. Aucun remboursement une fois le trajet commencé.';
+
+  @override
+  String get rideCancelledRefundPending =>
+      'Trajet annulé — le remboursement sera traité sous 5 à 10 jours ouvrés.';
+
+  @override
+  String get rideCancelledNoRefund =>
+      'Trajet annulé — aucun remboursement ne s\'applique car le trajet avait déjà commencé.';
+
+  @override
+  String get rideCancelledFullRefundPending =>
+      'Trajet annulé — les passagers seront intégralement remboursés sous 5 à 10 jours ouvrés.';
+
+  @override
+  String get rideCancelledPartialRefundPending =>
+      'Trajet annulé — les passagers seront partiellement remboursés (frais de plateforme exclus) sous 5 à 10 jours ouvrés.';
 
   @override
   String failedToCancelRideValue(Object value) {
@@ -4189,6 +4287,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String eventParticipantsCount(int count) {
     return 'Participants ($count)';
   }
+
+  @override
+  String eventCancelParticipantsNotice(int count) {
+    return 'Tous les $count participant(s) seront notifiés.';
+  }
+
+  @override
+  String get eventCancelNoParticipantsNotice =>
+      'Personne n\'a encore rejoint l\'événement, il sera donc supprimé immédiatement.';
 
   @override
   String eventSeatsLeftCount(int count) {
@@ -5873,6 +5980,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get submitReport => 'Soumettre le signalement';
 
   @override
+  String get failedToSubmitReportTryAgain =>
+      'Échec de l\'envoi du signalement. Veuillez réessayer.';
+
+  @override
   String amountPaid(String amount) {
     return 'Montant payé : $amount';
   }
@@ -7209,6 +7320,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get address => 'Adresse';
 
   @override
+  String get addressOptional => 'Adresse (Facultatif)';
+
+  @override
   String get save_driver_profile_and_continue =>
       'Enregistrer le profil conducteur et continuer';
 
@@ -7218,9 +7332,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get invalid_value => 'Valeur invalide';
-
-  @override
-  String get address_is_required => 'L\'adresse est requise';
 
   @override
   String get personalInfo => 'Infos personnelles';
@@ -8745,11 +8856,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Re-allow push notifications for this device';
 
   @override
-  String get analytics_crash_reports => 'Analytics & Crash Reports';
+  String get analytics_crash_reports => 'Analyses et rapports de crash';
 
   @override
   String get allow_anonymous_usage_data_and_crash_reports =>
-      'Allow anonymous usage data and crash reports';
+      'Autoriser les données d\'utilisation anonymes et les rapports de crash';
 
   @override
   String get data_processing_notice => 'Data Processing Notice';
@@ -9558,6 +9669,18 @@ class AppLocalizationsFr extends AppLocalizations {
     String eventTitle,
   ) {
     return '$organizerName a annulé \"$eventTitle\"';
+  }
+
+  @override
+  String get notificationEventUpdatedTitle => 'Événement mis à jour';
+
+  @override
+  String notificationEventUpdatedBody(
+    String organizerName,
+    String eventTitle,
+    String changeSummary,
+  ) {
+    return '$organizerName a mis à jour \"$eventTitle\" : $changeSummary';
   }
 
   @override

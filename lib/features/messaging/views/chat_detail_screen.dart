@@ -57,6 +57,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   late UserModel _resolvedReceiver;
   bool _isResolvingReceiver = false;
 
+  // Local-only marker for the most recent send failure. The Firestore write
+  // in ChatRepository.sendMessage is a single atomic batch, so a failure
+  // means no message document was ever created — there is nothing server-side
+  // to mark `failed`. This tracks the attempt purely on-device so the UI can
+  // show a visually distinct "failed to send" state instead of silently
+  // dropping it (beyond the existing composer-restore + snackbar).
+  MessageModel? _lastFailedMessage;
+
   // ── Convenience getters ──────────────────────────────────────────────────
 
   UserModel? get currentUser => ref.read(currentUserProvider).value;
@@ -224,6 +232,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     if (!await _ensurePersistedChat()) return;
     if (!mounted) return;
 
+    // A new attempt supersedes any previously shown failure banner.
+    if (_lastFailedMessage != null) {
+      setState(() => _lastFailedMessage = null);
+    }
+
     unawaited(HapticFeedback.lightImpact());
     _messageController.clear();
 
@@ -257,6 +270,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         error ?? AppLocalizations.of(context).failedToSendMessage,
         type: AdaptiveSnackBarType.error,
       );
+
+      setState(() {
+        _lastFailedMessage = MessageModel(
+          id: 'local-failed-${DateTime.now().microsecondsSinceEpoch}',
+          chatId: _chatId,
+          senderId: currentUser?.uid ?? '',
+          senderName:
+              currentUser?.username ?? AppLocalizations.of(context).user,
+          content: text,
+          status: MessageStatus.failed,
+          createdAt: DateTime.now(),
+        );
+      });
 
       return;
     }
@@ -815,6 +841,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                   ),
                 ),
                 if (chatState.typingUsers.isNotEmpty) _buildTypingIndicator(),
+                if (_lastFailedMessage != null) _buildFailedMessageBanner(),
                 if (chatState.replyToMessage != null)
                   _buildReplyPreview(chatState.replyToMessage!),
                 if (!isReceiverBlocked) _buildInputArea(),
@@ -1110,6 +1137,65 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         ],
       ),
     ).animate().fadeIn(duration: 220.ms);
+  }
+
+  /// Inline banner shown when the most recent send attempt failed. Visually
+  /// distinguishes a failed message from a sent one (error tint + icon)
+  /// and offers a quick retry without retyping.
+  Widget _buildFailedMessageBanner() {
+    final failed = _lastFailedMessage;
+    if (failed == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline_rounded, color: AppColors.error, size: 18.sp),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              l10n.failedToSendMessage,
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              _messageController
+                ..text = failed.content
+                ..selection = TextSelection.collapsed(
+                  offset: failed.content.length,
+                );
+              setState(() => _lastFailedMessage = null);
+              _focusNode.requestFocus();
+            },
+            child: Text(l10n.retry),
+          ),
+          IconButton(
+            tooltip: l10n.dismiss,
+            onPressed: () => setState(() => _lastFailedMessage = null),
+            icon: Icon(
+              Icons.close_rounded,
+              color: AppColors.textSecondary,
+              size: 18.sp,
+            ),
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildReplyPreview(MessageModel message) {
@@ -1567,13 +1653,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                 valueListenable: _messageController,
                 builder: (context, value, _) {
                   final hasText = value.text.trim().isNotEmpty;
+                  final isSending = chatState.isSending;
                   final showPrimary = hasText;
                   return Semantics(
                     button: true,
                     label: AppLocalizations.of(context).sendMessage,
                     child: GestureDetector(
                       onTap: () {
-                        if (hasText) {
+                        if (hasText && !isSending) {
                           _sendMessage();
                         }
                       },
@@ -1598,13 +1685,29 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                                 ]
                               : const [],
                         ),
-                        child: Icon(
-                          Icons.send_rounded,
-                          color: showPrimary
-                              ? Colors.white
-                              : AppColors.textSecondary,
-                          size: 22.sp,
-                        ),
+                        // While a send is in flight, swap the icon for a small
+                        // spinner and ignore taps so the UI isn't inert
+                        // between tapping send and the message appearing.
+                        child: isSending
+                            ? SizedBox(
+                                width: 22.sp,
+                                height: 22.sp,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    showPrimary
+                                        ? Colors.white
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                Icons.send_rounded,
+                                color: showPrimary
+                                    ? Colors.white
+                                    : AppColors.textSecondary,
+                                size: 22.sp,
+                              ),
                       ),
                     ),
                   );

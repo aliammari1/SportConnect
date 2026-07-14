@@ -1303,11 +1303,26 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
     if (existingBooking != null &&
         existingBooking.status == BookingStatus.accepted) {
       if (existingBooking.paidAt != null) {
+        // Cancellable whenever the ride itself hasn't started yet — this
+        // mirrors the pre-ride cancellable window the Cloud Function
+        // (onBookingCancelled) actually honours: full refund before the ride
+        // starts, no refund once it's inProgress. In practice the user is
+        // auto-redirected to the active-ride screen the moment the ride goes
+        // inProgress (see the ref.listen above), so this bar is only ever
+        // shown pre-ride, but the guard is kept for safety.
+        final canCancel =
+            ride.isCancellable && ride.status != RideStatus.inProgress;
         return _buildExistingBookingBar(
           label: AppLocalizations.of(context).bookingConfirmed,
           icon: Icons.check_circle_rounded,
           onPressed: null,
           style: PremiumButtonStyle.secondary,
+          secondaryActionLabel: canCancel
+              ? AppLocalizations.of(context).cancelRide2
+              : null,
+          onSecondaryAction: canCancel
+              ? () => _cancelBooking(ride, existingBooking)
+              : null,
         );
       }
       return _buildExistingBookingBar(
@@ -1464,6 +1479,8 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
     required IconData icon,
     required VoidCallback? onPressed,
     PremiumButtonStyle style = PremiumButtonStyle.primary,
+    String? secondaryActionLabel,
+    VoidCallback? onSecondaryAction,
   }) {
     return Container(
       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
@@ -1478,11 +1495,31 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: PremiumButton(
-          text: label,
-          onPressed: onPressed,
-          style: style,
-          icon: icon,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PremiumButton(
+              text: label,
+              onPressed: onPressed,
+              style: style,
+              icon: icon,
+            ),
+            if (secondaryActionLabel != null && onSecondaryAction != null) ...[
+              SizedBox(height: 8.h),
+              TextButton.icon(
+                onPressed: onSecondaryAction,
+                icon: const Icon(
+                  Icons.cancel_outlined,
+                  size: 18,
+                  color: AppColors.error,
+                ),
+                label: Text(
+                  secondaryActionLabel,
+                  style: const TextStyle(color: AppColors.error),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -1650,6 +1687,65 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
           type: AdaptiveSnackBarType.error,
         );
       }
+    }
+  }
+
+  /// Cancels the passenger's own booking (not the whole ride — other
+  /// passengers on this ride are unaffected). Mirrors the proven pattern in
+  /// [ActiveRideScreen]'s (passenger) `_cancelRide`: a plain confirm dialog +
+  /// [RideActionsViewModel.cancelBooking], which triggers a real Stripe
+  /// refund server-side via `onBookingCancelled` in functions/src/index.ts
+  /// (full refund pre-ride, no refund if the ride had already started).
+  Future<void> _cancelBooking(RideModel ride, RideBooking booking) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog.adaptive(
+        title: Text(l10n.cancelRide2),
+        content: Text(l10n.areYouSureYouWant9),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.keepRide),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: Text(l10n.cancelRide2),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    unawaited(HapticFeedback.mediumImpact());
+
+    // Capture whether the ride had already started BEFORE cancelling, so the
+    // confirmation message accurately reflects the refund rule that actually
+    // applied (full refund pre-ride, no refund once inProgress) rather than
+    // always claiming a refund is coming.
+    final wasInProgress = ride.status == RideStatus.inProgress;
+
+    try {
+      await ref
+          .read(rideActionsViewModelProvider.notifier)
+          .cancelBooking(rideId: ride.id, bookingId: booking.id);
+
+      if (!mounted) return;
+      AdaptiveSnackBar.show(
+        context,
+        message: wasInProgress
+            ? l10n.rideCancelledNoRefund
+            : l10n.rideCancelledRefundPending,
+        type: AdaptiveSnackBarType.success,
+      );
+    } on Exception catch (e) {
+      if (!mounted) return;
+      AdaptiveSnackBar.show(
+        context,
+        message: l10n.failedToCancelRideValue(e),
+        type: AdaptiveSnackBarType.error,
+      );
     }
   }
 }

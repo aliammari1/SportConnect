@@ -22,6 +22,8 @@ import 'package:sport_connect/features/messaging/models/message_model.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_view_model.dart';
 import 'package:sport_connect/features/notifications/models/notification_model.dart';
 import 'package:sport_connect/features/notifications/view_models/notification_view_model.dart';
+import 'package:sport_connect/features/reviews/models/review_model.dart';
+import 'package:sport_connect/features/reviews/view_models/review_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
 /// Notifications Screen with Firestore real-time updates
@@ -43,6 +45,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   /// notification, archive) rebuilds the list; without this gate the staggered
   /// entrance animation would re-run for every visible tile on each emission.
   final Set<String> _animatedIds = <String>{};
+
+  /// Keys ("rideId|revieweeId") of pending-review prompts the user has
+  /// dismissed from the banner during this screen visit. Session-scoped only
+  /// (not persisted) so a dismissed-but-still-unreviewed ride keeps
+  /// resurfacing on future visits — the whole point of surfacing
+  /// [pendingReviewsProvider] here is that the one-shot post-ride push is
+  /// easy to miss and must not be the only chance to review.
+  final Set<String> _dismissedPendingReviewKeys = <String>{};
 
   void _showStatusSnackBar(String message, {required Color backgroundColor}) {
     if (!context.mounted) return;
@@ -354,6 +364,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }) {
     return Column(
       children: [
+        _buildPendingReviewsBanner(userId),
         Padding(
           padding: EdgeInsets.fromLTRB(
             AppSpacing.md,
@@ -419,6 +430,86 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Banner surfacing completed rides the user hasn't reviewed yet.
+  ///
+  /// [pendingReviewsProvider] already computes this list correctly, but
+  /// nothing in the app ever displayed it — the only nudge was a single
+  /// push notification fired at ride-completion time, so a user who missed
+  /// it lost the chance to review permanently. Showing it here, on a screen
+  /// the user visits normally, gives the prompt another chance to be seen.
+  Widget _buildPendingReviewsBanner(String userId) {
+    final pendingAsync = ref.watch(pendingReviewsProvider(userId));
+    return pendingAsync.when(
+      data: (pending) {
+        final visible = pending.where((review) {
+          final key = '${review['rideId']}|${review['revieweeId']}';
+          return !_dismissedPendingReviewKeys.contains(key);
+        }).toList();
+        if (visible.isEmpty) return const SizedBox.shrink();
+
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+            0,
+          ),
+          child: Column(
+            children: [
+              for (final review in visible)
+                _PendingReviewCard(
+                  revieweeName: review['revieweeName'] as String,
+                  revieweePhotoUrl:
+                      (review['revieweePhotoUrl'] as String?)
+                          ?.isNotEmpty ==
+                          true
+                      ? review['revieweePhotoUrl'] as String
+                      : null,
+                  onTap: () => _openPendingReview(review),
+                  onDismiss: () => setState(() {
+                    _dismissedPendingReviewKeys.add(
+                      '${review['rideId']}|${review['revieweeId']}',
+                    );
+                  }),
+                ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+    );
+  }
+
+  /// Routes to the correct review screen for the current user's role,
+  /// mirroring the branching in ride_completion_screen.dart's action panel
+  /// (read-only reference; that file is owned by the rides feature): the
+  /// driver rates the passenger(s) via [AppRoutes.driverRatePassenger], the
+  /// rider rates the driver via [AppRoutes.submitReview].
+  void _openPendingReview(Map<String, dynamic> review) {
+    final rideId = review['rideId'] as String;
+    final type = review['type'] as ReviewType;
+
+    if (type == ReviewType.rider) {
+      // Pending review is "rate the passenger" — current user is the driver.
+      context.push(
+        AppRoutes.driverRatePassenger.path.replaceFirst(':rideId', rideId),
+      );
+      return;
+    }
+
+    // Pending review is "rate the driver" — current user is the passenger.
+    final revieweeId = review['revieweeId'] as String;
+    final revieweeName = review['revieweeName'] as String;
+    context.push(
+      '${AppRoutes.submitReview.path}'
+      '?rideId=$rideId'
+      '&revieweeId=$revieweeId'
+      '&revieweeName=${Uri.encodeComponent(revieweeName)}'
+      '&reviewType=driverReview',
     );
   }
 
@@ -788,6 +879,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         return true;
       case NotificationType.rideBookingAccepted:
       case NotificationType.eventCancelled:
+      case NotificationType.eventUpdated:
       case NotificationType.rideBookingCancelled:
       case NotificationType.rideBookingRejected:
       case NotificationType.rideStartingSoon:
@@ -838,6 +930,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         }
         return;
       case NotificationType.eventCancelled:
+      case NotificationType.eventUpdated:
         if (notification.referenceId != null) {
           context.pushNamed(
             AppRoutes.eventDetail.name,
@@ -1005,6 +1098,83 @@ Color _notificationTypeColor(NotificationType type) {
       return AppColors.warning;
     default:
       return AppColors.textSecondary;
+  }
+}
+
+/// Compact, dismissible card prompting the user to review a completed ride's
+/// counterpart (driver or passenger). See [_NotificationsScreenState._buildPendingReviewsBanner].
+class _PendingReviewCard extends StatelessWidget {
+  const _PendingReviewCard({
+    required this.revieweeName,
+    required this.revieweePhotoUrl,
+    required this.onTap,
+    required this.onDismiss,
+  });
+
+  final String revieweeName;
+  final String? revieweePhotoUrl;
+  final VoidCallback onTap;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.all(14.w),
+        decoration: BoxDecoration(
+          color: AppColors.warning.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            PremiumAvatar(name: revieweeName, imageUrl: revieweePhotoUrl, size: 40),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.rateYourRide,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    l10n.rateYourExperienceWith(revieweeName),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.close_rounded,
+                size: 18.sp,
+                color: AppColors.textSecondary,
+              ),
+              onPressed: onDismiss,
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.warning,
+              size: 20.sp,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

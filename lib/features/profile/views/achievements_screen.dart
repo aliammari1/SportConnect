@@ -831,17 +831,19 @@ class _ChallengesTab extends StatelessWidget {
     );
   }
 
+  // NOTE: Only challenges with real, already-computed backing data are shown.
+  // GamificationStats currently exposes: totalXP, totalRides, ridesOffered,
+  // currentStreak, longestStreak, totalDistance, unlockedBadges, achievements.
+  // Week Warrior (totalRides) and Streak Keeper (currentStreak) map cleanly to
+  // those fields. Daily Commuter (rides completed today), Explorer (distinct
+  // routes taken), Social Rider (reviews submitted) and Eco Warrior
+  // (shared/carpooled rides) had no corresponding tracked stat anywhere and
+  // previously displayed hardcoded progress that never advanced (e.g. Explorer
+  // showed "0/3" text but a frozen 10% progress bar). Per the same precedent
+  // used for the Badges tab above, they are hidden until real tracking logic
+  // exists for each metric.
   List<_ChallengeData> _getChallenges(GamificationStats stats) {
     return [
-      _ChallengeData(
-        l10n.challengeDailyCommuter,
-        l10n.challengeDailyCommuterDesc,
-        '0/1',
-        0,
-        50,
-        Icons.today_rounded,
-        l10n.challengeResetsInHours('12'),
-      ),
       _ChallengeData(
         l10n.challengeWeekWarrior,
         l10n.challengeWeekWarriorDesc,
@@ -859,33 +861,6 @@ class _ChallengesTab extends StatelessWidget {
         150,
         Icons.local_fire_department_rounded,
         l10n.challengeKeepGoing,
-      ),
-      _ChallengeData(
-        l10n.challengeExplorer,
-        l10n.challengeExplorerDesc,
-        '0/3',
-        0.1,
-        300,
-        Icons.explore_rounded,
-        l10n.challengeResetsInDays('23'),
-      ),
-      _ChallengeData(
-        l10n.challengeSocialRider,
-        l10n.challengeSocialRiderDesc,
-        '0/5',
-        0,
-        100,
-        Icons.star_half_rounded,
-        l10n.challengeResetsInDays('3'),
-      ),
-      _ChallengeData(
-        l10n.challengeEcoWarrior,
-        l10n.challengeEcoWarriorDesc,
-        '0/3',
-        0,
-        75,
-        Icons.eco_rounded,
-        l10n.challengeResetsInHours('12'),
       ),
     ];
   }

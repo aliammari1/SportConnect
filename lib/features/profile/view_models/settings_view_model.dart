@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/repositories/settings_repository.dart';
+import 'package:sport_connect/core/services/firebase_service.dart';
 
 part 'settings_view_model.g.dart';
 
@@ -11,6 +12,7 @@ class SettingsState {
     this.languageCode,
     this.locale,
     this.notificationDialogShown = false,
+    this.analyticsCollectionEnabled = true,
   });
 
   factory SettingsState.fromRepository(SettingsRepository repository) {
@@ -18,6 +20,7 @@ class SettingsState {
       languageCode: repository.languageCode,
       locale: repository.locale,
       notificationDialogShown: repository.notificationDialogShown,
+      analyticsCollectionEnabled: repository.analyticsCollectionEnabled,
     );
   }
 
@@ -25,11 +28,13 @@ class SettingsState {
   final Locale? locale;
 
   final bool notificationDialogShown;
+  final bool analyticsCollectionEnabled;
 
   SettingsState copyWith({
     Object? languageCode = _unset,
     Object? locale = _unset,
     bool? notificationDialogShown,
+    bool? analyticsCollectionEnabled,
   }) {
     return SettingsState(
       languageCode: identical(languageCode, _unset)
@@ -38,6 +43,8 @@ class SettingsState {
       locale: identical(locale, _unset) ? this.locale : locale as Locale?,
       notificationDialogShown:
           notificationDialogShown ?? this.notificationDialogShown,
+      analyticsCollectionEnabled:
+          analyticsCollectionEnabled ?? this.analyticsCollectionEnabled,
     );
   }
 }
@@ -82,5 +89,22 @@ class SettingsViewModel extends _$SettingsViewModel {
     if (!ref.mounted) return;
 
     state = state.copyWith(notificationDialogShown: updatedValue);
+  }
+
+  /// Persists the user's analytics/crash-reporting consent choice and
+  /// applies it immediately to the running Firebase Analytics and
+  /// Crashlytics SDKs so the change takes effect without an app restart.
+  Future<void> setAnalyticsCollectionEnabled({required bool value}) async {
+    final updatedValue = await _repository.setAnalyticsCollectionEnabled(
+      value: value,
+    );
+
+    await ref
+        .read(firebaseServiceProvider)
+        .setCollectionEnabled(enabled: updatedValue);
+
+    if (!ref.mounted) return;
+
+    state = state.copyWith(analyticsCollectionEnabled: updatedValue);
   }
 }

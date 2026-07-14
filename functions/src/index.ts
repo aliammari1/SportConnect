@@ -11,6 +11,12 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onRequest, onCall, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import { logger } from "firebase-functions/v2";
+// v1 is imported specifically for the Auth "onDelete" trigger below: the v2
+// identity module (firebase-functions/v2/identity) only exposes *blocking*
+// triggers (beforeUserCreated / beforeUserSignedIn) that run BEFORE the
+// operation completes. There is no v2 equivalent of the classic, non-blocking
+// "fires after a user was deleted" trigger, so v1 is required for that use case.
+import * as functionsV1 from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import Stripe from "stripe";
 import {
@@ -3860,7 +3866,7 @@ export const createPaymentIntent = onCall(
 export const stripeWebhook = onRequest(
   // FIX: Webhooks do NOT need cors:true — they are called by Stripe, not by browsers.
   // Enabling CORS on a webhook can expose it unnecessarily.
-  { secrets: [stripeSecretKey, stripeWebhookSecret], region: "us-central1" },
+  { secrets: [stripeSecretKey, stripeWebhookSecret] },
   async (req, res) => {
     const stripe = getStripeClient(stripeSecretKey.value().trim());
     const sig = req.headers["stripe-signature"];
@@ -6147,3 +6153,427 @@ export const requestAccountDeletion = onRequest(
     res.status(200).json({ success: true, requestId: docRef.id });
   },
 );
+
+// ============================================
+// Auth: Cascade-delete safety net (fires after a Firebase Auth user is
+// deleted, regardless of who/what deleted them)
+// ============================================
+//
+// AuthRepository.deleteAccount() (Flutter client) already performs most of
+// this cleanup itself, client-side, immediately after deleting the Auth user.
+// This trigger is a best-effort safety net for the cases that leaves
+// uncovered: the app gets killed mid-cleanup, a client-side step silently
+// failed, or an admin deletes the user directly (e.g. from the Firebase
+// console) with no client involved at all.
+//
+// Every sub-task below is independent, idempotent (safe to run again if the
+// client already did it, or if this trigger itself is retried), and wrapped
+// in its own try/catch so a single failure never blocks the others — this is
+// a best-effort cascade, not a transaction, and must never throw.
+
+async function getConnectAccountBalanceTotalCents(
+  stripe: StripeClient,
+  stripeAccountId: string,
+): Promise<number> {
+  const balance = await stripe.balance.retrieve(
+    {},
+    { stripeAccount: stripeAccountId },
+  );
+  const entries = [...(balance.available ?? []), ...(balance.pending ?? [])];
+  return entries.reduce((sum, entry) => sum + (entry.amount ?? 0), 0);
+}
+
+async function hasPendingStripePayout(
+  stripe: StripeClient,
+  stripeAccountId: string,
+): Promise<boolean> {
+  const payouts = await stripe.payouts.list(
+    { limit: 10 },
+    { stripeAccount: stripeAccountId },
+  );
+  return payouts.data.some(
+    (p) => p.status === "pending" || p.status === "in_transit",
+  );
+}
+
+// Approximates "does this driver have an open dispute" from our own Firestore
+// records (payments → rideId → disputes), rather than Stripe's connected-account
+// dispute APIs, which are considerably more involved to query correctly for
+// Express/destination-charge setups. This errs conservative: any dispute status
+// other than "resolved"/"closed" counts as open, so a borderline case blocks the
+// account deletion rather than risking deleting an account with a live dispute.
+async function hasOpenDisputeForDriver(
+  db: Firestore,
+  driverId: string,
+): Promise<boolean> {
+  const paymentsSnap = await db
+    .collection("payments")
+    .where("driverId", "==", driverId)
+    .limit(200)
+    .get();
+  const rideIds = [
+    ...new Set(
+      paymentsSnap.docs
+        .map((d) => d.data().rideId)
+        .filter(
+          (id): id is string => typeof id === "string" && id.trim().length > 0,
+        ),
+    ),
+  ];
+  if (rideIds.length === 0) return false;
+
+  for (let i = 0; i < rideIds.length; i += 10) {
+    const chunk = rideIds.slice(i, i + 10);
+    const disputesSnap = await db
+      .collection("disputes")
+      .where("rideId", "in", chunk)
+      .get();
+    const openDispute = disputesSnap.docs.some((d) => {
+      const status = (d.data().status as string | undefined) ?? "open";
+      return status !== "resolved" && status !== "closed";
+    });
+    if (openDispute) return true;
+  }
+  return false;
+}
+
+async function flagStripeAccountForManualCleanup(
+  db: Firestore,
+  uid: string,
+  stripeAccountId: string,
+  reason: string,
+): Promise<void> {
+  try {
+    await db.collection("pending_stripe_cleanups").doc(uid).set(
+      {
+        uid,
+        stripeAccountId,
+        reason,
+        flaggedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+    logger.info("cascade cleanup: flagged Connect account for manual review", {
+      uid,
+      stripeAccountId,
+      reason,
+    });
+  } catch (err) {
+    logger.error("cascade cleanup: failed to write pending_stripe_cleanups flag", {
+      uid,
+      stripeAccountId,
+      error: err,
+    });
+  }
+}
+
+// Stripe cleanup: deletes the rider's Stripe Customer unconditionally (Stripe's
+// own docs confirm this only removes the Customer + attached payment methods —
+// underlying Charge/PaymentIntent/Invoice records remain in Stripe's ledger
+// regardless, so this does not destroy financial/chargeback history). For a
+// driver's Stripe Connect (Express) account, only deletes it when the account
+// has a zero balance, no pending payout, and no open dispute; otherwise flags it
+// in `pending_stripe_cleanups` for manual/ops follow-up rather than risking a
+// destructive call Stripe would likely reject anyway. Stripe itself — not
+// SportConnect — is the regulated party for Connect-account KYC/AML retention,
+// so no separate driver identity-document retention is needed on our side.
+async function cleanupStripeForDeletedUser(
+  db: Firestore,
+  stripe: StripeClient,
+  uid: string,
+): Promise<void> {
+  let userData: DocumentData | undefined;
+  let connectedAccountData: DocumentData | undefined;
+  try {
+    const [userDoc, connectedAccountDoc] = await Promise.all([
+      db.collection("users").doc(uid).get(),
+      db.collection("driver_connected_accounts").doc(uid).get(),
+    ]);
+    userData = userDoc.data();
+    connectedAccountData = connectedAccountDoc.data();
+  } catch (err) {
+    logger.error(
+      "cascade cleanup: failed to read user/connected-account docs for Stripe cleanup",
+      { uid, error: err },
+    );
+    return;
+  }
+
+  // --- Stripe Customer (rider side) ---
+  const stripeCustomerId =
+    typeof userData?.stripeCustomerId === "string" &&
+    userData.stripeCustomerId.trim().length > 0
+      ? userData.stripeCustomerId.trim()
+      : undefined;
+  if (stripeCustomerId) {
+    try {
+      await stripe.customers.del(stripeCustomerId);
+      logger.info("cascade cleanup: deleted Stripe customer", {
+        uid,
+        stripeCustomerId,
+      });
+    } catch (err) {
+      logger.warn("cascade cleanup: Stripe customer deletion failed (best-effort)", {
+        uid,
+        stripeCustomerId,
+        error: err,
+      });
+    }
+  }
+
+  // --- Stripe Connect account (driver side) ---
+  const connectedAccountId =
+    typeof connectedAccountData?.stripeAccountId === "string" &&
+    connectedAccountData.stripeAccountId.trim().length > 0
+      ? connectedAccountData.stripeAccountId.trim()
+      : undefined;
+  const stripeAccountId =
+    connectedAccountId ??
+    (typeof userData?.stripeAccountId === "string" &&
+    userData.stripeAccountId.trim().length > 0
+      ? userData.stripeAccountId.trim()
+      : undefined);
+
+  if (!stripeAccountId) return;
+
+  try {
+    const [balanceTotalCents, pendingPayout, openDispute] = await Promise.all([
+      getConnectAccountBalanceTotalCents(stripe, stripeAccountId),
+      hasPendingStripePayout(stripe, stripeAccountId),
+      hasOpenDisputeForDriver(db, uid),
+    ]);
+
+    if (balanceTotalCents !== 0 || pendingPayout || openDispute) {
+      const reasons = [
+        balanceTotalCents !== 0
+          ? `non-zero balance (${balanceTotalCents} cents)`
+          : null,
+        pendingPayout ? "pending payout" : null,
+        openDispute ? "open dispute" : null,
+      ].filter((r): r is string => r !== null);
+
+      await flagStripeAccountForManualCleanup(
+        db,
+        uid,
+        stripeAccountId,
+        reasons.join(", "),
+      );
+      return;
+    }
+
+    await stripe.accounts.del(stripeAccountId);
+    logger.info("cascade cleanup: deleted Stripe Connect account", {
+      uid,
+      stripeAccountId,
+    });
+  } catch (err) {
+    // Covers both a failure in the eligibility checks above and Stripe
+    // rejecting the delete call itself (e.g. a balance/payout/dispute state
+    // that changed between our check and the call, or any other Stripe-side
+    // constraint) — either way, flag it rather than silently losing track.
+    logger.warn(
+      "cascade cleanup: Connect account cleanup failed, flagging for manual review",
+      { uid, stripeAccountId, error: err },
+    );
+    await flagStripeAccountForManualCleanup(
+      db,
+      uid,
+      stripeAccountId,
+      `automatic cleanup failed: ${err instanceof Error ? err.message : "unknown error"}`,
+    );
+  }
+}
+
+// Deletes every vehicle owned by the deleted user plus its Storage images.
+// Queries `vehicles` directly by `ownerId` (mirroring vehicle_repository.dart)
+// rather than reading the user doc's `vehicleIds`, since the user doc may
+// already be gone by the time this fires (deleted client-side, or by another
+// admin action) — querying by the owning field is robust either way.
+async function cleanupVehiclesForDeletedUser(
+  db: Firestore,
+  uid: string,
+): Promise<void> {
+  try {
+    const vehiclesSnap = await db
+      .collection("vehicles")
+      .where("ownerId", "==", uid)
+      .get();
+    if (vehiclesSnap.empty) return;
+
+    const bucket = admin.storage().bucket();
+    for (const doc of vehiclesSnap.docs) {
+      try {
+        // Mirrors the upload path in vehicle_repository.dart's
+        // uploadVehicleImage: storage.ref('vehicles/{vehicleId}/{imagePath}').
+        await bucket.deleteFiles({ prefix: `vehicles/${doc.id}/` });
+      } catch (err) {
+        logger.warn(
+          "cascade cleanup: vehicle image cleanup failed (best-effort)",
+          { uid, vehicleId: doc.id, error: err },
+        );
+      }
+    }
+
+    const docs = vehiclesSnap.docs;
+    for (let i = 0; i < docs.length; i += 499) {
+      const chunk = docs.slice(i, i + 499);
+      const batch = db.batch();
+      chunk.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+    logger.info("cascade cleanup: deleted vehicles", {
+      uid,
+      count: docs.length,
+    });
+  } catch (err) {
+    logger.error("cascade cleanup: vehicle cleanup failed", { uid, error: err });
+  }
+}
+
+// Deletes every notification addressed to the deleted user. Pages through in
+// bounded chunks (rather than one unbounded read) so a long-lived user's full
+// notification history is deleted incrementally.
+async function cleanupNotificationsForDeletedUser(
+  db: Firestore,
+  uid: string,
+): Promise<void> {
+  try {
+    let totalDeleted = 0;
+    for (;;) {
+      const snap = await db
+        .collection("notifications")
+        .where("userId", "==", uid)
+        .limit(400)
+        .get();
+      if (snap.empty) break;
+
+      const batch = db.batch();
+      snap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+      totalDeleted += snap.size;
+
+      if (snap.size < 400) break;
+    }
+    logger.info("cascade cleanup: deleted notifications", {
+      uid,
+      count: totalDeleted,
+    });
+  } catch (err) {
+    logger.error("cascade cleanup: notification cleanup failed", {
+      uid,
+      error: err,
+    });
+  }
+}
+
+// Removes the deleted user from every event's participantIds — the exact same
+// arrayRemove pattern AuthRepository.deleteAccount already uses for chat
+// participantIds, just extended to events (which it was never applied to).
+async function cleanupEventParticipationForDeletedUser(
+  db: Firestore,
+  uid: string,
+): Promise<void> {
+  try {
+    const eventsSnap = await db
+      .collection("events")
+      .where("participantIds", "array-contains", uid)
+      .get();
+    if (eventsSnap.empty) return;
+
+    const docs = eventsSnap.docs;
+    for (let i = 0; i < docs.length; i += 499) {
+      const chunk = docs.slice(i, i + 499);
+      const batch = db.batch();
+      chunk.forEach((d) => {
+        batch.update(d.ref, {
+          participantIds: FieldValue.arrayRemove(uid),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      });
+      await batch.commit();
+    }
+    logger.info("cascade cleanup: removed user from events", {
+      uid,
+      count: docs.length,
+    });
+  } catch (err) {
+    logger.error("cascade cleanup: event participant cleanup failed", {
+      uid,
+      error: err,
+    });
+  }
+}
+
+// Anonymizes (does NOT delete) reviews written ABOUT the deleted user: the
+// rating/comment stays for platform integrity, only the identifying
+// revieweeName/revieweePhotoUrl fields are scrubbed. Reviews the user wrote
+// themselves are already deleted by AuthRepository.deleteAccount
+// (reviewerId == uid); this only covers the other side (revieweeId == uid).
+async function anonymizeReviewsForDeletedUser(
+  db: Firestore,
+  uid: string,
+): Promise<void> {
+  try {
+    const reviewsSnap = await db
+      .collection("reviews")
+      .where("revieweeId", "==", uid)
+      .get();
+    if (reviewsSnap.empty) return;
+
+    const docs = reviewsSnap.docs;
+    for (let i = 0; i < docs.length; i += 499) {
+      const chunk = docs.slice(i, i + 499);
+      const batch = db.batch();
+      chunk.forEach((d) => {
+        batch.update(d.ref, {
+          revieweeName: "Deleted user",
+          revieweePhotoUrl: null,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      });
+      await batch.commit();
+    }
+    logger.info("cascade cleanup: anonymized reviews", {
+      uid,
+      count: docs.length,
+    });
+  } catch (err) {
+    logger.error("cascade cleanup: review anonymization failed", {
+      uid,
+      error: err,
+    });
+  }
+}
+
+export const onAuthUserDeleted = functionsV1
+  .runWith({ secrets: [stripeSecretKey] })
+  .auth.user()
+  .onDelete(async (user) => {
+    const uid = user.uid;
+    const db = admin.firestore();
+
+    let stripe: StripeClient | undefined;
+    try {
+      stripe = getStripeClient(stripeSecretKey.value().trim());
+    } catch (err) {
+      logger.error(
+        "cascade cleanup: failed to load Stripe client — skipping Stripe cleanup only",
+        { uid, error: err },
+      );
+    }
+
+    // Run every sub-task in parallel: each is independent, catches its own
+    // errors internally, and never throws — so one failing does not stop the
+    // others from completing.
+    await Promise.all([
+      stripe
+        ? cleanupStripeForDeletedUser(db, stripe, uid)
+        : Promise.resolve(),
+      cleanupVehiclesForDeletedUser(db, uid),
+      cleanupNotificationsForDeletedUser(db, uid),
+      cleanupEventParticipationForDeletedUser(db, uid),
+      anonymizeReviewsForDeletedUser(db, uid),
+    ]);
+
+    logger.info("onAuthUserDeleted: cascade cleanup finished", { uid });
+  });

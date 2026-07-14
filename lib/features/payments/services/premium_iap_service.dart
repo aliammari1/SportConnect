@@ -364,10 +364,13 @@ class PremiumIapService extends _$PremiumIapService {
       return androidProduct;
     }
 
-    return products.firstWhere(
-      (product) => product.id == plan.iapProductId,
-      orElse: () => products.first,
-    );
+    for (final product in products) {
+      if (product.id == plan.iapProductId) {
+        return product;
+      }
+    }
+
+    return products.first;
   }
 
   /// Selects the base-plan-only offer (no promotional offerId) for the given

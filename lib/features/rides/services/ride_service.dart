@@ -44,7 +44,7 @@ class RideService extends _$RideService {
     try {
       final profileRepo = ref.read(profileRepositoryProvider);
       await profileRepo.addXP(ride.driverId, 10);
-    } on Exception catch (e) {
+    } catch (e) {
       TalkerService.error('Failed to award ride creation XP: $e');
     }
 
@@ -137,7 +137,7 @@ class RideService extends _$RideService {
                 'refund required.',
               );
             }
-          } on Exception catch (e, st) {
+          } catch (e, st) {
             failedBookingIds.add(booking.id);
             TalkerService.error(
               'Failed to cancel booking ${booking.id} for ride $rideId',
@@ -147,7 +147,7 @@ class RideService extends _$RideService {
           }
         }
       }
-    } on Exception catch (e, st) {
+    } catch (e, st) {
       TalkerService.error('Failed to load bookings for ride $rideId', e, st);
       rethrow;
     }
@@ -198,11 +198,12 @@ class RideService extends _$RideService {
       for (final booking in bookings) {
         if (booking.status == BookingStatus.accepted) {
           completedPassengerIds.add(booking.passengerId);
-          passengerSeatsBooked[booking.passengerId] =
-              booking.seatsBooked > 0 ? booking.seatsBooked : 1;
+          passengerSeatsBooked[booking.passengerId] = booking.seatsBooked > 0
+              ? booking.seatsBooked
+              : 1;
         }
       }
-    } on Exception catch (e) {
+    } catch (e) {
       TalkerService.error('Failed to fetch booking statuses: $e');
     }
 
@@ -317,7 +318,7 @@ class RideService extends _$RideService {
       TalkerService.info(
         'Ride $rideId completed. XP awarded: $xp, estimated fare: ${estimatedFareInCents / 100}',
       );
-    } on Exception catch (e) {
+    } catch (e) {
       // Stats failure should NOT roll back the completion
       TalkerService.error('Failed to record ride completion stats: $e');
     }
@@ -396,7 +397,7 @@ class RideService extends _$RideService {
           reason: reason,
         );
       }
-    } on Exception catch (e) {
+    } catch (e) {
       // Notification failure should not break the main cancellation flow
       TalkerService.error('Failed to notify passengers of cancellation: $e');
     }
@@ -423,7 +424,7 @@ class RideService extends _$RideService {
       final profileRepo = ref.read(profileRepositoryProvider);
       await profileRepo.addXP(passengerId, -20);
       await profileRepo.resetStreak(passengerId);
-    } on Exception catch (e) {
+    } catch (e) {
       TalkerService.error('Failed to apply no-show gamification penalty: $e');
     }
 
@@ -455,7 +456,7 @@ class RideService extends _$RideService {
           priority: NotificationPriority.high,
         ),
       );
-    } on Exception catch (e) {
+    } catch (e) {
       TalkerService.error('Failed to send no-show notification: $e');
     }
   }
@@ -529,7 +530,7 @@ class RideService extends _$RideService {
           ),
         );
       }
-    } on Exception catch (e) {
+    } catch (e) {
       TalkerService.error('Failed to send delay notifications: $e');
     }
   }

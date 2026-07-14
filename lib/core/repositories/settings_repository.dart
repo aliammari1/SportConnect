@@ -26,6 +26,8 @@ class SettingsRepository {
 
   static const String _languageCodeKey = 'language_code';
   static const String _notificationDialogShownKey = 'notification_dialog_shown';
+  static const String _analyticsCollectionEnabledKey =
+      'analytics_collection_enabled';
   static const String _premiumPromptPrefix = 'premium_prompt_seen_';
   static const String _onboardingDraftPrefix = 'onboarding_setup_draft_';
 
@@ -60,6 +62,23 @@ class SettingsRepository {
 
   Future<bool> setNotificationDialogShown({bool value = true}) async {
     await _prefs.setBool(_notificationDialogShownKey, value);
+    return value;
+  }
+
+  // ============================================================
+  // Analytics & Crash Reporting Consent
+  // ============================================================
+
+  /// Whether the user has opted in to sharing analytics and crash reports.
+  ///
+  /// Defaults to `true` (opt-out model) so behavior is unchanged for users
+  /// who have never visited the toggle in Settings.
+  bool get analyticsCollectionEnabled {
+    return _prefs.getBool(_analyticsCollectionEnabledKey) ?? true;
+  }
+
+  Future<bool> setAnalyticsCollectionEnabled({required bool value}) async {
+    await _prefs.setBool(_analyticsCollectionEnabledKey, value);
     return value;
   }
 

@@ -65,7 +65,7 @@ final class DriverRideScreenUiViewModelProvider
 }
 
 String _$driverRideScreenUiViewModelHash() =>
-    r'f7dcfb1209030e3b796352d2e2df7c104a1b2b66';
+    r'fadf71629048bd456df0ac477cac6e0f3d09e3a4';
 
 final class DriverRideScreenUiViewModelFamily extends $Family
     with
