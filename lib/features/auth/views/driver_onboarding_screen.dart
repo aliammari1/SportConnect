@@ -281,7 +281,16 @@ class _DriverOnboardingScreenState
       _restoreSetupDraft(user.uid);
       _startDraftAutosave(user.uid);
 
-      if (skipProfileStep && state.driverCurrentStep == 0) {
+      // Re-read the step here rather than reusing the `state` snapshot taken
+      // above: `_restoreSetupDraft` can itself advance `driverCurrentStep`
+      // (e.g. to 2, if the local draft shows the vehicle step was already
+      // completed in a prior session). Checking the pre-restore snapshot
+      // would unconditionally force the step back down to 1, discarding
+      // that just-restored progress.
+      final stepAfterRestore = ref
+          .read(onboardingViewModelProvider)
+          .driverCurrentStep;
+      if (skipProfileStep && stepAfterRestore == 0) {
         notifier.setDriverCurrentStep(1);
       }
     });
@@ -379,6 +388,32 @@ class _DriverOnboardingScreenState
       _PF.gender: patchedGender ?? existingGender,
       _PF.expertise: user.expertise,
     });
+
+    // Phone/address live outside the ReactiveForm — IntlPhoneInput and
+    // AddressAutocompleteField only consume `initialValue` once, in their own
+    // initState, so unlike the form fields above they never re-sync on their
+    // own when a fresher `user` snapshot arrives (e.g. this screen's very
+    // first build racing the currentUser stream's first emission). Without
+    // this, a driver with an already-saved phone/address who lands here
+    // before that first snapshot resolves gets blank fields, and saving
+    // silently overwrites their real data with empty strings.
+    final patchedPhone = switch (user) {
+      DriverModel(:final phoneNumber) => phoneNumber,
+      RiderModel(:final phoneNumber) => phoneNumber,
+      PendingUserModel(:final phoneNumber) => phoneNumber,
+    };
+    if ((patchedPhone ?? '').isNotEmpty) {
+      _phoneKey.currentState?.setValue(patchedPhone);
+    }
+
+    final patchedAddress = switch (user) {
+      DriverModel(:final address) => address,
+      RiderModel(:final address) => address,
+      PendingUserModel() => null,
+    };
+    if ((patchedAddress ?? '').isNotEmpty) {
+      _addressKey.currentState?.setText(patchedAddress);
+    }
   }
 
   Future<void> _saveProfileAndContinue() async {

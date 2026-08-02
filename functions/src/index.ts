@@ -6056,7 +6056,6 @@ export const requestAccountDeletion = onRequest(
   {
     secrets: [resendApiKey, supportFromEmail, supportInboxEmail],
     cors: true,
-    region: "us-central1",
   },
   async (req, res) => {
     if (req.method !== "POST") {

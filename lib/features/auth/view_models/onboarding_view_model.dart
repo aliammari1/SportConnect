@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/repositories/settings_repository.dart';
 import 'package:sport_connect/core/utils/user_facing_error.dart';
+import 'package:sport_connect/features/auth/models/auth_exception.dart';
 import 'package:sport_connect/features/auth/view_models/auth_view_model.dart';
 import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
 import 'package:sport_connect/features/vehicles/models/vehicle_model.dart';
@@ -285,7 +286,15 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       final authActions = ref.read(authActionsViewModelProvider.notifier);
       final uid = authActions.currentUser?.uid;
       if (uid == null) {
-        throw StateError('User not authenticated');
+        // Must be an Exception, not an Error/StateError: this is a real
+        // runtime condition (session expired mid-onboarding), and the
+        // `on Exception catch` below only catches Exception subtypes — a
+        // StateError here would crash the app uncaught instead of showing
+        // an error message.
+        throw const AuthException(
+          code: 'not-authenticated',
+          message: 'Your session has expired. Please sign in again.',
+        );
       }
       await authActions.finalizeRoleAs(uid, UserRole.driver);
       if (!ref.mounted) return;
@@ -315,7 +324,15 @@ class OnboardingViewModel extends _$OnboardingViewModel {
       final authActions = ref.read(authActionsViewModelProvider.notifier);
       final uid = authActions.currentUser?.uid;
       if (uid == null) {
-        throw StateError('User not authenticated');
+        // Must be an Exception, not an Error/StateError: this is a real
+        // runtime condition (session expired mid-onboarding), and the
+        // `on Exception catch` below only catches Exception subtypes — a
+        // StateError here would crash the app uncaught instead of showing
+        // an error message.
+        throw const AuthException(
+          code: 'not-authenticated',
+          message: 'Your session has expired. Please sign in again.',
+        );
       }
       await authActions.finalizeRoleAs(uid, UserRole.driver);
       if (!ref.mounted) return;

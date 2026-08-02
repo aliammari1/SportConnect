@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/utils/user_facing_error.dart';
+import 'package:sport_connect/features/auth/models/auth_exception.dart';
 import 'package:sport_connect/features/auth/view_models/auth_view_model.dart';
 import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
 
@@ -54,7 +55,16 @@ class RoleSelectionViewModel extends _$RoleSelectionViewModel {
       // and native app restarts resume the correct setup flow.
       final authActions = ref.read(authActionsViewModelProvider.notifier);
       final currentUser = authActions.currentUser;
-      if (currentUser == null) throw StateError('User not authenticated');
+      if (currentUser == null) {
+        // Must be an Exception, not an Error/StateError: this is a real
+        // runtime condition (session expired), and the `on Exception catch`
+        // below only catches Exception subtypes — a StateError here would
+        // crash the app uncaught instead of showing an error message.
+        throw const AuthException(
+          code: 'not-authenticated',
+          message: 'Your session has expired. Please sign in again.',
+        );
+      }
 
       await ref.read(profileActionsViewModelProvider.notifier).updateProfile(
         currentUser.uid,

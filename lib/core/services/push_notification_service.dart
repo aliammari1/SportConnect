@@ -137,9 +137,17 @@ class PushNotificationService {
 
   /// Save the current FCM token to the user's Firestore document.
   ///
-  /// Uses `set` with merge so it works even if the document does not yet
-  /// contain an `fcmToken` field (avoids the `update`-on-missing-field
-  /// silent failure).
+  /// Uses `update`, not `set(merge: true)`: the latter creates the document
+  /// if it doesn't exist yet, which matters because this is called from a
+  /// global auth-state listener that can race the profile document being
+  /// written during sign-up (Firebase Auth signs the user in before the
+  /// Firestore profile doc is created). Winning that race with `set(merge:
+  /// true)` would create a malformed `users/{uid}` doc containing only the
+  /// token fields — missing `role` and everything else — which then fails to
+  /// deserialize forever after. `update` throws NOT_FOUND instead (caught
+  /// below as best-effort) when the doc isn't there yet, and otherwise adds
+  /// the field to the existing document exactly like `set(merge: true)`
+  /// would.
   /// Revoke the current device FCM token and clear it from Firestore.
   ///
   /// Call on every logout so the device stops receiving notifications after
@@ -188,20 +196,17 @@ class PushNotificationService {
         return;
       }
 
-      // Targeted merge: only touch the two token fields to avoid a
+      // Targeted update: only touch the two token fields to avoid a
       // read-then-write race that could overwrite concurrent profile updates.
       // fcmTokenUpdatedAt uses a server timestamp so stale-token pruning jobs
       // can reliably compare age regardless of device clock skew.
       await _firebaseService.firestore
           .collection(AppConstants.usersCollection)
           .doc(userId)
-          .set(
-            {
-              'fcmToken': token,
-              'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          .update({
+            'fcmToken': token,
+            'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+          });
 
       TalkerService.info('FCM token saved for user $userId');
 
@@ -213,13 +218,10 @@ class PushNotificationService {
             await _firebaseService.firestore
                 .collection(AppConstants.usersCollection)
                 .doc(userId)
-                .set(
-                  {
-                    'fcmToken': newToken,
-                    'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
-                  },
-                  SetOptions(merge: true),
-                );
+                .update({
+                  'fcmToken': newToken,
+                  'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+                });
             TalkerService.info('FCM token refreshed for user $userId');
           } on Object catch (e) {
             TalkerService.warning('FCM token refresh save failed: $e');

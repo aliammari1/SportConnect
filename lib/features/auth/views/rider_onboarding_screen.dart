@@ -210,6 +210,33 @@ class _RiderOnboardingScreenState extends ConsumerState<RiderOnboardingScreen> {
       _FormFields.gender: patchedGender ?? existingGender,
       _FormFields.expertise: user.expertise,
     });
+
+    // Phone/address live outside the ReactiveForm — IntlPhoneInput and
+    // AddressAutocompleteField only consume `initialValue` once, in their own
+    // initState, so unlike the form fields above they never re-sync on their
+    // own when a fresher `user` snapshot arrives (e.g. this screen's very
+    // first build racing the currentUser stream's first emission). Without
+    // this, a rider with an already-saved phone/address who lands here
+    // before that first snapshot resolves gets blank fields — and the
+    // "your saved info has been prefilled" snackbar above fires regardless,
+    // so saving would silently overwrite their real data with empty strings.
+    final patchedPhone = switch (user) {
+      final RiderModel rider => rider.phoneNumber,
+      final DriverModel driver => driver.phoneNumber,
+      final PendingUserModel pending => pending.phoneNumber,
+    };
+    if ((patchedPhone ?? '').isNotEmpty) {
+      _phoneKey.currentState?.setValue(patchedPhone);
+    }
+
+    final patchedAddress = switch (user) {
+      final RiderModel rider => rider.address,
+      final DriverModel driver => driver.address,
+      PendingUserModel() => null,
+    };
+    if ((patchedAddress ?? '').isNotEmpty) {
+      _addressKey.currentState?.setText(patchedAddress);
+    }
   }
 
   Widget _buildNameDisplay(String name, bool hasPhoto, String? photoUrl) {

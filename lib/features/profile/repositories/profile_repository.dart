@@ -199,11 +199,17 @@ class ProfileRepository {
 
   Future<void> addVehicle(String uid, VehicleModel vehicle) async {
     final user = await getUserById(uid);
+    // These are real runtime conditions (missing/wrong-role profile doc), not
+    // programmer errors — must be Exceptions, not StateErrors, so the
+    // `on Exception catch` in OnboardingViewModel.saveVehicle actually catches
+    // them instead of crashing the app uncaught.
     if (user == null) {
-      throw StateError('User not found for vehicle creation');
+      throw Exception(
+        'We could not find your profile. Please sign out and sign back in, then try again.',
+      );
     }
     if (user is! DriverModel && user is! PendingUserModel) {
-      throw StateError('Only drivers or pending users can add vehicles');
+      throw Exception('Only drivers can add a vehicle.');
     }
 
     // Use a batch to atomically create the vehicle document and append its
@@ -221,13 +227,17 @@ class ProfileRepository {
 
   Future<void> updateVehicle(String uid, VehicleModel vehicle) async {
     final user = await getUserById(uid);
+    // Real runtime conditions, not programmer errors — see addVehicle above
+    // for why these must be Exceptions rather than StateErrors.
     if (user == null) {
-      throw StateError('User not found for vehicle update');
+      throw Exception(
+        'We could not find your profile. Please sign out and sign back in, then try again.',
+      );
     }
     // PROF-9: mirror addVehicle's guard (drivers and pending drivers) and fail
     // explicitly on rejection instead of silently dropping the write.
     if (user is! DriverModel && user is! PendingUserModel) {
-      throw StateError('Only drivers or pending users can update vehicles');
+      throw Exception('Only drivers can update a vehicle.');
     }
 
     // Update vehicle in its own collection
@@ -238,13 +248,17 @@ class ProfileRepository {
 
   Future<void> removeVehicle(String uid, String vehicleId) async {
     final user = await getUserById(uid);
+    // Real runtime conditions, not programmer errors — see addVehicle above
+    // for why these must be Exceptions rather than StateErrors.
     if (user == null) {
-      throw StateError('User not found for vehicle removal');
+      throw Exception(
+        'We could not find your profile. Please sign out and sign back in, then try again.',
+      );
     }
     // PROF-9: mirror addVehicle's guard (drivers and pending drivers) and fail
     // explicitly on rejection instead of silently dropping the write.
     if (user is! DriverModel && user is! PendingUserModel) {
-      throw StateError('Only drivers or pending users can remove vehicles');
+      throw Exception('Only drivers can remove a vehicle.');
     }
 
     // Use a batch to atomically delete the vehicle document and remove the
@@ -383,9 +397,7 @@ class ProfileRepository {
     // Use an untyped document reference so the transaction can read/write the
     // server-managed gamification.lastActiveDate timestamp, which is not part
     // of the typed UserModel converter.
-    final docRef = _firestore
-        .collection(AppConstants.usersCollection)
-        .doc(uid);
+    final docRef = _firestore.collection(AppConstants.usersCollection).doc(uid);
 
     await _firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(docRef);

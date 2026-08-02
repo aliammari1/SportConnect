@@ -1003,7 +1003,18 @@ class AuthRepository {
     try {
       final existing = await getUserData(uid);
       if (existing == null) {
-        throw StateError('finalizeRoleAs: no user document found for $uid');
+        // A genuine runtime condition (the profile doc is missing/unreadable
+        // for a signed-in user), not a programmer error — must be an
+        // Exception, not an Error/StateError, so the `on Exception catch`
+        // handlers in OnboardingViewModel actually catch it instead of it
+        // crashing the app uncaught.
+        TalkerService.error('finalizeRoleAs: no user document found for $uid');
+        throw const AuthException(
+          code: 'user-document-not-found',
+          message:
+              'We could not find your profile. Please sign out and sign '
+              'back in, then try again.',
+        );
       }
 
       final rawDoc = await _firebaseService.firestore
