@@ -10,20 +10,35 @@ jobs:
 
     permissions:
       contents: read
-
+    env:
+      # ── App Store Connect API key ─────────────────────────────────────────
+      # All three are read automatically by the codemagic CLI from env.
+      APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+      # ── RSA 2048 certificate private key ─────────────────────────────────
+      # Generated ONCE with: ssh-keygen -t rsa -b 2048 -m PEM -f cert_key -q -N ""
+      # The CLI uses this key to fetch the existing Apple distribution cert,
+      # or creates one if it doesn't exist yet. Never regenerate this key or
+      # a new Apple certificate will be created.
+      CERTIFICATE_PRIVATE_KEY: ${{ secrets.CERTIFICATE_PRIVATE_KEY }}
+      # ── 10-digit Apple ID of the app in App Store Connect ─────────────────
+      APP_STORE_APPLE_ID: ${{ secrets.APP_STORE_APP_ID }}
+      # ── Primary app bundle ID ─────────────────────────────────────────────
+      IOS_BUNDLE_ID: com.sportconnect.SportConnectApplication
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: "stable"
           cache: true
 
       - name: Install Flutter dependencies
         run: flutter pub get
-        
+
       - name: Setup Upterm SSH session
         uses: owenthereal/action-upterm@v1
         with:
