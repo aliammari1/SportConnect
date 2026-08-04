@@ -2,7 +2,7 @@ name: sport_connect
 description: "SportConnect - Social carpooling app for sports enthusiasts"
 publish_to: "none"
 
-version: 1.2.8
+version: 1.2.9
 
 environment:
   sdk: ^3.11.0
