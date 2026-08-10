@@ -469,34 +469,39 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
     );
   }
 
+  Future<void> _showDatePicker(BuildContext context) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _searchState.draftDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (!mounted) return;
+
+    if (date != null) {
+      ref.read(rideSearchViewModelProvider.notifier).setDraftDate(date);
+      // Index 2 = "Custom" chip (the third entry in `_buildQuickDateSelection`).
+      // Previously this highlighted the "This Weekend" chip, which was
+      // misleading when the user picked any other date.
+      ref.read(rideSearchViewModelProvider.notifier).setSelectedDateChip(2);
+    }
+  }
+
   Widget _buildCompactDateSelector() {
     return GestureDetector(
-      onTap: () async {
-        final date = await showDatePicker(
-          context: context,
-          initialDate: _searchState.draftDate,
-          firstDate: DateTime.now(),
-          lastDate: DateTime.now().add(const Duration(days: 90)),
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.light(
-                  primary: AppColors.primary,
-                  onSurface: AppColors.textPrimary,
-                ),
-              ),
-              child: child!,
-            );
-          },
-        );
-
-        if (!mounted) return;
-
-        if (date != null) {
-          ref.read(rideSearchViewModelProvider.notifier).setDraftDate(date);
-          ref.read(rideSearchViewModelProvider.notifier).setSelectedDateChip(2);
-        }
-      },
+      onTap: () => _showDatePicker(context),
       child: Container(
         constraints: BoxConstraints(minHeight: 42.h),
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
@@ -700,7 +705,12 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
         AppLocalizations.of(context).tomorrow,
         now.add(const Duration(days: 1)),
       ),
-      (AppLocalizations.of(context).thisWeekend, _getNextWeekend()),
+      // Third chip is a passive indicator for "custom date picked via picker".
+      // It intentionally does NOT auto-set a date when tapped — the date
+      // picker is the canonical way to pick a custom date. Index 2 mirrors
+      // RideSearchState.selectedDateChip semantics (`// 0=Today, 1=Tomorrow,
+      // 2=Custom`).
+      (AppLocalizations.of(context).custom_label, _searchState.draftDate),
     ];
 
     return Container(
@@ -718,15 +728,20 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                 return Padding(
                   padding: EdgeInsets.only(right: 8.w),
                   child: GestureDetector(
-                    onTap: () {
-                      unawaited(HapticFeedback.selectionClick());
-                      ref
-                          .read(rideSearchViewModelProvider.notifier)
-                          .setSelectedDateChip(index);
-                      ref
-                          .read(rideSearchViewModelProvider.notifier)
-                          .setDraftDate(dates[index].$2);
-                    },
+                    onTap: index == 2
+                        // Custom chip is a passive marker — opening the
+                        // picker is the canonical action and keeps the
+                        // current draft date intact.
+                        ? () => _showDatePicker(context)
+                        : () {
+                            unawaited(HapticFeedback.selectionClick());
+                            ref
+                                .read(rideSearchViewModelProvider.notifier)
+                                .setSelectedDateChip(index);
+                            ref
+                                .read(rideSearchViewModelProvider.notifier)
+                                .setDraftDate(dates[index].$2);
+                          },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       constraints: BoxConstraints(maxWidth: 150.w),
@@ -768,17 +783,6 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
         ],
       ),
     ).animate().fadeIn(delay: 100.ms);
-  }
-
-  DateTime _getNextWeekend() {
-    final now = DateTime.now();
-
-    if (now.weekday == DateTime.saturday || now.weekday == DateTime.sunday) {
-      return now;
-    }
-
-    final daysUntilSaturday = DateTime.saturday - now.weekday;
-    return now.add(Duration(days: daysUntilSaturday));
   }
 
   Widget _buildActiveFilters() {

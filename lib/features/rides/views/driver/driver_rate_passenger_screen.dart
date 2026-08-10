@@ -50,8 +50,24 @@ class _DriverRatePassengerScreenState
   // flag per booking.
   final Set<String> _ratedBookingIds = {};
 
+  // Owns the comment field's text controller. Hoisted out of build() so a
+  // single TextEditingController instance is reused across rebuilds (was
+  // previously allocated inline on every build, leaking each instance and
+  // snapping the caret to the end of the text on every state change).
+  late final TextEditingController _commentController;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialComment = ref
+            .read(driverPassengerRatingViewModelProvider(widget.rideId))
+            .comment;
+    _commentController = TextEditingController(text: initialComment);
+  }
+
   @override
   void dispose() {
+    _commentController.dispose();
     super.dispose();
   }
 
@@ -61,6 +77,22 @@ class _DriverRatePassengerScreenState
     final formState = ref.watch(
       driverPassengerRatingViewModelProvider(widget.rideId),
     );
+
+    // Keep the controller text in sync when the view model clears the comment
+    // externally (e.g. after submitting a rating for one passenger and
+    // advancing to the next). Without this, the TextField would still show
+    // the previous passenger's comment.
+    ref.listen(driverPassengerRatingViewModelProvider(widget.rideId), (
+      previous,
+      next,
+    ) {
+      if (next.comment != _commentController.text) {
+        _commentController.value = TextEditingValue(
+          text: next.comment,
+          selection: TextSelection.collapsed(offset: next.comment.length),
+        );
+      }
+    });
 
     final bookings = vmState.bookings
         .where(
@@ -344,10 +376,7 @@ class _DriverRatePassengerScreenState
                         ).notifier,
                       )
                       .setComment(v),
-                  controller: TextEditingController(text: formState.comment)
-                    ..selection = TextSelection.collapsed(
-                      offset: formState.comment.length,
-                    ),
+                  controller: _commentController,
                   maxLines: 4,
                   maxLength: 300,
                   style: TextStyle(

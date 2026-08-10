@@ -81,6 +81,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   @override
   void dispose() {
+    _form.dispose();
     _animationController.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();

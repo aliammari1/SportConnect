@@ -104,7 +104,10 @@ const List<_VehicleColorOption> _vehicleColorOptions = [
     aliases: ['green', 'vert'],
   ),
   _VehicleColorOption(
-    label: 'Beige / Brown',
+    // Use a hyphen rather than "/" — the color validator's regex
+    // ([\p{L}\s\-']+) only accepts letters, whitespace, hyphens, and
+    // apostrophes. A slash fails validation as soon as the chip is tapped.
+    label: 'Beige - Brown',
     color: Color(0xFF92400E),
     aliases: ['brown', 'marron', 'bronze', 'champagne', 'beige'],
   ),

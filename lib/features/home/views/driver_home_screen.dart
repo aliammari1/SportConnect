@@ -271,6 +271,9 @@ class _DriverDashboard extends ConsumerWidget {
           ref.refresh(driverStatsProvider.future),
           ref.refresh(pendingRideRequestsProvider.future),
           ref.refresh(upcomingDriverRidesProvider.future),
+          ref
+              .read(driverLocationViewModelProvider.notifier)
+              .initialize(force: true),
         ]);
       },
       child: MaxWidthContainer(

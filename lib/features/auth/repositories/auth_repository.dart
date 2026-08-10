@@ -153,7 +153,6 @@ class AuthRepository {
     required String username,
     required UserRole role,
     String? phone,
-    DateTime? dateOfBirth,
     Expertise expertise = Expertise.rookie,
     File? profileImage,
   }) async {
@@ -180,7 +179,6 @@ class AuthRepository {
           username: username.trim(),
           photoUrl: photoUrl,
           phoneNumber: phone?.trim(),
-          dateOfBirth: dateOfBirth,
           expertise: expertise,
           selectedRoleIntent: role.name,
         );
@@ -271,6 +269,15 @@ class AuthRepository {
   }
 
   /// Get user data from Firestore
+  ///
+  /// Defensively wraps [UserModel.fromJson] so that a user document that is
+  /// missing the freezed union discriminator (`role`) — typically a legacy
+  /// doc or one written by an older client without the `$type` field — does
+  /// not throw a [CheckedFromJsonException] (which is an `Error`, not an
+  /// `Exception`, so it would otherwise bypass the `on Exception` handler).
+  /// We log the failure and return `null` so the route guard redirects the
+  /// user to role selection / onboarding instead of stranding them on an
+  /// infinite spinner.
 
   Future<UserModel?> getUserData(String uid) async {
     try {
@@ -282,16 +289,41 @@ class AuthRepository {
     } on Exception catch (e, st) {
       TalkerService.error('Get user data error', e, st);
     }
+    // ignore: avoid_catching_errors
+    on Error catch (e, st) {
+      // Catch CheckedFromJsonException and any other freezed Errors. Returning
+      // null lets the route guard redirect the user to onboarding.
+      TalkerService.error(
+        'Get user data — freezed deserialization failed for $uid',
+        e,
+        st,
+      );
+    }
     return null;
   }
 
   Stream<UserModel?> getUserDataStream(String uid) {
-    return _usersCollection.doc(uid).snapshots().map((doc) {
-      if (doc.exists && doc.data() != null) {
-        return doc.data();
-      }
-      return null;
-    });
+    return _usersCollection
+        .doc(uid)
+        .snapshots()
+        .map<UserModel?>((doc) {
+          if (doc.exists && doc.data() != null) {
+            try {
+              return doc.data();
+              // ignore: avoid_catching_errors
+            } on Error catch (e, st) {
+              // Swallow freezed deserialization errors in the stream and log
+              // them so a single bad doc does not break the live listener.
+              TalkerService.error(
+                'getUserDataStream — freezed deserialization failed for $uid',
+                e,
+                st,
+              );
+              return null;
+            }
+          }
+          return null;
+        });
   }
 
   /// Sign out
@@ -1028,8 +1060,6 @@ class AuthRepository {
       final address = rawData['address'] as String?;
       final latitude = (rawData['latitude'] as num?)?.toDouble();
       final longitude = (rawData['longitude'] as num?)?.toDouble();
-      final dateOfBirthTs = rawData['dateOfBirth'] as Timestamp?;
-      final dateOfBirth = dateOfBirthTs?.toDate();
       final vehicleIds = (rawData['vehicleIds'] as List<dynamic>? ?? const [])
           .whereType<String>()
           .toList(growable: false);
@@ -1055,7 +1085,6 @@ class AuthRepository {
           address: address,
           latitude: latitude,
           longitude: longitude,
-          dateOfBirth: dateOfBirth,
           expertise: existing.expertise,
           isEmailVerified: existing.isEmailVerified,
           isBanned: existing.isBanned,
@@ -1072,7 +1101,6 @@ class AuthRepository {
           address: address,
           latitude: latitude,
           longitude: longitude,
-          dateOfBirth: dateOfBirth,
           expertise: existing.expertise,
           isEmailVerified: existing.isEmailVerified,
           isBanned: existing.isBanned,

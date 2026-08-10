@@ -41,6 +41,15 @@ class _ReauthBottomSheetState extends ConsumerState<_ReauthBottomSheet> {
   bool _obscure = true;
 
   @override
+  void dispose() {
+    // FormGroup.dispose() closes the underlying stream controllers and
+    // disposes child controls. Skipping this leaks StreamControllers when
+    // the bottom sheet is dismissed.
+    _form.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final vmState = ref.watch(reauthViewModelProvider);

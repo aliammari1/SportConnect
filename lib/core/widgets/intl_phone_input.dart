@@ -90,7 +90,7 @@ class IntlPhoneInput extends StatefulWidget {
     this.hint,
     this.enabled = true,
     this.autofocus = false,
-    this.onChanged,
+    required this.onChanged,
     this.validator,
     this.accentColor,
     this.fillColor,
@@ -105,7 +105,7 @@ class IntlPhoneInput extends StatefulWidget {
   final String? hint;
   final bool enabled;
   final bool autofocus;
-  final ValueChanged<PhoneNumber>? onChanged;
+  final ValueChanged<PhoneNumber> onChanged;
   final String? Function(PhoneNumber?)? validator;
   final Color? accentColor;
   final Color? fillColor;

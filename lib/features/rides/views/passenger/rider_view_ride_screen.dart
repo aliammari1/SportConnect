@@ -1776,16 +1776,21 @@ class _BookingConfirmationSheet extends StatefulWidget {
 }
 
 class _BookingConfirmationSheetState extends State<_BookingConfirmationSheet> {
-  late String _noteText;
+  // Owns the note field's text controller. Using a TextEditingController
+  // (instead of TextFormField + initialValue + onChanged) guarantees the
+  // text survives rebuilds, allows programmatic clear, and properly
+  // disposes the underlying ChangeNotifier.
+  late final TextEditingController _noteController;
 
   @override
   void initState() {
     super.initState();
-    _noteText = widget.initialNote;
+    _noteController = TextEditingController(text: widget.initialNote);
   }
 
   @override
   void dispose() {
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -1849,9 +1854,8 @@ class _BookingConfirmationSheetState extends State<_BookingConfirmationSheet> {
               ),
             ),
             SizedBox(height: 16.h),
-            TextFormField(
-              initialValue: widget.initialNote,
-              onChanged: (v) => _noteText = v,
+            TextField(
+              controller: _noteController,
               maxLength: 255,
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
@@ -1890,7 +1894,7 @@ class _BookingConfirmationSheetState extends State<_BookingConfirmationSheet> {
                   child: PremiumButton(
                     text: AppLocalizations.of(context).confirmBooking,
                     onPressed: () {
-                      final note = _noteText;
+                      final note = _noteController.text;
                       Navigator.pop(context);
                       widget.onConfirm(note);
                     },

@@ -55,6 +55,7 @@ app.*.map.json
 .claude
 .agents
 .omx
+.omo
 opencode.json
 
 # Android Studio will place build artifacts here

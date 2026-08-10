@@ -61,7 +61,7 @@ final class AddVehicleSheetUiViewModelProvider
 }
 
 String _$addVehicleSheetUiViewModelHash() =>
-    r'65e255afe9a1f9485d8e348be8729ade71bebdb5';
+    r'ee172022ffe86d0ff36128a007cc3114cbcdc193';
 
 final class AddVehicleSheetUiViewModelFamily extends $Family
     with

@@ -37,10 +37,30 @@ class ReportIssueScreen extends ConsumerStatefulWidget {
 
 class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
   final _imagePicker = ImagePicker();
+  // Owns the description TextEditingController so it can be programmatically
+  // cleared after a successful submission. Without a controller, the field's
+  // internal text would survive a state reset, defeating the post-submit UX.
+  late final TextEditingController _descriptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = ref.read(_reportFormProvider).description;
+    _descriptionController = TextEditingController(text: initial);
+  }
 
   @override
   void dispose() {
+    _descriptionController.dispose();
     super.dispose();
+  }
+
+  void _syncDescriptionIfNeeded(String vmDescription) {
+    if (_descriptionController.text == vmDescription) return;
+    _descriptionController.value = TextEditingValue(
+      text: vmDescription,
+      selection: TextSelection.collapsed(offset: vmDescription.length),
+    );
   }
 
   void _showFloatingMessage(String message, {required Color backgroundColor}) {
@@ -122,6 +142,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
     final formState = ref.watch(_reportFormProvider);
 
     ref.listen<ReportIssueFormState>(_reportFormProvider, (previous, next) {
+      _syncDescriptionIfNeeded(next.description);
       if (next.errorMessage != null &&
           next.errorMessage != previous?.errorMessage) {
         _showFloatingMessage(
@@ -306,6 +327,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
         SizedBox(height: 8.h),
 
         TextField(
+          controller: _descriptionController,
           onChanged: ref.read(_reportFormProvider.notifier).updateDescription,
           maxLines: 5,
           maxLength: 500,

@@ -20,7 +20,6 @@ class ProfileEditState {
   const ProfileEditState({
     this.username = '',
     this.phoneNumber,
-    this.dateOfBirth,
     this.gender,
     this.expertise = Expertise.rookie,
     this.addressResult,
@@ -40,11 +39,6 @@ class ProfileEditState {
         final DriverModel driver => driver.phoneNumber,
         _ => null,
       },
-      dateOfBirth: switch (user) {
-        final RiderModel rider => rider.dateOfBirth,
-        final DriverModel driver => driver.dateOfBirth,
-        _ => null,
-      },
       gender: switch (user) {
         final RiderModel rider => rider.gender,
         final DriverModel driver => driver.gender,
@@ -55,7 +49,6 @@ class ProfileEditState {
   }
   final String username;
   final String? phoneNumber;
-  final DateTime? dateOfBirth;
   final String? gender;
   final Expertise expertise;
   final AddressResult? addressResult;
@@ -69,7 +62,6 @@ class ProfileEditState {
   ProfileEditState copyWith({
     String? username,
     String? phoneNumber,
-    DateTime? dateOfBirth,
     String? gender,
     Expertise? expertise,
     AddressResult? addressResult,
@@ -85,7 +77,6 @@ class ProfileEditState {
     return ProfileEditState(
       username: username ?? this.username,
       phoneNumber: phoneNumber ?? this.phoneNumber,
-      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gender: gender ?? this.gender,
       expertise: expertise ?? this.expertise,
       addressResult: clearAddressResult
@@ -606,10 +597,6 @@ class ProfileEditViewModel extends _$ProfileEditViewModel {
     );
   }
 
-  void setDateOfBirth(DateTime date) {
-    state = state.copyWith(dateOfBirth: date, hasChanges: true, isSaved: false);
-  }
-
   void setGender(String gender) {
     state = state.copyWith(gender: gender, hasChanges: true, isSaved: false);
   }
@@ -671,7 +658,6 @@ class ProfileEditViewModel extends _$ProfileEditViewModel {
       await repository.updateProfile(uid, {
         'username': state.username,
         'phoneNumber': state.phoneNumber,
-        'dateOfBirth': state.dateOfBirth,
         'gender': state.gender,
         'expertise': state.expertise.name,
       });
@@ -732,7 +718,6 @@ class ProfileEditViewModel extends _$ProfileEditViewModel {
       const editableFields = <String>{
         'username',
         'phoneNumber',
-        'dateOfBirth',
         'gender',
         'address',
         'expertise',

@@ -36,9 +36,30 @@ class SubmitReviewScreen extends ConsumerStatefulWidget {
 }
 
 class _SubmitReviewScreenState extends ConsumerState<SubmitReviewScreen> {
+  // Owns the comment field's TextEditingController so it can be
+  // programmatically cleared on reset and so text survives rebuilds.
+  late final TextEditingController _commentController;
+
+  @override
+  void initState() {
+    super.initState();
+    _commentController = TextEditingController(
+      text: ref.read(reviewFormViewModelProvider).comment,
+    );
+  }
+
   @override
   void dispose() {
+    _commentController.dispose();
     super.dispose();
+  }
+
+  void _syncCommentIfNeeded(String vmComment) {
+    if (_commentController.text == vmComment) return;
+    _commentController.value = TextEditingValue(
+      text: vmComment,
+      selection: TextSelection.collapsed(offset: vmComment.length),
+    );
   }
 
   @override
@@ -46,6 +67,13 @@ class _SubmitReviewScreenState extends ConsumerState<SubmitReviewScreen> {
     final state = ref.watch(reviewFormViewModelProvider);
     final viewModel = ref.read(reviewFormViewModelProvider.notifier);
     final availableTags = ReviewTag.getTagsFor(widget.reviewType);
+
+    // Keep the controller in sync when the view model resets the comment
+    // externally (e.g. after a successful submit, or when navigating between
+    // passengers).
+    ref.listen<ReviewFormState>(reviewFormViewModelProvider, (previous, next) {
+      _syncCommentIfNeeded(next.comment);
+    });
 
     return AdaptiveScaffold(
       appBar: AdaptiveAppBar(
@@ -342,6 +370,7 @@ class _SubmitReviewScreenState extends ConsumerState<SubmitReviewScreen> {
 
   Widget _buildCommentField(ReviewFormViewModel viewModel) {
     return TextField(
+      controller: _commentController,
       onChanged: (value) {
         // Sanitize: don't accept whitespace-only comments
         final trimmed = value.trim();

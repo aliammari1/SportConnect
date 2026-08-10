@@ -175,10 +175,15 @@ class HelpCenterScreen extends ConsumerWidget {
               SizedBox(height: 8.h),
 
               // Search bar
-              _buildSearchBar(
-                context,
-                ref,
-                uiState,
+              _HelpCenterSearchField(
+                initialQuery: uiState.searchQuery,
+                onChanged: ref
+                    .read(helpCenterUiViewModelProvider.notifier)
+                    .setSearchQuery,
+                onClear: ref
+                    .read(helpCenterUiViewModelProvider.notifier)
+                    .clearSearch,
+                fieldKey: uiState.searchFieldKey,
               ).animate().fadeIn(duration: 300.ms),
 
               SizedBox(height: 20.h),
@@ -219,53 +224,6 @@ class HelpCenterScreen extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSearchBar(
-    BuildContext context,
-    WidgetRef ref,
-    HelpCenterUiState uiState,
-  ) {
-    return TextField(
-      key: ValueKey(uiState.searchFieldKey),
-      onChanged: ref
-          .read(helpCenterUiViewModelProvider.notifier)
-          .setSearchQuery,
-      textInputAction: TextInputAction.search,
-      decoration: InputDecoration(
-        labelText: AppLocalizations.of(context).searchHelpArticles,
-        hintText: AppLocalizations.of(context).searchHelpArticles,
-        hintStyle: TextStyle(fontSize: 14.sp, color: AppColors.textTertiary),
-        prefixIcon: const Icon(
-          Icons.search_rounded,
-          color: AppColors.textSecondary,
-        ),
-        suffixIcon: uiState.searchQuery.isNotEmpty
-            ? IconButton(
-                tooltip: AppLocalizations.of(context).clearSearchTooltip,
-                icon: const Icon(Icons.clear_rounded),
-                onPressed: ref
-                    .read(helpCenterUiViewModelProvider.notifier)
-                    .clearSearch,
-              )
-            : null,
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14.r),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14.r),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14.r),
-          borderSide: const BorderSide(color: AppColors.primary),
-        ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       ),
     );
   }
@@ -433,6 +391,90 @@ class HelpCenterScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Stateful widget that owns the [TextEditingController] for the help-center
+/// search field. The outer screen is a [ConsumerWidget] (no State), so this
+/// encapsulates the controller lifecycle. [fieldKey] changes (from the view
+/// model's `clearSearch` action) force the field to remount, resetting its
+/// controller text — the canonical reactive pattern when you cannot use a
+/// [Form].
+class _HelpCenterSearchField extends StatefulWidget {
+  const _HelpCenterSearchField({
+    required this.initialQuery,
+    required this.onChanged,
+    required this.onClear,
+    required this.fieldKey,
+  });
+
+  final String initialQuery;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+  final int fieldKey;
+
+  @override
+  State<_HelpCenterSearchField> createState() => _HelpCenterSearchFieldState();
+}
+
+class _HelpCenterSearchFieldState extends State<_HelpCenterSearchField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialQuery);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return TextField(
+      controller: _controller,
+      onChanged: widget.onChanged,
+      textInputAction: TextInputAction.search,
+      decoration: InputDecoration(
+        labelText: l10n.searchHelpArticles,
+        hintText: l10n.searchHelpArticles,
+        hintStyle: TextStyle(fontSize: 14.sp, color: AppColors.textTertiary),
+        prefixIcon: const Icon(
+          Icons.search_rounded,
+          color: AppColors.textSecondary,
+        ),
+        suffixIcon: _controller.text.isNotEmpty
+            ? IconButton(
+                tooltip: l10n.clearSearchTooltip,
+                icon: const Icon(Icons.clear_rounded),
+                onPressed: () {
+                  _controller.clear();
+                  widget.onClear();
+                  setState(() {});
+                },
+              )
+            : null,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14.r),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14.r),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14.r),
+          borderSide: const BorderSide(color: AppColors.primary),
+        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       ),
     );
   }

@@ -106,7 +106,6 @@ class RouteGuardService {
     if (driver == null) return false;
     return (driver.phoneNumber?.isNotEmpty ?? false) ||
         (driver.address?.isNotEmpty ?? false) ||
-        driver.dateOfBirth != null ||
         (driver.gender?.isNotEmpty ?? false);
   }
 

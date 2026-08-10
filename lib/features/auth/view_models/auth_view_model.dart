@@ -165,7 +165,6 @@ class RegisterViewModel extends _$RegisterViewModel {
     required String username,
     required UserRole role,
     String? phone,
-    DateTime? dateOfBirth,
     File? profileImage,
     Expertise expertise = Expertise.rookie,
   }) async {
@@ -180,7 +179,6 @@ class RegisterViewModel extends _$RegisterViewModel {
             username: username,
             role: role,
             phone: phone,
-            dateOfBirth: dateOfBirth,
             expertise: expertise,
             profileImage: profileImage,
           );

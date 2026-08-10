@@ -30,6 +30,36 @@ class DisputeScreen extends ConsumerStatefulWidget {
 
 class _DisputeScreenState extends ConsumerState<DisputeScreen> {
   final _imagePicker = ImagePicker();
+  // Owns the description field so it can be programmatically cleared after a
+  // successful submission. Without this, the TextField's internal text would
+  // persist across submits, and any external reset (e.g. via state mutation)
+  // would not be reflected in the UI.
+  late final TextEditingController _descriptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialDescription = ref
+        .read(disputeFormViewModelProvider(widget.rideId))
+        .description;
+    _descriptionController = TextEditingController(text: initialDescription);
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  // Keep the controller in sync when the view model clears the description
+  // externally (e.g. after a successful submit resets the form).
+  void _syncDescriptionIfNeeded(String vmDescription) {
+    if (_descriptionController.text == vmDescription) return;
+    _descriptionController.value = TextEditingValue(
+      text: vmDescription,
+      selection: TextSelection.collapsed(offset: vmDescription.length),
+    );
+  }
 
   List<_DisputeType> _getDisputeTypes(AppLocalizations l10n) => [
     _DisputeType(
@@ -69,11 +99,6 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
       description: l10n.otherDisputeDesc,
     ),
   ];
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   Future<void> _pickFiles() async {
     final l10n = AppLocalizations.of(context);
@@ -145,6 +170,7 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
       previous,
       next,
     ) {
+      _syncDescriptionIfNeeded(next.description);
       if (next.errorMessage != null &&
           next.errorMessage != previous?.errorMessage) {
         AdaptiveSnackBar.show(
@@ -424,6 +450,7 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
       ),
       SizedBox(height: 8.h),
       TextField(
+        controller: _descriptionController,
         maxLines: 5,
         maxLength: 1000,
         onChanged: (value) => ref

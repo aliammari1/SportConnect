@@ -900,23 +900,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
                 SizedBox(height: 8.h),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(
-                      dialogContentContext,
-                    ).typeDeleteToConfirm,
-                    hintText: AppLocalizations.of(
-                      dialogContentContext,
-                    ).deleteKeyword,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 12.h,
-                    ),
-                  ),
-                  onChanged: (v) => setDialogState(() => confirmText = v),
+                _DeleteAccountConfirmField(
+                  onTextChanged: (v) =>
+                      setDialogState(() => confirmText = v),
                 ),
               ],
             ),
@@ -1508,6 +1494,57 @@ class _BlockedUsersScreenState extends ConsumerState<_BlockedUsersScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Stateful widget that owns the [TextEditingController] used inside the
+/// delete-account confirmation dialog. Extracting this avoids the previous
+/// anti-pattern of declaring `var confirmText = ''` inside the StatefulBuilder
+/// builder with no controller at all — that left the field's internal text
+/// unobservable from outside the dialog and made programmatic clearing
+/// impossible. The controller here is disposed when the dialog is dismissed.
+class _DeleteAccountConfirmField extends StatefulWidget {
+  const _DeleteAccountConfirmField({required this.onTextChanged});
+
+  final ValueChanged<String> onTextChanged;
+
+  @override
+  State<_DeleteAccountConfirmField> createState() =>
+      _DeleteAccountConfirmFieldState();
+}
+
+class _DeleteAccountConfirmFieldState
+    extends State<_DeleteAccountConfirmField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+    _controller.addListener(() => widget.onTextChanged(_controller.text));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      decoration: InputDecoration(
+        labelText: AppLocalizations.of(context).typeDeleteToConfirm,
+        hintText: AppLocalizations.of(context).deleteKeyword,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 16.w,
+          vertical: 12.h,
+        ),
       ),
     );
   }

@@ -345,41 +345,10 @@ class CancellationReasonScreen extends ConsumerWidget {
 
               SizedBox(height: 8.h),
 
-              TextField(
-                onChanged: (value) => ref
-                    .read(cancellationReasonViewModelProvider(rideId).notifier)
-                    .updateComment(value),
-                maxLines: 3,
-                maxLength: 500,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: InputDecoration(
-                  hintText: AppLocalizations.of(context).cancellationReasonHint,
-                  hintStyle: TextStyle(
-                    fontSize: 14.sp,
-                    color: AppColors.textTertiary,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  counterStyle: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textTertiary,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 1.5,
-                    ),
-                  ),
-                ),
+              _CancellationCommentField(
+                rideId: rideId,
+                initialValue: formState.commentText,
+                ref: ref,
               ).animate().fadeIn(delay: 650.ms),
 
               SizedBox(height: 32.h),
@@ -511,6 +480,84 @@ class CancellationReasonScreen extends ConsumerWidget {
                   : null,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Owns the cancellation-comment TextField's controller so the controller
+/// has a proper lifecycle (init/dispose). The outer screen is a
+/// [ConsumerWidget] (no State), so this small StatefulWidget encapsulates the
+/// controller without forcing the whole screen to be a [ConsumerStatefulWidget].
+class _CancellationCommentField extends StatefulWidget {
+  const _CancellationCommentField({
+    required this.rideId,
+    required this.initialValue,
+    required this.ref,
+  });
+
+  final String rideId;
+  final String initialValue;
+  final WidgetRef ref;
+
+  @override
+  State<_CancellationCommentField> createState() =>
+      _CancellationCommentFieldState();
+}
+
+class _CancellationCommentFieldState extends State<_CancellationCommentField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      onChanged: (value) => widget
+          .ref
+          .read(cancellationReasonViewModelProvider(widget.rideId).notifier)
+          .updateComment(value),
+      maxLines: 3,
+      maxLength: 500,
+      textCapitalization: TextCapitalization.sentences,
+      decoration: InputDecoration(
+        hintText: AppLocalizations.of(context).cancellationReasonHint,
+        hintStyle: TextStyle(
+          fontSize: 14.sp,
+          color: AppColors.textTertiary,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        counterStyle: TextStyle(
+          fontSize: 11.sp,
+          color: AppColors.textTertiary,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: const BorderSide(
+            color: AppColors.primary,
+            width: 1.5,
+          ),
         ),
       ),
     );

@@ -22,7 +22,6 @@ sealed class UserModel with _$UserModel {
     required String username,
     String? photoUrl,
     String? phoneNumber,
-    @TimestampConverter() DateTime? dateOfBirth,
     String? gender,
     @Default('') String fcmToken,
 
@@ -71,7 +70,6 @@ sealed class UserModel with _$UserModel {
     required String username,
     String? photoUrl,
     String? phoneNumber,
-    @TimestampConverter() DateTime? dateOfBirth,
     String? gender,
     @Default('') String fcmToken,
 
@@ -122,7 +120,6 @@ sealed class UserModel with _$UserModel {
     required String username,
     String? photoUrl,
     String? phoneNumber,
-    @TimestampConverter() DateTime? dateOfBirth,
     @Default(Expertise.rookie)
     @JsonKey(unknownEnumValue: Expertise.rookie)
     Expertise expertise,
@@ -230,24 +227,6 @@ extension UserModelLogic on UserModel {
     driver: (d) => d.latitude != null && d.longitude != null,
     pending: (_) => false,
   );
-
-  /// Age in whole years derived from [dateOfBirth], or `null` when the date of
-  /// birth is not set.
-  int? get age {
-    final dob = map(
-      rider: (r) => r.dateOfBirth,
-      driver: (d) => d.dateOfBirth,
-      pending: (p) => p.dateOfBirth,
-    );
-    if (dob == null) return null;
-    final now = DateTime.now();
-    var years = now.year - dob.year;
-    final hadBirthdayThisYear =
-        now.month > dob.month ||
-        (now.month == dob.month && now.day >= dob.day);
-    if (!hadBirthdayThisYear) years -= 1;
-    return years < 0 ? 0 : years;
-  }
 
   /// Profile completion check
   bool get isProfileComplete {

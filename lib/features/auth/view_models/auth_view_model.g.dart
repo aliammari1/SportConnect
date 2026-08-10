@@ -157,7 +157,7 @@ final class RegisterViewModelProvider
   }
 }
 
-String _$registerViewModelHash() => r'e5b070c1d78d82557a8e9bf05d3d93e7d76879f9';
+String _$registerViewModelHash() => r'88ccac5f9e9b29017d8c55f9ca927d2b704762e1';
 
 /// Register view model
 

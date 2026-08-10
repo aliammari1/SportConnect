@@ -15,7 +15,6 @@ import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
-import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/address_autocomplete_field.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
@@ -41,7 +40,7 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _form = FormGroup({
-    'name': FormControl<String>(
+    'username': FormControl<String>(
       validators: [
         Validators.required,
         Validators.minLength(2),
@@ -50,10 +49,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           final value = (control.value as String?)?.trim();
           if (value == null || value.isEmpty) return null;
           if (RegExp('[0-9]').hasMatch(value)) {
-            return {'name': 'name_cannot_contain_numbers'};
+            return {'username': 'name_cannot_contain_numbers'};
           }
           if (!RegExp(r"^[\p{L}\s\-'.]+$", unicode: true).hasMatch(value)) {
-            return {'name': 'name_contains_invalid_characters'};
+            return {'username': 'name_contains_invalid_characters'};
           }
           return null;
         }),
@@ -77,11 +76,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
-  void _hydrate(UserModel user) {
-    _user = user;
-    _initialized = true;
-    _form.patchValue({'name': user.username, 'email': user.email});
-    _formChangesSub?.cancel();
+  Future<void> _hydrate(UserModel user) async {
+    if (!mounted) return;
+    setState(() {
+      _user = user;
+      _initialized = true;
+    });
+    _form
+      ..patchValue({
+        'username': user.username,
+        'email': user.email,
+      })
+      ..markAsPristine();
+    await _formChangesSub?.cancel();
     _formChangesSub = _form.valueChanges.listen((_) {
       if (!mounted) return;
       ref.read(profileEditViewModelProvider(user.uid).notifier).markChanged();
@@ -110,7 +117,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final notifier = ref.read(profileEditViewModelProvider(user.uid).notifier);
     final editState = ref.read(profileEditViewModelProvider(user.uid));
 
-    final name = (_form.control('name').value as String?)?.trim() ?? '';
+    final name = (_form.control('username').value as String?)?.trim() ?? '';
     final phone = editState.phoneNumber?.trim().isNotEmpty == true
         ? editState.phoneNumber
         : null;
@@ -123,7 +130,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         phoneNumber: phone ?? r.phoneNumber,
         address: address ?? r.address,
         gender: editState.gender ?? r.gender,
-        dateOfBirth: editState.dateOfBirth ?? r.dateOfBirth,
         expertise: editState.expertise,
       ),
       driver: (d) => d.copyWith(
@@ -131,7 +137,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         phoneNumber: phone ?? d.phoneNumber,
         address: address ?? d.address,
         gender: editState.gender ?? d.gender,
-        dateOfBirth: editState.dateOfBirth ?? d.dateOfBirth,
         expertise: editState.expertise,
       ),
       pending: (p) => p,
@@ -271,35 +276,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _selectDateOfBirth() async {
-    final user = _user;
-    if (user == null) return;
-    final notifier = ref.read(profileEditViewModelProvider(user.uid).notifier);
-    final current =
-        ref.read(profileEditViewModelProvider(user.uid)).dateOfBirth ??
-        DateTime(1990);
-
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: current,
-      firstDate: DateTime(1920),
-      lastDate: DateTime.now().subtract(const Duration(days: 365 * 13)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: AppColors.primary,
-            onSurface: AppColors.textPrimary,
-          ),
-          dialogTheme: const DialogThemeData(
-            backgroundColor: AppColors.surface,
-          ),
-        ),
-        child: child!,
-      ),
-    );
-    if (picked != null) notifier.setDateOfBirth(picked);
   }
 
   Future<bool> _confirmDiscard() async {
@@ -571,7 +547,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       FormCard(
         children: [
           AdaptiveReactiveTextField(
-            formControlName: 'name',
+            formControlName: 'username',
             labelText: l10n.authFullName,
             prefixIcon: Icon(
               Icons.person_outline_rounded,
@@ -582,7 +558,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ValidationMessage.required: (_) => l10n.requiredField,
               ValidationMessage.minLength: (_) => l10n.nameMinLengthError,
               ValidationMessage.maxLength: (_) => l10n.nameTooLongError,
-              'name': (error) => switch (error as String) {
+              'username': (error) => switch (error as String) {
                 'name_cannot_contain_numbers' =>
                   l10n.name_cannot_contain_numbers,
                 'name_contains_invalid_characters' =>
@@ -693,17 +669,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           Divider(
             height: 1,
             color: AppColors.border.withValues(alpha: 0.5),
-          ),
-          _PickerTile(
-            icon: Icons.cake_outlined,
-            label: l10n.birthday,
-            value: editState.dateOfBirth == null
-                ? '—'
-                : AppLocaleFormatters.formatMediumDate(
-                    context,
-                    editState.dateOfBirth!,
-                  ),
-            onTap: _selectDateOfBirth,
           ),
         ],
       ),

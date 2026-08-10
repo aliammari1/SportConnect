@@ -42,7 +42,12 @@ class AddVehicleSheetUiViewModel extends _$AddVehicleSheetUiViewModel {
   }
 
   void setCapacity(int capacity) {
-    state = state.copyWith(capacity: capacity);
+    // Clamp capacity to the documented supported range. The chip selector in
+    // the UI only generates 1–7, but other callers (admin tooling, deep
+    // links, programmatic updates) could bypass that constraint. Mirrors the
+    // valid VehicleModel.capacity domain so the view-model never holds an
+    // out-of-range value.
+    state = state.copyWith(capacity: capacity.clamp(1, 7));
   }
 
   void setImageFile(File imageFile) {

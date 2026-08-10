@@ -1,7 +1,7 @@
 {
   "firestore": {
     "database": "(default)",
-    "location": "nam5",
+    "location": "us-central1",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
@@ -49,7 +49,8 @@
           "projectId": "marathon-connect",
           "configurations": {
             "android": "1:950804897667:android:336cec4dff83493780e0b6",
-            "ios": "1:950804897667:ios:ee25c791f879565e80e0b6"
+            "ios": "1:950804897667:ios:ee25c791f879565e80e0b6",
+            "web": "1:950804897667:web:35fe380e9a6e27ef80e0b6"
           }
         }
       }

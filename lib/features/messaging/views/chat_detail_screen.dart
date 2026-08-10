@@ -264,7 +264,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
           .read(chatDetailViewModelProvider(_chatId, currentUser?.uid ?? ''))
           .error;
 
-      _messageController.text = text;
+      _messageController.value = TextEditingValue(
+        text: text,
+        // Restore the caret to the end of the restored text — without this,
+        // assigning `_messageController.text = text` snaps the caret to
+        // position 0, forcing the user to click back where they were.
+        selection: TextSelection.collapsed(offset: text.length),
+      );
 
       _showStatusSnackBar(
         error ?? AppLocalizations.of(context).failedToSendMessage,
@@ -1453,49 +1459,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   }
 
   void _showEditDialog(MessageModel message) {
-    final controller = TextEditingController(text: message.content);
     showDialog<void>(
       context: context,
       barrierLabel: AppLocalizations.of(context).editMessage,
-      builder: (ctx) => AlertDialog.adaptive(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(PlatformAdaptive.dialogRadius),
-        ),
-        title: Text(AppLocalizations.of(context).editMessage),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: null,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => ctx.pop(),
-            child: Text(AppLocalizations.of(context).actionCancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              ref
-                  .read(
-                    chatDetailViewModelProvider(
-                      _chatId,
-                      currentUser!.uid,
-                    ).notifier,
-                  )
-                  .editMessage(message.id, controller.text);
-              ctx.pop();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: Text(
-              AppLocalizations.of(context).actionSave,
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
+      builder: (ctx) => _EditMessageDialog(
+        message: message,
+        chatId: _chatId,
+        currentUserId: currentUser!.uid,
       ),
     );
   }
@@ -1936,5 +1906,97 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         type: AdaptiveSnackBarType.error,
       );
     }
+  }
+}
+
+/// Stateful dialog that owns the TextEditingController used in the
+/// edit-message flow. Replaces the previous inline `TextEditingController`
+/// created inside `showDialog`'s builder, which leaked whenever the user
+/// dismissed the dialog via tap-outside or back gesture (the controller was
+/// never disposed).
+class _EditMessageDialog extends ConsumerStatefulWidget {
+  const _EditMessageDialog({
+    required this.message,
+    required this.chatId,
+    required this.currentUserId,
+  });
+
+  final MessageModel message;
+  final String chatId;
+  final String currentUserId;
+
+  @override
+  ConsumerState<_EditMessageDialog> createState() =>
+      _EditMessageDialogState();
+}
+
+class _EditMessageDialogState extends ConsumerState<_EditMessageDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.message.content);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final newContent = _controller.text.trim();
+    if (newContent.isEmpty || newContent == widget.message.content) {
+      // Reject empty/whitespace-only edits (defensive — view-model may not
+      // enforce this) and avoid an unnecessary VM round-trip when nothing
+      // changed.
+      Navigator.of(context).pop();
+      return;
+    }
+    await ref
+        .read(
+          chatDetailViewModelProvider(
+            widget.chatId,
+            widget.currentUserId,
+          ).notifier,
+        )
+        .editMessage(widget.message.id, newContent);
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog.adaptive(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(PlatformAdaptive.dialogRadius),
+      ),
+      title: Text(AppLocalizations.of(context).editMessage),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLines: null,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(AppLocalizations.of(context).actionCancel),
+        ),
+        ElevatedButton(
+          onPressed: _save,
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+          child: Text(
+            AppLocalizations.of(context).actionSave,
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
+      ],
+    );
   }
 }

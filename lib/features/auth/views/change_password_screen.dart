@@ -72,6 +72,15 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   }
 
   @override
+  void dispose() {
+    // FormGroup.dispose() closes the underlying stream controllers and
+    // disposes child controls. Skipping this leaks StreamControllers every
+    // time the change-password screen is popped.
+    _form.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final vmState = ref.watch(changePasswordViewModelProvider);

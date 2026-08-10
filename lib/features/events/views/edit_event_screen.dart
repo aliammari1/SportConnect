@@ -140,9 +140,25 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
   }
 
   void _syncTextControllers(EditEventFormState state) {
-    _isSyncingTextControllers = true;
-    _titleController.text = state.title;
-    _descriptionController.text = state.description;
+    // Detach listeners around the assignment. The previous flag-based guard
+    // (`_isSyncingTextControllers`) relied on the synchronous nature of
+    // ChangeNotifier.notifyListeners — but in practice `controller.text = ...`
+    // and an immediate reset of the flag can leave a small window where the
+    // listener fires after the flag is back to false, causing the freshly
+    // hydrated value to be immediately overwritten by a stale setTitle call.
+    // Removing the listeners for the duration of the sync is the only fully
+    // race-free approach.
+    _titleController.removeListener(_onTitleChanged);
+    _descriptionController.removeListener(_onDescriptionChanged);
+    try {
+      _titleController.text = state.title;
+      _descriptionController.text = state.description;
+    } finally {
+      _titleController.addListener(_onTitleChanged);
+      _descriptionController.addListener(_onDescriptionChanged);
+    }
+    // Defensive: keep the flag check in dispose() ordering intact. Future
+    // refactors that bypass the listener detach should still skip via flag.
     _isSyncingTextControllers = false;
   }
 

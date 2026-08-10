@@ -186,6 +186,13 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
 
   @override
   void dispose() {
+    // FormGroup.dispose() closes valueChanges/statusChanges/focusChanges
+    // stream controllers and cascades to child FormControls. Calling it
+    // for every FormGroup is required by reactive_forms to avoid leaking
+    // streams on every navigation away from the wizard.
+    for (final form in _forms) {
+      form.dispose();
+    }
     super.dispose();
   }
 
@@ -252,7 +259,6 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
           username: (step0Values['name'] as String? ?? '').trim(),
           role: uiState.selectedRole,
           phone: uiState.phoneNumber,
-          dateOfBirth: null,
           profileImage: uiState.profileImage,
           expertise: uiState.expertise,
         );
