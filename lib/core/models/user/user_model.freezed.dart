@@ -42,10 +42,7 @@ UserModel _$UserModelFromJson(
 /// @nodoc
 mixin _$UserModel {
 
- String get uid; String get email; String get username; String? get photoUrl; String? get phoneNumber; String get fcmToken;// Verification & status
- bool get isEmailVerified; bool get isBanned;// Expertise
-@JsonKey(unknownEnumValue: Expertise.rookie) Expertise get expertise;// Timestamps
-@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;
+ String get uid; String get email; String get username; String? get photoUrl; String? get phoneNumber; String get fcmToken; bool get isEmailVerified; bool get isBanned;@JsonKey(unknownEnumValue: Expertise.rookie) Expertise get expertise;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;
 /// Create a copy of UserModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -265,37 +262,27 @@ class RiderModel extends UserModel {
 @override final  String? phoneNumber;
  final  String? gender;
 @override@JsonKey() final  String fcmToken;
-// Address & location
  final  String? address;
  final  double? latitude;
  final  double? longitude;
-// Verification & status
 @override@JsonKey() final  bool isEmailVerified;
 @override@JsonKey() final  bool isBanned;
 @JsonKey() final  bool isPremium;
  final  String? premiumPlan;
-// 'monthly' | 'yearly'
 @TimestampConverter() final  DateTime? premiumUpdatedAt;
-// Social
  final  List<String> _blockedUsers;
-// Social
 @JsonKey() List<String> get blockedUsers {
   if (_blockedUsers is EqualUnmodifiableListView) return _blockedUsers;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_blockedUsers);
 }
 
-// Rider-specific: Passenger rating
 @JsonKey() final  RatingBreakdown rating;
-// Rider-specific: Gamification
 @JsonKey() final  GamificationStats gamification;
-// Preferences
 @JsonKey() final  UserPreferences preferences;
-// Expertise
 @override@JsonKey(unknownEnumValue: Expertise.rookie) final  Expertise expertise;
  final  String? stripeCustomerId;
 @JsonKey() final  bool isStripeCustomerCreated;
-// Timestamps
 @override@TimestampConverter() final  DateTime? createdAt;
 @override@TimestampConverter() final  DateTime? updatedAt;
 
@@ -427,46 +414,33 @@ class DriverModel extends UserModel {
 @override final  String? phoneNumber;
  final  String? gender;
 @override@JsonKey() final  String fcmToken;
-// Address & location
  final  String? address;
  final  double? latitude;
  final  double? longitude;
-// Verification & status
 @override@JsonKey() final  bool isEmailVerified;
 @override@JsonKey() final  bool isBanned;
 @JsonKey() final  bool isPremium;
  final  String? premiumPlan;
-// 'monthly' | 'yearly'
 @TimestampConverter() final  DateTime? premiumUpdatedAt;
-// Social
  final  List<String> _blockedUsers;
-// Social
 @JsonKey() List<String> get blockedUsers {
   if (_blockedUsers is EqualUnmodifiableListView) return _blockedUsers;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_blockedUsers);
 }
 
-// Driver-specific: Driver rating
 @JsonKey() final  RatingBreakdown rating;
-// Driver-specific: Gamification
 @JsonKey() final  GamificationStats gamification;
-// Preferences
 @JsonKey() final  UserPreferences preferences;
-// Expertise
 @override@JsonKey(unknownEnumValue: Expertise.rookie) final  Expertise expertise;
-// Driver-specific: Vehicle IDs
  final  List<String> _vehicleIds;
-// Driver-specific: Vehicle IDs
 @JsonKey() List<String> get vehicleIds {
   if (_vehicleIds is EqualUnmodifiableListView) return _vehicleIds;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_vehicleIds);
 }
 
-// Driver-specific: Stripe Connect
  final  String? stripeAccountId;
-// Timestamps
 @override@TimestampConverter() final  DateTime? createdAt;
 @override@TimestampConverter() final  DateTime? updatedAt;
 

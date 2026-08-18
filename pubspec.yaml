@@ -2,7 +2,7 @@ name: sport_connect
 description: "SportConnect - Social carpooling app for sports enthusiasts"
 publish_to: "none"
 
-version: 1.2.10
+version: 1.2.11
 
 environment:
   sdk: ^3.11.0
@@ -111,7 +111,7 @@ dependencies:
   http_cache_hive_store: ^5.1.0
   in_app_purchase_android: ^0.4.0+10
   reactive_cupertino_text_field: ^2.1.2
-  json_annotation: ^4.9.0
+  json_annotation: ^4.12.0
   freezed_annotation: ^3.1.0
 
 dev_dependencies:
@@ -120,11 +120,10 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
   # Code Generation
-  freezed: ^3.2.3
-  json_serializable: ^6.11.2
+  freezed: ^3.2.5
+  json_serializable: ^6.14.1
   riverpod_generator: ^4.0.0
-  riverpod_lint: ^3.1.0
-  custom_lint: ^0.8.1
+  riverpod_lint: 3.1.4
   riverpod_devtools_tracker: ^1.0.7
 
   # Secrets Management

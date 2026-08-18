@@ -100,7 +100,7 @@ abstract class _$DriverPassengerRatingViewModel
   DriverPassengerRatingState build(String rideId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<DriverPassengerRatingState, DriverPassengerRatingState>;
@@ -115,6 +115,6 @@ abstract class _$DriverPassengerRatingViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

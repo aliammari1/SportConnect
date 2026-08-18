@@ -68,7 +68,7 @@ abstract class _$ReauthViewModel extends $Notifier<ReauthState> {
   ReauthState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ReauthState, ReauthState>;
     final element =
         ref.element
@@ -78,6 +78,6 @@ abstract class _$ReauthViewModel extends $Notifier<ReauthState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

@@ -17,12 +17,7 @@ mixin _$EventModel {
 
  String get id; String get creatorId; String get title; EventType get type; LocationPoint get location;@RequiredTimestampConverter() DateTime get startsAt;@TimestampConverter() DateTime? get endsAt; String? get description;/// Display name of the organiser (denormalized for fast rendering).
  String? get organizerName;/// Cover image URL (Firebase Storage).
- String? get imageUrl; List<String> get participantIds; int get maxParticipants; bool get isActive;// ── Event-Ride Integration fields ──
-// Note: the event↔ride link is standardized on `ride.eventId` (queried via
-// streamRidesByEventId / eventLinkedRidesProvider). The previously
-// one-directional `linkedRideIds` array was never populated and has been
-// removed to avoid a permanently-empty dead field.
-/// RSVP ride status per participant: { uid: 'driving' | 'need_ride' | 'self_arranged' }.
+ String? get imageUrl; List<String> get participantIds; int get maxParticipants; bool get isActive;/// RSVP ride status per participant: { uid: 'driving' | 'need_ride' | 'self_arranged' }.
  Map<String, String> get rideStatuses;/// Post-event meetup pin location for coordinating departure.
  LocationPoint? get meetupPinLocation;/// Auto-created chat group ID for event participants.
  String? get chatGroupId;/// Whether this is a recurring event (e.g. weekly training).
@@ -289,18 +284,8 @@ class _EventModel extends EventModel {
 
 @override@JsonKey() final  int maxParticipants;
 @override@JsonKey() final  bool isActive;
-// ── Event-Ride Integration fields ──
-// Note: the event↔ride link is standardized on `ride.eventId` (queried via
-// streamRidesByEventId / eventLinkedRidesProvider). The previously
-// one-directional `linkedRideIds` array was never populated and has been
-// removed to avoid a permanently-empty dead field.
 /// RSVP ride status per participant: { uid: 'driving' | 'need_ride' | 'self_arranged' }.
  final  Map<String, String> _rideStatuses;
-// ── Event-Ride Integration fields ──
-// Note: the event↔ride link is standardized on `ride.eventId` (queried via
-// streamRidesByEventId / eventLinkedRidesProvider). The previously
-// one-directional `linkedRideIds` array was never populated and has been
-// removed to avoid a permanently-empty dead field.
 /// RSVP ride status per participant: { uid: 'driving' | 'need_ride' | 'self_arranged' }.
 @override@JsonKey() Map<String, String> get rideStatuses {
   if (_rideStatuses is EqualUnmodifiableMapView) return _rideStatuses;

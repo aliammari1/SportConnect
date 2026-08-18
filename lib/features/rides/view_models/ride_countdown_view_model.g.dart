@@ -95,7 +95,7 @@ abstract class _$RideCountdownUiViewModel
   RideCountdownUiState build(String bookingId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<RideCountdownUiState, RideCountdownUiState>;
     final element =
         ref.element
@@ -105,6 +105,6 @@ abstract class _$RideCountdownUiViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

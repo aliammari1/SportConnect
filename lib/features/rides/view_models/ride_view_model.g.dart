@@ -93,7 +93,7 @@ abstract class _$RideDetailUiViewModel extends $Notifier<RideDetailUiState> {
   RideDetailUiState build(String rideId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<RideDetailUiState, RideDetailUiState>;
     final element =
         ref.element
@@ -103,7 +103,7 @@ abstract class _$RideDetailUiViewModel extends $Notifier<RideDetailUiState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -164,7 +164,7 @@ abstract class _$RideActionsViewModel extends $Notifier<void> {
   void build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<void, void>;
     final element =
         ref.element
@@ -174,7 +174,7 @@ abstract class _$RideActionsViewModel extends $Notifier<void> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -269,7 +269,7 @@ abstract class _$CancellationReasonViewModel
   CancellationReasonState build(String rideId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<CancellationReasonState, CancellationReasonState>;
     final element =
@@ -280,7 +280,7 @@ abstract class _$CancellationReasonViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -368,7 +368,7 @@ abstract class _$DisputeFormViewModel extends $Notifier<DisputeFormState> {
   DisputeFormState build(String rideId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<DisputeFormState, DisputeFormState>;
     final element =
         ref.element
@@ -378,7 +378,7 @@ abstract class _$DisputeFormViewModel extends $Notifier<DisputeFormState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -586,7 +586,7 @@ abstract class _$RideFormViewModel extends $Notifier<RideFormState> {
   RideFormState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<RideFormState, RideFormState>;
     final element =
         ref.element
@@ -596,7 +596,7 @@ abstract class _$RideFormViewModel extends $Notifier<RideFormState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -712,7 +712,7 @@ abstract class _$RideSearchViewModel extends $Notifier<RideSearchState> {
   RideSearchState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<RideSearchState, RideSearchState>;
     final element =
         ref.element
@@ -722,7 +722,7 @@ abstract class _$RideSearchViewModel extends $Notifier<RideSearchState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -826,7 +826,7 @@ abstract class _$RideDetailViewModel extends $Notifier<RideDetailState> {
   RideDetailState build(String rideId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<RideDetailState, RideDetailState>;
     final element =
         ref.element
@@ -836,7 +836,7 @@ abstract class _$RideDetailViewModel extends $Notifier<RideDetailState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -934,7 +934,7 @@ abstract class _$ActiveRideViewModel extends $Notifier<ActiveRideState> {
   ActiveRideState build(String rideId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ActiveRideState, ActiveRideState>;
     final element =
         ref.element
@@ -944,7 +944,7 @@ abstract class _$ActiveRideViewModel extends $Notifier<ActiveRideState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -2001,7 +2001,7 @@ abstract class _$DisputeViewModel extends $Notifier<void> {
   void build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<void, void>;
     final element =
         ref.element
@@ -2011,6 +2011,6 @@ abstract class _$DisputeViewModel extends $Notifier<void> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

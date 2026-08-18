@@ -15,8 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Achievement {
 
- String get id; String get title; String get description; String get iconName; int get xpReward; bool get isUnlocked;@TimestampConverter() DateTime? get unlockedAt;// Progress-style achievements (optional, backward-compatible).
- int get progress; int? get target;
+ String get id; String get title; String get description; String get iconName; int get xpReward; bool get isUnlocked;@TimestampConverter() DateTime? get unlockedAt; int get progress; int? get target;
 /// Create a copy of Achievement
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -228,7 +227,6 @@ class _Achievement extends Achievement {
 @override final  int xpReward;
 @override@JsonKey() final  bool isUnlocked;
 @override@TimestampConverter() final  DateTime? unlockedAt;
-// Progress-style achievements (optional, backward-compatible).
 @override@JsonKey() final  int progress;
 @override final  int? target;
 

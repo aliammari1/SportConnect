@@ -15,11 +15,6 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserPreferences {
 
-// unknownEnumValue guards against legacy/bad documents that persisted the
-// Dart enum *name* ("french") instead of its wire value ("fr"). Without it,
-// $enumDecodeNullable throws on the unrecognised value and the whole
-// UserModel.fromJson fails — which strands login on an infinite spinner
-// (App Store 2.1). Unknown values now fall back to the default locale.
 @JsonKey(unknownEnumValue: AppLocale.french) AppLocale get language;
 /// Create a copy of UserPreferences
 /// with the given fields replaced by the non-null parameter values.
@@ -217,11 +212,6 @@ class _UserPreferences extends UserPreferences {
   const _UserPreferences({@JsonKey(unknownEnumValue: AppLocale.french) this.language = AppLocale.french}): super._();
   factory _UserPreferences.fromJson(Map<String, dynamic> json) => _$UserPreferencesFromJson(json);
 
-// unknownEnumValue guards against legacy/bad documents that persisted the
-// Dart enum *name* ("french") instead of its wire value ("fr"). Without it,
-// $enumDecodeNullable throws on the unrecognised value and the whole
-// UserModel.fromJson fails — which strands login on an infinite spinner
-// (App Store 2.1). Unknown values now fall back to the default locale.
 @override@JsonKey(unknownEnumValue: AppLocale.french) final  AppLocale language;
 
 /// Create a copy of UserPreferences

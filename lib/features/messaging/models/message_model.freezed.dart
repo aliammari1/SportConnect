@@ -15,13 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MessageModel {
 
- String get id; String get chatId; String get senderId; String get senderName; String get content; String? get senderPhotoUrl; MessageType get type; MessageStatus get status; String? get mediaUrl; String? get thumbnailUrl;// Location
- double? get latitude; double? get longitude; String? get locationName;// Ride attachment
- String? get rideId;// Reply context
- String? get replyToMessageId; String? get replyToContent;// Reactions: emoji → [userId, ...]
- Map<String, List<String>> get reactions;// Read receipts
- List<String> get readBy; List<String> get deliveredTo;// Metadata
- bool get isEdited; bool get isDeleted;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get editedAt;
+ String get id; String get chatId; String get senderId; String get senderName; String get content; String? get senderPhotoUrl; MessageType get type; MessageStatus get status; String? get mediaUrl; String? get thumbnailUrl; double? get latitude; double? get longitude; String? get locationName; String? get rideId; String? get replyToMessageId; String? get replyToContent; Map<String, List<String>> get reactions; List<String> get readBy; List<String> get deliveredTo; bool get isEdited; bool get isDeleted;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get editedAt;
 /// Create a copy of MessageModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -250,27 +244,20 @@ class _MessageModel extends MessageModel {
 @override@JsonKey() final  MessageStatus status;
 @override final  String? mediaUrl;
 @override final  String? thumbnailUrl;
-// Location
 @override final  double? latitude;
 @override final  double? longitude;
 @override final  String? locationName;
-// Ride attachment
 @override final  String? rideId;
-// Reply context
 @override final  String? replyToMessageId;
 @override final  String? replyToContent;
-// Reactions: emoji → [userId, ...]
  final  Map<String, List<String>> _reactions;
-// Reactions: emoji → [userId, ...]
 @override@JsonKey() Map<String, List<String>> get reactions {
   if (_reactions is EqualUnmodifiableMapView) return _reactions;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_reactions);
 }
 
-// Read receipts
  final  List<String> _readBy;
-// Read receipts
 @override@JsonKey() List<String> get readBy {
   if (_readBy is EqualUnmodifiableListView) return _readBy;
   // ignore: implicit_dynamic_type
@@ -284,7 +271,6 @@ class _MessageModel extends MessageModel {
   return EqualUnmodifiableListView(_deliveredTo);
 }
 
-// Metadata
 @override@JsonKey() final  bool isEdited;
 @override@JsonKey() final  bool isDeleted;
 @override@TimestampConverter() final  DateTime? createdAt;
@@ -376,9 +362,7 @@ as DateTime?,
 /// @nodoc
 mixin _$ChatParticipant {
 
-@JsonKey(name: 'uid') String get userId; String get username; String? get photoUrl; bool get isAdmin; bool get isMuted;// Role distinguishes the group owner/creator from regular admins/members.
-// Optional & nullable: legacy docs without this key deserialize to null.
- ParticipantRole? get role;@TimestampConverter() DateTime? get lastSeenAt;@TimestampConverter() DateTime? get joinedAt;
+@JsonKey(name: 'uid') String get userId; String get username; String? get photoUrl; bool get isAdmin; bool get isMuted; ParticipantRole? get role;@TimestampConverter() DateTime? get lastSeenAt;@TimestampConverter() DateTime? get joinedAt;
 /// Create a copy of ChatParticipant
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -587,8 +571,6 @@ class _ChatParticipant extends ChatParticipant {
 @override final  String? photoUrl;
 @override@JsonKey() final  bool isAdmin;
 @override@JsonKey() final  bool isMuted;
-// Role distinguishes the group owner/creator from regular admins/members.
-// Optional & nullable: legacy docs without this key deserialize to null.
 @override final  ParticipantRole? role;
 @override@TimestampConverter() final  DateTime? lastSeenAt;
 @override@TimestampConverter() final  DateTime? joinedAt;
@@ -664,18 +646,7 @@ as DateTime?,
 /// @nodoc
 mixin _$ChatModel {
 
- String get id; ChatType get type;// Participants
- List<ChatParticipant> get participants; List<String> get participantIds;// Group
- String? get groupName; String? get groupPhotoUrl; String? get description;// Ride / event
- String? get rideId; String? get eventId;// Last message preview
- String? get lastMessageContent; String? get lastMessageSenderId; String? get lastMessageSenderName; MessageType get lastMessageType;@TimestampConverter() DateTime? get lastMessageAt;// Unread counts: userId → count
- Map<String, int> get unreadCounts;// Per-user settings
- Map<String, bool> get mutedBy; Map<String, bool> get pinnedBy;// One-sided deletion: userId → true
-// User removed the conversation from their chat list.
-// If a newer message arrives after this timestamp, the chat appears again.
-@TimestampMapConverter() Map<String, DateTime> get deletedAtBy;// User cleared message history up to this timestamp.
-// The chat can stay visible, but older messages are hidden for this user.
-@TimestampMapConverter() Map<String, DateTime> get clearedAtBy; bool get isActive;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;
+ String get id; ChatType get type; List<ChatParticipant> get participants; List<String> get participantIds; String? get groupName; String? get groupPhotoUrl; String? get description; String? get rideId; String? get eventId; String? get lastMessageContent; String? get lastMessageSenderId; String? get lastMessageSenderName; MessageType get lastMessageType;@TimestampConverter() DateTime? get lastMessageAt; Map<String, int> get unreadCounts; Map<String, bool> get mutedBy; Map<String, bool> get pinnedBy;@TimestampMapConverter() Map<String, DateTime> get deletedAtBy;@TimestampMapConverter() Map<String, DateTime> get clearedAtBy; bool get isActive;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;
 /// Create a copy of ChatModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -895,9 +866,7 @@ class _ChatModel extends ChatModel {
 
 @override final  String id;
 @override@JsonKey() final  ChatType type;
-// Participants
  final  List<ChatParticipant> _participants;
-// Participants
 @override@JsonKey() List<ChatParticipant> get participants {
   if (_participants is EqualUnmodifiableListView) return _participants;
   // ignore: implicit_dynamic_type
@@ -911,31 +880,24 @@ class _ChatModel extends ChatModel {
   return EqualUnmodifiableListView(_participantIds);
 }
 
-// Group
 @override final  String? groupName;
 @override final  String? groupPhotoUrl;
 @override final  String? description;
-// Ride / event
 @override final  String? rideId;
 @override final  String? eventId;
-// Last message preview
 @override final  String? lastMessageContent;
 @override final  String? lastMessageSenderId;
 @override final  String? lastMessageSenderName;
 @override@JsonKey() final  MessageType lastMessageType;
 @override@TimestampConverter() final  DateTime? lastMessageAt;
-// Unread counts: userId → count
  final  Map<String, int> _unreadCounts;
-// Unread counts: userId → count
 @override@JsonKey() Map<String, int> get unreadCounts {
   if (_unreadCounts is EqualUnmodifiableMapView) return _unreadCounts;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_unreadCounts);
 }
 
-// Per-user settings
  final  Map<String, bool> _mutedBy;
-// Per-user settings
 @override@JsonKey() Map<String, bool> get mutedBy {
   if (_mutedBy is EqualUnmodifiableMapView) return _mutedBy;
   // ignore: implicit_dynamic_type
@@ -949,24 +911,14 @@ class _ChatModel extends ChatModel {
   return EqualUnmodifiableMapView(_pinnedBy);
 }
 
-// One-sided deletion: userId → true
-// User removed the conversation from their chat list.
-// If a newer message arrives after this timestamp, the chat appears again.
  final  Map<String, DateTime> _deletedAtBy;
-// One-sided deletion: userId → true
-// User removed the conversation from their chat list.
-// If a newer message arrives after this timestamp, the chat appears again.
 @override@JsonKey()@TimestampMapConverter() Map<String, DateTime> get deletedAtBy {
   if (_deletedAtBy is EqualUnmodifiableMapView) return _deletedAtBy;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_deletedAtBy);
 }
 
-// User cleared message history up to this timestamp.
-// The chat can stay visible, but older messages are hidden for this user.
  final  Map<String, DateTime> _clearedAtBy;
-// User cleared message history up to this timestamp.
-// The chat can stay visible, but older messages are hidden for this user.
 @override@JsonKey()@TimestampMapConverter() Map<String, DateTime> get clearedAtBy {
   if (_clearedAtBy is EqualUnmodifiableMapView) return _clearedAtBy;
   // ignore: implicit_dynamic_type

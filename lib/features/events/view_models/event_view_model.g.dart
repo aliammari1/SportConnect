@@ -49,7 +49,7 @@ abstract class _$CreateEventFormViewModel
   CreateEventFormState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<CreateEventFormState, CreateEventFormState>;
     final element =
         ref.element
@@ -59,7 +59,7 @@ abstract class _$CreateEventFormViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -148,7 +148,7 @@ abstract class _$EditEventFormViewModel extends $Notifier<EditEventFormState> {
   EditEventFormState build(String eventId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<EditEventFormState, EditEventFormState>;
     final element =
         ref.element
@@ -158,7 +158,7 @@ abstract class _$EditEventFormViewModel extends $Notifier<EditEventFormState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -202,7 +202,7 @@ abstract class _$EventSelectionViewModel
   EventSelectionState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<EventSelectionState, EventSelectionState>;
     final element =
         ref.element
@@ -212,7 +212,7 @@ abstract class _$EventSelectionViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -300,7 +300,7 @@ abstract class _$EventDetailViewModel extends $Notifier<EventDetailState> {
   EventDetailState build(String eventId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<EventDetailState, EventDetailState>;
     final element =
         ref.element
@@ -310,7 +310,7 @@ abstract class _$EventDetailViewModel extends $Notifier<EventDetailState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -371,7 +371,7 @@ abstract class _$EventListViewModel extends $Notifier<EventListState> {
   EventListState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<EventListState, EventListState>;
     final element =
         ref.element
@@ -381,7 +381,7 @@ abstract class _$EventListViewModel extends $Notifier<EventListState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 

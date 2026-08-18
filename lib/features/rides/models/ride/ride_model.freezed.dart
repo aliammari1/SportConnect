@@ -15,17 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RideModel {
 
-@JsonKey(includeToJson: false) String get id; String get driverId;// Composed sub-models
- RideRoute get route; RideSchedule get schedule; RideCapacity get capacity; RidePricing get pricing; RidePreferences get preferences; String? get eventId; String? get eventName;// Status
- RideStatus get status;// Phase (persisted so passengers see granular driver progress)
- String? get ridePhase;// Vehicle reference (resolved through VehicleRepository)
- String? get vehicleId; String? get vehicleInfo;// Bookings (lightweight - detailed bookings stored separately)
- List<String> get bookingIds;// Bookings list (populated by service layer when full booking data is needed)
-@JsonKey(includeToJson: false, includeFromJson: false) List<RideBooking> get bookings;// Reviews (count only - detailed reviews stored separately)
- int get reviewCount; double get averageRating;// XP Rewards
- int get xpReward;// Metadata
- String? get notes; List<String> get tags;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;// Lifecycle stamps (optional — set as the ride moves through its states).
-@TimestampConverter() DateTime? get completedAt;@TimestampConverter() DateTime? get cancelledAt; String? get cancellationReason;
+@JsonKey(includeToJson: false) String get id; String get driverId; RideRoute get route; RideSchedule get schedule; RideCapacity get capacity; RidePricing get pricing; RidePreferences get preferences; String? get eventId; String? get eventName; RideStatus get status; String? get ridePhase; String? get vehicleId; String? get vehicleInfo; List<String> get bookingIds;@JsonKey(includeToJson: false, includeFromJson: false) List<RideBooking> get bookings; int get reviewCount; double get averageRating; int get xpReward; String? get notes; List<String> get tags;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;@TimestampConverter() DateTime? get completedAt;@TimestampConverter() DateTime? get cancelledAt; String? get cancellationReason;
 /// Create a copy of RideModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -293,7 +283,6 @@ class _RideModel extends RideModel {
 
 @override@JsonKey(includeToJson: false) final  String id;
 @override final  String driverId;
-// Composed sub-models
 @override final  RideRoute route;
 @override final  RideSchedule schedule;
 @override final  RideCapacity capacity;
@@ -301,37 +290,27 @@ class _RideModel extends RideModel {
 @override final  RidePreferences preferences;
 @override final  String? eventId;
 @override final  String? eventName;
-// Status
 @override@JsonKey() final  RideStatus status;
-// Phase (persisted so passengers see granular driver progress)
 @override final  String? ridePhase;
-// Vehicle reference (resolved through VehicleRepository)
 @override final  String? vehicleId;
 @override final  String? vehicleInfo;
-// Bookings (lightweight - detailed bookings stored separately)
  final  List<String> _bookingIds;
-// Bookings (lightweight - detailed bookings stored separately)
 @override@JsonKey() List<String> get bookingIds {
   if (_bookingIds is EqualUnmodifiableListView) return _bookingIds;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_bookingIds);
 }
 
-// Bookings list (populated by service layer when full booking data is needed)
  final  List<RideBooking> _bookings;
-// Bookings list (populated by service layer when full booking data is needed)
 @override@JsonKey(includeToJson: false, includeFromJson: false) List<RideBooking> get bookings {
   if (_bookings is EqualUnmodifiableListView) return _bookings;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_bookings);
 }
 
-// Reviews (count only - detailed reviews stored separately)
 @override@JsonKey() final  int reviewCount;
 @override@JsonKey() final  double averageRating;
-// XP Rewards
 @override@JsonKey() final  int xpReward;
-// Metadata
 @override final  String? notes;
  final  List<String> _tags;
 @override@JsonKey() List<String> get tags {
@@ -342,7 +321,6 @@ class _RideModel extends RideModel {
 
 @override@TimestampConverter() final  DateTime? createdAt;
 @override@TimestampConverter() final  DateTime? updatedAt;
-// Lifecycle stamps (optional — set as the ride moves through its states).
 @override@TimestampConverter() final  DateTime? completedAt;
 @override@TimestampConverter() final  DateTime? cancelledAt;
 @override final  String? cancellationReason;

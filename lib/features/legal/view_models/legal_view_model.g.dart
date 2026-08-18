@@ -94,7 +94,7 @@ abstract class _$LegalScreenUiViewModel extends $Notifier<LegalScreenUiState> {
   LegalScreenUiState build(LegalDocumentType arg);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<LegalScreenUiState, LegalScreenUiState>;
     final element =
         ref.element
@@ -104,6 +104,6 @@ abstract class _$LegalScreenUiViewModel extends $Notifier<LegalScreenUiState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

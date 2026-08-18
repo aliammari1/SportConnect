@@ -130,7 +130,7 @@ abstract class _$DriverViewModel extends $Notifier<DriverState> {
   DriverState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<DriverState, DriverState>;
     final element =
         ref.element
@@ -140,6 +140,6 @@ abstract class _$DriverViewModel extends $Notifier<DriverState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

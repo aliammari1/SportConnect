@@ -15,13 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RideBooking {
 
- String get id; String get rideId; String get passengerId; String? get driverId; int get seatsBooked; BookingStatus get status; LocationPoint? get pickupLocation; LocationPoint? get dropoffLocation; String? get note;// No denormalized user data - fetch via passengerId for single source of truth
-@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get respondedAt;// Payment tracking — stamped when Stripe payment succeeds
- String? get paymentIntentId;@TimestampConverter() DateTime? get paidAt;// Pickup OTP — shown to passenger, driver enters this to confirm pickup
- String? get pickupOtp;// Per-seat price snapshot captured at booking time (defends against the
-// driver editing the ride price after a passenger has booked).
- int? get pricePerSeatInCents;// Stamped when the booking is cancelled (by passenger or driver).
-@TimestampConverter() DateTime? get cancelledAt;
+ String get id; String get rideId; String get passengerId; String? get driverId; int get seatsBooked; BookingStatus get status; LocationPoint? get pickupLocation; LocationPoint? get dropoffLocation; String? get note;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get respondedAt; String? get paymentIntentId;@TimestampConverter() DateTime? get paidAt; String? get pickupOtp; int? get pricePerSeatInCents;@TimestampConverter() DateTime? get cancelledAt;
 /// Create a copy of RideBooking
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -266,18 +260,12 @@ class _RideBooking extends RideBooking {
 @override final  LocationPoint? pickupLocation;
 @override final  LocationPoint? dropoffLocation;
 @override final  String? note;
-// No denormalized user data - fetch via passengerId for single source of truth
 @override@TimestampConverter() final  DateTime? createdAt;
 @override@TimestampConverter() final  DateTime? respondedAt;
-// Payment tracking — stamped when Stripe payment succeeds
 @override final  String? paymentIntentId;
 @override@TimestampConverter() final  DateTime? paidAt;
-// Pickup OTP — shown to passenger, driver enters this to confirm pickup
 @override final  String? pickupOtp;
-// Per-seat price snapshot captured at booking time (defends against the
-// driver editing the ride price after a passenger has booked).
 @override final  int? pricePerSeatInCents;
-// Stamped when the booking is cancelled (by passenger or driver).
 @override@TimestampConverter() final  DateTime? cancelledAt;
 
 /// Create a copy of RideBooking

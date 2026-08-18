@@ -6,7 +6,11 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:freezed_annotation/freezed_annotation.dart'
+    show CheckedFromJsonException;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:json_annotation/json_annotation.dart'
+    show CheckedFromJsonException;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:sport_connect/core/config/app_config.dart';
@@ -288,42 +292,27 @@ class AuthRepository {
       }
     } on Exception catch (e, st) {
       TalkerService.error('Get user data error', e, st);
-    }
-    // ignore: avoid_catching_errors
-    on Error catch (e, st) {
-      // Catch CheckedFromJsonException and any other freezed Errors. Returning
-      // null lets the route guard redirect the user to onboarding.
-      TalkerService.error(
-        'Get user data — freezed deserialization failed for $uid',
-        e,
-        st,
-      );
+      rethrow;
     }
     return null;
   }
 
   Stream<UserModel?> getUserDataStream(String uid) {
-    return _usersCollection
-        .doc(uid)
-        .snapshots()
-        .map<UserModel?>((doc) {
-          if (doc.exists && doc.data() != null) {
-            try {
-              return doc.data();
-              // ignore: avoid_catching_errors
-            } on Error catch (e, st) {
-              // Swallow freezed deserialization errors in the stream and log
-              // them so a single bad doc does not break the live listener.
-              TalkerService.error(
-                'getUserDataStream — freezed deserialization failed for $uid',
-                e,
-                st,
-              );
-              return null;
-            }
-          }
-          return null;
-        });
+    return _usersCollection.doc(uid).snapshots().map<UserModel?>((doc) {
+      try {
+        if (doc.exists && doc.data() != null) {
+          return doc.data();
+        }
+      } on Exception catch (e, st) {
+        TalkerService.error(
+          'getUserDataStream — freezed deserialization failed for $uid',
+          e,
+          st,
+        );
+        rethrow;
+      }
+      return null;
+    });
   }
 
   /// Sign out
@@ -763,11 +752,12 @@ class AuthRepository {
   /// Sign in with Apple
 
   Future<SocialSignInResult> signInWithApple() async {
+    final AuthorizationCredentialAppleID appleCredential;
     try {
       final rawNonce = _generateNonce();
       final nonce = _sha256ofString(rawNonce);
 
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
+      appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
@@ -915,10 +905,11 @@ class AuthRepository {
     const charset =
         '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
     final random = Random.secure();
-    return List.generate(
-      length,
-      (_) => charset[random.nextInt(charset.length)],
-    ).join();
+    final buffer = StringBuffer();
+    for (var i = 0; i < length; i++) {
+      buffer.write(charset[random.nextInt(charset.length)]);
+    }
+    return buffer.toString();
   }
 
   String _sha256ofString(String input) {
@@ -1133,7 +1124,7 @@ class AuthRepository {
         // Return a single generic message for all credential errors to prevent
         // email enumeration — an attacker must not be able to tell whether the
         // email or password was wrong.
-        return AuthException(
+        return const AuthException(
           code: 'invalid-credential',
           message: 'Invalid email or password',
         );

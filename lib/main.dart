@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+// Config & Services
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -12,12 +14,9 @@ import 'package:go_router/go_router.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:riverpod_devtools_tracker/riverpod_devtools_tracker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Config & Services
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:sport_connect/core/config/app_router.dart';
 import 'package:sport_connect/core/config/stripe_config.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
-import 'package:sport_connect/features/auth/repositories/auth_repository.dart';
 import 'package:sport_connect/core/repositories/settings_repository.dart';
 import 'package:sport_connect/core/services/deep_link_service.dart';
 import 'package:sport_connect/core/services/firebase_service.dart';
@@ -26,6 +25,7 @@ import 'package:sport_connect/core/services/stripe_service.dart';
 import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/cupertino_app_theme.dart';
 import 'package:sport_connect/core/theme/material_app_theme.dart';
+import 'package:sport_connect/features/auth/repositories/auth_repository.dart';
 import 'package:sport_connect/features/profile/view_models/settings_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
 import 'package:upgrader/upgrader.dart';
@@ -74,7 +74,9 @@ void main() async {
 
   if (firebase != null) {
     FlutterError.onError = (details) {
-      unawaited(firebase!.crashlytics.recordFlutterFatalError(details));
+      unawaited(
+        firebase!.crashlytics.recordError(details.exception, details.stack),
+      );
       TalkerService.error(
         'FlutterError: ${details.exceptionAsString()}',
         details.exception,

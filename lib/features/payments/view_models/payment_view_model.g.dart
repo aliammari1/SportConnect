@@ -84,7 +84,7 @@ abstract class _$PaymentHistoryFilterViewModel
   PaymentHistoryFilterState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<PaymentHistoryFilterState, PaymentHistoryFilterState>;
     final element =
@@ -95,7 +95,7 @@ abstract class _$PaymentHistoryFilterViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -232,7 +232,7 @@ abstract class _$DriverEarningsPeriodViewModel
   DriverEarningsPeriodState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<DriverEarningsPeriodState, DriverEarningsPeriodState>;
     final element =
@@ -243,7 +243,7 @@ abstract class _$DriverEarningsPeriodViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -283,7 +283,7 @@ abstract class _$PaymentViewModel extends $AsyncNotifier<void> {
   FutureOr<void> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<fr.AsyncValue<void>, void>;
     final element =
         ref.element
@@ -293,7 +293,7 @@ abstract class _$PaymentViewModel extends $AsyncNotifier<void> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -342,7 +342,7 @@ abstract class _$DriverOnboardingViewModel extends $AsyncNotifier<void> {
   FutureOr<void> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<fr.AsyncValue<void>, void>;
     final element =
         ref.element
@@ -352,7 +352,7 @@ abstract class _$DriverOnboardingViewModel extends $AsyncNotifier<void> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -405,7 +405,7 @@ abstract class _$DriverStripeOnboardingFlowViewModel
   DriverStripeOnboardingFlowState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -423,7 +423,7 @@ abstract class _$DriverStripeOnboardingFlowViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -695,7 +695,7 @@ abstract class _$DriverConnectedAccountViewModel
   FutureOr<DriverConnectedAccount?> build(String driverId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -713,7 +713,7 @@ abstract class _$DriverConnectedAccountViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -1113,7 +1113,7 @@ abstract class _$DriverPayoutViewModel extends $AsyncNotifier<void> {
   FutureOr<void> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<fr.AsyncValue<void>, void>;
     final element =
         ref.element
@@ -1123,7 +1123,7 @@ abstract class _$DriverPayoutViewModel extends $AsyncNotifier<void> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 

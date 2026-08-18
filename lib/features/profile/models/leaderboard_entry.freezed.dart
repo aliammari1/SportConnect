@@ -15,10 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LeaderboardEntry {
 
- String get userId; String get username; int get totalXP; int get level; int get rank; String? get photoUrl;// Lifetime total rides. Renamed from the former `ridesThisMonth`, which was
-// mislabeled: it has always been fed from GamificationStats.totalRides (a
-// lifetime counter) because no monthly ride bucket exists in the model.
- int get totalRides;
+ String get userId; String get username; int get totalXP; int get level; int get rank; String? get photoUrl; int get totalRides;
 /// Create a copy of LeaderboardEntry
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -227,9 +224,6 @@ class _LeaderboardEntry implements LeaderboardEntry {
 @override final  int level;
 @override final  int rank;
 @override final  String? photoUrl;
-// Lifetime total rides. Renamed from the former `ridesThisMonth`, which was
-// mislabeled: it has always been fed from GamificationStats.totalRides (a
-// lifetime counter) because no monthly ride bucket exists in the model.
 @override@JsonKey() final  int totalRides;
 
 /// Create a copy of LeaderboardEntry

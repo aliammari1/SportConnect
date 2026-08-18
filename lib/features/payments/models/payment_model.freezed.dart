@@ -583,13 +583,7 @@ as StripeDisabledReason?,
 /// @nodoc
 mixin _$PaymentTransaction {
 
- String get id; String get rideId; String get riderId; String get riderName; String get driverId; String get driverName; int get amountInCents;// ✅ cents
- String get currency; PaymentStatus get status; int get platformFeeInCents;// ✅ cents
- int get driverEarningsInCents;// ✅ cents
- int get stripeFeeInCents;// ✅ cents
- PaymentMethodType? get paymentMethodType; String? get paymentMethodLast4;// Stripe IDs
- String? get stripePaymentIntentId; String? get stripeCustomerId; String? get stripeChargeId; String? get stripeTransferId; String? get stripeBalanceTransactionId; String? get stripeRefundId; int? get seatsBooked;// Timestamps
-@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;@TimestampConverter() DateTime? get completedAt;@TimestampConverter() DateTime? get refundedAt; String? get failureReason; String? get refundReason; int? get refundedAmountInCents; Map<String, dynamic> get metadata;
+ String get id; String get rideId; String get riderId; String get riderName; String get driverId; String get driverName; int get amountInCents; String get currency; PaymentStatus get status; int get platformFeeInCents; int get driverEarningsInCents; int get stripeFeeInCents; PaymentMethodType? get paymentMethodType; String? get paymentMethodLast4; String? get stripePaymentIntentId; String? get stripeCustomerId; String? get stripeChargeId; String? get stripeTransferId; String? get stripeBalanceTransactionId; String? get stripeRefundId; int? get seatsBooked;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;@TimestampConverter() DateTime? get completedAt;@TimestampConverter() DateTime? get refundedAt; String? get failureReason; String? get refundReason; int? get refundedAmountInCents; Map<String, dynamic> get metadata;
 /// Create a copy of PaymentTransaction
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -821,18 +815,13 @@ class _PaymentTransaction extends PaymentTransaction {
 @override final  String driverId;
 @override final  String driverName;
 @override final  int amountInCents;
-// ✅ cents
 @override final  String currency;
 @override final  PaymentStatus status;
 @override final  int platformFeeInCents;
-// ✅ cents
 @override final  int driverEarningsInCents;
-// ✅ cents
 @override@JsonKey() final  int stripeFeeInCents;
-// ✅ cents
 @override final  PaymentMethodType? paymentMethodType;
 @override final  String? paymentMethodLast4;
-// Stripe IDs
 @override final  String? stripePaymentIntentId;
 @override final  String? stripeCustomerId;
 @override final  String? stripeChargeId;
@@ -840,7 +829,6 @@ class _PaymentTransaction extends PaymentTransaction {
 @override final  String? stripeBalanceTransactionId;
 @override final  String? stripeRefundId;
 @override final  int? seatsBooked;
-// Timestamps
 @override@TimestampConverter() final  DateTime? createdAt;
 @override@TimestampConverter() final  DateTime? updatedAt;
 @override@TimestampConverter() final  DateTime? completedAt;
@@ -948,13 +936,7 @@ as Map<String, dynamic>,
 /// @nodoc
 mixin _$DriverPayout {
 
- String get id; String get driverId; String get driverName; String get connectedAccountId; int get amountInCents;// ✅ cents
- String get currency; PayoutStatus get status; PayoutMethod get method;// ADD
- PayoutType get type;// ADD
- String? get destination;// ADD: bank account / card ID on Connect acct
- String? get stripePayoutId; String? get stripeTransferId; String? get stripeBalanceTransactionId;// ADD: reconciliation
- List<String> get transactionIds;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get expectedArrivalDate;@TimestampConverter() DateTime? get arrivedAt; String? get failureReason; String? get failureCode;// ADD: Stripe failure code enum string
- Map<String, dynamic> get metadata;
+ String get id; String get driverId; String get driverName; String get connectedAccountId; int get amountInCents; String get currency; PayoutStatus get status; PayoutMethod get method; PayoutType get type; String? get destination; String? get stripePayoutId; String? get stripeTransferId; String? get stripeBalanceTransactionId; List<String> get transactionIds;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get expectedArrivalDate;@TimestampConverter() DateTime? get arrivedAt; String? get failureReason; String? get failureCode; Map<String, dynamic> get metadata;
 /// Create a copy of DriverPayout
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1175,21 +1157,15 @@ class _DriverPayout extends DriverPayout {
 @override final  String driverName;
 @override final  String connectedAccountId;
 @override final  int amountInCents;
-// ✅ cents
 @override final  String currency;
 @override final  PayoutStatus status;
 @override@JsonKey() final  PayoutMethod method;
-// ADD
 @override@JsonKey() final  PayoutType type;
-// ADD
 @override final  String? destination;
-// ADD: bank account / card ID on Connect acct
 @override final  String? stripePayoutId;
 @override final  String? stripeTransferId;
 @override final  String? stripeBalanceTransactionId;
-// ADD: reconciliation
  final  List<String> _transactionIds;
-// ADD: reconciliation
 @override@JsonKey() List<String> get transactionIds {
   if (_transactionIds is EqualUnmodifiableListView) return _transactionIds;
   // ignore: implicit_dynamic_type
@@ -1201,9 +1177,7 @@ class _DriverPayout extends DriverPayout {
 @override@TimestampConverter() final  DateTime? arrivedAt;
 @override final  String? failureReason;
 @override final  String? failureCode;
-// ADD: Stripe failure code enum string
  final  Map<String, dynamic> _metadata;
-// ADD: Stripe failure code enum string
 @override@JsonKey() Map<String, dynamic> get metadata {
   if (_metadata is EqualUnmodifiableMapView) return _metadata;
   // ignore: implicit_dynamic_type
@@ -1294,19 +1268,7 @@ as Map<String, dynamic>,
 /// @nodoc
 mixin _$DriverConnectedAccount {
 
- String get id; String get driverId; String get stripeAccountId; String get email; String get country; String get defaultCurrency;// ✅ from Stripe directly
- bool get chargesEnabled; bool get payoutsEnabled; bool get detailsSubmitted;// Capabilities
- StripeCapabilities get capabilities;// ADD
-// Requirements
- StripeRequirements get requirements;// ✅ typed
- StripeRequirements get futureRequirements;// ADD
-// Onboarding — no onboardingUrl, generate on-demand via CF
- bool? get onboardingCompleted;@TimestampConverter() DateTime? get onboardingCompletedAt; String? get accountHolderName;// Balances in cents
- int get totalEarningsInCents;// ✅ cents
- int get availableBalanceInCents;// ✅ cents
- int get pendingBalanceInCents;// ✅ cents
-// Timestamps
-@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;@TimestampConverter() DateTime? get lastPayoutAt; Map<String, dynamic> get metadata;
+ String get id; String get driverId; String get stripeAccountId; String get email; String get country; String get defaultCurrency; bool get chargesEnabled; bool get payoutsEnabled; bool get detailsSubmitted; StripeCapabilities get capabilities; StripeRequirements get requirements; StripeRequirements get futureRequirements; bool? get onboardingCompleted;@TimestampConverter() DateTime? get onboardingCompletedAt; String? get accountHolderName; int get totalEarningsInCents; int get availableBalanceInCents; int get pendingBalanceInCents;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;@TimestampConverter() DateTime? get lastPayoutAt; Map<String, dynamic> get metadata;
 /// Create a copy of DriverConnectedAccount
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1557,30 +1519,18 @@ class _DriverConnectedAccount extends DriverConnectedAccount {
 @override final  String email;
 @override final  String country;
 @override final  String defaultCurrency;
-// ✅ from Stripe directly
 @override final  bool chargesEnabled;
 @override final  bool payoutsEnabled;
 @override final  bool detailsSubmitted;
-// Capabilities
 @override@JsonKey() final  StripeCapabilities capabilities;
-// ADD
-// Requirements
 @override@JsonKey() final  StripeRequirements requirements;
-// ✅ typed
 @override@JsonKey() final  StripeRequirements futureRequirements;
-// ADD
-// Onboarding — no onboardingUrl, generate on-demand via CF
 @override final  bool? onboardingCompleted;
 @override@TimestampConverter() final  DateTime? onboardingCompletedAt;
 @override final  String? accountHolderName;
-// Balances in cents
 @override@JsonKey() final  int totalEarningsInCents;
-// ✅ cents
 @override@JsonKey() final  int availableBalanceInCents;
-// ✅ cents
 @override@JsonKey() final  int pendingBalanceInCents;
-// ✅ cents
-// Timestamps
 @override@TimestampConverter() final  DateTime? createdAt;
 @override@TimestampConverter() final  DateTime? updatedAt;
 @override@TimestampConverter() final  DateTime? lastPayoutAt;
@@ -1704,8 +1654,7 @@ $StripeRequirementsCopyWith<$Res> get futureRequirements {
 /// @nodoc
 mixin _$RiderPaymentMethod {
 
- String get id; String get riderId; String get stripeCustomerId; String get stripePaymentMethodId; String get brand; String get last4; int get exMonth; int get exYear; String? get fingerprint;// ADD: dedup same card across customers
- String? get funding; String? get cardCountry; bool get isDefault;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;
+ String get id; String get riderId; String get stripeCustomerId; String get stripePaymentMethodId; String get brand; String get last4; int get exMonth; int get exYear; String? get fingerprint; String? get funding; String? get cardCountry; bool get isDefault;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;
 /// Create a copy of RiderPaymentMethod
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1924,7 +1873,6 @@ class _RiderPaymentMethod extends RiderPaymentMethod {
 @override final  int exMonth;
 @override final  int exYear;
 @override final  String? fingerprint;
-// ADD: dedup same card across customers
 @override final  String? funding;
 @override final  String? cardCountry;
 @override@JsonKey() final  bool isDefault;
@@ -2008,12 +1956,7 @@ as DateTime?,
 /// @nodoc
 mixin _$EarningsSummary {
 
- String get driverId;// Total earnings
- int get totalEarningsInCents; int get totalPlatformFeesInCents; int get totalStripeFeesInCents;// Period earnings
- int get earningsTodayInCents; int get earningsThisWeekInCents; int get earningsThisMonthInCents; int get earningsThisYearInCents;// Ride stats
- int get totalRidesCompleted; int get ridesCompletedToday; int get ridesCompletedThisWeek; int get ridesCompletedThisMonth;// Balance
- int get availableBalanceInCents; int get pendingBalanceInCents;// Timestamps
-@TimestampConverter() DateTime? get lastUpdated;@TimestampConverter() DateTime? get lastPayoutDate;
+ String get driverId; int get totalEarningsInCents; int get totalPlatformFeesInCents; int get totalStripeFeesInCents; int get earningsTodayInCents; int get earningsThisWeekInCents; int get earningsThisMonthInCents; int get earningsThisYearInCents; int get totalRidesCompleted; int get ridesCompletedToday; int get ridesCompletedThisWeek; int get ridesCompletedThisMonth; int get availableBalanceInCents; int get pendingBalanceInCents;@TimestampConverter() DateTime? get lastUpdated;@TimestampConverter() DateTime? get lastPayoutDate;
 /// Create a copy of EarningsSummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2226,24 +2169,19 @@ class _EarningsSummary extends EarningsSummary {
   factory _EarningsSummary.fromJson(Map<String, dynamic> json) => _$EarningsSummaryFromJson(json);
 
 @override final  String driverId;
-// Total earnings
 @override@JsonKey() final  int totalEarningsInCents;
 @override@JsonKey() final  int totalPlatformFeesInCents;
 @override@JsonKey() final  int totalStripeFeesInCents;
-// Period earnings
 @override@JsonKey() final  int earningsTodayInCents;
 @override@JsonKey() final  int earningsThisWeekInCents;
 @override@JsonKey() final  int earningsThisMonthInCents;
 @override@JsonKey() final  int earningsThisYearInCents;
-// Ride stats
 @override@JsonKey() final  int totalRidesCompleted;
 @override@JsonKey() final  int ridesCompletedToday;
 @override@JsonKey() final  int ridesCompletedThisWeek;
 @override@JsonKey() final  int ridesCompletedThisMonth;
-// Balance
 @override@JsonKey() final  int availableBalanceInCents;
 @override@JsonKey() final  int pendingBalanceInCents;
-// Timestamps
 @override@TimestampConverter() final  DateTime? lastUpdated;
 @override@TimestampConverter() final  DateTime? lastPayoutDate;
 

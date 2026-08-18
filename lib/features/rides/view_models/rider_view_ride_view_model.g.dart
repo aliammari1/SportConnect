@@ -95,7 +95,7 @@ abstract class _$RiderViewRideUiViewModel
   RiderViewRideUiState build(String arg);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<RiderViewRideUiState, RiderViewRideUiState>;
     final element =
         ref.element
@@ -105,6 +105,6 @@ abstract class _$RiderViewRideUiViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

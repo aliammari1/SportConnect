@@ -15,9 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ReviewModel {
 
- String get id; String get rideId; String get reviewerId; String get reviewerName; String get revieweeId; String get revieweeName; ReviewType get type; double get rating;@RequiredTimestampConverter() DateTime get createdAt; String? get reviewerPhotoUrl; String? get revieweePhotoUrl; String? get comment; List<String> get tags;// Store as strings for Firestore compatibility
- bool get isVisible; String? get response;// Response from the person being reviewed
-@TimestampConverter() DateTime? get responseAt;@TimestampConverter() DateTime? get updatedAt;
+ String get id; String get rideId; String get reviewerId; String get reviewerName; String get revieweeId; String get revieweeName; ReviewType get type; double get rating;@RequiredTimestampConverter() DateTime get createdAt; String? get reviewerPhotoUrl; String? get revieweePhotoUrl; String? get comment; List<String> get tags; bool get isVisible; String? get response;@TimestampConverter() DateTime? get responseAt;@TimestampConverter() DateTime? get updatedAt;
 /// Create a copy of ReviewModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -249,10 +247,8 @@ class _ReviewModel extends ReviewModel {
   return EqualUnmodifiableListView(_tags);
 }
 
-// Store as strings for Firestore compatibility
 @override@JsonKey() final  bool isVisible;
 @override final  String? response;
-// Response from the person being reviewed
 @override@TimestampConverter() final  DateTime? responseAt;
 @override@TimestampConverter() final  DateTime? updatedAt;
 
@@ -336,8 +332,7 @@ as DateTime?,
 /// @nodoc
 mixin _$RatingStats {
 
- int get totalReviews; double get averageRating; int get fiveStarCount; int get fourStarCount; int get threeStarCount; int get twoStarCount; int get oneStarCount; Map<String, int> get tagCounts;// Tag -> count
-@TimestampConverter() DateTime? get lastReviewAt;@TimestampConverter() DateTime? get updatedAt;
+ int get totalReviews; double get averageRating; int get fiveStarCount; int get fourStarCount; int get threeStarCount; int get twoStarCount; int get oneStarCount; Map<String, int> get tagCounts;@TimestampConverter() DateTime? get lastReviewAt;@TimestampConverter() DateTime? get updatedAt;
 /// Create a copy of RatingStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -557,7 +552,6 @@ class _RatingStats extends RatingStats {
   return EqualUnmodifiableMapView(_tagCounts);
 }
 
-// Tag -> count
 @override@TimestampConverter() final  DateTime? lastReviewAt;
 @override@TimestampConverter() final  DateTime? updatedAt;
 

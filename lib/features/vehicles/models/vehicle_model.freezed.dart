@@ -15,11 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$VehicleModel {
 
- String get id; String get ownerId; String get make; String get model; int get year; String get color; String get licensePlate; String get ownerName; String? get ownerPhotoUrl; int get capacity; String? get imageUrl; List<String> get imageUrls; bool get isActive; bool get isDefault;// Specs (optional; captured during onboarding / editing)
- VehicleType get type; VehicleFuelType get fuelType; VehicleTransmission get transmission;// Verification
- VehicleVerificationStatus get verificationStatus;@TimestampConverter() DateTime? get verifiedAt; String? get rejectionReason;// Stats
- int get totalRides; double get averageRating;// Timestamps
-@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;
+ String get id; String get ownerId; String get make; String get model; int get year; String get color; String get licensePlate; String get ownerName; String? get ownerPhotoUrl; int get capacity; String? get imageUrl; List<String> get imageUrls; bool get isActive; bool get isDefault; VehicleType get type; VehicleFuelType get fuelType; VehicleTransmission get transmission; VehicleVerificationStatus get verificationStatus;@TimestampConverter() DateTime? get verifiedAt; String? get rejectionReason; int get totalRides; double get averageRating;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get updatedAt;
 /// Create a copy of VehicleModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -259,18 +255,14 @@ class _VehicleModel extends VehicleModel {
 
 @override@JsonKey() final  bool isActive;
 @override@JsonKey() final  bool isDefault;
-// Specs (optional; captured during onboarding / editing)
 @override@JsonKey() final  VehicleType type;
 @override@JsonKey() final  VehicleFuelType fuelType;
 @override@JsonKey() final  VehicleTransmission transmission;
-// Verification
 @override@JsonKey() final  VehicleVerificationStatus verificationStatus;
 @override@TimestampConverter() final  DateTime? verifiedAt;
 @override final  String? rejectionReason;
-// Stats
 @override@JsonKey() final  int totalRides;
 @override@JsonKey() final  double averageRating;
-// Timestamps
 @override@TimestampConverter() final  DateTime? createdAt;
 @override@TimestampConverter() final  DateTime? updatedAt;
 

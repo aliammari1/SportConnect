@@ -48,7 +48,7 @@ abstract class _$HelpCenterUiViewModel extends $Notifier<HelpCenterUiState> {
   HelpCenterUiState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<HelpCenterUiState, HelpCenterUiState>;
     final element =
         ref.element
@@ -58,6 +58,6 @@ abstract class _$HelpCenterUiViewModel extends $Notifier<HelpCenterUiState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

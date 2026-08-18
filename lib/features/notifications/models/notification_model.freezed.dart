@@ -15,14 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$NotificationModel {
 
- String get id; String get userId; NotificationType get type; String get title; String get body; NotificationPriority get priority;// Related entity
- String? get referenceId; String? get referenceType;// Sender info (for social notifications)
- String? get senderId; String? get senderName; String? get senderPhotoUrl;// Rich media (e.g. promotion banners, achievement art); distinct from the
-// sender's avatar.
- String? get imageUrl;// Action
- String? get actionUrl; Map<String, dynamic> get data;// Status
- bool get isRead; bool get isArchived; bool get isPushSent;// Timestamps
-@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get readAt;@TimestampConverter() DateTime? get expiresAt;
+ String get id; String get userId; NotificationType get type; String get title; String get body; NotificationPriority get priority; String? get referenceId; String? get referenceType; String? get senderId; String? get senderName; String? get senderPhotoUrl; String? get imageUrl; String? get actionUrl; Map<String, dynamic> get data; bool get isRead; bool get isArchived; bool get isPushSent;@TimestampConverter() DateTime? get createdAt;@TimestampConverter() DateTime? get readAt;@TimestampConverter() DateTime? get expiresAt;
 /// Create a copy of NotificationModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -244,17 +237,12 @@ class _NotificationModel extends NotificationModel {
 @override final  String title;
 @override final  String body;
 @override@JsonKey() final  NotificationPriority priority;
-// Related entity
 @override final  String? referenceId;
 @override final  String? referenceType;
-// Sender info (for social notifications)
 @override final  String? senderId;
 @override final  String? senderName;
 @override final  String? senderPhotoUrl;
-// Rich media (e.g. promotion banners, achievement art); distinct from the
-// sender's avatar.
 @override final  String? imageUrl;
-// Action
 @override final  String? actionUrl;
  final  Map<String, dynamic> _data;
 @override@JsonKey() Map<String, dynamic> get data {
@@ -263,11 +251,9 @@ class _NotificationModel extends NotificationModel {
   return EqualUnmodifiableMapView(_data);
 }
 
-// Status
 @override@JsonKey() final  bool isRead;
 @override@JsonKey() final  bool isArchived;
 @override@JsonKey() final  bool isPushSent;
-// Timestamps
 @override@TimestampConverter() final  DateTime? createdAt;
 @override@TimestampConverter() final  DateTime? readAt;
 @override@TimestampConverter() final  DateTime? expiresAt;
@@ -355,11 +341,7 @@ as DateTime?,
 /// @nodoc
 mixin _$NotificationPreferences {
 
-// Push notifications
- bool get pushEnabled; bool get rideNotifications; bool get messageNotifications; bool get socialNotifications; bool get gamificationNotifications; bool get promotionNotifications;// Email notifications
- bool get emailEnabled; bool get emailRideSummary; bool get emailWeeklyDigest;// Quiet hours
- bool get quietHoursEnabled; String get quietHoursStart; String get quietHoursEnd;// Sound & vibration
- bool get soundEnabled; bool get vibrationEnabled;
+ bool get pushEnabled; bool get rideNotifications; bool get messageNotifications; bool get socialNotifications; bool get gamificationNotifications; bool get promotionNotifications; bool get emailEnabled; bool get emailRideSummary; bool get emailWeeklyDigest; bool get quietHoursEnabled; String get quietHoursStart; String get quietHoursEnd; bool get soundEnabled; bool get vibrationEnabled;
 /// Create a copy of NotificationPreferences
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -569,22 +551,18 @@ class _NotificationPreferences extends NotificationPreferences {
   const _NotificationPreferences({this.pushEnabled = true, this.rideNotifications = true, this.messageNotifications = true, this.socialNotifications = true, this.gamificationNotifications = true, this.promotionNotifications = true, this.emailEnabled = true, this.emailRideSummary = true, this.emailWeeklyDigest = true, this.quietHoursEnabled = false, this.quietHoursStart = '22:00', this.quietHoursEnd = '08:00', this.soundEnabled = true, this.vibrationEnabled = true}): super._();
   factory _NotificationPreferences.fromJson(Map<String, dynamic> json) => _$NotificationPreferencesFromJson(json);
 
-// Push notifications
 @override@JsonKey() final  bool pushEnabled;
 @override@JsonKey() final  bool rideNotifications;
 @override@JsonKey() final  bool messageNotifications;
 @override@JsonKey() final  bool socialNotifications;
 @override@JsonKey() final  bool gamificationNotifications;
 @override@JsonKey() final  bool promotionNotifications;
-// Email notifications
 @override@JsonKey() final  bool emailEnabled;
 @override@JsonKey() final  bool emailRideSummary;
 @override@JsonKey() final  bool emailWeeklyDigest;
-// Quiet hours
 @override@JsonKey() final  bool quietHoursEnabled;
 @override@JsonKey() final  String quietHoursStart;
 @override@JsonKey() final  String quietHoursEnd;
-// Sound & vibration
 @override@JsonKey() final  bool soundEnabled;
 @override@JsonKey() final  bool vibrationEnabled;
 

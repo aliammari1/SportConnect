@@ -153,7 +153,7 @@ abstract class _$NotificationPreferencesViewModel
   NotificationPreferencesState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<NotificationPreferencesState, NotificationPreferencesState>;
@@ -168,6 +168,6 @@ abstract class _$NotificationPreferencesViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

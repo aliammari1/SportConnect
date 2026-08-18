@@ -53,7 +53,7 @@ abstract class _$ReviewFormViewModel extends $Notifier<ReviewFormState> {
   ReviewFormState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ReviewFormState, ReviewFormState>;
     final element =
         ref.element
@@ -63,7 +63,7 @@ abstract class _$ReviewFormViewModel extends $Notifier<ReviewFormState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -153,7 +153,7 @@ abstract class _$ReviewsListViewModel extends $AsyncNotifier<ReviewsListState> {
   FutureOr<ReviewsListState> build(String userId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<ReviewsListState>, ReviewsListState>;
     final element =
@@ -164,7 +164,7 @@ abstract class _$ReviewsListViewModel extends $AsyncNotifier<ReviewsListState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -213,7 +213,7 @@ abstract class _$ReviewResponseViewModel extends $Notifier<AsyncValue<void>> {
   AsyncValue<void> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, AsyncValue<void>>;
     final element =
         ref.element
@@ -223,7 +223,7 @@ abstract class _$ReviewResponseViewModel extends $Notifier<AsyncValue<void>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 

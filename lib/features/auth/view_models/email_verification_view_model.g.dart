@@ -51,7 +51,7 @@ abstract class _$EmailVerificationViewModel
   EmailVerificationState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<EmailVerificationState, EmailVerificationState>;
     final element =
@@ -62,6 +62,6 @@ abstract class _$EmailVerificationViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

@@ -96,7 +96,7 @@ abstract class _$AddVehicleSheetUiViewModel
   AddVehicleSheetUiState build(String arg);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AddVehicleSheetUiState, AddVehicleSheetUiState>;
     final element =
@@ -107,6 +107,6 @@ abstract class _$AddVehicleSheetUiViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

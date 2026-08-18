@@ -15,10 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DriverStats {
 
- String get driverId; double get rating;// Rides
- int get totalRides; int get ridesToday; int get ridesThisWeek; int get ridesThisMonth; int get pendingRequests;// Earnings
- int get totalEarningsInCents; int get earningsTodayInCents; int get earningsThisWeekInCents; int get earningsThisMonthInCents; int get totalSpentInCents;// Distance & status
- double get totalDistance;@TimestampConverter() DateTime? get lastRideAt;
+ String get driverId; double get rating; int get totalRides; int get ridesToday; int get ridesThisWeek; int get ridesThisMonth; int get pendingRequests; int get totalEarningsInCents; int get earningsTodayInCents; int get earningsThisWeekInCents; int get earningsThisMonthInCents; int get totalSpentInCents; double get totalDistance;@TimestampConverter() DateTime? get lastRideAt;
 /// Create a copy of DriverStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -230,19 +227,16 @@ class _DriverStats extends DriverStats {
 
 @override@JsonKey() final  String driverId;
 @override@JsonKey() final  double rating;
-// Rides
 @override@JsonKey() final  int totalRides;
 @override@JsonKey() final  int ridesToday;
 @override@JsonKey() final  int ridesThisWeek;
 @override@JsonKey() final  int ridesThisMonth;
 @override@JsonKey() final  int pendingRequests;
-// Earnings
 @override@JsonKey() final  int totalEarningsInCents;
 @override@JsonKey() final  int earningsTodayInCents;
 @override@JsonKey() final  int earningsThisWeekInCents;
 @override@JsonKey() final  int earningsThisMonthInCents;
 @override@JsonKey() final  int totalSpentInCents;
-// Distance & status
 @override@JsonKey() final  double totalDistance;
 @override@JsonKey()@TimestampConverter() final  DateTime? lastRideAt;
 

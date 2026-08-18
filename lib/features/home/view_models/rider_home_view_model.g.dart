@@ -53,7 +53,7 @@ abstract class _$RiderHomeViewModel extends $Notifier<RiderHomeState> {
   RiderHomeState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<RiderHomeState, RiderHomeState>;
     final element =
         ref.element
@@ -63,6 +63,6 @@ abstract class _$RiderHomeViewModel extends $Notifier<RiderHomeState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

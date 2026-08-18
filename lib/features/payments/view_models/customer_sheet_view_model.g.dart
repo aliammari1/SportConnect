@@ -48,7 +48,7 @@ abstract class _$CustomerSheetViewModel extends $Notifier<CustomerSheetState> {
   CustomerSheetState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<CustomerSheetState, CustomerSheetState>;
     final element =
         ref.element
@@ -58,6 +58,6 @@ abstract class _$CustomerSheetViewModel extends $Notifier<CustomerSheetState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

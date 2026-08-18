@@ -48,7 +48,7 @@ abstract class _$ProfileActionsViewModel extends $Notifier<void> {
   void build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<void, void>;
     final element =
         ref.element
@@ -58,7 +58,7 @@ abstract class _$ProfileActionsViewModel extends $Notifier<void> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -187,7 +187,7 @@ abstract class _$ReportIssueFormViewModel
   ReportIssueFormState build(ReportIssueFormArgs args);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ReportIssueFormState, ReportIssueFormState>;
     final element =
         ref.element
@@ -197,7 +197,7 @@ abstract class _$ReportIssueFormViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -462,7 +462,7 @@ abstract class _$ProfileEditViewModel extends $Notifier<ProfileEditState> {
   ProfileEditState build(String uid);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ProfileEditState, ProfileEditState>;
     final element =
         ref.element
@@ -472,7 +472,7 @@ abstract class _$ProfileEditViewModel extends $Notifier<ProfileEditState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -516,7 +516,7 @@ abstract class _$ContactSupportViewModel
   ContactSupportState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ContactSupportState, ContactSupportState>;
     final element =
         ref.element
@@ -526,7 +526,7 @@ abstract class _$ContactSupportViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -631,7 +631,7 @@ abstract class _$SocialActionsViewModel extends $Notifier<SocialState> {
   SocialState build(String currentUserId, String targetUserId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<SocialState, SocialState>;
     final element =
         ref.element
@@ -641,7 +641,7 @@ abstract class _$SocialActionsViewModel extends $Notifier<SocialState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args.$1, _$args.$2));
+    return element.handleCreate(ref, () => build(_$args.$1, _$args.$2));
   }
 }
 
@@ -738,7 +738,7 @@ abstract class _$VehicleViewModel extends $Notifier<VehicleState> {
   VehicleState build(String uid);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<VehicleState, VehicleState>;
     final element =
         ref.element
@@ -748,7 +748,7 @@ abstract class _$VehicleViewModel extends $Notifier<VehicleState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 

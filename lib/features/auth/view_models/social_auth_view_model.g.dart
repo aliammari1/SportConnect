@@ -48,7 +48,7 @@ abstract class _$SocialAuthViewModel extends $Notifier<SocialAuthState> {
   SocialAuthState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<SocialAuthState, SocialAuthState>;
     final element =
         ref.element
@@ -58,6 +58,6 @@ abstract class _$SocialAuthViewModel extends $Notifier<SocialAuthState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

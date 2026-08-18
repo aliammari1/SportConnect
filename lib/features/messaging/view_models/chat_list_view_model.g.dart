@@ -48,7 +48,7 @@ abstract class _$ChatListUiViewModel extends $Notifier<ChatListUiState> {
   ChatListUiState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ChatListUiState, ChatListUiState>;
     final element =
         ref.element
@@ -58,7 +58,7 @@ abstract class _$ChatListUiViewModel extends $Notifier<ChatListUiState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -101,7 +101,7 @@ abstract class _$NewChatSearchViewModel extends $Notifier<NewChatSearchState> {
   NewChatSearchState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<NewChatSearchState, NewChatSearchState>;
     final element =
         ref.element
@@ -111,6 +111,6 @@ abstract class _$NewChatSearchViewModel extends $Notifier<NewChatSearchState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

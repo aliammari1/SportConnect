@@ -50,7 +50,7 @@ abstract class _$DriverOfferRideViewModel
   DriverOfferRideFormState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<DriverOfferRideFormState, DriverOfferRideFormState>;
     final element =
@@ -61,6 +61,6 @@ abstract class _$DriverOfferRideViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

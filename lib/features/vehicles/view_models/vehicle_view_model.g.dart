@@ -56,7 +56,7 @@ abstract class _$VehicleViewModel extends $Notifier<VehicleState> {
   VehicleState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<VehicleState, VehicleState>;
     final element =
         ref.element
@@ -66,6 +66,6 @@ abstract class _$VehicleViewModel extends $Notifier<VehicleState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

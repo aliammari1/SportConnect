@@ -10,7 +10,7 @@
 include: package:very_good_analysis/analysis_options.yaml
 
 plugins:
-  riverpod_lint: 3.1.3
+  riverpod_lint: 3.1.4
 
 
 # Dart Code Metrics Configuration - Comprehensive Code Quality Analysis
@@ -20,24 +20,24 @@ dcm:
     # Complexity Metrics
     cyclomatic-complexity: 10  # Max 10 independent paths (warn above)
     halstead-volume: 600       # Max information complexity
-    
+
     # Size Metrics
     lines-of-code: 100         # Max lines per function (warn above)
     source-lines-of-code: 80   # Max executable lines (excluding blanks/comments)
-    
+
     # Maintenance Metrics
     maintainability-index: 0.7  # Min maintainability (0-100 scale, warn below 50)
     maximum-nesting-level: 5   # Max nested blocks in function
-    
+
     # Function Signature Metrics
     number-of-parameters: 5    # Max parameters per function
-    
+
     # Widget-specific Metrics (Flutter)
     number-of-used-widgets: 30 # Max widgets in build method
     widgets-nesting-level: 5   # Max nested widgets
-    
+
     technical-debt: 20
-    
+
   metrics-exclude:
     - test/**
     - lib/generated/**
@@ -128,7 +128,7 @@ dcm:
     # - prefer-single-widget-per-file
     - prefer-using-list-view
     - use-setstate-synchronously
-    
+
 # Additional Metrics Configuration
 analyzer:
   language:
@@ -140,12 +140,7 @@ analyzer:
   errors:
     invalid_annotation_target: ignore  # freezed needs this
 
-linter: 
+linter:
   rules:
     public_member_api_docs: false
     lines_longer_than_80_chars: false
-# The following section is specific to the built_value package
-# and should not be modified
-# custom_lint:
-#   rules:
-#     - rules_to_enable_or_configure_built_value_lints

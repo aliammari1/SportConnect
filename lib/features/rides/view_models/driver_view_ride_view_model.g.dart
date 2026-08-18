@@ -100,7 +100,7 @@ abstract class _$DriverRideScreenUiViewModel
   DriverRideScreenUiState build(String rideId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<DriverRideScreenUiState, DriverRideScreenUiState>;
     final element =
@@ -111,6 +111,6 @@ abstract class _$DriverRideScreenUiViewModel
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
