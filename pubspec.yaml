@@ -2,7 +2,7 @@ name: sport_connect
 description: "SportConnect - Social carpooling app for sports enthusiasts"
 publish_to: "none"
 
-version: 1.2.11
+version: 1.2.12
 
 environment:
   sdk: ^3.11.0
@@ -84,7 +84,7 @@ dependencies:
 
   # App Features
   in_app_review: ^2.0.10
-  in_app_purchase: ^3.2.3
+  in_app_purchase: ^3.3.0
 
   smooth_page_indicator: ^2.0.1
   emoji_picker_flutter: ^4.4.0
@@ -109,7 +109,7 @@ dependencies:
   geo_fence_utils: ^2.0.1
   dio_cache_interceptor: ^4.0.6
   http_cache_hive_store: ^5.1.0
-  in_app_purchase_android: ^0.4.0+10
+  in_app_purchase_android: ^0.5.2
   reactive_cupertino_text_field: ^2.1.2
   json_annotation: ^4.12.0
   freezed_annotation: ^3.1.0
