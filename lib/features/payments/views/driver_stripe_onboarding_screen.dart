@@ -1,8 +1,9 @@
 import 'dart:async';
+
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -45,31 +46,43 @@ class DriverStripeOnboardingScreen extends ConsumerStatefulWidget {
   const DriverStripeOnboardingScreen({super.key});
 
   @override
-  ConsumerState<DriverStripeOnboardingScreen> createState() =>
-      _DriverStripeOnboardingScreenState();
+  ConsumerState<DriverStripeOnboardingScreen> createState() => _DriverStripeOnboardingScreenState();
 }
 
-class _DriverStripeOnboardingScreenState
-    extends ConsumerState<DriverStripeOnboardingScreen> {
+class _DriverStripeOnboardingScreenState extends ConsumerState<DriverStripeOnboardingScreen>
+    with WidgetsBindingObserver {
   bool _didNavigateAway = false;
   _PayoutSetupPage _page = _PayoutSetupPage.intro;
-
-  /// Native secure browser (SFSafariViewController on iOS, Chrome Custom Tab
-  /// on Android) used to host the Stripe Connect onboarding flow.
-  late final _StripeSafariBrowser _safariBrowser = _StripeSafariBrowser(
-    onClosedCallback: _onSafariClosed,
-  );
   bool _safariLaunched = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref
           .read(driverStripeOnboardingFlowViewModelProvider.notifier)
           .checkExistingAccount(ref.read(currentUserProvider).value);
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Proxy for "the secure browser closed" — flutter_custom_tabs has no
+    // onClosed callback, so returning to the foreground while a Custom
+    // Tab/SFSafariViewController session is active is our signal to
+    // re-verify the account server-side.
+    if (state == AppLifecycleState.resumed && _safariLaunched) {
+      _onSafariClosed();
+    }
   }
 
   void _safeGoNamed(
@@ -181,9 +194,7 @@ class _DriverStripeOnboardingScreenState
         final previousUser = previous?.value;
         final user = next.value;
         if (user != null && previousUser?.uid != user.uid) {
-          ref
-              .read(driverStripeOnboardingFlowViewModelProvider.notifier)
-              .checkExistingAccount(user);
+          ref.read(driverStripeOnboardingFlowViewModelProvider.notifier).checkExistingAccount(user);
         }
       })
       ..listen(driverStripeOnboardingFlowViewModelProvider, (previous, next) {
@@ -204,15 +215,11 @@ class _DriverStripeOnboardingScreenState
                     next.pendingRequirementCategory,
                     next.successMessage!,
                   ),
-            type: next.isConnected
-                ? AdaptiveSnackBarType.success
-                : AdaptiveSnackBarType.warning,
+            type: next.isConnected ? AdaptiveSnackBarType.success : AdaptiveSnackBarType.warning,
           );
         }
 
-        if (next.isConnected &&
-            previous?.isConnected != true &&
-            context.mounted) {
+        if (next.isConnected && previous?.isConnected != true && context.mounted) {
           setState(() => _page = _PayoutSetupPage.success);
         }
       });
@@ -284,9 +291,7 @@ class _DriverStripeOnboardingScreenState
                   text: l10n.connectStripeAccount,
                   trailingIcon: Icons.lock_outline_rounded,
                   isLoading: isBusy,
-                  onPressed: isBusy
-                      ? null
-                      : () => setState(() => _page = _PayoutSetupPage.prep),
+                  onPressed: isBusy ? null : () => setState(() => _page = _PayoutSetupPage.prep),
                 ),
                 SizedBox(height: 13.h),
                 _PoweredByStripe(l10n: l10n),
@@ -857,9 +862,7 @@ class _DriverStripeOnboardingScreenState
 
     if (!mounted) return;
 
-    final url = ref
-        .read(driverStripeOnboardingFlowViewModelProvider)
-        .onboardingUrl;
+    final url = ref.read(driverStripeOnboardingFlowViewModelProvider).onboardingUrl;
     if (url != null && url.isNotEmpty) {
       await _openStripeOnboarding(url);
     }
@@ -872,15 +875,24 @@ class _DriverStripeOnboardingScreenState
     if (_safariLaunched) return;
     _safariLaunched = true;
 
+    final theme = Theme.of(context);
     try {
-      await _safariBrowser.open(
-        url: WebUri(url),
-        settings: ChromeSafariBrowserSettings(
+      await launchUrl(
+        Uri.parse(url),
+        customTabsOptions: CustomTabsOptions(
+          colorSchemes: CustomTabsColorSchemes.defaults(
+            toolbarColor: theme.colorScheme.surface,
+          ),
+          urlBarHidingEnabled: true,
+          showTitle: true,
+        ),
+        safariVCOptions: SafariViewControllerOptions(
+          preferredBarTintColor: theme.colorScheme.surface,
+          preferredControlTintColor: theme.colorScheme.onSurface,
           barCollapsingEnabled: false,
-          presentationStyle: ModalPresentationStyle.OVER_FULL_SCREEN,
         ),
       );
-    } on Exception {
+    } catch (e) {
       _safariLaunched = false;
       if (!mounted) return;
       ref
@@ -899,9 +911,7 @@ class _DriverStripeOnboardingScreenState
     final state = ref.read(driverStripeOnboardingFlowViewModelProvider);
     if (state.completionHandled) return;
 
-    ref
-        .read(driverStripeOnboardingFlowViewModelProvider.notifier)
-        .markCompletionHandled();
+    ref.read(driverStripeOnboardingFlowViewModelProvider.notifier).markCompletionHandled();
     unawaited(_handleOnboardingComplete());
   }
 
@@ -956,18 +966,6 @@ class _DriverStripeOnboardingScreenState
       setState(() => _page = _PayoutSetupPage.success);
     }
   }
-}
-
-/// SFSafariViewController (iOS) / Chrome Custom Tab (Android) wrapper
-/// used for Stripe Connect hosted onboarding. We only need the
-/// `onClosed` lifecycle hook to trigger server-side re-verification.
-class _StripeSafariBrowser extends ChromeSafariBrowser {
-  _StripeSafariBrowser({required this.onClosedCallback});
-
-  final VoidCallback onClosedCallback;
-
-  @override
-  void onClosed() => onClosedCallback();
 }
 
 class _StickyFooter extends StatelessWidget {

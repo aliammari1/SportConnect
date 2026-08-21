@@ -1,0 +1,76 @@
+{
+  // ── VS Code feel ────────────────────────────────────────────────
+  "base_keymap": "VSCode",              // Ctrl+P, Ctrl+Shift+P, Ctrl+B, F5, Ctrl+D, Alt+↑/↓ …
+  "vim_mode": false,
+  "theme": { "mode": "system", "light": "One Light", "dark": "One Dark" },
+  "buffer_font_family": "Cascadia Code",
+  "buffer_font_size": 14,
+  "ui_font_size": 15,
+  "tab_size": 2,
+  "autosave": "off",
+  "format_on_save": "on",
+  "show_completions_on_input": true,
+  "use_autoclose": true,
+  "indent_guides": { "enabled": true, "coloring": "indent_aware" },
+  "tabs": { "file_icons": true, "git_status": true },
+  "toolbar": { "breadcrumbs": true, "quick_actions": true },
+  "project_panel": { "dock": "left" },
+  "scrollbar": { "show": "auto" },
+  "minimap": { "show": "auto" },  
+  "wrap_guides": [80, 120],
+
+  "auto_install_extensions": { "dart": true },
+
+  // ── Dart / Flutter ──────────────────────────────────────────────
+  "languages": {
+    "Dart": {
+      "tab_size": 2,
+      "format_on_save": "on",
+      "formatter": { "language_server": { "name": "dart" } },
+      "prettier": { "allowed": false },        // stops the "no parser for .dart" error
+      "code_actions_on_format": {
+        "source.organizeImports": true,
+        "source.fixAll": true
+      },
+      "preferred_line_length": 100
+    },
+    "YAML": { "tab_size": 2 }
+  },
+
+  "lsp": {
+    "dart": {
+      "settings": {
+        "lineLength": 100,                     // Dart's default 80 is brutal for widget trees
+        "completeFunctionCalls": true,
+        "enableSnippets": true,
+        "showTodos": true,
+        "renameFilesWithClasses": "prompt"
+      },
+      "initialization_options": {
+        "onlyAnalyzeProjectsWithOpenFiles": false,
+        "suggestFromUnimportedLibraries": true,
+        "closingLabels": true
+      }
+      // If dart is NOT on PATH, or you use FVM (Windows paths need \\):
+      // "binary": {
+      //   "path": "C:\\flutter\\bin\\dart.bat",
+      //   "arguments": ["language-server", "--protocol=lsp"]
+      // }
+      // FVM: "path": "C:\\Users\\aliammari\\AppData\\Local\\Pub\\Cache\\bin\\fvm.bat",
+      //      "arguments": ["dart", "language-server", "--protocol=lsp"]
+    }
+  },
+
+  // ── Keeps the analyzer fast on a repo this size ─────────────────
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/.dart_tool",
+    "**/build",
+    "**/.idea",
+    "**/ios/Pods",
+    "**/ios/Flutter/ephemeral",
+    "**/macos/Pods",
+    "**/android/.gradle",
+    "**/.fvm/versions"
+  ]
+}

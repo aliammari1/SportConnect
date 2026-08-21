@@ -2,14 +2,15 @@ import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
+import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/features/legal/view_models/legal_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
-import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 enum LegalDocumentType { terms, privacy }
 
@@ -23,10 +24,69 @@ class LegalScreen extends ConsumerStatefulWidget {
 }
 
 class _LegalScreenState extends ConsumerState<LegalScreen> {
-  // Bumped to force a fresh InAppWebView (re-running initialData) on retry.
-  Key _webViewKey = UniqueKey();
+  late final WebViewController _webViewController;
+  bool _contentLoaded = false;
 
   LegalDocumentType get type => widget.type;
+
+  @override
+  void initState() {
+    super.initState();
+
+    late final PlatformWebViewControllerCreationParams params;
+    if (WebViewPlatform.instance is WebKitWebViewPlatform) {
+      params = WebKitWebViewControllerCreationParams();
+    } else {
+      params = const PlatformWebViewControllerCreationParams();
+    }
+
+    _webViewController = WebViewController.fromPlatformCreationParams(params)
+      ..setJavaScriptMode(JavaScriptMode.disabled)
+      ..setBackgroundColor(Colors.white)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageFinished: (url) {
+            // Late async callback: the widget (and its autoDispose
+            // provider) may already be gone after the user taps back.
+            if (!mounted) return;
+            ref.read(legalScreenUiViewModelProvider(type).notifier).setLoading(false);
+          },
+          onWebResourceError: (error) {
+            if (!mounted) return;
+            ref.read(legalScreenUiViewModelProvider(type).notifier).setError();
+          },
+        ),
+      );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // webview_flutter has no `initialData`-style API: load once explicitly
+    // instead of relying on first mount, since the controller now persists
+    // across rebuilds.
+    if (!_contentLoaded) {
+      _contentLoaded = true;
+      _loadHtml();
+    }
+  }
+
+  void _loadHtml() {
+    final l10n = AppLocalizations.of(context);
+    final title = type == LegalDocumentType.terms
+        ? l10n.termsOfServiceTitle
+        : l10n.privacyPolicyTitle;
+    _webViewController.loadHtmlString(
+      _buildHtmlContent(title, type, Localizations.localeOf(context).languageCode),
+    );
+  }
+
+  void _retry() {
+    ref.read(legalScreenUiViewModelProvider(type).notifier).retry();
+    // Instead of bumping a UniqueKey to force a fresh InAppWebView, just
+    // reload the same controller.
+    _loadHtml();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,45 +127,12 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
           maxWidth: kMaxWidthWide,
           child: Stack(
             children: [
-              InAppWebView(
-                key: _webViewKey,
-                initialData: InAppWebViewInitialData(
-                  data: _buildHtmlContent(
-                    title,
-                    type,
-                    Localizations.localeOf(context).languageCode,
-                  ),
-                ),
-                initialSettings: InAppWebViewSettings(
-                  javaScriptEnabled: false,
-                  disableContextMenu: true,
-                  useOnLoadResource: false,
-                ),
-                onLoadStop: (controller, url) {
-                  // Late async callback: the widget (and its autoDispose
-                  // provider) may already be gone after the user taps back.
-                  if (!mounted) return;
-                  ref
-                      .read(legalScreenUiViewModelProvider(type).notifier)
-                      .setLoading(false);
-                },
-                onReceivedError: (controller, request, error) {
-                  if (!mounted) return;
-                  ref
-                      .read(legalScreenUiViewModelProvider(type).notifier)
-                      .setError();
-                },
-              ),
+              WebViewWidget(controller: _webViewController),
               if (uiState.hasError)
                 _LegalErrorView(
                   message: l10n.somethingWentWrong,
                   retryLabel: l10n.tryAgain,
-                  onRetry: () {
-                    ref
-                        .read(legalScreenUiViewModelProvider(type).notifier)
-                        .retry();
-                    setState(() => _webViewKey = UniqueKey());
-                  },
+                  onRetry: _retry,
                 )
               else if (uiState.isLoading)
                 ColoredBox(

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:geo_fence_utils/geo_fence_utils.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -13,6 +12,7 @@ import 'package:sport_connect/core/services/deep_link_service.dart';
 import 'package:sport_connect/core/services/map_service.dart';
 import 'package:sport_connect/core/services/routing_service.dart';
 import 'package:sport_connect/core/services/talker_service.dart';
+import 'package:sport_connect/core/utils/geo/geo.dart';
 import 'package:sport_connect/features/events/repositories/event_repository.dart';
 import 'package:sport_connect/features/messaging/models/message_model.dart';
 import 'package:sport_connect/features/messaging/repositories/chat_repository.dart';
@@ -75,8 +75,7 @@ class RideFormState {
     );
   }
 
-  bool get isValid =>
-      origin != null && destination != null && departureTime != null;
+  bool get isValid => origin != null && destination != null && departureTime != null;
 }
 
 class RideDetailUiState {
@@ -110,9 +109,7 @@ class RideDetailUiState {
       selectedSeats: selectedSeats ?? this.selectedSeats,
       isBooking: isBooking ?? this.isBooking,
       isReminderEnabled: isReminderEnabled ?? this.isReminderEnabled,
-      pickupLocation: clearPickupLocation
-          ? null
-          : (pickupLocation ?? this.pickupLocation),
+      pickupLocation: clearPickupLocation ? null : (pickupLocation ?? this.pickupLocation),
       routeInfo: clearRouteInfo ? null : (routeInfo ?? this.routeInfo),
       isLoadingRoute: isLoadingRoute ?? this.isLoadingRoute,
     );
@@ -241,18 +238,14 @@ class RideActionsViewModel extends _$RideActionsViewModel {
     required String rideId,
     required RideBooking booking,
   }) {
-    return ref
-        .read(rideRepositoryProvider)
-        .bookRide(rideId: rideId, booking: booking);
+    return ref.read(rideRepositoryProvider).bookRide(rideId: rideId, booking: booking);
   }
 
   Future<void> cancelBooking({
     required String rideId,
     required String bookingId,
   }) {
-    return ref
-        .read(rideRepositoryProvider)
-        .cancelBooking(rideId: rideId, bookingId: bookingId);
+    return ref.read(rideRepositoryProvider).cancelBooking(rideId: rideId, bookingId: bookingId);
   }
 
   /// Stamps the booking with the Stripe payment intent ID once payment
@@ -278,9 +271,7 @@ class RideActionsViewModel extends _$RideActionsViewModel {
     String rideId,
     String driverId,
   ) {
-    return ref
-        .read(bookingRepositoryProvider)
-        .getBookingsByRideId(rideId, driverId);
+    return ref.read(bookingRepositoryProvider).getBookingsByRideId(rideId, driverId);
   }
 
   /// Returns the current passenger's booking for a ride, or null.
@@ -288,9 +279,7 @@ class RideActionsViewModel extends _$RideActionsViewModel {
     String rideId,
     String passengerId,
   ) {
-    return ref
-        .read(bookingRepositoryProvider)
-        .getPassengerBookingForRide(rideId, passengerId);
+    return ref.read(bookingRepositoryProvider).getPassengerBookingForRide(rideId, passengerId);
   }
 
   /// One-shot fetch of a single ride by ID.
@@ -337,15 +326,11 @@ class RideActionsViewModel extends _$RideActionsViewModel {
   }
 
   Future<void> updatePickupOrder(String rideId, List<String> passengerIds) {
-    return ref
-        .read(rideRepositoryProvider)
-        .updatePickupOrder(rideId, passengerIds);
+    return ref.read(rideRepositoryProvider).updatePickupOrder(rideId, passengerIds);
   }
 
   Future<void> recordActualDistance(String rideId, double distanceKm) {
-    return ref
-        .read(rideRepositoryProvider)
-        .recordActualDistance(rideId, distanceKm);
+    return ref.read(rideRepositoryProvider).recordActualDistance(rideId, distanceKm);
   }
 }
 
@@ -387,15 +372,11 @@ class CancellationReasonState {
     bool? wasInProgress,
   }) {
     return CancellationReasonState(
-      selectedReason: selectedReason == _unset
-          ? this.selectedReason
-          : selectedReason as String?,
+      selectedReason: selectedReason == _unset ? this.selectedReason : selectedReason as String?,
       commentText: commentText ?? this.commentText,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       isSubmitted: isSubmitted ?? this.isSubmitted,
-      validationMessage: clearValidation
-          ? null
-          : (validationMessage ?? this.validationMessage),
+      validationMessage: clearValidation ? null : (validationMessage ?? this.validationMessage),
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       wasInProgress: wasInProgress ?? this.wasInProgress,
     );
@@ -446,9 +427,7 @@ class CancellationReasonViewModel extends _$CancellationReasonViewModel {
 
     try {
       final comment = state.commentText.trim();
-      final reason = comment.isNotEmpty
-          ? '$selectedReason | $comment'
-          : selectedReason;
+      final reason = comment.isNotEmpty ? '$selectedReason | $comment' : selectedReason;
 
       // Capture whether the ride had already started BEFORE cancelling it, so
       // the confirmation message can accurately reflect the refund rule that
@@ -456,9 +435,7 @@ class CancellationReasonViewModel extends _$CancellationReasonViewModel {
       final rideBeforeCancel = ref.read(rideStreamProvider(_rideId)).value;
       final wasInProgress = rideBeforeCancel?.status == RideStatus.inProgress;
 
-      await ref
-          .read(rideActionsViewModelProvider.notifier)
-          .cancelRide(_rideId, reason);
+      await ref.read(rideActionsViewModelProvider.notifier).cancelRide(_rideId, reason);
       if (!ref.mounted) return;
       state = state.copyWith(
         isSubmitting: false,
@@ -519,9 +496,7 @@ class DisputeFormState {
       isSubmitting: isSubmitting ?? this.isSubmitting,
       isSubmitted: isSubmitted ?? this.isSubmitted,
       typeError: clearTypeError ? null : (typeError ?? this.typeError),
-      descriptionError: clearDescriptionError
-          ? null
-          : (descriptionError ?? this.descriptionError),
+      descriptionError: clearDescriptionError ? null : (descriptionError ?? this.descriptionError),
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
@@ -593,9 +568,7 @@ class DisputeFormViewModel extends _$DisputeFormViewModel {
   }
 
   bool _validate() {
-    final typeError = state.selectedDisputeType == null
-        ? 'Please select a dispute type'
-        : null;
+    final typeError = state.selectedDisputeType == null ? 'Please select a dispute type' : null;
     final description = state.description.trim();
     final descriptionError = description.isEmpty
         ? 'Please describe your issue'
@@ -681,8 +654,7 @@ Stream<({double latitude, double longitude})?> driverLiveLocation(
       bookings?.any((booking) {
         if (booking.rideId != rideId) return false;
         final hasPayment =
-            (booking.paymentIntentId?.trim().isNotEmpty ?? false) ||
-            booking.paidAt != null;
+            (booking.paymentIntentId?.trim().isNotEmpty ?? false) || booking.paidAt != null;
         return hasPayment && booking.status != BookingStatus.cancelled;
       }) ??
       false;
@@ -757,9 +729,7 @@ class RideFormViewModel extends _$RideFormViewModel {
       );
 
       // Route through RideService so validation rules are applied consistently
-      final rideId = await ref
-          .read(rideServiceProvider.notifier)
-          .createRide(ride);
+      final rideId = await ref.read(rideServiceProvider.notifier).createRide(ride);
       if (!ref.mounted) return null;
       state = state.copyWith(isLoading: false);
       return rideId;
@@ -774,9 +744,7 @@ class RideFormViewModel extends _$RideFormViewModel {
     state = state.copyWith(isLoading: true);
 
     try {
-      final rideId = await ref
-          .read(rideServiceProvider.notifier)
-          .createRide(ride);
+      final rideId = await ref.read(rideServiceProvider.notifier).createRide(ride);
 
       if (!ref.mounted) return rideId;
       state = state.copyWith(isLoading: false);
@@ -890,9 +858,7 @@ class RideSearchState {
       error: error == _unset ? this.error : error as String?,
       filters: filters ?? this.filters,
       hasMore: hasMore ?? this.hasMore,
-      draftOrigin: draftOrigin == _unset
-          ? this.draftOrigin
-          : draftOrigin as LocationPoint?,
+      draftOrigin: draftOrigin == _unset ? this.draftOrigin : draftOrigin as LocationPoint?,
       draftDestination: draftDestination == _unset
           ? this.draftDestination
           : draftDestination as LocationPoint?,
@@ -1033,15 +999,13 @@ List<RideModel> _applyRideSearchPresentation(
   final filtered = rides.where((ride) {
     // Only apply date filter when user has performed an explicit search.
     // Pre-search discovery should show rides on all upcoming dates.
-    if (state.hasSearched &&
-        !_isSameCalendarDay(ride.departureTime, state.draftDate)) {
+    if (state.hasSearched && !_isSameCalendarDay(ride.departureTime, state.draftDate)) {
       return false;
     }
     if (ride.remainingSeats < state.draftSeats) {
       return false;
     }
-    if (state.draftMaxPrice < 100 &&
-        ride.pricePerSeatInCents > state.draftMaxPrice * 100) {
+    if (state.draftMaxPrice < 100 && ride.pricePerSeatInCents > state.draftMaxPrice * 100) {
       return false;
     }
     if (state.draftFemaleOnly && !ride.isWomenOnly) {
@@ -1088,12 +1052,8 @@ List<RideModel> _applyRideSearchPresentation(
     default:
       final now = DateTime.now();
       filtered.sort((a, b) {
-        final scoreA =
-            (a.remainingSeats * 10) +
-            (100 - a.departureTime.difference(now).inMinutes);
-        final scoreB =
-            (b.remainingSeats * 10) +
-            (100 - b.departureTime.difference(now).inMinutes);
+        final scoreA = (a.remainingSeats * 10) + (100 - a.departureTime.difference(now).inMinutes);
+        final scoreB = (b.remainingSeats * 10) + (100 - b.departureTime.difference(now).inMinutes);
         return scoreB.compareTo(scoreA);
       });
   }
@@ -1299,9 +1259,7 @@ class RideSearchViewModel extends _$RideSearchViewModel {
     if (state.pendingQueryKey == queryKey) {
       return null;
     }
-    if (!forceRefresh &&
-        state.hasSearched &&
-        state.lastCompletedQueryKey == queryKey) {
+    if (!forceRefresh && state.hasSearched && state.lastCompletedQueryKey == queryKey) {
       return null;
     }
 
@@ -1325,9 +1283,7 @@ class RideSearchViewModel extends _$RideSearchViewModel {
       allowPets: state.draftPetFriendly,
       allowSmoking: state.draftNoSmoking,
       minDriverRating: state.draftMinRating > 0 ? state.draftMinRating : null,
-      sortBy: state.draftSortBy == 'recommended'
-          ? 'departure_time'
-          : state.draftSortBy,
+      sortBy: state.draftSortBy == 'recommended' ? 'departure_time' : state.draftSortBy,
     );
 
     // Capture repository before awaiting
@@ -1359,9 +1315,7 @@ class RideSearchViewModel extends _$RideSearchViewModel {
         rides = rides.where((r) => r.preferences.allowLuggage).toList();
       }
       if (filters.minDriverRating != null) {
-        rides = rides
-            .where((r) => r.averageRating >= filters.minDriverRating!)
-            .toList();
+        rides = rides.where((r) => r.averageRating >= filters.minDriverRating!).toList();
       }
 
       // If provider was disposed while awaiting, bail out safely
@@ -1488,9 +1442,7 @@ class RideDetailState {
     ride: ride ?? this.ride,
     bookings: bookings ?? this.bookings,
     isActing: isActing ?? this.isActing,
-    actionError: actionError == _unset
-        ? this.actionError
-        : actionError as String?,
+    actionError: actionError == _unset ? this.actionError : actionError as String?,
   );
 }
 
@@ -1501,9 +1453,7 @@ class RideDetailViewModel extends _$RideDetailViewModel {
   @override
   RideDetailState build(String rideId) {
     final rideAsync = ref.watch(rideStreamProvider(rideId));
-    final bookings =
-        ref.watch(bookingsByRideProvider(rideId)).value ??
-        const <RideBooking>[];
+    final bookings = ref.watch(bookingsByRideProvider(rideId)).value ?? const <RideBooking>[];
     return RideDetailState(ride: rideAsync, bookings: bookings);
   }
 
@@ -1531,9 +1481,7 @@ class RideDetailViewModel extends _$RideDetailViewModel {
         pickupLocation: pickupLocation,
         createdAt: DateTime.now(),
       );
-      await ref
-          .read(rideRepositoryProvider)
-          .bookRide(rideId: ride.id, booking: booking);
+      await ref.read(rideRepositoryProvider).bookRide(rideId: ride.id, booking: booking);
       if (!ref.mounted) return false;
       state = state.copyWith(actionError: null);
 
@@ -1631,9 +1579,7 @@ class RideDetailViewModel extends _$RideDetailViewModel {
         if (!ref.mounted) return true;
         if (ride.eventId != null && ride.eventId!.isNotEmpty) {
           try {
-            await ref
-                .read(eventRepositoryProvider)
-                .joinEvent(ride.eventId!, booking.passengerId);
+            await ref.read(eventRepositoryProvider).joinEvent(ride.eventId!, booking.passengerId);
           } catch (e, st) {
             TalkerService.error('Failed to auto-join event on accept', e, st);
           }
@@ -1664,9 +1610,7 @@ class RideDetailViewModel extends _$RideDetailViewModel {
     if (ride == null) return false;
     // Capture the booking before its status changes so we can reconcile event
     // membership for the affected passenger afterwards.
-    final rejectedBooking = state.bookings
-        .where((b) => b.id == bookingId)
-        .firstOrNull;
+    final rejectedBooking = state.bookings.where((b) => b.id == bookingId).firstOrNull;
     try {
       state = state.copyWith(isActing: true, actionError: null);
       await ref
@@ -1683,9 +1627,7 @@ class RideDetailViewModel extends _$RideDetailViewModel {
       // passenger joined to the linked event. Leave only when they have no
       // other active (pending/accepted) booking for the same event — see
       // _leaveEventIfNoOtherBooking.
-      if (rejectedBooking != null &&
-          ride.eventId != null &&
-          ride.eventId!.isNotEmpty) {
+      if (rejectedBooking != null && ride.eventId != null && ride.eventId!.isNotEmpty) {
         await _leaveEventIfNoOtherBooking(
           eventId: ride.eventId!,
           passengerId: rejectedBooking.passengerId,
@@ -1723,8 +1665,7 @@ class RideDetailViewModel extends _$RideDetailViewModel {
 
       for (final other in passengerBookings) {
         if (other.id == excludeBookingId) continue;
-        if (other.status != BookingStatus.pending &&
-            other.status != BookingStatus.accepted) {
+        if (other.status != BookingStatus.pending && other.status != BookingStatus.accepted) {
           continue;
         }
         final otherRide = await rideRepo.getRideById(other.rideId);
@@ -1978,21 +1919,14 @@ class ActiveRideState {
     driverLiveLocation: driverLiveLocation == _unset
         ? this.driverLiveLocation
         : driverLiveLocation as ({double latitude, double longitude})?,
-    currentLocation: currentLocation == _unset
-        ? this.currentLocation
-        : currentLocation as LatLng?,
+    currentLocation: currentLocation == _unset ? this.currentLocation : currentLocation as LatLng?,
     isLoadingLocation: isLoadingLocation ?? this.isLoadingLocation,
-    hasInitializedLocation:
-        hasInitializedLocation ?? this.hasInitializedLocation,
-    locationServicesEnabled:
-        locationServicesEnabled ?? this.locationServicesEnabled,
-    locationPermissionGranted:
-        locationPermissionGranted ?? this.locationPermissionGranted,
+    hasInitializedLocation: hasInitializedLocation ?? this.hasInitializedLocation,
+    locationServicesEnabled: locationServicesEnabled ?? this.locationServicesEnabled,
+    locationPermissionGranted: locationPermissionGranted ?? this.locationPermissionGranted,
     locationPermissionDeniedForever:
         locationPermissionDeniedForever ?? this.locationPermissionDeniedForever,
-    locationError: locationError == _unset
-        ? this.locationError
-        : locationError as String?,
+    locationError: locationError == _unset ? this.locationError : locationError as String?,
     userHeading: userHeading ?? this.userHeading,
     currentSpeedKmh: currentSpeedKmh ?? this.currentSpeedKmh,
     isNavigationExpanded: isNavigationExpanded ?? this.isNavigationExpanded,
@@ -2007,12 +1941,8 @@ class ActiveRideState {
     remainingRoutePoints: remainingRoutePoints == _unset
         ? this.remainingRoutePoints
         : remainingRoutePoints as List<LatLng>?,
-    loadedRouteKey: loadedRouteKey == _unset
-        ? this.loadedRouteKey
-        : loadedRouteKey as String?,
-    loadingRouteKey: loadingRouteKey == _unset
-        ? this.loadingRouteKey
-        : loadingRouteKey as String?,
+    loadedRouteKey: loadedRouteKey == _unset ? this.loadedRouteKey : loadedRouteKey as String?,
+    loadingRouteKey: loadingRouteKey == _unset ? this.loadingRouteKey : loadingRouteKey as String?,
     isLoadingOsrmRoute: isLoadingOsrmRoute ?? this.isLoadingOsrmRoute,
     remainingDistanceKm: remainingDistanceKm == _unset
         ? this.remainingDistanceKm
@@ -2025,11 +1955,8 @@ class ActiveRideState {
     passedWaypointIndices: passedWaypointIndices ?? this.passedWaypointIndices,
     waypointEtaMinutes: waypointEtaMinutes ?? this.waypointEtaMinutes,
     hasSkippedReview: hasSkippedReview ?? this.hasSkippedReview,
-    hasAutoNavigatedToCompletion:
-        hasAutoNavigatedToCompletion ?? this.hasAutoNavigatedToCompletion,
-    actionError: actionError == _unset
-        ? this.actionError
-        : actionError as String?,
+    hasAutoNavigatedToCompletion: hasAutoNavigatedToCompletion ?? this.hasAutoNavigatedToCompletion,
+    actionError: actionError == _unset ? this.actionError : actionError as String?,
     pickupOrder: pickupOrder ?? this.pickupOrder,
     noShowPassengerIds: noShowPassengerIds ?? this.noShowPassengerIds,
     latestQuickMessage: latestQuickMessage == _unset
@@ -2039,8 +1966,7 @@ class ActiveRideState {
     rideTimeoutMinutes: rideTimeoutMinutes == _unset
         ? this.rideTimeoutMinutes
         : rideTimeoutMinutes as int?,
-    hasShownTimeoutWarning:
-        hasShownTimeoutWarning ?? this.hasShownTimeoutWarning,
+    hasShownTimeoutWarning: hasShownTimeoutWarning ?? this.hasShownTimeoutWarning,
     isConnected: isConnected ?? this.isConnected,
     pendingLocationWrites: pendingLocationWrites ?? this.pendingLocationWrites,
     rideDelayMinutes: rideDelayMinutes ?? this.rideDelayMinutes,
@@ -2049,8 +1975,7 @@ class ActiveRideState {
         ? this.lastDriverLocationUpdate
         : lastDriverLocationUpdate as DateTime?,
     pickupProximityFired: pickupProximityFired ?? this.pickupProximityFired,
-    destinationProximityFired:
-        destinationProximityFired ?? this.destinationProximityFired,
+    destinationProximityFired: destinationProximityFired ?? this.destinationProximityFired,
   );
 }
 
@@ -2113,11 +2038,8 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     });
 
     final rideAsync = ref.read(rideStreamProvider(rideId));
-    final bookings =
-        ref.read(bookingsByRideProvider(rideId)).value ?? const <RideBooking>[];
-    final driverLiveLocation = ref
-        .read(driverLiveLocationProvider(rideId))
-        .value;
+    final bookings = ref.read(bookingsByRideProvider(rideId)).value ?? const <RideBooking>[];
+    final driverLiveLocation = ref.read(driverLiveLocationProvider(rideId)).value;
 
     Future<void>.microtask(() {
       if (!ref.mounted) return;
@@ -2214,9 +2136,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
           locationServicesEnabled: true,
           locationPermissionGranted: false,
           locationPermissionDeniedForever: false,
-          locationError: requestPermission
-              ? 'location-permission-denied'
-              : null,
+          locationError: requestPermission ? 'location-permission-denied' : null,
         );
         return requestPermission
             ? ActiveRideLocationInitResult.permissionDenied
@@ -2271,8 +2191,8 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
       distanceFilter: 5,
     );
 
-    _positionStreamSubscription =
-        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+    _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings)
+        .listen(
           (position) {
             if (!ref.mounted) return;
 
@@ -2326,8 +2246,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     final now = DateTime.now();
     if (!force &&
         _lastLocationWriteTime != null &&
-        now.difference(_lastLocationWriteTime!).inSeconds <
-            _writeIntervalSeconds) {
+        now.difference(_lastLocationWriteTime!).inSeconds < _writeIntervalSeconds) {
       return;
     }
 
@@ -2598,9 +2517,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     points.add(LatLng(ride.destination.latitude, ride.destination.longitude));
 
     // Use OSRM trip endpoint for optimal ordering
-    final tripResult = await ref
-        .read(routingServiceProvider)
-        .getOptimalTrip(points: points);
+    final tripResult = await ref.read(routingServiceProvider).getOptimalTrip(points: points);
     if (tripResult == null || !ref.mounted) {
       // Fallback: keep booking creation order
       state = state.copyWith(
@@ -2611,9 +2528,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
 
     // The trip result reorders the points — extract passenger order
     // For now use distance-based sort from driver's current location
-    final driverLoc =
-        state.currentLocation ??
-        LatLng(ride.origin.latitude, ride.origin.longitude);
+    final driverLoc = state.currentLocation ?? LatLng(ride.origin.latitude, ride.origin.longitude);
     final sorted = List<RideBooking>.from(acceptedBookings)
       ..sort((a, b) {
         final aLoc = a.pickupLocation;
@@ -2651,9 +2566,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     final rideId = state.currentRide?.id;
     if (rideId != null) {
       unawaited(
-        ref
-            .read(rideRepositoryProvider)
-            .markPassengerPickedUp(rideId, passengerId),
+        ref.read(rideRepositoryProvider).markPassengerPickedUp(rideId, passengerId),
       );
     }
   }
@@ -2670,8 +2583,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
   /// Call [commitNoShow] after undo window expires to persist.
   void localMarkNoShow({required String passengerId}) {
     final nextNoShow = <String>{...state.noShowPassengerIds, passengerId};
-    final nextPickedUp = <String>{...state.pickedUpPassengerIds}
-      ..remove(passengerId);
+    final nextPickedUp = <String>{...state.pickedUpPassengerIds}..remove(passengerId);
     state = state.copyWith(
       noShowPassengerIds: nextNoShow,
       pickedUpPassengerIds: nextPickedUp,
@@ -2680,8 +2592,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
 
   /// Undo a local-only no-show mark before Firestore commit.
   void undoNoShow({required String passengerId}) {
-    final nextNoShow = <String>{...state.noShowPassengerIds}
-      ..remove(passengerId);
+    final nextNoShow = <String>{...state.noShowPassengerIds}..remove(passengerId);
     state = state.copyWith(noShowPassengerIds: nextNoShow);
   }
 
@@ -2733,8 +2644,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
 
       final nextNoShow = <String>{...state.noShowPassengerIds, passengerId};
       // Also remove from picked-up set if mistakenly marked
-      final nextPickedUp = <String>{...state.pickedUpPassengerIds}
-        ..remove(passengerId);
+      final nextPickedUp = <String>{...state.pickedUpPassengerIds}..remove(passengerId);
 
       state = state.copyWith(
         isProcessing: false,
@@ -2820,9 +2730,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     final ride = state.currentRide;
     if (ride == null || state.actualDistanceKm <= 0) return;
     try {
-      await ref
-          .read(rideRepositoryProvider)
-          .recordActualDistance(ride.id, state.actualDistanceKm);
+      await ref.read(rideRepositoryProvider).recordActualDistance(ride.id, state.actualDistanceKm);
     } catch (e) {
       TalkerService.error('Failed to record actual distance: $e');
     }
@@ -2835,9 +2743,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     final ride = state.currentRide;
     if (ride == null || ride.status != RideStatus.inProgress) return;
 
-    final timeout = ref
-        .read(rideServiceProvider.notifier)
-        .checkRideTimeout(ride);
+    final timeout = ref.read(rideServiceProvider.notifier).checkRideTimeout(ride);
     if (timeout == null) {
       if (state.rideTimeoutMinutes != null) {
         state = state.copyWith(rideTimeoutMinutes: null);
@@ -2860,9 +2766,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
 
     try {
       state = state.copyWith(isProcessing: true, actionError: null);
-      final returnRideId = await ref
-          .read(rideServiceProvider.notifier)
-          .createReturnRide(ride.id);
+      final returnRideId = await ref.read(rideServiceProvider.notifier).createReturnRide(ride.id);
       if (!ref.mounted) return null;
 
       state = state.copyWith(isProcessing: false);
@@ -2954,9 +2858,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     if (rideId == null || lat == null || lng == null) return;
 
     try {
-      await ref
-          .read(rideRepositoryProvider)
-          .updateLiveLocation(rideId, lat, lng);
+      await ref.read(rideRepositoryProvider).updateLiveLocation(rideId, lat, lng);
       await _clearPersistedLocation();
     } catch (_) {
       // Will retry on next GPS update
@@ -3010,8 +2912,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
       return;
     }
 
-    if (ride.status != RideStatus.completed &&
-        state.hasAutoNavigatedToCompletion) {
+    if (ride.status != RideStatus.completed && state.hasAutoNavigatedToCompletion) {
       state = state.copyWith(hasAutoNavigatedToCompletion: false);
     }
 
@@ -3022,9 +2923,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
   }
 
   void _handleBookingsUpdate(List<RideBooking> bookings) {
-    final validPassengerIds = bookings
-        .map((booking) => booking.passengerId)
-        .toSet();
+    final validPassengerIds = bookings.map((booking) => booking.passengerId).toSet();
     final pickedUpPassengerIds = state.pickedUpPassengerIds
         .where(validPassengerIds.contains)
         .toSet();
@@ -3040,9 +2939,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
   ) {
     state = state.copyWith(
       driverLiveLocation: driverLiveLocation,
-      lastDriverLocationUpdate: driverLiveLocation != null
-          ? DateTime.now()
-          : null,
+      lastDriverLocationUpdate: driverLiveLocation != null ? DateTime.now() : null,
     );
     _updatePassengerRouteTracking(state.currentRide, driverLiveLocation);
     // Recalculate ETAs on every driver-location tick so the passenger screen
@@ -3083,10 +2980,8 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
 
   Future<void> _ensureOsrmRouteLoaded(RideModel ride) async {
     final routeKey = _routeKeyFor(ride);
-    final alreadyLoaded =
-        state.loadedRouteKey == routeKey && state.osrmRoutePoints != null;
-    final isLoadingSameRoute =
-        state.isLoadingOsrmRoute && state.loadingRouteKey == routeKey;
+    final alreadyLoaded = state.loadedRouteKey == routeKey && state.osrmRoutePoints != null;
+    final isLoadingSameRoute = state.isLoadingOsrmRoute && state.loadingRouteKey == routeKey;
 
     if (alreadyLoaded || isLoadingSameRoute) {
       return;
@@ -3095,25 +2990,16 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     state = state.copyWith(
       isLoadingOsrmRoute: true,
       loadingRouteKey: routeKey,
-      osrmRoutePoints: state.loadedRouteKey == routeKey
-          ? state.osrmRoutePoints
-          : null,
-      loadedRouteKey: state.loadedRouteKey == routeKey
-          ? state.loadedRouteKey
-          : null,
-      remainingDistanceKm: state.loadedRouteKey == routeKey
-          ? state.remainingDistanceKm
-          : null,
-      remainingEtaMinutes: state.loadedRouteKey == routeKey
-          ? state.remainingEtaMinutes
-          : null,
+      osrmRoutePoints: state.loadedRouteKey == routeKey ? state.osrmRoutePoints : null,
+      loadedRouteKey: state.loadedRouteKey == routeKey ? state.loadedRouteKey : null,
+      remainingDistanceKm: state.loadedRouteKey == routeKey ? state.remainingDistanceKm : null,
+      remainingEtaMinutes: state.loadedRouteKey == routeKey ? state.remainingEtaMinutes : null,
     );
 
     try {
       final waypoints = ride.route.waypoints
           .map(
-            (waypoint) =>
-                LatLng(waypoint.location.latitude, waypoint.location.longitude),
+            (waypoint) => LatLng(waypoint.location.latitude, waypoint.location.longitude),
           )
           .toList(growable: false);
 
@@ -3162,8 +3048,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     // Driver uses own GPS; passenger uses the Firestore-synced driver location.
     final dl = state.driverLiveLocation;
     final effectiveLocation =
-        state.currentLocation ??
-        (dl != null ? LatLng(dl.latitude, dl.longitude) : null);
+        state.currentLocation ?? (dl != null ? LatLng(dl.latitude, dl.longitude) : null);
 
     final routePoints = state.osrmRoutePoints;
     if (ride == null ||
@@ -3205,8 +3090,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     remainingDistance = math.max(0, remainingDistance);
 
     final totalDistance = ride.distanceKm ?? ride.route.distanceKm ?? 0;
-    final totalDuration =
-        ride.durationMinutes ?? ride.route.durationMinutes ?? 0;
+    final totalDuration = ride.durationMinutes ?? ride.route.durationMinutes ?? 0;
     if (!remainingDistance.isFinite ||
         !totalDistance.isFinite ||
         !totalDuration.isFinite ||
@@ -3281,9 +3165,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
   /// ETAs reflect remaining travel time, not time from the route origin.
   void _computeWaypointEtas(RideModel ride) {
     final routePoints = state.osrmRoutePoints;
-    if (routePoints == null ||
-        routePoints.length < 2 ||
-        ride.route.waypoints.isEmpty) {
+    if (routePoints == null || routePoints.length < 2 || ride.route.waypoints.isEmpty) {
       state = state.copyWith(waypointEtaMinutes: const <int, int>{});
       return;
     }
@@ -3291,8 +3173,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     // Resolve effective position: driver GPS first, Firestore location as fallback.
     final dl = state.driverLiveLocation;
     final effectivePos =
-        state.currentLocation ??
-        (dl != null ? LatLng(dl.latitude, dl.longitude) : null);
+        state.currentLocation ?? (dl != null ? LatLng(dl.latitude, dl.longitude) : null);
 
     // Find the route index nearest to the driver's current position.
     var driverNearestIdx = 0;
@@ -3319,10 +3200,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
 
     // Use the live remaining ETA when available; fall back to proportional estimate.
     final remainingEtaMin =
-        (state.remainingEtaMinutes ??
-                ride.durationMinutes ??
-                ride.route.durationMinutes ??
-                0)
+        (state.remainingEtaMinutes ?? ride.durationMinutes ?? ride.route.durationMinutes ?? 0)
             .toDouble();
     if (!remainingEtaMin.isFinite || remainingEtaMin <= 0) return;
 
@@ -3400,8 +3278,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     // Threshold: 40% of avg segment length, clamped between 150 m and 400 m.
     final offRouteThreshold = (avgSegmentMeters * 0.4).clamp(150.0, 400.0);
 
-    final isOffRoute =
-        minDistMeters.isFinite && minDistMeters > offRouteThreshold;
+    final isOffRoute = minDistMeters.isFinite && minDistMeters > offRouteThreshold;
     if (isOffRoute != state.isOffRoute || isOffRoute) {
       state = state.copyWith(
         isOffRoute: isOffRoute,
@@ -3444,8 +3321,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     RideModel ride,
   ) async {
     final now = DateTime.now();
-    if (_lastRouteRecalcTime != null &&
-        now.difference(_lastRouteRecalcTime!).inSeconds < 30) {
+    if (_lastRouteRecalcTime != null && now.difference(_lastRouteRecalcTime!).inSeconds < 30) {
       return;
     }
     _lastRouteRecalcTime = now;
@@ -3509,8 +3385,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     final avgSeg = totalMeters / (pts.length - 1);
     final threshold = (avgSeg * 0.4).clamp(150.0, 400.0);
 
-    final isOffRoute =
-        minimumDistanceMeters.isFinite && minimumDistanceMeters > threshold;
+    final isOffRoute = minimumDistanceMeters.isFinite && minimumDistanceMeters > threshold;
     final newPassedIndices = _getPassedWaypointIndices(
       driverPosition,
       state.osrmRoutePoints!,
@@ -3527,9 +3402,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
 
     state = state.copyWith(
       isOffRoute: isOffRoute,
-      routeDeviationMeters: minimumDistanceMeters.isFinite
-          ? minimumDistanceMeters
-          : 0,
+      routeDeviationMeters: minimumDistanceMeters.isFinite ? minimumDistanceMeters : 0,
       passedWaypointIndices: mergedPassedIndices,
     );
 
@@ -3557,11 +3430,7 @@ class ActiveRideViewModel extends _$ActiveRideViewModel {
     }
 
     final passedWaypointIndices = <int>{};
-    for (
-      var waypointIndex = 0;
-      waypointIndex < ride.route.waypoints.length;
-      waypointIndex++
-    ) {
+    for (var waypointIndex = 0; waypointIndex < ride.route.waypoints.length; waypointIndex++) {
       final waypoint = ride.route.waypoints[waypointIndex];
       final waypointLatLng = LatLng(
         waypoint.location.latitude,
@@ -3768,17 +3637,13 @@ Stream<List<RideBooking>> bookingsByRide(Ref ref, String rideId) async* {
   final ride = await ref.watch(rideStreamProvider(rideId).future);
   if (ride != null && ride.driverId != uid) {
     // Current user is a passenger — stream only their own booking.
-    yield* ref
-        .read(bookingRepositoryProvider)
-        .streamPassengerBookingForRide(rideId, uid);
+    yield* ref.read(bookingRepositoryProvider).streamPassengerBookingForRide(rideId, uid);
     return;
   }
 
   // Current user is the driver (or ride hasn't loaded yet — driver query is
   // safe to retry because it returns empty for non-drivers).
-  yield* ref
-      .read(bookingRepositoryProvider)
-      .streamBookingsByRideId(rideId, uid);
+  yield* ref.read(bookingRepositoryProvider).streamBookingsByRideId(rideId, uid);
 }
 
 @riverpod
@@ -3848,9 +3713,7 @@ Stream<({int cancelCount, int noShowCount})> userRideReliability(
   String userId,
 ) {
   return ref.watch(rideRepositoryProvider).getRideHistory(userId).map((rides) {
-    final cancelCount = rides
-        .where((r) => r.status == RideStatus.cancelled)
-        .length;
+    final cancelCount = rides.where((r) => r.status == RideStatus.cancelled).length;
     return (cancelCount: cancelCount, noShowCount: 0);
   });
 }

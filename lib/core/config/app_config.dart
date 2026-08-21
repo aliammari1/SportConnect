@@ -18,7 +18,7 @@ class AppConfig {
   /// Debug builds use Firebase emulators.
   /// Release/Profile builds use production Firebase services.
   static const EnvironmentMode environmentMode = kDebugMode
-      ? EnvironmentMode.emulator
+      ? EnvironmentMode.production
       : EnvironmentMode.production;
 
   /// Check if we're using Firebase emulators.
@@ -54,10 +54,9 @@ class AppConfig {
   /// or override it from the command line:
   ///
   /// --dart-define=FIREBASE_EMULATOR_HOST=192.168.1.23
-  static const String defaultPhysicalDeviceEmulatorHost =
-      String.fromEnvironment(
-        'FIREBASE_DEFAULT_PHYSICAL_DEVICE_EMULATOR_HOST',
-      );
+  static const String defaultPhysicalDeviceEmulatorHost = String.fromEnvironment(
+    'FIREBASE_DEFAULT_PHYSICAL_DEVICE_EMULATOR_HOST',
+  );
 
   /// Firebase emulator host resolution.
   ///
@@ -77,8 +76,7 @@ class AppConfig {
       return 'localhost';
     }
 
-    if (defaultTargetPlatform == TargetPlatform.android &&
-        useAndroidEmulatorHost) {
+    if (defaultTargetPlatform == TargetPlatform.android && useAndroidEmulatorHost) {
       return '10.0.2.2';
     }
 
@@ -115,7 +113,7 @@ class AppConfig {
 
   /// App-level settings.
   static const String appName = 'SportConnect';
-  static const String appVersion = '1.2.13';
+  static const String appVersion = '1.2.14';
 
   static const String supportTicketEmail = String.fromEnvironment(
     'SPORTCONNECT_SUPPORT_EMAIL',
