@@ -10,6 +10,7 @@ class LocationService {
   LocationService._();
 
   static LocationService? _instance;
+  final Geocoding _geocoding = Geocoding();
   static LocationService get instance {
     _instance ??= LocationService._();
     return _instance!;
@@ -109,7 +110,7 @@ class LocationService {
 
   Future<String?> getAddressFromCoordinates(double lat, double lon) async {
     try {
-      final placemarks = await placemarkFromCoordinates(lat, lon);
+      final placemarks = await _geocoding.placemarkFromCoordinates(lat, lon);
 
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
@@ -123,7 +124,7 @@ class LocationService {
 
   Future<Position?> getCoordinatesFromAddress(String address) async {
     try {
-      final locations = await locationFromAddress(address);
+      final locations = await _geocoding.locationFromAddress(address);
       if (locations.isNotEmpty) {
         final location = locations.first;
         // Convert Location to Position

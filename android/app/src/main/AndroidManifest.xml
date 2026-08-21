@@ -1,22 +1,52 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
-
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    
+
     <!-- Android 13+ (API 33): Required for showing notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
-    <!-- Android 13+ (API 33): Granular media access permissions -->
-    <!-- READ_MEDIA_IMAGES: used for gallery picks (profile photo, vehicle photos,  -->
-    <!-- event covers, dispute evidence, chat & support attachments).               -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <!-- ===================================================================== -->
+    <!-- Google Play "Photo and Video Permissions" policy compliance.          -->
+    <!--                                                                       -->
+    <!-- Our gallery picks (profile photo, vehicle photos, event covers,       -->
+    <!-- dispute evidence, chat & support attachments) are all ONE-TIME /      -->
+    <!-- INFREQUENT use, which Play explicitly excludes from broad media       -->
+    <!-- access. We therefore rely on image_picker -> Android system photo     -->
+    <!-- picker, which needs NO storage permission at all.                     -->
+    <!--                                                                       -->
+    <!-- These tools:node="remove" entries both (a) drop the permission we     -->
+    <!-- used to declare, and (b) act as guards so a future dependency         -->
+    <!-- (file_picker, image_cropper, open_filex, photo_manager, ...) cannot   -->
+    <!-- silently merge it back in and re-trigger the policy rejection.        -->
+    <!-- ===================================================================== -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
+        tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"
+        tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"
+        tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
+        tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        tools:node="remove"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:node="remove"/>
+
+    <!-- USE_EXACT_ALARM is auto-granted and restricted by Play to alarm-clock -->
+    <!-- and calendar apps only. SportConnect is neither, and ride reminders   -->
+    <!-- go out via FCM (firebase_messaging), so we strip it defensively in    -->
+    <!-- case flutter_local_notifications merges it in.                        -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"
+        tools:node="remove"/>
 
     <!-- The Advertising ID (AD_ID) is auto-added by the Firebase Analytics SDK.   -->
     <!-- This app does NOT use advertising/ad personalisation, so we strip the     -->
@@ -33,7 +63,6 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-
             <!-- Custom URL Scheme - sportconnect:// -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -41,14 +70,12 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="sportconnect"/>
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="flutterstripe" android:host="redirect" />
             </intent-filter>
-
             <!-- HTTPS App Links - sportaxitrip.com -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
@@ -64,15 +91,27 @@
             </intent-filter>
         </activity>
         <meta-data android:name="flutterEmbedding" android:value="2" />
-
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="sport_connect_general" />
-
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/notification_color" />
-
         <meta-data android:name="com.google.android.gms.wallet.api.enabled" android:value="true" />
 
+        <!-- Opts in to the BACKPORTED Android photo picker delivered via Google  -->
+        <!-- Play services. Now that we no longer hold READ_MEDIA_IMAGES, this    -->
+        <!-- guarantees users on Android 11/12 get the same modern system picker  -->
+        <!-- instead of the legacy document-provider fallback.                    -->
+        <!-- Ref: developer.android.com/training/data-storage/shared/photo-picker -->
+        <service android:name="com.google.android.gms.metadata.ModuleDependencies"
+            android:enabled="false"
+            android:exported="false"
+            tools:ignore="MissingClass">
+            <intent-filter>
+                <action android:name="com.google.android.gms.metadata.MODULE_DEPENDENCIES" />
+            </intent-filter>
+            <meta-data android:name="photopicker_activity:0:required" android:value="" />
+        </service>
     </application>
+
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>

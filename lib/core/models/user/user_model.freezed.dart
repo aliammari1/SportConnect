@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'user_model.dart';
@@ -9,6 +9,7 @@ part of 'user_model.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 UserModel _$UserModelFromJson(
@@ -252,7 +253,7 @@ return pending(_that.uid,_that.email,_that.username,_that.photoUrl,_that.phoneNu
 @JsonSerializable()
 
 class RiderModel extends UserModel {
-  const RiderModel({required this.uid, required this.email, required this.username, this.photoUrl, this.phoneNumber, this.gender, this.fcmToken = '', this.address, this.latitude, this.longitude, this.isEmailVerified = false, this.isBanned = false, this.isPremium = false, this.premiumPlan, @TimestampConverter() this.premiumUpdatedAt, final  List<String> blockedUsers = const [], this.rating = const RatingBreakdown(), this.gamification = const GamificationStats(), this.preferences = const UserPreferences(), @JsonKey(unknownEnumValue: Expertise.rookie) this.expertise = Expertise.rookie, this.stripeCustomerId, this.isStripeCustomerCreated = false, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt, final  String? $type}): _blockedUsers = blockedUsers,$type = $type ?? 'rider',super._();
+  const RiderModel({required this.uid, required this.email, required this.username, this.photoUrl, this.phoneNumber, this.gender, this.fcmToken = '', this.address, this.latitude, this.longitude, this.isEmailVerified = false, this.isBanned = false, this.isPremium = false, this.premiumPlan, @TimestampConverter() this.premiumUpdatedAt,  List<String> blockedUsers = const [], this.rating = const RatingBreakdown(), this.gamification = const GamificationStats(), this.preferences = const UserPreferences(), @JsonKey(unknownEnumValue: Expertise.rookie) this.expertise = Expertise.rookie, this.stripeCustomerId, this.isStripeCustomerCreated = false, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt,  String? $type}): _blockedUsers = blockedUsers,$type = $type ?? 'rider',super._();
   factory RiderModel.fromJson(Map<String, dynamic> json) => _$RiderModelFromJson(json);
 
 @override final  String uid;
@@ -404,7 +405,7 @@ $UserPreferencesCopyWith<$Res> get preferences {
 @JsonSerializable()
 
 class DriverModel extends UserModel {
-  const DriverModel({required this.uid, required this.email, required this.username, this.photoUrl, this.phoneNumber, this.gender, this.fcmToken = '', this.address, this.latitude, this.longitude, this.isEmailVerified = false, this.isBanned = false, this.isPremium = false, this.premiumPlan, @TimestampConverter() this.premiumUpdatedAt, final  List<String> blockedUsers = const [], this.rating = const RatingBreakdown(), this.gamification = const GamificationStats(), this.preferences = const UserPreferences(), @JsonKey(unknownEnumValue: Expertise.rookie) this.expertise = Expertise.rookie, final  List<String> vehicleIds = const [], this.stripeAccountId, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt, final  String? $type}): _blockedUsers = blockedUsers,_vehicleIds = vehicleIds,$type = $type ?? 'driver',super._();
+  const DriverModel({required this.uid, required this.email, required this.username, this.photoUrl, this.phoneNumber, this.gender, this.fcmToken = '', this.address, this.latitude, this.longitude, this.isEmailVerified = false, this.isBanned = false, this.isPremium = false, this.premiumPlan, @TimestampConverter() this.premiumUpdatedAt,  List<String> blockedUsers = const [], this.rating = const RatingBreakdown(), this.gamification = const GamificationStats(), this.preferences = const UserPreferences(), @JsonKey(unknownEnumValue: Expertise.rookie) this.expertise = Expertise.rookie,  List<String> vehicleIds = const [], this.stripeAccountId, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt,  String? $type}): _blockedUsers = blockedUsers,_vehicleIds = vehicleIds,$type = $type ?? 'driver',super._();
   factory DriverModel.fromJson(Map<String, dynamic> json) => _$DriverModelFromJson(json);
 
 @override final  String uid;
@@ -562,7 +563,7 @@ $UserPreferencesCopyWith<$Res> get preferences {
 @JsonSerializable()
 
 class PendingUserModel extends UserModel {
-  const PendingUserModel({required this.uid, required this.email, required this.username, this.photoUrl, this.phoneNumber, @JsonKey(unknownEnumValue: Expertise.rookie) this.expertise = Expertise.rookie, this.isEmailVerified = false, this.isBanned = false, this.fcmToken = '', this.selectedRoleIntent, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt, final  String? $type}): $type = $type ?? 'pending',super._();
+  const PendingUserModel({required this.uid, required this.email, required this.username, this.photoUrl, this.phoneNumber, @JsonKey(unknownEnumValue: Expertise.rookie) this.expertise = Expertise.rookie, this.isEmailVerified = false, this.isBanned = false, this.fcmToken = '', this.selectedRoleIntent, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt,  String? $type}): $type = $type ?? 'pending',super._();
   factory PendingUserModel.fromJson(Map<String, dynamic> json) => _$PendingUserModelFromJson(json);
 
 @override final  String uid;

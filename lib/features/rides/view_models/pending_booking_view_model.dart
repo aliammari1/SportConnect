@@ -203,7 +203,7 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
       rideDetailViewModelProvider(rideId),
       (_, next) => syncRideState(next),
     );
-
+    ref.listen(paymentViewModelProvider, (_, _) {});
     if (currentUserId != null) {
       ref.listen<AsyncValue<List<RideBooking>>>(
         bookingsByPassengerProvider(currentUserId),
@@ -420,8 +420,6 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
         throw Exception('User not found');
       }
 
-      final paymentViewModel = ref.read(paymentViewModelProvider.notifier);
-      final stripeService = ref.read(stripeServiceProvider);
       final driverProfile = await ref.read(
         userProfileProvider(ride.driverId).future,
       );
@@ -445,42 +443,48 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
         );
       }
 
-      final customerId = await paymentViewModel.getOrCreateCustomer(
-        userId: user.uid,
-        email: user.email,
-        name: user.username,
-        phone: switch (user) {
-          final RiderModel rider => rider.asRider?.phoneNumber,
-          final DriverModel driver => driver.asDriver?.phoneNumber,
-          _ => null,
-        },
-      );
+      final customerId = await ref
+          .read(paymentViewModelProvider.notifier)
+          .getOrCreateCustomer(
+            userId: user.uid,
+            email: user.email,
+            name: user.username,
+            phone: switch (user) {
+              final RiderModel rider => rider.asRider?.phoneNumber,
+              final DriverModel driver => driver.asDriver?.phoneNumber,
+              _ => null,
+            },
+          );
       if (!ref.mounted) {
         return;
       }
 
       final totalAmount = ride.pricePerSeatInCents * booking.seatsBooked;
-      final paymentData = await stripeService.createPaymentIntent(
-        rideId: ride.id,
-        riderId: user.uid,
-        riderName: user.username,
-        driverId: ride.driverId,
-        driverName: driverProfile.username,
-        amountInCents: totalAmount,
-        currency: 'eur',
-        customerId: customerId,
-        driverStripeAccountId: driverStripeAccountId,
-        description: '${ride.origin.address} → ${ride.destination.address}',
-      );
+      final paymentData = await ref
+          .read(stripeServiceProvider)
+          .createPaymentIntent(
+            rideId: ride.id,
+            riderId: user.uid,
+            riderName: user.username,
+            driverId: ride.driverId,
+            driverName: driverProfile.username,
+            amountInCents: totalAmount,
+            currency: 'eur',
+            customerId: customerId,
+            driverStripeAccountId: driverStripeAccountId,
+            description: '${ride.origin.address} → ${ride.destination.address}',
+          );
       if (!ref.mounted) {
         return;
       }
 
-      final paymentSuccess = await stripeService.processPaymentWithSheet(
-        paymentIntentClientSecret: paymentData['clientSecret'] as String,
-        customerId: customerId,
-        ephemeralKeySecret: paymentData['ephemeralKey'] as String?,
-      );
+      final paymentSuccess = await ref
+          .read(stripeServiceProvider)
+          .processPaymentWithSheet(
+            paymentIntentClientSecret: paymentData['clientSecret'] as String,
+            customerId: customerId,
+            ephemeralKeySecret: paymentData['ephemeralKey'] as String?,
+          );
       if (!ref.mounted) {
         return;
       }

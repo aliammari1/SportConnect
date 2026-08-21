@@ -83,6 +83,7 @@ const Country france = Country(
 /// - stores normalized full number as +33XXXXXXXXX
 class IntlPhoneInput extends StatefulWidget {
   const IntlPhoneInput({
+    required this.onChanged,
     super.key,
     this.initialValue,
     this.initialCountryCode = 'FR',
@@ -90,7 +91,6 @@ class IntlPhoneInput extends StatefulWidget {
     this.hint,
     this.enabled = true,
     this.autofocus = false,
-    required this.onChanged,
     this.validator,
     this.accentColor,
     this.fillColor,
@@ -172,7 +172,7 @@ class IntlPhoneInputState extends State<IntlPhoneInput> {
       text: nextText,
       selection: TextSelection.collapsed(offset: nextText.length),
     );
-    widget.onChanged?.call(phoneNumber);
+    widget.onChanged.call(phoneNumber);
   }
 
   @override
@@ -192,7 +192,7 @@ class IntlPhoneInputState extends State<IntlPhoneInput> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      widget.onChanged?.call(phoneNumber);
+      widget.onChanged.call(phoneNumber);
     });
   }
 
@@ -239,7 +239,7 @@ class IntlPhoneInputState extends State<IntlPhoneInput> {
       }
     });
 
-    widget.onChanged?.call(phoneNumber);
+    widget.onChanged.call(phoneNumber);
   }
 
   void _clear() {
@@ -252,7 +252,7 @@ class IntlPhoneInputState extends State<IntlPhoneInput> {
       _errorText = _validatePhone();
     });
 
-    widget.onChanged?.call(phoneNumber);
+    widget.onChanged.call(phoneNumber);
   }
 
   String _supportText(

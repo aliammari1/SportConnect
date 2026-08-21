@@ -282,8 +282,7 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
         LocationPickerResult(
           location: _selectedLocation!,
           address:
-              _selectedAddress ??
-              AppLocalizations.of(context).selectedLocation,
+              _selectedAddress ?? AppLocalizations.of(context).selectedLocation,
         ),
       );
     }
@@ -293,10 +292,25 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
     final location = _selectedLocation;
     if (location == null) return;
 
+    // Declare once (ideally hoist to a top-level/static const) — only maps
+    // referenced here get compiled into the binary in v6.
+    const supportedMapApps = <MapApp>[MapApp.google, MapApp.apple, MapApp.waze];
+
     try {
-      final maps = await MapLauncher.installedMaps;
+      final request = MapLauncher.marker(
+        .coords(
+          location.latitude,
+          location.longitude,
+          title:
+              _selectedAddress ?? AppLocalizations.of(context).selectedLocation,
+        ),
+      );
+
+      final supportedMaps = await request.getSupportedMaps(supportedMapApps);
       if (!mounted) return;
-      if (maps.isEmpty) {
+
+      final installedMaps = supportedMaps.where((m) => m.isInstalled).toList();
+      if (installedMaps.isEmpty) {
         AdaptiveSnackBar.show(
           context,
           message: 'No map apps are available on this device.',
@@ -305,16 +319,12 @@ class _MapLocationPickerState extends ConsumerState<MapLocationPicker>
         return;
       }
 
-      final map = maps.firstWhere(
-        (item) => item.mapType == MapType.google,
-        orElse: () => maps.first,
+      final map = installedMaps.firstWhere(
+        (item) => item.map == MapApp.google,
+        orElse: () => installedMaps.first,
       );
-      await map.showMarker(
-        coords: Coords(location.latitude, location.longitude),
-        title:
-            _selectedAddress ?? AppLocalizations.of(context).selectedLocation,
-      );
-    } on Exception {
+      await map.show();
+    } on MapLaunchException {
       if (!mounted) return;
       AdaptiveSnackBar.show(
         context,

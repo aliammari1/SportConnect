@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'ride_review_model.dart';
@@ -9,6 +9,7 @@ part of 'ride_review_model.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -66,7 +67,7 @@ class _$RideReviewModelCopyWithImpl<$Res>
 /// Create a copy of RideReviewModel
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? reviewerId = null,Object? reviewerName = null,Object? revieweeId = null,Object? rating = null,Object? reviewerPhotoUrl = freezed,Object? comment = freezed,Object? tags = null,Object? createdAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RideReviewModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,reviewerId: null == reviewerId ? _self.reviewerId : reviewerId // ignore: cast_nullable_to_non_nullable
 as String,reviewerName: null == reviewerName ? _self.reviewerName : reviewerName // ignore: cast_nullable_to_non_nullable
@@ -217,7 +218,7 @@ return $default(_that.id,_that.reviewerId,_that.reviewerName,_that.revieweeId,_t
 @JsonSerializable()
 
 class _RideReviewModel extends RideReviewModel {
-  const _RideReviewModel({required this.id, required this.reviewerId, required this.reviewerName, required this.revieweeId, required this.rating, this.reviewerPhotoUrl, this.comment, final  List<String> tags = const [], @TimestampConverter() this.createdAt}): _tags = tags,super._();
+  const _RideReviewModel({required this.id, required this.reviewerId, required this.reviewerName, required this.revieweeId, required this.rating, this.reviewerPhotoUrl, this.comment,  List<String> tags = const [], @TimestampConverter() this.createdAt}): _tags = tags,super._();
   factory _RideReviewModel.fromJson(Map<String, dynamic> json) => _$RideReviewModelFromJson(json);
 
 @override final  String id;

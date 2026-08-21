@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'vehicle_model.dart';
@@ -9,6 +9,7 @@ part of 'vehicle_model.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -66,7 +67,7 @@ class _$VehicleModelCopyWithImpl<$Res>
 /// Create a copy of VehicleModel
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ownerId = null,Object? make = null,Object? model = null,Object? year = null,Object? color = null,Object? licensePlate = null,Object? ownerName = null,Object? ownerPhotoUrl = freezed,Object? capacity = null,Object? imageUrl = freezed,Object? imageUrls = null,Object? isActive = null,Object? isDefault = null,Object? type = null,Object? fuelType = null,Object? transmission = null,Object? verificationStatus = null,Object? verifiedAt = freezed,Object? rejectionReason = freezed,Object? totalRides = null,Object? averageRating = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(VehicleModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,ownerId: null == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
 as String,make: null == make ? _self.make : make // ignore: cast_nullable_to_non_nullable
@@ -232,7 +233,7 @@ return $default(_that.id,_that.ownerId,_that.make,_that.model,_that.year,_that.c
 @JsonSerializable()
 
 class _VehicleModel extends VehicleModel {
-  const _VehicleModel({required this.id, required this.ownerId, required this.make, required this.model, required this.year, required this.color, required this.licensePlate, this.ownerName = 'Unknown', this.ownerPhotoUrl, this.capacity = 4, this.imageUrl, final  List<String> imageUrls = const [], this.isActive = false, this.isDefault = false, this.type = VehicleType.unknown, this.fuelType = VehicleFuelType.unknown, this.transmission = VehicleTransmission.unknown, this.verificationStatus = VehicleVerificationStatus.unverified, @TimestampConverter() this.verifiedAt, this.rejectionReason, this.totalRides = 0, this.averageRating = 0.0, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt}): _imageUrls = imageUrls,super._();
+  const _VehicleModel({required this.id, required this.ownerId, required this.make, required this.model, required this.year, required this.color, required this.licensePlate, this.ownerName = 'Unknown', this.ownerPhotoUrl, this.capacity = 4, this.imageUrl,  List<String> imageUrls = const [], this.isActive = false, this.isDefault = false, this.type = VehicleType.unknown, this.fuelType = VehicleFuelType.unknown, this.transmission = VehicleTransmission.unknown, this.verificationStatus = VehicleVerificationStatus.unverified, @TimestampConverter() this.verifiedAt, this.rejectionReason, this.totalRides = 0, this.averageRating = 0.0, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt}): _imageUrls = imageUrls,super._();
   factory _VehicleModel.fromJson(Map<String, dynamic> json) => _$VehicleModelFromJson(json);
 
 @override final  String id;

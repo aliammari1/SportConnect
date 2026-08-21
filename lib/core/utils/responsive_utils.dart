@@ -2,6 +2,8 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:responsive_framework/responsive_framework.dart';
+import 'package:sport_connect/core/widgets/adaptive_master_detail_scaffold.dart'
+    show AdaptiveMasterDetailScaffold;
 
 // ═══════════════════════════════════════════════════════════════════
 // MATERIAL DESIGN 3 BREAKPOINTS
@@ -334,7 +336,7 @@ EdgeInsets adaptivePadding(
 }) {
   final multiplier = responsiveValue<double>(
     context,
-    compact: 1.0,
+    compact: 1,
     medium: 1.25,
     expanded: 1.5,
     large: 1.75,

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'review_model.dart';
@@ -9,6 +9,7 @@ part of 'review_model.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -66,7 +67,7 @@ class _$ReviewModelCopyWithImpl<$Res>
 /// Create a copy of ReviewModel
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? rideId = null,Object? reviewerId = null,Object? reviewerName = null,Object? revieweeId = null,Object? revieweeName = null,Object? type = null,Object? rating = null,Object? createdAt = null,Object? reviewerPhotoUrl = freezed,Object? revieweePhotoUrl = freezed,Object? comment = freezed,Object? tags = null,Object? isVisible = null,Object? response = freezed,Object? responseAt = freezed,Object? updatedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ReviewModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,rideId: null == rideId ? _self.rideId : rideId // ignore: cast_nullable_to_non_nullable
 as String,reviewerId: null == reviewerId ? _self.reviewerId : reviewerId // ignore: cast_nullable_to_non_nullable
@@ -225,7 +226,7 @@ return $default(_that.id,_that.rideId,_that.reviewerId,_that.reviewerName,_that.
 @JsonSerializable()
 
 class _ReviewModel extends ReviewModel {
-  const _ReviewModel({required this.id, required this.rideId, required this.reviewerId, required this.reviewerName, required this.revieweeId, required this.revieweeName, required this.type, required this.rating, @RequiredTimestampConverter() required this.createdAt, this.reviewerPhotoUrl, this.revieweePhotoUrl, this.comment, final  List<String> tags = const [], this.isVisible = true, this.response, @TimestampConverter() this.responseAt, @TimestampConverter() this.updatedAt}): _tags = tags,super._();
+  const _ReviewModel({required this.id, required this.rideId, required this.reviewerId, required this.reviewerName, required this.revieweeId, required this.revieweeName, required this.type, required this.rating, @RequiredTimestampConverter() required this.createdAt, this.reviewerPhotoUrl, this.revieweePhotoUrl, this.comment,  List<String> tags = const [], this.isVisible = true, this.response, @TimestampConverter() this.responseAt, @TimestampConverter() this.updatedAt}): _tags = tags,super._();
   factory _ReviewModel.fromJson(Map<String, dynamic> json) => _$ReviewModelFromJson(json);
 
 @override final  String id;
@@ -383,7 +384,7 @@ class _$RatingStatsCopyWithImpl<$Res>
 /// Create a copy of RatingStats
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? totalReviews = null,Object? averageRating = null,Object? fiveStarCount = null,Object? fourStarCount = null,Object? threeStarCount = null,Object? twoStarCount = null,Object? oneStarCount = null,Object? tagCounts = null,Object? lastReviewAt = freezed,Object? updatedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RatingStats(
 totalReviews: null == totalReviews ? _self.totalReviews : totalReviews // ignore: cast_nullable_to_non_nullable
 as int,averageRating: null == averageRating ? _self.averageRating : averageRating // ignore: cast_nullable_to_non_nullable
 as double,fiveStarCount: null == fiveStarCount ? _self.fiveStarCount : fiveStarCount // ignore: cast_nullable_to_non_nullable
@@ -535,7 +536,7 @@ return $default(_that.totalReviews,_that.averageRating,_that.fiveStarCount,_that
 @JsonSerializable()
 
 class _RatingStats extends RatingStats {
-  const _RatingStats({this.totalReviews = 0, this.averageRating = 0.0, this.fiveStarCount = 0, this.fourStarCount = 0, this.threeStarCount = 0, this.twoStarCount = 0, this.oneStarCount = 0, final  Map<String, int> tagCounts = const {}, @TimestampConverter() this.lastReviewAt, @TimestampConverter() this.updatedAt}): _tagCounts = tagCounts,super._();
+  const _RatingStats({this.totalReviews = 0, this.averageRating = 0.0, this.fiveStarCount = 0, this.fourStarCount = 0, this.threeStarCount = 0, this.twoStarCount = 0, this.oneStarCount = 0,  Map<String, int> tagCounts = const {}, @TimestampConverter() this.lastReviewAt, @TimestampConverter() this.updatedAt}): _tagCounts = tagCounts,super._();
   factory _RatingStats.fromJson(Map<String, dynamic> json) => _$RatingStatsFromJson(json);
 
 @override@JsonKey() final  int totalReviews;
@@ -679,7 +680,7 @@ class _$CreateReviewRequestCopyWithImpl<$Res>
 /// Create a copy of CreateReviewRequest
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? rideId = null,Object? revieweeId = null,Object? revieweeName = null,Object? type = null,Object? rating = null,Object? revieweePhotoUrl = freezed,Object? comment = freezed,Object? tags = null,}) {
-  return _then(_self.copyWith(
+  return _then(CreateReviewRequest(
 rideId: null == rideId ? _self.rideId : rideId // ignore: cast_nullable_to_non_nullable
 as String,revieweeId: null == revieweeId ? _self.revieweeId : revieweeId // ignore: cast_nullable_to_non_nullable
 as String,revieweeName: null == revieweeName ? _self.revieweeName : revieweeName // ignore: cast_nullable_to_non_nullable
@@ -829,7 +830,7 @@ return $default(_that.rideId,_that.revieweeId,_that.revieweeName,_that.type,_tha
 @JsonSerializable()
 
 class _CreateReviewRequest extends CreateReviewRequest {
-  const _CreateReviewRequest({required this.rideId, required this.revieweeId, required this.revieweeName, required this.type, required this.rating, this.revieweePhotoUrl, this.comment, final  List<String> tags = const []}): _tags = tags,super._();
+  const _CreateReviewRequest({required this.rideId, required this.revieweeId, required this.revieweeName, required this.type, required this.rating, this.revieweePhotoUrl, this.comment,  List<String> tags = const []}): _tags = tags,super._();
   factory _CreateReviewRequest.fromJson(Map<String, dynamic> json) => _$CreateReviewRequestFromJson(json);
 
 @override final  String rideId;

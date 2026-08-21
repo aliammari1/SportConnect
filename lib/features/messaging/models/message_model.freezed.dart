@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'message_model.dart';
@@ -9,6 +9,7 @@ part of 'message_model.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -66,7 +67,7 @@ class _$MessageModelCopyWithImpl<$Res>
 /// Create a copy of MessageModel
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? chatId = null,Object? senderId = null,Object? senderName = null,Object? content = null,Object? senderPhotoUrl = freezed,Object? type = null,Object? status = null,Object? mediaUrl = freezed,Object? thumbnailUrl = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? locationName = freezed,Object? rideId = freezed,Object? replyToMessageId = freezed,Object? replyToContent = freezed,Object? reactions = null,Object? readBy = null,Object? deliveredTo = null,Object? isEdited = null,Object? isDeleted = null,Object? createdAt = freezed,Object? editedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(MessageModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,chatId: null == chatId ? _self.chatId : chatId // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
@@ -231,7 +232,7 @@ return $default(_that.id,_that.chatId,_that.senderId,_that.senderName,_that.cont
 @JsonSerializable()
 
 class _MessageModel extends MessageModel {
-  const _MessageModel({required this.id, required this.chatId, required this.senderId, required this.senderName, required this.content, this.senderPhotoUrl, this.type = MessageType.text, this.status = MessageStatus.sending, this.mediaUrl, this.thumbnailUrl, this.latitude, this.longitude, this.locationName, this.rideId, this.replyToMessageId, this.replyToContent, final  Map<String, List<String>> reactions = const {}, final  List<String> readBy = const [], final  List<String> deliveredTo = const [], this.isEdited = false, this.isDeleted = false, @TimestampConverter() this.createdAt, @TimestampConverter() this.editedAt}): _reactions = reactions,_readBy = readBy,_deliveredTo = deliveredTo,super._();
+  const _MessageModel({required this.id, required this.chatId, required this.senderId, required this.senderName, required this.content, this.senderPhotoUrl, this.type = MessageType.text, this.status = MessageStatus.sending, this.mediaUrl, this.thumbnailUrl, this.latitude, this.longitude, this.locationName, this.rideId, this.replyToMessageId, this.replyToContent,  Map<String, List<String>> reactions = const {},  List<String> readBy = const [],  List<String> deliveredTo = const [], this.isEdited = false, this.isDeleted = false, @TimestampConverter() this.createdAt, @TimestampConverter() this.editedAt}): _reactions = reactions,_readBy = readBy,_deliveredTo = deliveredTo,super._();
   factory _MessageModel.fromJson(Map<String, dynamic> json) => _$MessageModelFromJson(json);
 
 @override final  String id;
@@ -413,7 +414,7 @@ class _$ChatParticipantCopyWithImpl<$Res>
 /// Create a copy of ChatParticipant
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? username = null,Object? photoUrl = freezed,Object? isAdmin = null,Object? isMuted = null,Object? role = freezed,Object? lastSeenAt = freezed,Object? joinedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ChatParticipant(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,photoUrl: freezed == photoUrl ? _self.photoUrl : photoUrl // ignore: cast_nullable_to_non_nullable
@@ -697,7 +698,7 @@ class _$ChatModelCopyWithImpl<$Res>
 /// Create a copy of ChatModel
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? participants = null,Object? participantIds = null,Object? groupName = freezed,Object? groupPhotoUrl = freezed,Object? description = freezed,Object? rideId = freezed,Object? eventId = freezed,Object? lastMessageContent = freezed,Object? lastMessageSenderId = freezed,Object? lastMessageSenderName = freezed,Object? lastMessageType = null,Object? lastMessageAt = freezed,Object? unreadCounts = null,Object? mutedBy = null,Object? pinnedBy = null,Object? deletedAtBy = null,Object? clearedAtBy = null,Object? isActive = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(ChatModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as ChatType,participants: null == participants ? _self.participants : participants // ignore: cast_nullable_to_non_nullable
@@ -861,7 +862,7 @@ return $default(_that.id,_that.type,_that.participants,_that.participantIds,_tha
 @JsonSerializable()
 
 class _ChatModel extends ChatModel {
-  const _ChatModel({required this.id, this.type = ChatType.private, final  List<ChatParticipant> participants = const [], final  List<String> participantIds = const [], this.groupName, this.groupPhotoUrl, this.description, this.rideId, this.eventId, this.lastMessageContent, this.lastMessageSenderId, this.lastMessageSenderName, this.lastMessageType = MessageType.text, @TimestampConverter() this.lastMessageAt, final  Map<String, int> unreadCounts = const {}, final  Map<String, bool> mutedBy = const {}, final  Map<String, bool> pinnedBy = const {}, @TimestampMapConverter() final  Map<String, DateTime> deletedAtBy = const {}, @TimestampMapConverter() final  Map<String, DateTime> clearedAtBy = const {}, this.isActive = true, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt}): _participants = participants,_participantIds = participantIds,_unreadCounts = unreadCounts,_mutedBy = mutedBy,_pinnedBy = pinnedBy,_deletedAtBy = deletedAtBy,_clearedAtBy = clearedAtBy,super._();
+  const _ChatModel({required this.id, this.type = ChatType.private,  List<ChatParticipant> participants = const [],  List<String> participantIds = const [], this.groupName, this.groupPhotoUrl, this.description, this.rideId, this.eventId, this.lastMessageContent, this.lastMessageSenderId, this.lastMessageSenderName, this.lastMessageType = MessageType.text, @TimestampConverter() this.lastMessageAt,  Map<String, int> unreadCounts = const {},  Map<String, bool> mutedBy = const {},  Map<String, bool> pinnedBy = const {}, @TimestampMapConverter()  Map<String, DateTime> deletedAtBy = const {}, @TimestampMapConverter()  Map<String, DateTime> clearedAtBy = const {}, this.isActive = true, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt}): _participants = participants,_participantIds = participantIds,_unreadCounts = unreadCounts,_mutedBy = mutedBy,_pinnedBy = pinnedBy,_deletedAtBy = deletedAtBy,_clearedAtBy = clearedAtBy,super._();
   factory _ChatModel.fromJson(Map<String, dynamic> json) => _$ChatModelFromJson(json);
 
 @override final  String id;
@@ -1065,7 +1066,7 @@ class _$TypingIndicatorCopyWithImpl<$Res>
 /// Create a copy of TypingIndicator
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? username = null,Object? chatId = null,Object? startedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(TypingIndicator(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
 as String,chatId: null == chatId ? _self.chatId : chatId // ignore: cast_nullable_to_non_nullable

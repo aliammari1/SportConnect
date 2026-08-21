@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'ride_schedule.dart';
@@ -9,6 +9,7 @@ part of 'ride_schedule.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -66,7 +67,7 @@ class _$RideScheduleCopyWithImpl<$Res>
 /// Create a copy of RideSchedule
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? departureTime = null,Object? arrivalTime = freezed,Object? actualDepartureTime = freezed,Object? flexibilityMinutes = null,Object? isRecurring = null,Object? recurringDays = null,Object? recurringEndDate = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RideSchedule(
 departureTime: null == departureTime ? _self.departureTime : departureTime // ignore: cast_nullable_to_non_nullable
 as DateTime,arrivalTime: freezed == arrivalTime ? _self.arrivalTime : arrivalTime // ignore: cast_nullable_to_non_nullable
 as DateTime?,actualDepartureTime: freezed == actualDepartureTime ? _self.actualDepartureTime : actualDepartureTime // ignore: cast_nullable_to_non_nullable
@@ -215,7 +216,7 @@ return $default(_that.departureTime,_that.arrivalTime,_that.actualDepartureTime,
 @JsonSerializable()
 
 class _RideSchedule extends RideSchedule {
-  const _RideSchedule({@RequiredTimestampConverter() required this.departureTime, @TimestampConverter() this.arrivalTime, @TimestampConverter() this.actualDepartureTime, this.flexibilityMinutes = 15, this.isRecurring = false, final  List<int> recurringDays = const [], @TimestampConverter() this.recurringEndDate}): _recurringDays = recurringDays,super._();
+  const _RideSchedule({@RequiredTimestampConverter() required this.departureTime, @TimestampConverter() this.arrivalTime, @TimestampConverter() this.actualDepartureTime, this.flexibilityMinutes = 15, this.isRecurring = false,  List<int> recurringDays = const [], @TimestampConverter() this.recurringEndDate}): _recurringDays = recurringDays,super._();
   factory _RideSchedule.fromJson(Map<String, dynamic> json) => _$RideScheduleFromJson(json);
 
 @override@RequiredTimestampConverter() final  DateTime departureTime;

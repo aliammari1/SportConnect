@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'gamification_stats.dart';
@@ -9,6 +9,7 @@ part of 'gamification_stats.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -66,7 +67,7 @@ class _$GamificationStatsCopyWithImpl<$Res>
 /// Create a copy of GamificationStats
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? totalXP = null,Object? totalRides = null,Object? ridesOffered = null,Object? currentStreak = null,Object? longestStreak = null,Object? totalDistance = null,Object? unlockedBadges = null,Object? achievements = null,}) {
-  return _then(_self.copyWith(
+  return _then(GamificationStats(
 totalXP: null == totalXP ? _self.totalXP : totalXP // ignore: cast_nullable_to_non_nullable
 as int,totalRides: null == totalRides ? _self.totalRides : totalRides // ignore: cast_nullable_to_non_nullable
 as int,ridesOffered: null == ridesOffered ? _self.ridesOffered : ridesOffered // ignore: cast_nullable_to_non_nullable
@@ -216,7 +217,7 @@ return $default(_that.totalXP,_that.totalRides,_that.ridesOffered,_that.currentS
 @JsonSerializable()
 
 class _GamificationStats extends GamificationStats {
-  const _GamificationStats({this.totalXP = 0, this.totalRides = 0, this.ridesOffered = 0, this.currentStreak = 0, this.longestStreak = 0, this.totalDistance = 0.0, final  List<String> unlockedBadges = const [], final  List<Achievement> achievements = const []}): _unlockedBadges = unlockedBadges,_achievements = achievements,super._();
+  const _GamificationStats({this.totalXP = 0, this.totalRides = 0, this.ridesOffered = 0, this.currentStreak = 0, this.longestStreak = 0, this.totalDistance = 0.0,  List<String> unlockedBadges = const [],  List<Achievement> achievements = const []}): _unlockedBadges = unlockedBadges,_achievements = achievements,super._();
   factory _GamificationStats.fromJson(Map<String, dynamic> json) => _$GamificationStatsFromJson(json);
 
 @override@JsonKey() final  int totalXP;

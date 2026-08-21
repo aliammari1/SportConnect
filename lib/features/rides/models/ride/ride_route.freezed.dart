@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'ride_route.dart';
@@ -9,6 +9,7 @@ part of 'ride_route.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -66,7 +67,7 @@ class _$RouteWaypointCopyWithImpl<$Res>
 /// Create a copy of RouteWaypoint
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? location = null,Object? order = null,Object? estimatedArrival = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RouteWaypoint(
 location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
 as LocationPoint,order: null == order ? _self.order : order // ignore: cast_nullable_to_non_nullable
 as int,estimatedArrival: freezed == estimatedArrival ? _self.estimatedArrival : estimatedArrival // ignore: cast_nullable_to_non_nullable
@@ -353,7 +354,7 @@ class _$RideRouteCopyWithImpl<$Res>
 /// Create a copy of RideRoute
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? origin = null,Object? destination = null,Object? waypoints = null,Object? distanceKm = freezed,Object? durationMinutes = freezed,Object? polylineEncoded = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RideRoute(
 origin: null == origin ? _self.origin : origin // ignore: cast_nullable_to_non_nullable
 as LocationPoint,destination: null == destination ? _self.destination : destination // ignore: cast_nullable_to_non_nullable
 as LocationPoint,waypoints: null == waypoints ? _self.waypoints : waypoints // ignore: cast_nullable_to_non_nullable
@@ -519,7 +520,7 @@ return $default(_that.origin,_that.destination,_that.waypoints,_that.distanceKm,
 @JsonSerializable()
 
 class _RideRoute extends RideRoute {
-  const _RideRoute({required this.origin, required this.destination, final  List<RouteWaypoint> waypoints = const [], this.distanceKm, this.durationMinutes, this.polylineEncoded}): _waypoints = waypoints,super._();
+  const _RideRoute({required this.origin, required this.destination,  List<RouteWaypoint> waypoints = const [], this.distanceKm, this.durationMinutes, this.polylineEncoded}): _waypoints = waypoints,super._();
   factory _RideRoute.fromJson(Map<String, dynamic> json) => _$RideRouteFromJson(json);
 
 @override final  LocationPoint origin;

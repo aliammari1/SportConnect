@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'payment_model.dart';
@@ -9,6 +9,7 @@ part of 'payment_model.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -66,7 +67,7 @@ class _$StripeCapabilitiesCopyWithImpl<$Res>
 /// Create a copy of StripeCapabilities
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? transfers = null,Object? cardPayments = null,}) {
-  return _then(_self.copyWith(
+  return _then(StripeCapabilities(
 transfers: null == transfers ? _self.transfers : transfers // ignore: cast_nullable_to_non_nullable
 as StripeCapabilityStatus,cardPayments: null == cardPayments ? _self.cardPayments : cardPayments // ignore: cast_nullable_to_non_nullable
 as StripeCapabilityStatus,
@@ -332,7 +333,7 @@ class _$StripeRequirementsCopyWithImpl<$Res>
 /// Create a copy of StripeRequirements
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? currentlyDue = null,Object? eventuallyDue = null,Object? pastDue = null,Object? pendingVerification = null,Object? currentDeadline = freezed,Object? disabledReason = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(StripeRequirements(
 currentlyDue: null == currentlyDue ? _self.currentlyDue : currentlyDue // ignore: cast_nullable_to_non_nullable
 as List<String>,eventuallyDue: null == eventuallyDue ? _self.eventuallyDue : eventuallyDue // ignore: cast_nullable_to_non_nullable
 as List<String>,pastDue: null == pastDue ? _self.pastDue : pastDue // ignore: cast_nullable_to_non_nullable
@@ -480,7 +481,7 @@ return $default(_that.currentlyDue,_that.eventuallyDue,_that.pastDue,_that.pendi
 @JsonSerializable()
 
 class _StripeRequirements implements StripeRequirements {
-  const _StripeRequirements({final  List<String> currentlyDue = const [], final  List<String> eventuallyDue = const [], final  List<String> pastDue = const [], final  List<String> pendingVerification = const [], @TimestampConverter() this.currentDeadline, this.disabledReason}): _currentlyDue = currentlyDue,_eventuallyDue = eventuallyDue,_pastDue = pastDue,_pendingVerification = pendingVerification;
+  const _StripeRequirements({ List<String> currentlyDue = const [],  List<String> eventuallyDue = const [],  List<String> pastDue = const [],  List<String> pendingVerification = const [], @TimestampConverter() this.currentDeadline, this.disabledReason}): _currentlyDue = currentlyDue,_eventuallyDue = eventuallyDue,_pastDue = pastDue,_pendingVerification = pendingVerification;
   factory _StripeRequirements.fromJson(Map<String, dynamic> json) => _$StripeRequirementsFromJson(json);
 
  final  List<String> _currentlyDue;
@@ -634,7 +635,7 @@ class _$PaymentTransactionCopyWithImpl<$Res>
 /// Create a copy of PaymentTransaction
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? rideId = null,Object? riderId = null,Object? riderName = null,Object? driverId = null,Object? driverName = null,Object? amountInCents = null,Object? currency = null,Object? status = null,Object? platformFeeInCents = null,Object? driverEarningsInCents = null,Object? stripeFeeInCents = null,Object? paymentMethodType = freezed,Object? paymentMethodLast4 = freezed,Object? stripePaymentIntentId = freezed,Object? stripeCustomerId = freezed,Object? stripeChargeId = freezed,Object? stripeTransferId = freezed,Object? stripeBalanceTransactionId = freezed,Object? stripeRefundId = freezed,Object? seatsBooked = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,Object? completedAt = freezed,Object? refundedAt = freezed,Object? failureReason = freezed,Object? refundReason = freezed,Object? refundedAmountInCents = freezed,Object? metadata = null,}) {
-  return _then(_self.copyWith(
+  return _then(PaymentTransaction(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,rideId: null == rideId ? _self.rideId : rideId // ignore: cast_nullable_to_non_nullable
 as String,riderId: null == riderId ? _self.riderId : riderId // ignore: cast_nullable_to_non_nullable
@@ -805,7 +806,7 @@ return $default(_that.id,_that.rideId,_that.riderId,_that.riderName,_that.driver
 @JsonSerializable()
 
 class _PaymentTransaction extends PaymentTransaction {
-  const _PaymentTransaction({required this.id, required this.rideId, required this.riderId, required this.riderName, required this.driverId, required this.driverName, required this.amountInCents, required this.currency, required this.status, required this.platformFeeInCents, required this.driverEarningsInCents, this.stripeFeeInCents = 0, this.paymentMethodType, this.paymentMethodLast4, this.stripePaymentIntentId, this.stripeCustomerId, this.stripeChargeId, this.stripeTransferId, this.stripeBalanceTransactionId, this.stripeRefundId, this.seatsBooked, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt, @TimestampConverter() this.completedAt, @TimestampConverter() this.refundedAt, this.failureReason, this.refundReason, this.refundedAmountInCents, final  Map<String, dynamic> metadata = const {}}): _metadata = metadata,super._();
+  const _PaymentTransaction({required this.id, required this.rideId, required this.riderId, required this.riderName, required this.driverId, required this.driverName, required this.amountInCents, required this.currency, required this.status, required this.platformFeeInCents, required this.driverEarningsInCents, this.stripeFeeInCents = 0, this.paymentMethodType, this.paymentMethodLast4, this.stripePaymentIntentId, this.stripeCustomerId, this.stripeChargeId, this.stripeTransferId, this.stripeBalanceTransactionId, this.stripeRefundId, this.seatsBooked, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt, @TimestampConverter() this.completedAt, @TimestampConverter() this.refundedAt, this.failureReason, this.refundReason, this.refundedAmountInCents,  Map<String, dynamic> metadata = const {}}): _metadata = metadata,super._();
   factory _PaymentTransaction.fromJson(Map<String, dynamic> json) => _$PaymentTransactionFromJson(json);
 
 @override final  String id;
@@ -987,7 +988,7 @@ class _$DriverPayoutCopyWithImpl<$Res>
 /// Create a copy of DriverPayout
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? driverId = null,Object? driverName = null,Object? connectedAccountId = null,Object? amountInCents = null,Object? currency = null,Object? status = null,Object? method = null,Object? type = null,Object? destination = freezed,Object? stripePayoutId = freezed,Object? stripeTransferId = freezed,Object? stripeBalanceTransactionId = freezed,Object? transactionIds = null,Object? createdAt = freezed,Object? expectedArrivalDate = freezed,Object? arrivedAt = freezed,Object? failureReason = freezed,Object? failureCode = freezed,Object? metadata = null,}) {
-  return _then(_self.copyWith(
+  return _then(DriverPayout(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,driverId: null == driverId ? _self.driverId : driverId // ignore: cast_nullable_to_non_nullable
 as String,driverName: null == driverName ? _self.driverName : driverName // ignore: cast_nullable_to_non_nullable
@@ -1149,7 +1150,7 @@ return $default(_that.id,_that.driverId,_that.driverName,_that.connectedAccountI
 @JsonSerializable()
 
 class _DriverPayout extends DriverPayout {
-  const _DriverPayout({required this.id, required this.driverId, required this.driverName, required this.connectedAccountId, required this.amountInCents, required this.currency, required this.status, this.method = PayoutMethod.standard, this.type = PayoutType.bankAccount, this.destination, this.stripePayoutId, this.stripeTransferId, this.stripeBalanceTransactionId, final  List<String> transactionIds = const [], @TimestampConverter() this.createdAt, @TimestampConverter() this.expectedArrivalDate, @TimestampConverter() this.arrivedAt, this.failureReason, this.failureCode, final  Map<String, dynamic> metadata = const {}}): _transactionIds = transactionIds,_metadata = metadata,super._();
+  const _DriverPayout({required this.id, required this.driverId, required this.driverName, required this.connectedAccountId, required this.amountInCents, required this.currency, required this.status, this.method = PayoutMethod.standard, this.type = PayoutType.bankAccount, this.destination, this.stripePayoutId, this.stripeTransferId, this.stripeBalanceTransactionId,  List<String> transactionIds = const [], @TimestampConverter() this.createdAt, @TimestampConverter() this.expectedArrivalDate, @TimestampConverter() this.arrivedAt, this.failureReason, this.failureCode,  Map<String, dynamic> metadata = const {}}): _transactionIds = transactionIds,_metadata = metadata,super._();
   factory _DriverPayout.fromJson(Map<String, dynamic> json) => _$DriverPayoutFromJson(json);
 
 @override final  String id;
@@ -1319,7 +1320,7 @@ class _$DriverConnectedAccountCopyWithImpl<$Res>
 /// Create a copy of DriverConnectedAccount
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? driverId = null,Object? stripeAccountId = null,Object? email = null,Object? country = null,Object? defaultCurrency = null,Object? chargesEnabled = null,Object? payoutsEnabled = null,Object? detailsSubmitted = null,Object? capabilities = null,Object? requirements = null,Object? futureRequirements = null,Object? onboardingCompleted = freezed,Object? onboardingCompletedAt = freezed,Object? accountHolderName = freezed,Object? totalEarningsInCents = null,Object? availableBalanceInCents = null,Object? pendingBalanceInCents = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? lastPayoutAt = freezed,Object? metadata = null,}) {
-  return _then(_self.copyWith(
+  return _then(DriverConnectedAccount(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,driverId: null == driverId ? _self.driverId : driverId // ignore: cast_nullable_to_non_nullable
 as String,stripeAccountId: null == stripeAccountId ? _self.stripeAccountId : stripeAccountId // ignore: cast_nullable_to_non_nullable
@@ -1510,7 +1511,7 @@ return $default(_that.id,_that.driverId,_that.stripeAccountId,_that.email,_that.
 @JsonSerializable()
 
 class _DriverConnectedAccount extends DriverConnectedAccount {
-  const _DriverConnectedAccount({required this.id, required this.driverId, required this.stripeAccountId, required this.email, required this.country, required this.defaultCurrency, required this.chargesEnabled, required this.payoutsEnabled, required this.detailsSubmitted, this.capabilities = const StripeCapabilities(), this.requirements = const StripeRequirements(), this.futureRequirements = const StripeRequirements(), this.onboardingCompleted, @TimestampConverter() this.onboardingCompletedAt, this.accountHolderName, this.totalEarningsInCents = 0, this.availableBalanceInCents = 0, this.pendingBalanceInCents = 0, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt, @TimestampConverter() this.lastPayoutAt, final  Map<String, dynamic> metadata = const {}}): _metadata = metadata,super._();
+  const _DriverConnectedAccount({required this.id, required this.driverId, required this.stripeAccountId, required this.email, required this.country, required this.defaultCurrency, required this.chargesEnabled, required this.payoutsEnabled, required this.detailsSubmitted, this.capabilities = const StripeCapabilities(), this.requirements = const StripeRequirements(), this.futureRequirements = const StripeRequirements(), this.onboardingCompleted, @TimestampConverter() this.onboardingCompletedAt, this.accountHolderName, this.totalEarningsInCents = 0, this.availableBalanceInCents = 0, this.pendingBalanceInCents = 0, @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt, @TimestampConverter() this.lastPayoutAt,  Map<String, dynamic> metadata = const {}}): _metadata = metadata,super._();
   factory _DriverConnectedAccount.fromJson(Map<String, dynamic> json) => _$DriverConnectedAccountFromJson(json);
 
 @override final  String id;
@@ -1705,7 +1706,7 @@ class _$RiderPaymentMethodCopyWithImpl<$Res>
 /// Create a copy of RiderPaymentMethod
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? riderId = null,Object? stripeCustomerId = null,Object? stripePaymentMethodId = null,Object? brand = null,Object? last4 = null,Object? exMonth = null,Object? exYear = null,Object? fingerprint = freezed,Object? funding = freezed,Object? cardCountry = freezed,Object? isDefault = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RiderPaymentMethod(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,riderId: null == riderId ? _self.riderId : riderId // ignore: cast_nullable_to_non_nullable
 as String,stripeCustomerId: null == stripeCustomerId ? _self.stripeCustomerId : stripeCustomerId // ignore: cast_nullable_to_non_nullable
@@ -2007,7 +2008,7 @@ class _$EarningsSummaryCopyWithImpl<$Res>
 /// Create a copy of EarningsSummary
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? driverId = null,Object? totalEarningsInCents = null,Object? totalPlatformFeesInCents = null,Object? totalStripeFeesInCents = null,Object? earningsTodayInCents = null,Object? earningsThisWeekInCents = null,Object? earningsThisMonthInCents = null,Object? earningsThisYearInCents = null,Object? totalRidesCompleted = null,Object? ridesCompletedToday = null,Object? ridesCompletedThisWeek = null,Object? ridesCompletedThisMonth = null,Object? availableBalanceInCents = null,Object? pendingBalanceInCents = null,Object? lastUpdated = freezed,Object? lastPayoutDate = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(EarningsSummary(
 driverId: null == driverId ? _self.driverId : driverId // ignore: cast_nullable_to_non_nullable
 as String,totalEarningsInCents: null == totalEarningsInCents ? _self.totalEarningsInCents : totalEarningsInCents // ignore: cast_nullable_to_non_nullable
 as int,totalPlatformFeesInCents: null == totalPlatformFeesInCents ? _self.totalPlatformFeesInCents : totalPlatformFeesInCents // ignore: cast_nullable_to_non_nullable

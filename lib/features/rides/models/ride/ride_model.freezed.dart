@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'ride_model.dart';
@@ -9,6 +9,7 @@ part of 'ride_model.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -66,7 +67,7 @@ class _$RideModelCopyWithImpl<$Res>
 /// Create a copy of RideModel
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? driverId = null,Object? route = null,Object? schedule = null,Object? capacity = null,Object? pricing = null,Object? preferences = null,Object? eventId = freezed,Object? eventName = freezed,Object? status = null,Object? ridePhase = freezed,Object? vehicleId = freezed,Object? vehicleInfo = freezed,Object? bookingIds = null,Object? bookings = null,Object? reviewCount = null,Object? averageRating = null,Object? xpReward = null,Object? notes = freezed,Object? tags = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? completedAt = freezed,Object? cancelledAt = freezed,Object? cancellationReason = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(RideModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,driverId: null == driverId ? _self.driverId : driverId // ignore: cast_nullable_to_non_nullable
 as String,route: null == route ? _self.route : route // ignore: cast_nullable_to_non_nullable
@@ -278,7 +279,7 @@ return $default(_that.id,_that.driverId,_that.route,_that.schedule,_that.capacit
 @JsonSerializable()
 
 class _RideModel extends RideModel {
-  const _RideModel({@JsonKey(includeToJson: false) required this.id, required this.driverId, required this.route, required this.schedule, required this.capacity, required this.pricing, required this.preferences, this.eventId, this.eventName, this.status = RideStatus.draft, this.ridePhase, this.vehicleId, this.vehicleInfo, final  List<String> bookingIds = const [], @JsonKey(includeToJson: false, includeFromJson: false) final  List<RideBooking> bookings = const [], this.reviewCount = 0, this.averageRating = 0.0, this.xpReward = 50, this.notes, final  List<String> tags = const [], @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt, @TimestampConverter() this.completedAt, @TimestampConverter() this.cancelledAt, this.cancellationReason}): _bookingIds = bookingIds,_bookings = bookings,_tags = tags,super._();
+  const _RideModel({@JsonKey(includeToJson: false) required this.id, required this.driverId, required this.route, required this.schedule, required this.capacity, required this.pricing, required this.preferences, this.eventId, this.eventName, this.status = RideStatus.draft, this.ridePhase, this.vehicleId, this.vehicleInfo,  List<String> bookingIds = const [], @JsonKey(includeToJson: false, includeFromJson: false)  List<RideBooking> bookings = const [], this.reviewCount = 0, this.averageRating = 0.0, this.xpReward = 50, this.notes,  List<String> tags = const [], @TimestampConverter() this.createdAt, @TimestampConverter() this.updatedAt, @TimestampConverter() this.completedAt, @TimestampConverter() this.cancelledAt, this.cancellationReason}): _bookingIds = bookingIds,_bookings = bookings,_tags = tags,super._();
   factory _RideModel.fromJson(Map<String, dynamic> json) => _$RideModelFromJson(json);
 
 @override@JsonKey(includeToJson: false) final  String id;

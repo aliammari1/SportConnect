@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart' hide FirebaseService;
 // Config & Services
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -52,13 +52,10 @@ void main() async {
   // splash renders and its 10-second timeout safely redirects the user.
   // Start Firebase and SharedPreferences in parallel — they're independent.
   FirebaseService? firebase;
-  final firebaseFuture = FirebaseService.instance.initializeCore().timeout(
-    const Duration(seconds: 8),
-  );
   final prefsFuture = SharedPreferences.getInstance();
 
   try {
-    firebase = await firebaseFuture;
+    firebase = await FirebaseService.instance.initializeCore();
     TalkerService.info('✅ Firebase core initialized');
   } on TimeoutException {
     TalkerService.error(
@@ -132,9 +129,7 @@ Future<void> _initializePushNotifications() async {
   try {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    await PushNotificationService.instance.initialize().timeout(
-      const Duration(seconds: 6),
-    );
+    await PushNotificationService.instance.initialize();
 
     TalkerService.info('✅ Push notifications initialized');
   } on Exception catch (e, st) {
@@ -149,11 +144,9 @@ Future<void> _initializeStripe() async {
       return;
     }
 
-    await StripeService()
-        .initialize(
-          publishableKey: StripeConfig.publishableKey,
-        )
-        .timeout(const Duration(seconds: 6));
+    await StripeService().initialize(
+      publishableKey: StripeConfig.publishableKey,
+    );
 
     TalkerService.info('✅ Stripe initialized');
   } on Exception catch (e, st) {
