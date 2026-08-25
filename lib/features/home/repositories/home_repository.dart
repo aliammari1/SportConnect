@@ -28,7 +28,8 @@ class HomeRepository {
   CollectionReference<RideModel> get _ridesCollection => _firestore
       .collection(AppConstants.ridesCollection)
       .withConverter(
-        fromFirestore: (snap, _) => RideModel.fromJson(snap.data()!),
+        fromFirestore: (snap, _) =>
+            RideModel.fromJson({...snap.data()!, 'id': snap.id}),
         toFirestore: (model, _) => model.toJson(),
       );
 

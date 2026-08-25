@@ -9,13 +9,17 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
+import 'package:sport_connect/core/models/user/models.dart';
+import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/currency_formatter.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
+import 'package:sport_connect/core/utils/user_facing_error.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
+import 'package:sport_connect/features/messaging/view_models/chat_view_model.dart';
 import 'package:sport_connect/features/rides/models/booking/ride_booking.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 import 'package:sport_connect/features/rides/view_models/pending_booking_view_model.dart';
@@ -40,12 +44,15 @@ class RideBookingPendingScreen extends ConsumerStatefulWidget {
 
 class _RideBookingPendingScreenState
     extends ConsumerState<RideBookingPendingScreen> {
-  void _showStatusSnackBar(String message, {Color? backgroundColor}) {
+  void _showStatusSnackBar(
+    String message, {
+    AdaptiveSnackBarType type = AdaptiveSnackBarType.info,
+  }) {
     if (!context.mounted) return;
     AdaptiveSnackBar.show(
       context,
       message: message,
-      type: AdaptiveSnackBarType.error,
+      type: type,
     );
   }
 
@@ -80,9 +87,11 @@ class _RideBookingPendingScreenState
           case PendingBookingEffectType.navigateMyRides:
             context.go(AppRoutes.riderMyRides.path);
             if (effect.message != null) {
+              // Rejection and expiry land here; amber reads as "not now"
+              // rather than the red of a genuine failure.
               _showStatusSnackBar(
                 effect.message!,
-                backgroundColor: AppColors.error,
+                type: AdaptiveSnackBarType.warning,
               );
             }
           case PendingBookingEffectType.navigateActiveRide:
@@ -102,10 +111,10 @@ class _RideBookingPendingScreenState
 
     return state.rideAsync.when(
       data: (ride) => ride == null
-          ? _buildError('Ride not found')
+          ? _buildError(AppLocalizations.of(context).rideNotFound)
           : _buildContent(ride, state.booking, state, notifier),
       loading: _buildLoading,
-      error: (e, _) => _buildError(e.toString()),
+      error: (e, _) => _buildError(userFacingError(e)),
     );
   }
 
@@ -254,14 +263,67 @@ class _RideBookingPendingScreenState
                     text: AppLocalizations.of(context).completePaymentButton,
                     onPressed: notifier.processPayment,
                   ),
+                SizedBox(height: 10.h),
+                // Purchase-protection line at the moment of payment; tapping
+                // it opens the Privacy Policy, which anchors straight to the
+                // Refund Policy section.
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => context.push(AppRoutes.privacy.path),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.verified_user_outlined,
+                        size: 15.sp,
+                        color: AppColors.success,
+                      ),
+                      SizedBox(width: 6.w),
+                      Expanded(
+                        child: Text.rich(
+                          TextSpan(
+                            text:
+                                '${AppLocalizations.of(context).paymentRefundAssurance} · ',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: AppLocalizations.of(
+                                  context,
+                                ).refundPolicyLinkLabel,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16.sp,
+                        color: AppColors.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 32.h),
               ],
 
-              // Expiry countdown (only when pending)
+              // Expiry countdown (only while time remains)
               if (!isAcceptedNeedsPayment &&
                   booking?.createdAt != null &&
                   state.timeRemaining > Duration.zero)
                 _buildExpiryChip(expiryText).animate().fadeIn(delay: 500.ms),
+
+              // Expired: say so plainly instead of letting the chip vanish
+              if (!isAcceptedNeedsPayment &&
+                  booking?.status == BookingStatus.pending &&
+                  state.timeRemaining <= Duration.zero)
+                _buildExpiredBanner(),
 
               if (!isAcceptedNeedsPayment) SizedBox(height: 32.h),
 
@@ -438,6 +500,27 @@ class _RideBookingPendingScreenState
     );
   }
 
+  void _openDriverChat(RideModel ride, String displayName, String? photoUrl) {
+    final uid = ref.read(currentUserProvider).value?.uid;
+    if (uid == null || ride.driverId.isEmpty) return;
+
+    context.pushNamed(
+      AppRoutes.chatDetail.name,
+      pathParameters: {'id': buildDraftChatId(uid, ride.driverId)},
+      queryParameters: {
+        'receiverId': ride.driverId,
+        'receiverName': displayName,
+        if (photoUrl != null) 'receiverPhotoUrl': photoUrl,
+      },
+      extra: UserModel.rider(
+        uid: ride.driverId,
+        email: '',
+        username: displayName,
+        photoUrl: photoUrl,
+      ),
+    );
+  }
+
   Widget _buildDriverInfoCard(RideModel ride) {
     return Container(
       width: double.infinity,
@@ -499,6 +582,18 @@ class _RideBookingPendingScreenState
                     color: AppColors.primary,
                     fontWeight: FontWeight.w500,
                   ),
+                ),
+              ),
+              SizedBox(width: 4.w),
+              // The wait is the most natural moment to ask the driver
+              // something; route straight into a draft chat with them.
+              IconButton(
+                tooltip: AppLocalizations.of(context).message,
+                onPressed: () => _openDriverChat(ride, displayName, photoUrl),
+                icon: Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  color: AppColors.primary,
+                  size: 20.sp,
                 ),
               ),
             ],
@@ -615,6 +710,51 @@ class _RideBookingPendingScreenState
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpiredBanner() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        color: AppColors.warningSurface,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.warning.withAlpha(80)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.timer_off_outlined, color: AppColors.warning, size: 18.sp),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context).bookingRequestExpired,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: AppColors.warningDark,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          TextButton(
+            onPressed: () =>
+                context.pushReplacement(AppRoutes.searchRides.path),
+            child: Text(
+              AppLocalizations.of(context).bookingRequestSearchAgain,
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),

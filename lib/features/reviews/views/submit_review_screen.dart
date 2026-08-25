@@ -381,7 +381,7 @@ class _SubmitReviewScreenState extends ConsumerState<SubmitReviewScreen> {
       textCapitalization: TextCapitalization.sentences,
       decoration: InputDecoration(
         hintText: AppLocalizations.of(context).shareYourExperience,
-        hintStyle: const TextStyle(color: AppColors.textTertiary),
+        hintStyle: TextStyle(color: AppColors.textTertiary),
         helperText: AppLocalizations.of(context).specificFeedbackHelps,
         helperStyle: TextStyle(color: AppColors.textTertiary, fontSize: 11.sp),
         filled: true,
@@ -395,7 +395,7 @@ class _SubmitReviewScreenState extends ConsumerState<SubmitReviewScreen> {
           borderSide: const BorderSide(color: AppColors.primary),
         ),
         contentPadding: EdgeInsets.all(16.r),
-        counterStyle: const TextStyle(color: AppColors.textTertiary),
+        counterStyle: TextStyle(color: AppColors.textTertiary),
       ),
       style: TextStyle(color: AppColors.textPrimary, fontSize: 14.sp),
     );

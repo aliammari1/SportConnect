@@ -136,7 +136,7 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
                 )
               else if (uiState.isLoading)
                 ColoredBox(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -337,6 +337,12 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
       Dernière mise à jour : avril 2026<br />
       Contact :
       <a href="mailto:support@sportaxitrip.com">support@sportaxitrip.com</a>
+    </p>
+
+    <p>
+      <a href="#refunds"
+        >Aller à la section 6 · Politique de remboursement</a
+      >
     </p>
 
     <p>
@@ -839,7 +845,7 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
       <a href="mailto:support@sportaxitrip.com">support@sportaxitrip.com</a>.
     </p>
 
-    <h2>6. Politique de remboursement</h2>
+      <h2 id="refunds">6. Politique de remboursement</h2>
 
     <h3>6.1 Paiements de trajets</h3>
     <p>
@@ -1226,6 +1232,10 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
       Last updated: April 2026<br />
       Contact:
       <a href="mailto:support@sportaxitrip.com">support@sportaxitrip.com</a>
+    </p>
+
+    <p>
+      <a href="#refunds">Jump to section 6 · Refund Policy</a>
     </p>
 
     <p>
@@ -1693,7 +1703,7 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
       <a href="mailto:support@sportaxitrip.com">support@sportaxitrip.com</a>.
     </p>
 
-    <h2>6. Refund Policy</h2>
+      <h2 id="refunds">6. Refund Policy</h2>
 
     <h3>6.1 Ride Payments</h3>
     <p>
@@ -2012,7 +2022,7 @@ class _LegalErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: Colors.white,
+      color: AppColors.surface,
       child: Center(
         child: Padding(
           padding: EdgeInsets.all(24.w),

@@ -15,6 +15,7 @@ import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
+import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
@@ -27,7 +28,6 @@ import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 import 'package:sport_connect/features/rides/view_models/ride_completion_view_model.dart';
 import 'package:sport_connect/features/rides/view_models/ride_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
-import 'package:sport_connect/core/utils/responsive_utils.dart';
 
 /// Ride Completion / Trip Summary screen shown after a ride finishes.
 ///
@@ -829,7 +829,7 @@ class _RideCompletionScreenState extends ConsumerState<RideCompletionScreen> {
           if (ride.route.distanceKm != null ||
               ride.route.durationMinutes != null) ...[
             SizedBox(height: 12.h),
-            const Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: AppColors.divider),
             SizedBox(height: 12.h),
             Row(
               children: [

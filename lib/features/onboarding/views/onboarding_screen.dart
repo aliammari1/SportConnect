@@ -951,7 +951,7 @@ class _EarningsHeroCard extends StatelessWidget {
                       vertical: _clamped(15.h, 12, 17),
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.78),
+                      color: AppColors.surface.withValues(alpha: 0.78),
                       borderRadius: BorderRadius.circular(19.r),
                       border: Border.all(
                         color: AppColors.primary.withValues(alpha: 0.10),
@@ -1443,7 +1443,7 @@ class _ChatPreviewCard extends StatelessWidget {
         _clamped(12.h, 10, 14),
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.80),
+        color: AppColors.surface.withValues(alpha: 0.80),
         borderRadius: BorderRadius.circular(18.r),
         border: Border.all(
           color: AppColors.primary.withValues(alpha: 0.10),
@@ -1775,7 +1775,7 @@ class _MiniStatPill extends StatelessWidget {
         vertical: _clamped(8.h, 6, 9),
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.82),
+        color: AppColors.surface.withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(999.r),
         border: Border.all(
           color: AppColors.primary.withValues(alpha: 0.10),

@@ -66,8 +66,8 @@ class SwipeActionTile extends StatelessWidget {
     this.onSwipeRight,
     this.leftIcon = Icons.delete_rounded,
     this.rightIcon = Icons.archive_rounded,
-    this.leftColor = const Color(0xFFC1666B),
-    this.rightColor = const Color(0xFF4A7C88),
+    this.leftColor = AppColors.error,
+    this.rightColor = AppColors.info,
     this.leftLabel,
     this.rightLabel,
   });

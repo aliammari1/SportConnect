@@ -681,7 +681,7 @@ class _DriverViewRideScreenState extends ConsumerState<DriverViewRideScreen> {
                               color: AppColors.warning,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white,
+                                color: AppColors.cardBg,
                                 width: 1.5,
                               ),
                             ),

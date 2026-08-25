@@ -1198,7 +1198,7 @@ class _PriceBreakdownCard extends StatelessWidget {
           ],
           Padding(
             padding: EdgeInsets.symmetric(vertical: 16.h),
-            child: const Divider(color: AppColors.border, height: 1),
+            child:  Divider(color: AppColors.border, height: 1),
           ),
           _PriceLine(
             label: AppLocalizations.of(context).total,
@@ -1320,7 +1320,7 @@ class _BookingFooter extends StatelessWidget {
             Expanded(
               child: RichText(
                 text: TextSpan(
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style:  TextStyle(color: AppColors.textPrimary),
                   children: [
                     TextSpan(
                       text: AppLocalizations.of(context).totaln,

@@ -304,7 +304,7 @@ class TextDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(child: Divider(color: AppColors.border)),
+        Expanded(child: Divider(color: AppColors.divider)),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Text(
@@ -312,7 +312,7 @@ class TextDivider extends StatelessWidget {
             style: TextStyle(fontSize: 14.sp, color: AppColors.textTertiary),
           ),
         ),
-        const Expanded(child: Divider(color: AppColors.border)),
+        Expanded(child: Divider(color: AppColors.divider)),
       ],
     );
   }

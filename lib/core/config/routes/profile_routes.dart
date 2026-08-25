@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/config/routes/route_params.dart';
-import 'package:sport_connect/features/admin/views/admin_dashboard_screen.dart';
+import 'package:sport_connect/features/admin/views/admin_console_screen.dart';
 import 'package:sport_connect/features/notifications/views/notification_preferences_screen.dart';
 import 'package:sport_connect/features/notifications/views/notifications_screen.dart';
 import 'package:sport_connect/features/payments/views/driver_stripe_onboarding_screen.dart';
@@ -143,11 +143,11 @@ class ProfileRoutes {
         pageBuilder: (context, state) => PlatformInfo.isIOS
             ? CupertinoPage(
                 key: state.pageKey,
-                child: const AdminDashboardScreen(),
+                child: const AdminConsoleScreen(),
               )
             : MaterialPage(
                 key: state.pageKey,
-                child: const AdminDashboardScreen(),
+                child: const AdminConsoleScreen(),
               ),
       ),
 
@@ -311,3 +311,4 @@ class ProfileRoutes {
     ];
   }
 }
+

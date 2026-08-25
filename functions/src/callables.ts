@@ -1828,12 +1828,16 @@ export const createPaymentIntent = onCall(
         currency: paymentCurrency,
         automatic_payment_methods: { enabled: true },
         description: description || `SportConnect ride payment - ${rideId}`,
+        // Destination charge: funds land on the driver's connected account
+        // at capture; reverse_transfer/refund_application_fee refunds work.
+        application_fee_amount: platformFee,
+        transfer_data: { destination: driverStripeAccountId },
         metadata: {
           rideId,
           driverId,
           riderId,
           bookingId,
-          moneyFlow: "platform_held",
+          moneyFlow: "destination_charge",
           driverStripeAccountId,
           platformFeeInCents: String(platformFee),
           driverAmountInCents: String(driverAmount),
@@ -1895,6 +1899,121 @@ export const createPaymentIntent = onCall(
       paymentIntentId: paymentIntent.id,
       ...(ephemeralKey && { ephemeralKey }),
     };
+  },
+);
+
+// ============================================
+// Verify Booking Payment (post-PaymentSheet reconciliation)
+// ============================================
+
+/**
+ * Called by the client immediately after the Stripe PaymentSheet reports
+ * success. Stamps the booking `{ paidAt, paymentIntentId, paymentStatus }`
+ * so every screen reflects "paid" without waiting for webhook delivery —
+ * removing the window where a rider who already paid still sees a
+ * "Complete Payment" call to action.
+ *
+ * The Stripe webhook remains the source of truth for downstream effects
+ * (driver balance, notifications) and stays fully idempotent against this
+ * write: it only stamps bookings whose `paidAt` is not yet set.
+ *
+ * Security: success is verified against Stripe itself (the client cannot
+ * forge it), and the PaymentIntent's server-set metadata must reference
+ * this exact booking. Idempotent: re-running after the webhook lands is a
+ * no-op.
+ */
+export const verifyBookingPayment = onCall(
+  { secrets: [stripeSecretKey], cors: true },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
+
+    await checkRateLimit(
+      firestoreDb,
+      request.auth.uid,
+      "verifyBookingPayment",
+      20,
+      60,
+    );
+
+    const { bookingId, paymentIntentId } = request.data as {
+      bookingId?: string;
+      paymentIntentId?: string;
+    };
+
+    if (!bookingId || !paymentIntentId) {
+      throw new HttpsError(
+        "invalid-argument",
+        "bookingId and paymentIntentId are required",
+      );
+    }
+
+    const stripe = getStripeClient(stripeSecretKey.value().trim());
+
+    // Authoritative status comes from Stripe, never from the client.
+    let intent;
+    try {
+      intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    } catch (error) {
+      logger.warn("verifyBookingPayment: failed to retrieve intent", {
+        paymentIntentId,
+        error,
+      });
+      throw new HttpsError("not-found", "Payment could not be verified");
+    }
+
+    if (intent.status !== "succeeded") {
+      throw new HttpsError(
+        "failed-precondition",
+        "Payment has not succeeded yet",
+      );
+    }
+
+    // The charge must reference this booking via server-set metadata.
+    if (intent.metadata?.bookingId !== bookingId) {
+      throw new HttpsError(
+        "permission-denied",
+        "Payment does not match this booking",
+      );
+    }
+
+    const bookingRef = firestoreDb.collection("bookings").doc(bookingId);
+
+    await firestoreDb.runTransaction(async (tx) => {
+      const snap = await tx.get(bookingRef);
+      if (!snap.exists) {
+        throw new HttpsError("not-found", "Booking not found");
+      }
+      const data = snap.data()!;
+
+      const passengerId = data.passengerId as string | undefined;
+      if (passengerId !== request.auth!.uid) {
+        throw new HttpsError("permission-denied", "Not your booking");
+      }
+
+      // Already reconciled by us or by the webhook — idempotent no-op.
+      if (data.paidAt || data.paymentIntentId === paymentIntentId) {
+        return;
+      }
+
+      const status = data.status as string | undefined;
+      if (status === "cancelled" || status === "rejected") {
+        throw new HttpsError(
+          "failed-precondition",
+          "This booking can no longer be marked paid",
+        );
+      }
+
+      tx.update(bookingRef, {
+        paymentIntentId: paymentIntentId,
+        paymentStatus: "paid",
+        paidAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    });
+
+    return { verified: true };
   },
 );
 

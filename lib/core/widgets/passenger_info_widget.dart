@@ -120,7 +120,7 @@ class PassengerAvatarWidget extends ConsumerWidget {
       ),
       error: (_, _) => CircleAvatar(
         radius: radius,
-        backgroundColor: AppColors.error.withOpacity(0.1),
+        backgroundColor: AppColors.error.withValues(alpha: 0.1),
         child: Icon(Icons.error, size: radius * 0.7, color: AppColors.error),
       ),
     );
@@ -156,3 +156,4 @@ class PassengerPhoneWidget extends ConsumerWidget {
     );
   }
 }
+

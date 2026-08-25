@@ -1110,7 +1110,7 @@ class _PassengerActiveRideScreenState
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(24.r),
           topRight: Radius.circular(24.r),
@@ -1660,6 +1660,10 @@ class _PassengerActiveRideScreenState
                 if (myBooking == null) return const SizedBox.shrink();
 
                 final isPaid = myBooking.paidAt != null;
+                // Charge captured but paidAt not yet visible: waiting state,
+                // never "Complete payment" again after a successful charge.
+                final isFinalizing =
+                    !isPaid && myBooking.paymentIntentId != null;
                 return Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: 20.w,
@@ -1697,7 +1701,11 @@ class _PassengerActiveRideScreenState
                               Text(
                                 isPaid
                                     ? 'Payment Confirmed'
-                                    : 'Payment Pending',
+                                    : isFinalizing
+                                        ? AppLocalizations.of(
+                                            context,
+                                          ).paymentFinalizing
+                                        : 'Payment Pending',
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.w700,
@@ -1706,9 +1714,26 @@ class _PassengerActiveRideScreenState
                                       : AppColors.warning,
                                 ),
                               ),
-                              if (isPaid && myBooking.paidAt != null)
+                              if (isPaid && myBooking.paidAt != null) ...[
                                 Text(
                                   'Paid on ${_formatPaidAt(myBooking.paidAt!)}',
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).paymentRefundAssurance,
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ] else if (isFinalizing)
+                                Text(
+                                  'Your payment was received. Confirming…',
                                   style: TextStyle(
                                     fontSize: 11.sp,
                                     color: AppColors.textSecondary,
@@ -2489,7 +2514,7 @@ class _PassengerActiveRideScreenState
             height: 24.h,
             width: 2,
             margin: EdgeInsets.symmetric(vertical: 4.h),
-            decoration: const BoxDecoration(
+            decoration:  BoxDecoration(
               border: Border(
                 left: BorderSide(
                   color: AppColors.border,
@@ -2682,7 +2707,7 @@ class _PassengerActiveRideScreenState
             ),
           ],
           SizedBox(height: 16.h),
-          const Divider(color: AppColors.border),
+           Divider(color: AppColors.border),
           SizedBox(height: 12.h),
           // Ride info row
           Row(
@@ -2851,7 +2876,7 @@ class _PassengerActiveRideScreenState
           if (ride.status == RideStatus.draft ||
               ride.status == RideStatus.active)
             PremiumButton(
-              text: l10n.cancelRide2,
+              text: l10n.cancelBooking,
               icon: Icons.cancel_outlined,
               onPressed: () => _showCancelDialog(context, ride),
               style: PremiumButtonStyle.outline,
@@ -2955,10 +2980,10 @@ class _PassengerActiveRideScreenState
     final l10n = AppLocalizations.of(context);
     await showDialog<void>(
       context: context,
-      barrierLabel: l10n.cancelRide,
+      barrierLabel: l10n.cancelBooking,
       builder: (ctx) => AlertDialog.adaptive(
-        title: Text(l10n.cancelRide2),
-        content: Text(l10n.areYouSureYouWant9),
+        title: Text(l10n.cancelBooking),
+        content: Text(l10n.cancelBookingConfirm),
         actions: [
           TextButton(
             onPressed: () => ctx.pop(),
@@ -2970,7 +2995,7 @@ class _PassengerActiveRideScreenState
               await _cancelRide(ride);
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: Text(l10n.cancelRide2),
+            child: Text(l10n.cancelBooking),
           ),
         ],
       ),
@@ -3018,7 +3043,7 @@ class _PassengerActiveRideScreenState
         // which previously said nothing about their money.
         AdaptiveSnackBar.show(
           context,
-          message: l10n.rideCancelledNoRefund,
+          message: l10n.bookingCancelledNoRefund,
           type: AdaptiveSnackBarType.success,
         );
         context.pop();

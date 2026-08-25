@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sport_connect/core/constants/app_constants.dart';
 import 'package:sport_connect/core/services/firebase_service.dart';
+import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 
 final adminRepositoryProvider = Provider<AdminRepository>((ref) {
   final firebase = ref.watch(firebaseServiceProvider);
@@ -172,6 +173,60 @@ class AdminRepository {
     await _functions.httpsCallable(name).call<void>(data);
   }
 
+  // ── Ops actions (server-authoritative, audit-logged server-side) ─────────
+
+  HttpsCallable callable(String name) => _functions.httpsCallable(name);
+
+  Future<void> setUserSuspended({
+    required String userId,
+    required bool suspended,
+    String? reason,
+  }) =>
+      _call('setUserSuspended', {
+        'userId': userId,
+        'suspended': suspended,
+        if (reason != null) 'reason': reason,
+      });
+
+  Future<void> setPremiumOverride({
+    required String userId,
+    required bool premium,
+  }) =>
+      _call('setPremiumOverride', {'userId': userId, 'premium': premium});
+
+  Future<void> adminCancelRide({
+    required String rideId,
+    String reason = 'cancelled_by_platform',
+  }) =>
+      _call('adminCancelRide', {'rideId': rideId, 'reason': reason});
+
+  Future<void> resolveReport({required String reportId, String? note}) =>
+      _call('resolveReport', {'reportId': reportId, 'note': ?note});
+
+  Future<void> sendAdminPush({
+    required String userId,
+    required String title,
+    required String body,
+    String? route,
+  }) =>
+      _call('sendAdminPush', {
+        'userId': userId,
+        'title': title,
+        'body': body,
+        if (route != null) 'route': route,
+      });
+
+  Future<void> setPlatformConfig({
+    int? commissionPercent,
+    int? refundWindowDays,
+    bool? maintenanceMode,
+  }) =>
+      _call('setPlatformConfig', {
+        if (commissionPercent != null) 'commissionPercent': commissionPercent,
+        if (refundWindowDays != null) 'refundWindowDays': refundWindowDays,
+        if (maintenanceMode != null) 'maintenanceMode': maintenanceMode,
+      });
+
   static AdminIssue _issueFromDoc(
     QueryDocumentSnapshot<Map<String, dynamic>> doc, {
     required String title,
@@ -201,3 +256,115 @@ class AdminRepository {
     return 'EUR ${(amount / 100).toStringAsFixed(2)}';
   }
 }
+
+// ── Ops overview KPIs (single server-side aggregation) ───────────────────────
+
+final opsOverviewProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final repo = ref.watch(adminRepositoryProvider);
+  final result = await _callRepo(repo, 'getOpsOverview', {});
+  return result;
+});
+
+Future<Map<String, dynamic>> _callRepo(
+  AdminRepository repo,
+  String name,
+  Map<String, dynamic> data,
+) async {
+  final callable = repo.callable(name);
+  final response = await callable.call<Map<String, dynamic>>(data);
+  return response.data;
+}
+
+final adminFindUsersProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((ref, query) async {
+  final repo = ref.watch(adminRepositoryProvider);
+  final result = await _callRepo(repo, 'adminFindUsers', {'query': query});
+  return ((result['users'] ?? const []) as List)
+      .whereType<Map<String, dynamic>>()
+      .toList();
+});
+enum AdminRideSegment { live, upcoming, completed, cancelled }
+
+final adminRidesSegmentProvider = StreamProvider.family<List<RideModel>,
+    AdminRideSegment>((ref, segment) {
+  final db = ref.watch(firebaseServiceProvider).firestore;
+  final rides = db.collection('rides').withConverter(
+        fromFirestore: (snap, _) =>
+            RideModel.fromJson({...snap.data()!, 'id': snap.id}),
+        toFirestore: (model, _) => model.toJson(),
+      );
+
+  switch (segment) {
+    case AdminRideSegment.live:
+      return rides
+          .where('status', isEqualTo: 'inProgress')
+          .orderBy('schedule.departureTime')
+          .limit(50)
+          .snapshots()
+          .map((s) => s.docs.map((d) => d.data()).toList());
+    case AdminRideSegment.upcoming:
+      return rides
+          .where('status', isEqualTo: 'active')
+          .where('schedule.departureTime',
+              isGreaterThan: Timestamp.fromDate(DateTime.now()))
+          .orderBy('schedule.departureTime')
+          .limit(50)
+          .snapshots()
+          .map((s) => s.docs.map((d) => d.data()).toList());
+    case AdminRideSegment.completed:
+      return rides
+          .where('status', isEqualTo: 'completed')
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .snapshots()
+          .map((s) => s.docs.map((d) => d.data()).toList());
+    case AdminRideSegment.cancelled:
+      return rides
+          .where('status', isEqualTo: 'cancelled')
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .snapshots()
+          .map((s) => s.docs.map((d) => d.data()).toList());
+  }
+});
+
+// ── P2/P3 streams & wrappers ─────────────────────────────────────────────────
+
+final adminPaymentsProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
+  final db = ref.watch(firebaseServiceProvider).firestore;
+  return db
+      .collection('payments')
+      .orderBy('createdAt', descending: true)
+      .limit(50)
+      .snapshots()
+      .map((s) => s.docs.map((d) => d.data()).toList());
+});
+
+final adminReportsProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
+  final db = ref.watch(firebaseServiceProvider).firestore;
+  return db
+      .collection('reports')
+      .orderBy('createdAt', descending: true)
+      .limit(50)
+      .snapshots()
+      .map((s) => s.docs.map((d) => d.data()).toList());
+});
+
+final adminAuditProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
+  final db = ref.watch(firebaseServiceProvider).firestore;
+  return db
+      .collection('admin_audit')
+      .orderBy('at', descending: true)
+      .limit(100)
+      .snapshots()
+      .map((s) => s.docs.map((d) => d.data()).toList());
+});
+
+final platformConfigProvider = StreamProvider<Map<String, dynamic>>((ref) {
+  final db = ref.watch(firebaseServiceProvider).firestore;
+  return db.collection('config').doc('platform').snapshots().map(
+        (d) => d.data() ?? <String, dynamic>{},
+      );
+});
+
+

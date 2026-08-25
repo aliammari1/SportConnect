@@ -148,7 +148,29 @@ class PremiumCheckoutViewModel extends _$PremiumCheckoutViewModel {
 
       if (!ref.mounted) return false;
 
+      // Server-side verification is the only writer of isPremium (rules pin
+      // it). Verification is idempotent, so a later Restore Purchases safely
+      // re-runs it if this attempt cannot complete.
+      final verifiedActive = await ref
+          .read(premiumIapServiceProvider.notifier)
+          .verifyEntitlementForActivation(purchase);
+
+      if (!ref.mounted) return false;
+
       ref.invalidate(currentUserProvider);
+
+      if (!verifiedActive) {
+        // The receipt is stored on the profile above, so nothing is lost;
+        // Restore Purchases re-runs verification against the saved reference.
+        state = state.copyWith(
+          isProcessing: false,
+          errorMessage:
+              'Your purchase was recorded, but automatic verification did '
+              'not finish yet. Use Restore Purchases in a moment to activate '
+              'your benefits.',
+        );
+        return false;
+      }
 
       state = state.copyWith(
         isProcessing: false,

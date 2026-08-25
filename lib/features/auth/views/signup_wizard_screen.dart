@@ -30,22 +30,24 @@ import 'package:sport_connect/l10n/generated/app_localizations.dart';
 
 // ─── Step Theme ───────────────────────────────────────────────────────────────
 
-class _StepTheme {
-  const _StepTheme({
+class _StepTheme {  
+  // Not const: bg/card read AppColors brightness-aware getters, so the
+  // wizard re-themes with dark mode like every other surface.
+  _StepTheme({
     required this.bg,
     required this.accent,
     required this.card,
     required this.text,
     required this.label,
   });
-  final Color bg;
+  Color bg;
   final Color accent;
   final Color card;
   final Color text;
   final String label;
 }
 
-const _kText = Color(0xFF1A1A1A);
+Color get _kText => AppColors.textPrimary;
 
 List<String> _signupStepLabels(AppLocalizations l10n) => [
   l10n.account_setup,
@@ -70,7 +72,7 @@ String _localizedSignupValidationError(
 }
 
 // UX: 3 steps
-const _stepThemes = [
+final _stepThemes = [
   _StepTheme(
     bg: AppColors.background,
     accent: AppColors.primary,
@@ -432,7 +434,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                 ? MaterialLocalizations.of(context).closeButtonTooltip
                 : MaterialLocalizations.of(context).backButtonTooltip,
             style: IconButton.styleFrom(
-              backgroundColor: theme.accent.withOpacity(0.15),
+              backgroundColor: theme.accent.withValues(alpha: 0.15),
               foregroundColor: theme.accent,
               // Cap at 48 logical pixels so the button doesn't over-scale on
               // tablets and steal horizontal space from the title.
@@ -477,7 +479,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 12.sp.clamp(0.0, 13.0),
-                    color: theme.accent.withOpacity(0.8),
+                    color: theme.accent.withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -496,7 +498,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                 decoration: BoxDecoration(
                   color: i <= wizardUiState.currentStep
                       ? theme.accent
-                      : theme.accent.withOpacity(0.25),
+                      : theme.accent.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -522,7 +524,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
               decoration: BoxDecoration(
                 color: i <= wizardUiState.currentStep
                     ? AppColors.primary
-                    : AppColors.primary.withOpacity(0.18),
+                    : AppColors.primary.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
@@ -578,12 +580,12 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            theme.accent.withOpacity(0.12),
-            theme.accent.withOpacity(0.04),
+            theme.accent.withValues(alpha: 0.12),
+            theme.accent.withValues(alpha: 0.04),
           ],
         ),
         borderRadius: BorderRadius.circular(28.r),
-        border: Border.all(color: theme.accent.withOpacity(0.15)),
+        border: Border.all(color: theme.accent.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -591,7 +593,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             decoration: BoxDecoration(
-              color: theme.accent.withOpacity(0.12),
+              color: theme.accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(999.r),
             ),
             child: Text(
@@ -622,7 +624,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
             style: TextStyle(
               fontSize: 14.sp,
               height: 1.5,
-              color: theme.text.withOpacity(0.72),
+              color: theme.text.withValues(alpha: 0.72),
             ),
           ),
           SizedBox(height: 28.h),
@@ -899,7 +901,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
             label: l10n.authPhoneOptional,
             hint: l10n.authPhoneHint,
             accentColor: theme.accent,
-            fillColor: theme.accent.withOpacity(0.06),
+            fillColor: theme.accent.withValues(alpha: 0.06),
             onChanged: (phone) => ref
                 .read(signupWizardUiViewModelProvider.notifier)
                 .setPhoneNumber(phone.isValid ? phone.fullNumber : null),
@@ -950,7 +952,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                       height: 110.w,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: theme.accent.withOpacity(0.12),
+                        color: theme.accent.withValues(alpha: 0.12),
                         image: wizardUiState.profileImage != null
                             ? DecorationImage(
                                 image: FileImage(wizardUiState.profileImage!),
@@ -963,7 +965,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                           ? Icon(
                               Icons.person_rounded,
                               size: 50.sp,
-                              color: theme.accent.withOpacity(0.5),
+                              color: theme.accent.withValues(alpha: 0.5),
                             )
                           : null,
                     ),
@@ -1009,9 +1011,9 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
           Container(
             padding: EdgeInsets.all(18.w),
             decoration: BoxDecoration(
-              color: theme.accent.withOpacity(0.1),
+              color: theme.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(18.r),
-              border: Border.all(color: theme.accent.withOpacity(0.3)),
+              border: Border.all(color: theme.accent.withValues(alpha: 0.3)),
             ),
             child: Column(
               children: [
@@ -1059,9 +1061,9 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
 
     return Container(
       padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.background,
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 10,
@@ -1089,7 +1091,7 @@ class _SignupWizardScreenState extends ConsumerState<SignupWizardScreen> {
                     borderRadius: BorderRadius.circular(16.r),
                     boxShadow: [
                       BoxShadow(
-                        color: theme.accent.withOpacity(0.4),
+                        color: theme.accent.withValues(alpha: 0.4),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),
@@ -1155,9 +1157,9 @@ class _SecurityBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: EdgeInsets.all(AppSpacing.lg),
     decoration: BoxDecoration(
-      color: accent.withOpacity(0.08),
+      color: accent.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(16.r),
-      border: Border.all(color: accent.withOpacity(0.25)),
+      border: Border.all(color: accent.withValues(alpha: 0.25)),
     ),
     child: Row(
       children: [
@@ -1223,15 +1225,18 @@ class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      Expanded(child: Divider(color: accent.withOpacity(0.2))),
+      Expanded(child: Divider(color: accent.withValues(alpha: 0.2))),
       Padding(
         padding: EdgeInsets.symmetric(horizontal: 12.w),
         child: Text(
           label,
-          style: TextStyle(fontSize: 12.sp, color: accent.withOpacity(0.6)),
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: accent.withValues(alpha: 0.6),
+          ),
         ),
       ),
-      Expanded(child: Divider(color: accent.withOpacity(0.2))),
+      Expanded(child: Divider(color: accent.withValues(alpha: 0.2))),
     ],
   );
 }
@@ -1247,11 +1252,11 @@ class _GoogleButton extends StatelessWidget {
     child: OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14.r),
         ),
-        side: const BorderSide(color: Color(0xFF747775)),
+        side: BorderSide(color: AppColors.border),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1268,7 +1273,7 @@ class _GoogleButton extends StatelessWidget {
               fontFamily: 'Roboto',
               fontSize: 14.sp,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF1F1F1F),
+              color: AppColors.textPrimary,
             ),
           ),
         ],
@@ -1306,7 +1311,10 @@ class _PasswordStrengthBar extends StatelessWidget {
       children: [
         Text(
           AppLocalizations.of(context).passwordStrength,
-          style: TextStyle(fontSize: 12.sp, color: accent.withOpacity(0.7)),
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: accent.withValues(alpha: 0.7),
+          ),
         ),
         SizedBox(height: 6.h),
         Row(
@@ -1317,7 +1325,7 @@ class _PasswordStrengthBar extends StatelessWidget {
                 height: 5.h,
                 margin: EdgeInsets.only(right: i < 3 ? 4.w : 0),
                 decoration: BoxDecoration(
-                  color: i < s ? colors[s - 1] : accent.withOpacity(0.15),
+                  color: i < s ? colors[s - 1] : accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(3.r),
                 ),
               ),
@@ -1405,13 +1413,13 @@ class _TermsCardState extends State<_TermsCard> {
         padding: EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           color: widget.agreed
-              ? widget.accent.withOpacity(0.1)
+              ? widget.accent.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(14.r),
           border: Border.all(
             color: widget.agreed
                 ? widget.accent
-                : widget.accent.withOpacity(0.3),
+                : widget.accent.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
@@ -1435,7 +1443,7 @@ class _TermsCardState extends State<_TermsCard> {
                 text: TextSpan(
                   style: TextStyle(
                     fontSize: 12.sp,
-                    color: widget.accent.withOpacity(0.8),
+                    color: widget.accent.withValues(alpha: 0.8),
                   ),
                   children: [
                     TextSpan(text: AppLocalizations.of(context).iAgreeToThe),
@@ -1489,8 +1497,8 @@ class _TabletStepTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final surfaceColor = active
-        ? accent.withOpacity(0.12)
-        : Colors.white.withOpacity(0.72);
+        ? accent.withValues(alpha: 0.12)
+        : AppColors.surface.withValues(alpha: 0.72);
 
     return AnimatedContainer(
       duration: 250.ms,
@@ -1500,8 +1508,8 @@ class _TabletStepTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
           color: active || complete
-              ? accent.withOpacity(active ? 0.5 : 0.25)
-              : accent.withOpacity(0.12),
+              ? accent.withValues(alpha: active ? 0.5 : 0.25)
+              : accent.withValues(alpha: 0.12),
         ),
       ),
       child: Row(
@@ -1510,7 +1518,7 @@ class _TabletStepTile extends StatelessWidget {
             width: 40.w,
             height: 40.w,
             decoration: BoxDecoration(
-              color: active || complete ? accent : Colors.white,
+              color: active || complete ? accent : AppColors.cardBg,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -1537,7 +1545,7 @@ class _TabletStepTile extends StatelessWidget {
                     fontFamily: 'Syne',
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black87,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 SizedBox(height: 4.h),
@@ -1546,7 +1554,7 @@ class _TabletStepTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12.sp,
                     height: 1.35,
-                    color: Colors.black54,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -1588,16 +1596,18 @@ class _RoleCard extends StatelessWidget {
         duration: 250.ms,
         padding: EdgeInsets.all(18.w),
         decoration: BoxDecoration(
-          color: isSelected ? accent.withOpacity(0.1) : Colors.transparent,
+          color: isSelected
+              ? accent.withValues(alpha: 0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
-            color: isSelected ? accent : accent.withOpacity(0.25),
+            color: isSelected ? accent : accent.withValues(alpha: 0.25),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: accent.withOpacity(0.15),
+                    color: accent.withValues(alpha: 0.15),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
@@ -1609,7 +1619,7 @@ class _RoleCard extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
-                color: isSelected ? accent : accent.withOpacity(0.1),
+                color: isSelected ? accent : accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14.r),
               ),
               child: Icon(
@@ -1629,13 +1639,14 @@ class _RoleCard extends StatelessWidget {
                       fontFamily: 'Syne',
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
-                      color: isSelected ? accent : Colors.black87,
+                      color: isSelected ? accent : AppColors.textPrimary,
                     ),
                   ),
                   SizedBox(height: 3.h),
                   Text(
                     desc,
-                    style: TextStyle(fontSize: 12.sp, color: Colors.black54),
+                    style: TextStyle(
+                        fontSize: 12.sp, color: AppColors.textSecondary),
                   ),
                 ],
               ),

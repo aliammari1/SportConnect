@@ -367,7 +367,7 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppColors.primary.withValues(alpha: 0.08)
-                    : Colors.white,
+                    : AppColors.surface,
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
                   color: isSelected ? AppColors.primary : AppColors.border,
@@ -465,15 +465,15 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
             color: AppColors.textTertiary,
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.inputFill,
           counterStyle: TextStyle(fontSize: 11.sp),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: AppColors.divider),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: AppColors.divider),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
@@ -536,7 +536,7 @@ class _DisputeScreenState extends ConsumerState<DisputeScreen> {
         child: Container(
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(12.r),
             border: Border.all(color: AppColors.border),
           ),

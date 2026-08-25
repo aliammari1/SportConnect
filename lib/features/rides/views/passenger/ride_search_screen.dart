@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -225,7 +226,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: AppColors.cardBg, width: 2),
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.primary.withValues(alpha: 0.3),
@@ -454,11 +455,15 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                   }
                 },
                 child: Padding(
-                  padding: EdgeInsets.all(4.w),
-                  child: Icon(
-                    Icons.close_rounded,
-                    size: 16.sp,
-                    color: AppColors.textTertiary,
+                  padding: EdgeInsets.all(10.w),
+                  child: SizedBox(
+                    width: 24.w,
+                    height: 24.w,
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 16.sp,
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ),
               ),
@@ -470,6 +475,68 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
   }
 
   Future<void> _showDatePicker(BuildContext context) async {
+    // iOS gets the native wheel in a bottom sheet; Android keeps the
+    // Material calendar themed from the active theme instead of a forced
+    // light scheme.
+    if (PlatformInfo.isIOS) {
+      DateTime selection = _searchState.draftDate;
+      final picked = await showCupertinoModalPopup<DateTime>(
+        context: context,
+        builder: (sheetContext) => Container(
+          color: AppColors.surface,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.paddingOf(sheetContext).bottom,
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CupertinoButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      child: Text(
+                        AppLocalizations.of(sheetContext).actionCancel,
+                      ),
+                    ),
+                    CupertinoButton(
+                      onPressed: () => Navigator.of(
+                        sheetContext,
+                      ).pop(selection),
+                      child: Text(
+                        AppLocalizations.of(sheetContext).done,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 220.h,
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.date,
+                    initialDateTime: _searchState.draftDate,
+                    minimumDate: DateTime.now(),
+                    maximumDate: DateTime.now().add(
+                      const Duration(days: 90),
+                    ),
+                    onDateTimeChanged: (value) => selection = value,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      if (!mounted || picked == null) return;
+      ref.read(rideSearchViewModelProvider.notifier).setDraftDate(picked);
+      ref.read(rideSearchViewModelProvider.notifier).setSelectedDateChip(2);
+      return;
+    }
+
     final date = await showDatePicker(
       context: context,
       initialDate: _searchState.draftDate,
@@ -478,9 +545,8 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
               primary: AppColors.primary,
-              onSurface: AppColors.textPrimary,
             ),
           ),
           child: child!,
@@ -688,13 +754,20 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
         .read(rideSearchViewModelProvider.notifier)
         .searchRides();
 
-    if (error != null && mounted) {
-      AdaptiveSnackBar.show(
-        context,
-        message: error,
-        type: AdaptiveSnackBarType.error,
-      );
-    }
+    if (error == null || !mounted) return;
+
+    final l10n = AppLocalizations.of(context);
+    final message = switch (error) {
+      RideSearchInputError.missingLocations => l10n.searchErrorMissingLocations,
+      RideSearchInputError.sameLocation => l10n.searchErrorSameLocation,
+      RideSearchInputError.pastDate => l10n.searchErrorPastDate,
+      RideSearchInputError.invalidSeats => l10n.searchErrorInvalidSeats,
+    };
+    AdaptiveSnackBar.show(
+      context,
+      message: message,
+      type: AdaptiveSnackBarType.error,
+    );
   }
 
   Widget _buildQuickDateSelection() {
@@ -811,19 +884,6 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
             ref
                 .read(rideSearchViewModelProvider.notifier)
                 .setDraftFemaleOnly(false);
-          },
-        ),
-      );
-    }
-
-    if (_searchState.draftVerifiedOnly) {
-      filters.add(
-        SearchFilterTag(
-          label: AppLocalizations.of(context).verifiedDriver2,
-          onRemove: () {
-            ref
-                .read(rideSearchViewModelProvider.notifier)
-                .setDraftVerifiedOnly(false);
           },
         ),
       );
@@ -1026,54 +1086,6 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
             ],
           ),
         ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
-      ),
-      SliverToBoxAdapter(
-        child: Container(
-          margin: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 8.h),
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: AppColors.info.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(color: AppColors.info.withValues(alpha: 0.15)),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.verified_user_rounded,
-                color: AppColors.info,
-                size: 28.sp,
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.verifiedDrivers,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      l10n.allDriversAreVerified,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
       ),
     ];
   }
@@ -1303,7 +1315,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                 children: [
                   Container(
                     padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(color: AppColors.border),
                       ),
@@ -1530,22 +1542,6 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                                 },
                               ),
                               SearchToggleChip(
-                                label: AppLocalizations.of(
-                                  context,
-                                ).verifiedDriver2,
-                                icon: Icons.verified_user_rounded,
-                                isSelected: searchState.draftVerifiedOnly,
-                                onTap: () {
-                                  ref
-                                      .read(
-                                        rideSearchViewModelProvider.notifier,
-                                      )
-                                      .setDraftVerifiedOnly(
-                                        !searchState.draftVerifiedOnly,
-                                      );
-                                },
-                              ),
-                              SearchToggleChip(
                                 label: AppLocalizations.of(context).petFriendly,
                                 icon: Icons.pets_rounded,
                                 isSelected: searchState.draftPetFriendly,
@@ -1597,7 +1593,7 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
                   ),
                   Container(
                     padding: EdgeInsets.all(20.w),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.cardBg,
                       border: Border(
                         top: BorderSide(color: AppColors.border),
@@ -1743,13 +1739,18 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) {
-            return _buildRideModelCard(_resultsState.visibleResults[index])
-                .animate()
-                .fadeIn(
-                  duration: 350.ms,
-                  delay: Duration(milliseconds: 50 + (index * 60)),
-                )
-                .slideX(begin: 0.1, curve: Curves.easeOutCubic);
+            // Stagger is capped so late rows don't wait seconds to appear
+            // and paginated batches don't re-animate slowly.
+            final stagger = 50 + (index.clamp(0, 8)) * 60;
+            return RepaintBoundary(
+              child: _buildRideModelCard(_resultsState.visibleResults[index])
+                  .animate()
+                  .fadeIn(
+                    duration: 350.ms,
+                    delay: Duration(milliseconds: stagger),
+                  )
+                  .slideX(begin: 0.1, curve: Curves.easeOutCubic),
+            );
           },
           childCount: _resultsState.visibleResults.length,
         ),
@@ -2241,3 +2242,5 @@ class _RideSearchScreenState extends ConsumerState<RideSearchScreen> {
     );
   }
 }
+
+

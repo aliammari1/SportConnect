@@ -6,7 +6,10 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/billing_client_wrappers.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sport_connect/core/providers/user_providers.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/features/payments/models/premium_plan.dart';
+import 'package:sport_connect/features/payments/repositories/premium_entitlement_repository.dart';
 
 part 'premium_iap_service.g.dart';
 
@@ -321,6 +324,13 @@ class PremiumIapService extends _$PremiumIapService {
     }
   }
 
+  /// Sentinel used when no store event resolves a registered restore
+  /// completer within the window; filtered before any message reaches users.
+  static const String _kNothingRestored = '__nothing_restored__';
+
+  /// Re-fetches previously owned purchases from the store and re-runs server
+  /// verification on each one. Entitlement flips here — the store-side
+  /// restore itself never writes anything locally.
   Future<PremiumIapResult> restorePurchases() async {
     try {
       if (!await isSupported()) {
@@ -329,8 +339,74 @@ class PremiumIapService extends _$PremiumIapService {
         );
       }
 
-      await _iap.restorePurchases();
+      // Restored purchases arrive asynchronously on the shared purchase
+      // stream. Registering completers up front lets us await them instead of
+      // dropping receipts nobody was listening for.
+      final productIds = defaultTargetPlatform == TargetPlatform.iOS
+          ? PremiumPlan.values.map((plan) => plan.iosProductId).toSet()
+          : {PremiumPlan.monthly.googlePlayProductId};
+      final completers = <Completer<PremiumIapResult>>[];
+      for (final productId in productIds) {
+        final completer = Completer<PremiumIapResult>();
+        _pendingPurchases[productId] = completer;
+        completers.add(completer);
+      }
 
+      try {
+        await _iap.restorePurchases();
+      } on Object {
+        for (final productId in productIds) {
+          _pendingPurchases.remove(productId);
+        }
+        rethrow;
+      }
+
+      final results = await Future.wait(
+        completers.map(
+          (completer) => completer.future.timeout(
+            const Duration(seconds: 25),
+            onTimeout: () => const PremiumIapResult.failure(_kNothingRestored),
+          ),
+        ),
+      );
+      for (final productId in productIds) {
+        _pendingPurchases.remove(productId);
+      }
+
+      final restored = results
+          .where((result) => result.isSuccess && result.purchase != null)
+          .map((result) => result.purchase!)
+          .toList();
+
+      if (restored.isEmpty) {
+        final meaningfulError = results
+            .map((result) => result.errorMessage)
+            .whereType<String>()
+            .firstWhere(
+              (message) => message != _kNothingRestored,
+              orElse: () => '',
+            );
+        return PremiumIapResult.failure(
+          meaningfulError.isNotEmpty
+              ? meaningfulError
+              : 'No previous purchases were found for this account.',
+        );
+      }
+
+      var activatedAny = false;
+      for (final purchase in restored) {
+        final activated = await verifyEntitlementForActivation(purchase);
+        activatedAny = activatedAny || activated;
+      }
+
+      if (!activatedAny) {
+        return const PremiumIapResult.failure(
+          'Your purchase was found but could not be verified yet. '
+          'Please try again shortly.',
+        );
+      }
+
+      ref.invalidate(currentUserProvider);
       return const PremiumIapResult.success();
     } on PlatformException catch (e) {
       return PremiumIapResult.failure(_mapPlatformError(e));
@@ -341,6 +417,42 @@ class PremiumIapService extends _$PremiumIapService {
     } on Object catch (e) {
       return PremiumIapResult.failure('Restore purchases failed: $e');
     }
+  }
+
+  /// Single source of truth for which store receipt reference feeds the
+  /// entitlement verifier on each platform. Checkout and restore both route
+  /// through here so the two flows cannot drift.
+  ///
+  /// Returns true only when the backend reports an active subscription.
+  /// Transport and configuration failures are logged and returned as false;
+  /// callers treat false as "receipt recorded, not yet activated".
+  Future<bool> verifyEntitlementForActivation(PurchaseDetails? purchase) async {
+    if (purchase == null) return false;
+    if (kIsWeb) return false;
+
+    try {
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final purchaseToken = purchase.verificationData.serverVerificationData;
+        if (purchaseToken.trim().isEmpty) return false;
+        final result = await ref
+            .read(premiumEntitlementRepositoryProvider)
+            .verifyPurchase(platform: 'android', purchaseToken: purchaseToken);
+        return result.isActive;
+      }
+
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final transactionId = purchase.purchaseID;
+        if (transactionId == null || transactionId.isEmpty) return false;
+        final result = await ref
+            .read(premiumEntitlementRepositoryProvider)
+            .verifyPurchase(platform: 'ios', transactionId: transactionId);
+        return result.isActive;
+      }
+    } on PremiumEntitlementException catch (e, st) {
+      TalkerService.warning('Premium verification failed: $e');
+      TalkerService.error('Premium verification error', e, st);
+    }
+    return false;
   }
 
   ProductDetails _selectProductForPlan(

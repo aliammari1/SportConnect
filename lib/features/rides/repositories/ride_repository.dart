@@ -475,7 +475,6 @@ class RideRepository {
 
     await _firestore.runTransaction((txn) async {
       final rideRef = _ridesCollection.doc(rideId);
-      final bookingRef = _rideBookingsCollection.doc(deterministicBookingId);
 
       // Reads first (transaction requirement): re-read the ride and the target
       // booking doc inside the transaction so the checks reflect committed data.
@@ -494,12 +493,11 @@ class RideRepository {
         );
       }
 
-      // Atomic guard against a concurrent double-submit creating two bookings.
-      final bookingSnap = await txn.get(bookingRef);
-      if (bookingSnap.exists) {
-        throw StateError('You already have an active booking for this ride.');
-      }
-
+      // No in-transaction probe of [deterministicBookingId]: reading a
+      // not-yet-created doc fails Firestore rules because every bookings-read
+      // branch dereferences resource.data. Duplicate protection comes from the
+      // deterministic id itself (both racing writers converge on one doc) plus
+      // the pre-check above for the common double-tap case.
       // Store only client-allowed fields.
       // Do NOT send paymentIntentId / paidAt on create.
       txn.set(

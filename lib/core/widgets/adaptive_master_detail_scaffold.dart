@@ -40,7 +40,7 @@ class AdaptiveMasterDetailScaffold extends StatelessWidget {
           flex: masterFlex,
           child: Material(type: MaterialType.transparency, child: master),
         ),
-        const VerticalDivider(width: 1, color: AppColors.border),
+        VerticalDivider(width: 1, color: AppColors.divider),
         Expanded(
           flex: detailFlex,
           child: Material(type: MaterialType.transparency, child: detail),

@@ -8,7 +8,6 @@ import 'package:sport_connect/core/models/location/location_point.dart';
 import 'package:sport_connect/core/services/firebase_service.dart';
 import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/features/events/models/event_model.dart';
-import 'package:sport_connect/features/messaging/models/message_model.dart';
 
 part 'event_repository.g.dart';
 
@@ -44,82 +43,12 @@ class EventRepository {
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
 
-  Future<bool> _isPremiumSubscriber({
-    required Transaction tx,
-    required String userId,
-  }) async {
-    final userSnap = await tx.get(
-      _firestore.collection(AppConstants.usersCollection).doc(userId),
-    );
-    final userData = userSnap.data();
-    return userData is Map<String, dynamic> && userData['isPremium'] == true;
-  }
-
-  List<String> _premiumEventChatParticipants({
-    required String creatorId,
-    required bool creatorIsPremium,
-    required bool userIsPremium,
-    required String userId,
-  }) {
-    return <String>{
-      if (creatorIsPremium) creatorId,
-      if (userIsPremium) userId,
-    }.toList();
-  }
-
   String _resolveEventChatId(EventModel event) {
     final configuredChatId = event.chatGroupId?.trim();
     if (configuredChatId != null && configuredChatId.isNotEmpty) {
       return configuredChatId;
     }
     return event.id;
-  }
-
-  Map<String, dynamic> _eventChatCreatePayload({
-    required String chatId,
-    required EventModel event,
-    required List<String> participantIds,
-  }) {
-    return {
-      'id': chatId,
-      'type': ChatType.eventGroup.name,
-      'eventId': event.id,
-      'premiumOnly': true,
-      'groupName': event.title,
-      if ((event.imageUrl ?? '').isNotEmpty) 'groupPhotoUrl': event.imageUrl,
-
-      'participantIds': participantIds,
-      'participants': <Map<String, dynamic>>[],
-
-      'lastMessageContent': null,
-      'lastMessageSenderId': null,
-      'lastMessageSenderName': null,
-      'lastMessageType': MessageType.system.name,
-
-      'unreadCounts': <String, int>{},
-      'mutedBy': <String, bool>{},
-      'pinnedBy': <String, bool>{},
-
-      // New timestamp-based visibility fields.
-      'deletedAtBy': <String, dynamic>{},
-      'clearedAtBy': <String, dynamic>{},
-
-      'isActive': true,
-      'lastMessageAt': FieldValue.serverTimestamp(),
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
-  }
-
-  Map<String, dynamic> _eventChatMergePayload({
-    required List<String> participantIds,
-  }) {
-    return {
-      if (participantIds.isNotEmpty)
-        'participantIds': FieldValue.arrayUnion(participantIds),
-
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
   }
 
   CollectionReference<EventModel> get _eventsCollection => _firestore
@@ -291,90 +220,6 @@ class EventRepository {
         'participantIds': FieldValue.arrayUnion([userId]),
         'updatedAt': FieldValue.serverTimestamp(),
       });
-    });
-  }
-
-  Future<String> ensureEventGroupChat({
-    required EventModel event,
-    required String userId,
-  }) async {
-    final eventRef = _eventsCollection.doc(event.id);
-
-    return _firestore.runTransaction((tx) async {
-      final eventSnap = await tx.get(eventRef);
-      final latestEvent = eventSnap.exists ? eventSnap.data()! : event;
-
-      final isParticipant =
-          latestEvent.participantIds.contains(userId) ||
-          latestEvent.creatorId == userId;
-
-      if (!isParticipant) {
-        throw Exception('Join the event before opening the group chat.');
-      }
-
-      final userIsPremium = await _isPremiumSubscriber(
-        tx: tx,
-        userId: userId,
-      );
-
-      if (!userIsPremium) {
-        throw Exception(
-          'Event group chat is a Premium feature. Upgrade to access attendee chat.',
-        );
-      }
-
-      // creatorIsPremium is checked so the creator is only included
-      // in the participant list when they hold a premium subscription.
-      final creatorIsPremium = await _isPremiumSubscriber(
-        tx: tx,
-        userId: latestEvent.creatorId,
-      );
-
-      final chatId = _resolveEventChatId(latestEvent);
-
-      final participantIds = _premiumEventChatParticipants(
-        creatorId: latestEvent.creatorId,
-        creatorIsPremium: creatorIsPremium,
-        userIsPremium: userIsPremium,
-        userId: userId,
-      );
-
-      final chatRef = _firestore
-          .collection(AppConstants.chatsCollection)
-          .doc(chatId);
-
-      final chatSnap = await tx.get(chatRef);
-
-      if (chatSnap.exists) {
-        tx.set(
-          chatRef,
-          _eventChatMergePayload(participantIds: participantIds),
-          SetOptions(merge: true),
-        );
-      } else {
-        tx.set(
-          chatRef,
-          _eventChatCreatePayload(
-            chatId: chatId,
-            event: latestEvent,
-            participantIds: participantIds,
-          ),
-        );
-      }
-
-      // Persist the resolved chat id back onto the event so chatGroupId
-      // becomes authoritative (rather than perpetually null and silently
-      // falling back to event.id via _resolveEventChatId). Done inside the
-      // same transaction for atomicity.
-      final configuredChatId = latestEvent.chatGroupId?.trim();
-      if (configuredChatId == null || configuredChatId.isEmpty) {
-        tx.update(eventRef, {
-          'chatGroupId': chatId,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-
-      return chatId;
     });
   }
 

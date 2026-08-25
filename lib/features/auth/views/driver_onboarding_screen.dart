@@ -1899,14 +1899,14 @@ class _DriverOnboardingScreenState
                   description: l10n.stripePoweredByMillions,
                   delay: 60,
                 ),
-                const Divider(height: 1, color: AppColors.divider),
+                Divider(height: 1, color: AppColors.divider),
                 _buildBenefitItem(
                   icon: Icons.flash_on_rounded,
                   title: l10n.fastTransfers,
                   description: l10n.stripeFastTransfersDesc,
                   delay: 120,
                 ),
-                const Divider(height: 1, color: AppColors.divider),
+                Divider(height: 1, color: AppColors.divider),
                 _buildBenefitItem(
                   icon: Icons.receipt_long_rounded,
                   title: l10n.easyTracking,
@@ -2150,7 +2150,7 @@ class _DriverOnboardingAside extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.all(18.w),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.72),
+              color: AppColors.cardBg.withValues(alpha: 0.72),
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(
                 color: AppColors.primary.withValues(alpha: 0.1),

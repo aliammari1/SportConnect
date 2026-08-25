@@ -7,25 +7,38 @@ import 'package:flutter/material.dart' show Colors;
 class AppColors {
   AppColors._();
 
-  // ═══════════════════════════════════════════════════════════════
+  /// Current UI brightness for the semantic tokens below.
+  ///
+  /// Synced once per frame from MaterialApp's resolved theme (see main.dart
+  /// builder), so every `AppColors.surface`-style read across the app flips
+  /// together when the mode changes. Light values are the design defaults.
+  static Brightness _brightness = Brightness.light;
+  static Brightness get brightness => _brightness;
+  static void setBrightness(Brightness value) {
+    _brightness = value;
+  }
+
+  static bool get isDark => _brightness == Brightness.dark;
+
+  // ───────────────────────────────────────────────────────────────────────
   // PRIMARY BRAND COLORS - Light Classy Green (Fresh & Premium)
-  // ═══════════════════════════════════════════════════════════════
+  // ───────────────────────────────────────────────────────────────────────
   static const Color primary = Color(0xFF40916C); // Emerald Green (lighter)
   static const Color primaryLight = Color(0xFF52B788); // Fresh Emerald
   static const Color primaryDark = Color(0xFF2D6A4F); // Deep Emerald
   static const Color primarySurface = Color(0xFFE8F5E9); // Very Light Green
 
-  // ═══════════════════════════════════════════════════════════════
+  // ───────────────────────────────────────────────────────────────────────
   // SECONDARY - Sage Green (Elegant & Light)
-  // ═══════════════════════════════════════════════════════════════
+  // ───────────────────────────────────────────────────────────────────────
   static const Color secondary = Color(0xFF74C69D); // Sage Green
   static const Color secondaryLight = Color(0xFF95D5B2); // Light Sage
   static const Color secondaryDark = Color(0xFF52B788); // Emerald Sage
   static const Color secondarySurface = Color(0xFFF0FFF4); // Mint Surface
 
-  // ═══════════════════════════════════════════════════════════════
+  // ───────────────────────────────────────────────────────────────────────
   // ACCENT - Mint Green (Subtle & Fresh)
-  // ═══════════════════════════════════════════════════════════════
+  // ───────────────────────────────────────────────────────────────────────
   static const Color accent = Color(0xFF95D5B2); // Mint Green
   static const Color accentLight = Color(0xFFB7E4C7); // Light Mint
   static const Color accentDark = Color(0xFF74C69D); // Sage
@@ -59,36 +72,51 @@ class AppColors {
   static const Color infoSurface = Color(0xFFEBF2F4);
 
   // ═══════════════════════════════════════════════════════════════
-  // NEUTRAL COLORS - Clean & Modern
+  // NEUTRAL COLORS - brightness-aware semantic tokens.
+  //
+  // These were `static const` light-only values, which is why dark mode
+  // rendered white cards on a black scaffold. They are now getters that pick
+  // the WCAG-documented dark pairs (SEMANTIC - DARK block below) whenever
+  // [setBrightness] was told the app resolved to dark. Usage sites keep
+  // their code; only `const` expressions containing them need the keyword
+  // dropped (analyzer lists every one).
+  //
+  // Android: Material 3 colorScheme drives scaffold/appbar; these tokens
+  // must match it. iOS: mirrors cupertinoDarkTheme surfaces (#1C1C1E family).
   // ═══════════════════════════════════════════════════════════════
-  static const Color background = Color(
-    0xFFF8FAF9,
-  ); // Off White with green tint
-  static const Color surface = Color(0xFFFFFFFF); // Pure White
-  static const Color surfaceVariant = Color(0xFFF1F5F3); // Light Gray Green
-  static const Color cardBg = Color(0xFFFFFFFF);
-  static const Color scaffoldBg = Color(0xFFF8FAF9);
+  static Color get background =>
+      isDark ? backgroundDark : const Color(0xFFF8FAF9);
+  static Color get surface => isDark ? surfaceDark : const Color(0xFFFFFFFF);
+  static Color get surfaceVariant =>
+      isDark ? surfaceVariantDark : const Color(0xFFF1F5F3);
+  static Color get cardBg => isDark ? cardBgDark : const Color(0xFFFFFFFF);
+  static Color get scaffoldBg => background;
 
-  // Text Colors - High Contrast
-  static const Color textPrimary = Color(0xFF1B2E24); // Dark Green Black
-  static const Color textSecondary = Color(0xFF5C7266); // Muted Green Gray
-  static const Color textTertiary = Color(0xFF8FA399); // Light Green Gray
-  static const Color textOnPrimary = Color(0xFFFFFFFF);
-  static const Color textMuted = Color(0xFFB8C7BF);
+  static Color get textPrimary =>
+      isDark ? textPrimaryDark : const Color(0xFF1B2E24);
+  static Color get textSecondary =>
+      isDark ? textSecondaryDark : const Color(0xFF5C7266);
+  static Color get textTertiary =>
+      isDark ? textTertiaryDark : const Color(0xFF8FA399);
+  static Color get textOnPrimary => const Color(0xFFFFFFFF);
+  static Color get textMuted =>
+      isDark ? textDisabledDark : const Color(0xFFB8C7BF);
 
-  // Input Field
-  static const Color inputFill = Color(0xFFF5F8F6);
-  static const Color inputBorder = Color(0xFFD8E0DB);
-  static const Color inputFocusBorder = Color(0xFF40916C);
+  static Color get inputFill =>
+      isDark ? surfaceVariantDark : const Color(0xFFF5F8F6);
+  static Color get inputBorder => border;
+  static Color get inputFocusBorder =>
+      isDark ? primaryDarkMode : const Color(0xFF40916C);
 
-  // Border & Divider
-  static const Color border = Color(0xFFD8E0DB);
-  static const Color divider = Color(0xFFE8EDE9);
-  static const Color borderLight = Color(0xFFEDF1EE);
+  static Color get border => isDark ? borderDark : const Color(0xFFD8E0DB);
+  static Color get divider => isDark ? dividerDark : const Color(0xFFE8EDE9);
+  static Color get borderLight =>
+      isDark ? surfaceElevatedDark : const Color(0xFFEDF1EE);
 
-  // Shimmer / Loading
-  static const Color shimmer = Color(0xFFE8EDE9);
-  static const Color shimmerHighlight = Color(0xFFF5F8F6);
+  static Color get shimmer =>
+      isDark ? surfaceVariantDark : const Color(0xFFE8EDE9);
+  static Color get shimmerHighlight =>
+      isDark ? surfaceElevatedDark : const Color(0xFFF5F8F6);
 
   // ═══════════════════════════════════════════════════════════════
   // GAMIFICATION COLORS
@@ -447,7 +475,7 @@ class AppColors {
     darkHighContrastElevatedColor: primaryLightDarkMode,
   );
 
-  static const CupertinoDynamicColor adaptiveTextPrimary =
+  static final CupertinoDynamicColor adaptiveTextPrimary =
       CupertinoDynamicColor(
         color: textPrimary,
         darkColor: textPrimaryDark,
@@ -459,7 +487,7 @@ class AppColors {
         darkHighContrastElevatedColor: Colors.white,
       );
 
-  static const CupertinoDynamicColor adaptiveTextSecondary =
+  static final CupertinoDynamicColor adaptiveTextSecondary =
       CupertinoDynamicColor(
         color: textSecondary,
         darkColor: textSecondaryDark,
@@ -471,7 +499,7 @@ class AppColors {
         darkHighContrastElevatedColor: _neutral300,
       );
 
-  static const CupertinoDynamicColor adaptiveBackground = CupertinoDynamicColor(
+  static final CupertinoDynamicColor adaptiveBackground = CupertinoDynamicColor(
     color: background,
     darkColor: backgroundDark,
     highContrastColor: Colors.white,
@@ -482,7 +510,7 @@ class AppColors {
     darkHighContrastElevatedColor: _dark50,
   );
 
-  static const CupertinoDynamicColor adaptiveSurface = CupertinoDynamicColor(
+  static final CupertinoDynamicColor adaptiveSurface = CupertinoDynamicColor(
     color: surface,
     darkColor: surfaceDark,
     highContrastColor: Colors.white,

@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:sport_connect/core/services/stripe_service.dart';
 import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
@@ -397,11 +398,19 @@ class _RefundRequestSheetState extends State<RefundRequestSheet> {
     } catch (e, st) {
       TalkerService.error('Refund request submission failed', e, st);
       if (!mounted) return;
+      // A rejected policy check arrives as StripePaymentException carrying
+      // the server's user-facing reason ("not eligible because …"). Show it;
+      // a generic "try again" would send the user into a retry loop that can
+      // never succeed.
+      final message = switch (e) {
+        final StripePaymentException stripeError when
+            stripeError.code == 'failed-precondition' =>
+          stripeError.message,
+        _ => AppLocalizations.of(context).could_not_submit_refund_please_try_again,
+      };
       setState(() {
         _isSubmitting = false;
-        _errorMessage = AppLocalizations.of(
-          context,
-        ).could_not_submit_refund_please_try_again;
+        _errorMessage = message;
       });
     }
   }

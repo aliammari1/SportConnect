@@ -177,10 +177,8 @@ abstract class RideModel with _$RideModel {
   /// Is an eco-friendly ride (driver tagged it as eco)
   bool get isEco => tags.contains('eco');
 
-  /// Is a verified-driver ride (driver was ID-verified at creation time)
-  bool get isDriverVerified => tags.contains('verified_driver');
-
   /// Accepted bookings (bookings with accepted status)
   List<RideBooking> get acceptedBookings =>
       bookings.where((b) => b.status == BookingStatus.accepted).toList();
 }
+

@@ -505,27 +505,30 @@ class PendingBookingViewModel extends _$PendingBookingViewModel {
 
       final paymentIntentId = paymentData['paymentIntentId'] as String;
       // The charge has been captured. Record the submitted intent id so the
-      // Complete Payment CTA is suppressed regardless of the streamed paidAt,
-      // which the Stripe webhook writes asynchronously. Cleared in
-      // syncPassengerBookings once the streamed booking confirms payment.
+      // Complete Payment CTA is suppressed regardless of streamed booking
+      // state. Cleared in syncPassengerBookings once the stream confirms.
       state = state.copyWith(paymentSubmittedIntentId: paymentIntentId);
-      var reconciled = false;
+      var reconciled = true;
       try {
         if (!ref.mounted) {
           return;
         }
 
+        // Stripe-authoritative reconciliation: stamps paidAt/paymentIntentId
+        // immediately so no screen re-shows "Complete Payment" while waiting
+        // for webhook delivery. The webhook remains the source for downstream
+        // effects (driver balance, notifications).
         await ref
-            .read(rideActionsViewModelProvider.notifier)
-            .markBookingPaid(
+            .read(stripeServiceProvider)
+            .verifyBookingPayment(
               bookingId: booking.id,
               paymentIntentId: paymentIntentId,
             );
-        reconciled = true;
       } catch (e, st) {
         // The Stripe charge has already been captured, but persisting the
-        // captured paymentIntentId to the booking failed. Log the orphaned
-        // intent for manual reconciliation; never silently swallow it.
+        // captured paymentIntentId to the booking failed. Log for manual
+        // reconciliation; never silently swallow it.
+        reconciled = false;
         TalkerService.error(
           'Failed to mark booking paid after successful charge '
           '(captured paymentIntentId=$paymentIntentId, bookingId=${booking.id})',

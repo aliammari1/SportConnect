@@ -918,7 +918,7 @@ class _RideCountdownScreenState extends ConsumerState<RideCountdownScreen> {
           // Estimated arrival row
           if (arrivalTime != null) ...[
             SizedBox(height: 12.h),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             SizedBox(height: 12.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -989,7 +989,7 @@ class _ZoomButton extends StatelessWidget {
         width: 36.w,
         height: 36.w,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(8.r),
           boxShadow: [
             BoxShadow(

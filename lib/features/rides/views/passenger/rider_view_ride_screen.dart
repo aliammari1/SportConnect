@@ -407,7 +407,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                       vertical: 10.h,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Column(
@@ -522,7 +522,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
 
           if (ride.vehicleInfo != null) ...[
             SizedBox(height: 12.h),
-            const Divider(height: 1, color: AppColors.divider),
+            Divider(height: 1, color: AppColors.divider),
             SizedBox(height: 12.h),
             Row(
               children: [
@@ -683,7 +683,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
                                   color: AppColors.warning,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Colors.white,
+                                    color: AppColors.cardBg,
                                     width: 1.5,
                                   ),
                                 ),
@@ -1185,7 +1185,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Divider(height: 1, color: AppColors.divider),
+          Divider(height: 1, color: AppColors.divider),
           SizedBox(height: 10.h),
           Row(
             children: [
@@ -1318,11 +1318,20 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
           onPressed: null,
           style: PremiumButtonStyle.secondary,
           secondaryActionLabel: canCancel
-              ? AppLocalizations.of(context).cancelRide2
+              ? AppLocalizations.of(context).cancelBooking
               : null,
           onSecondaryAction: canCancel
               ? () => _cancelBooking(ride, existingBooking)
               : null,
+        );
+      }
+      // Charge captured but paidAt not yet visible: show a waiting state
+      // instead of asking the user to pay again.
+      if (existingBooking.paymentIntentId != null) {
+        return _buildExistingBookingBar(
+          label: AppLocalizations.of(context).paymentFinalizing,
+          icon: Icons.hourglass_top_rounded,
+          onPressed: null,
         );
       }
       return _buildExistingBookingBar(
@@ -1701,8 +1710,8 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog.adaptive(
-        title: Text(l10n.cancelRide2),
-        content: Text(l10n.areYouSureYouWant9),
+        title: Text(l10n.cancelBooking),
+        content: Text(l10n.cancelBookingConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -1711,7 +1720,7 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: Text(l10n.cancelRide2),
+            child: Text(l10n.cancelBooking),
           ),
         ],
       ),
@@ -1735,8 +1744,8 @@ class _RiderViewRideScreenState extends ConsumerState<RiderViewRideScreen> {
       AdaptiveSnackBar.show(
         context,
         message: wasInProgress
-            ? l10n.rideCancelledNoRefund
-            : l10n.rideCancelledRefundPending,
+            ? l10n.bookingCancelledNoRefund
+            : l10n.bookingCancelledRefundPending,
         type: AdaptiveSnackBarType.success,
       );
     } on Exception catch (e) {
@@ -1841,7 +1850,7 @@ class _BookingConfirmationSheetState extends State<_BookingConfirmationSheet> {
                     ),
                   ),
                   SizedBox(height: 8.h),
-                  const Divider(color: AppColors.divider),
+                  Divider(color: AppColors.divider),
                   SizedBox(height: 8.h),
                   _buildRow(
                     l10n.total,

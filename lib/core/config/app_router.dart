@@ -16,6 +16,7 @@ import 'package:sport_connect/core/config/routes/profile_routes.dart';
 import 'package:sport_connect/core/config/routes/reviews_routes.dart';
 import 'package:sport_connect/core/config/routes/ride_routes.dart';
 import 'package:sport_connect/core/models/user/models.dart';
+import 'package:sport_connect/core/providers/admin_access_provider.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/services/firebase_service.dart';
 import 'package:sport_connect/core/services/route_guard_service.dart';
@@ -102,6 +103,12 @@ GoRouter appRouter(Ref ref) {
     ..listen(isOnboardingCompleteProvider, (previous, next) {
       routerListenable.notify();
     })
+    // Subscribing here also kicks off the admin-claim check at startup, so a
+    // newly granted admin reaches the console on their next launch without
+    // opening Settings first.
+    ..listen(adminAccessProvider, (previous, next) {
+      if (previous != next) routerListenable.notify();
+    })
     ..onDispose(routerListenable.dispose);
 
   return GoRouter(
@@ -132,6 +139,7 @@ GoRouter appRouter(Ref ref) {
       final selectedRoleIntent = needsRoleSelection
           ? ref.read(selectedRoleIntentProvider)
           : null;
+      final adminAccessState = ref.read(adminAccessProvider);
 
       return _handleRedirect(
         userState,
@@ -143,6 +151,9 @@ GoRouter appRouter(Ref ref) {
         hasVerifiableEmail: firebaseUser?.email?.isNotEmpty ?? false,
         isFirestoreStillLoading: isFirestoreStillLoading,
         selectedRoleIntent: selectedRoleIntent,
+        hasAdminClaim: adminAccessState.value ?? false,
+        isAdminClaimLoading:
+            firebaseUser != null && adminAccessState.isLoading,
       );
     },
     routes: _buildRoutes(),
@@ -161,6 +172,8 @@ String? _handleRedirect(
   bool hasVerifiableEmail = false,
   bool isFirestoreStillLoading = false,
   UserRole? selectedRoleIntent,
+  bool hasAdminClaim = false,
+  bool isAdminClaimLoading = false,
 }) {
   final guard = RouteGuardService.fromAuthState(
     userState,
@@ -171,6 +184,8 @@ String? _handleRedirect(
     hasCompletedOnboarding: onboardingState.value ?? false,
     isEmailVerified: isEmailVerified,
     hasVerifiableEmail: hasVerifiableEmail,
+    hasAdminClaim: hasAdminClaim,
+    isAdminClaimLoading: isAdminClaimLoading,
     selectedRoleIntent: selectedRoleIntent,
     currentDriverConnectedAccount: connectedAccountState.value,
   );

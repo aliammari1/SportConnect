@@ -399,7 +399,7 @@ class _DriverRatePassengerScreenState
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: const BorderSide(color: AppColors.divider),
+                      borderSide:  BorderSide(color: AppColors.divider),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),

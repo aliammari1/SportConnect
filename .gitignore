@@ -52,10 +52,13 @@ app.*.map.json
 
 .mcp.json
 .sisyphus/
+scripts/
 .claude
 .agents
 .omx
 .omo
+.cursor
+.opencode
 opencode.json
 
 # Android Studio will place build artifacts here

@@ -15,6 +15,15 @@ val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
+
+// stripe_android transitively pulls com.stripe:stripe-android-issuing-push-provisioning,
+// which depends on the PRIVATE play-services-tapandpay:17.1.2 SDK that is not
+// published to any public Maven repository (Stripe issue #2084). This app does
+// not use Issuing push provisioning, so exclude the module entirely.
+configurations.all {
+    exclude(group = "com.stripe", module = "stripe-android-issuing-push-provisioning")
+}
+
 android {
     namespace = "com.sportconnect.sport_connect"
     compileSdk = flutter.compileSdkVersion

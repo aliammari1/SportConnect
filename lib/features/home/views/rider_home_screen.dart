@@ -20,10 +20,10 @@ import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/app_map_tile_layer.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/driver_info_widget.dart';
-import 'package:sport_connect/core/widgets/rating_value.dart';
 import 'package:sport_connect/core/widgets/misc_feature_widgets.dart';
 import 'package:sport_connect/core/widgets/permission_dialog_helper.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
+import 'package:sport_connect/core/widgets/rating_value.dart';
 import 'package:sport_connect/features/home/view_models/home_view_model.dart';
 import 'package:sport_connect/features/home/view_models/rider_home_view_model.dart';
 import 'package:sport_connect/features/home/views/widgets/active_trip_banner.dart';
@@ -156,8 +156,9 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
     if (userId != null) {
       // Evaluate the current bookings immediately (WidgetRef.listen does not
       // support fireImmediately), then react to subsequent changes.
-      final currentBookings =
-          ref.read(bookingsByPassengerProvider(userId)).value;
+      final currentBookings = ref
+          .read(bookingsByPassengerProvider(userId))
+          .value;
       if (currentBookings != null) {
         unawaited(_checkForActiveRide(currentBookings));
       }
@@ -1020,8 +1021,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
     final unreadCount = ref
         .watch(userNotificationsProvider)
         .maybeWhen(
-          data: (notifications) =>
-              notifications.where((n) => !n.isRead).length,
+          data: (notifications) => notifications.where((n) => !n.isRead).length,
           orElse: () => 0,
         );
 
@@ -1698,7 +1698,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
               onPressed: () {
                 ref.read(riderHomeViewModelProvider.notifier).clearRoutes();
               },
-              icon: const Icon(Icons.close, color: AppColors.textSecondary),
+              icon:  Icon(Icons.close, color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -1791,7 +1791,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                               ),
                             ),
                           ),
-                          const Divider(color: AppColors.border, height: 1),
+                          Divider(color: AppColors.divider, height: 1),
                           TextField(
                             controller: toCtrl,
                             onChanged: (_) => setModal(() {}),
@@ -2239,7 +2239,7 @@ class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: AppColors.cardBg, width: 2),
                       ),
                     ),
                     Container(

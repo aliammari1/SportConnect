@@ -1273,7 +1273,7 @@ class _InlineMapToggle extends StatelessWidget {
               width: 34.w,
               height: 34.w,
               decoration: BoxDecoration(
-                color: expanded ? accent : accent.withOpacity(0.13),
+                color: expanded ? accent : accent.withValues(alpha: 0.13),
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Icon(
@@ -1372,10 +1372,10 @@ class _InlineMapExpansion extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.045),
+        color: accent.withValues(alpha: 0.045),
         borderRadius: BorderRadius.circular(13.r),
         border: Border.all(
-          color: accent.withOpacity(0.16),
+          color: accent.withValues(alpha: 0.16),
         ),
       ),
       child: Column(
@@ -1435,11 +1435,11 @@ class _InlineMapExpansion extends StatelessWidget {
                         vertical: 9.h,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.surface.withOpacity(0.94),
+                        color: AppColors.surface.withValues(alpha: 0.94),
                         borderRadius: BorderRadius.circular(12.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 12,
                             offset: Offset(0, 5.h),
                           ),
@@ -1479,7 +1479,7 @@ class _InlineMapExpansion extends StatelessWidget {
                   width: 34.w,
                   height: 34.w,
                   decoration: BoxDecoration(
-                    color: accent.withOpacity(0.12),
+                    color: accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Icon(
@@ -1592,7 +1592,7 @@ class _MapMarker extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: accent.withOpacity(0.35),
+              color: accent.withValues(alpha: 0.35),
               blurRadius: 18,
               offset: Offset(0, 8.h),
             ),
@@ -1708,7 +1708,7 @@ class _SuggestionArea extends StatelessWidget {
                   fontSize: 10.sp,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.25,
-                  color: accent.withOpacity(0.58),
+                  color: accent.withValues(alpha: 0.58),
                 ),
               ),
             ),
@@ -1759,10 +1759,10 @@ class _SuggestionTile extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
         decoration: BoxDecoration(
-          color: accent.withOpacity(0.045),
+          color: accent.withValues(alpha: 0.045),
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: accent.withOpacity(0.12),
+            color: accent.withValues(alpha: 0.12),
           ),
         ),
         child: Row(
@@ -1772,7 +1772,7 @@ class _SuggestionTile extends StatelessWidget {
               width: 34.w,
               height: 34.w,
               decoration: BoxDecoration(
-                color: accent.withOpacity(0.11),
+                color: accent.withValues(alpha: 0.11),
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Icon(
@@ -1842,10 +1842,10 @@ class _SelectedAddressPreview extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(13.w),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.075),
+        color: accent.withValues(alpha: 0.075),
         borderRadius: BorderRadius.circular(13.r),
         border: Border.all(
-          color: accent.withOpacity(0.22),
+          color: accent.withValues(alpha: 0.22),
         ),
       ),
       child: Column(
@@ -1958,10 +1958,10 @@ class _PanelHint extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.045),
+        color: accent.withValues(alpha: 0.045),
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: accent.withOpacity(0.1),
+          color: accent.withValues(alpha: 0.1),
         ),
       ),
       child: Row(
@@ -2011,7 +2011,7 @@ class _SuggestionSkeleton extends StatelessWidget {
     return Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
           decoration: BoxDecoration(
-            color: AppColors.textSecondary.withOpacity(0.045),
+            color: AppColors.textSecondary.withValues(alpha: 0.045),
             borderRadius: BorderRadius.circular(12.r),
           ),
           child: Row(
@@ -2020,7 +2020,7 @@ class _SuggestionSkeleton extends StatelessWidget {
                 width: 34.w,
                 height: 34.w,
                 decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withOpacity(0.11),
+                  color: AppColors.textSecondary.withValues(alpha: 0.11),
                   borderRadius: BorderRadius.circular(10.r),
                 ),
               ),
@@ -2033,7 +2033,7 @@ class _SuggestionSkeleton extends StatelessWidget {
                       height: 11.h,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: AppColors.textSecondary.withOpacity(0.12),
+                        color: AppColors.textSecondary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(999.r),
                       ),
                     ),
@@ -2042,7 +2042,7 @@ class _SuggestionSkeleton extends StatelessWidget {
                       height: 9.h,
                       width: 160.w,
                       decoration: BoxDecoration(
-                        color: AppColors.textSecondary.withOpacity(0.09),
+                        color: AppColors.textSecondary.withValues(alpha: 0.09),
                         borderRadius: BorderRadius.circular(999.r),
                       ),
                     ),
@@ -2072,7 +2072,7 @@ class _SmallStatusPill extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.08),
+        color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999.r),
       ),
       child: Row(
@@ -2127,3 +2127,4 @@ class AddressResult {
   final String fullAddress;
   final LatLng location;
 }
+

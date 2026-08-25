@@ -153,7 +153,7 @@ final class RideActionsViewModelProvider
 }
 
 String _$rideActionsViewModelHash() =>
-    r'928de38b15380cf43fab6eb80ac42d7fdee7d3ac';
+    r'ca8c5136e0a1a2de998d0971904fb05009afa712';
 
 /// Delegates ride operations through the [RideService] for validated
 /// business logic. Falls back to the repository only for operations
@@ -699,7 +699,7 @@ final class RideSearchViewModelProvider
 }
 
 String _$rideSearchViewModelHash() =>
-    r'8155e69a06aea98ad386cbefad9c59dc7b862e7e';
+    r'a6dcc5b9e61cf66839ee1d15a22092e28d4c965e';
 
 /// Ride Search View Model
 ///

@@ -251,12 +251,4 @@ class BookingRepository {
 
   /// Get pending bookings for a ride
 
-  Stream<List<RideBooking>> streamPendingBookingsByRideId(String rideId) {
-    return _bookingsCollection
-        .where('rideId', isEqualTo: rideId)
-        .where('status', isEqualTo: 'pending')
-        .orderBy('createdAt')
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
-  }
 }

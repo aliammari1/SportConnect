@@ -236,7 +236,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(color: AppColors.border),
             ),
@@ -309,10 +309,10 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
           // Attachment
           GestureDetector(
             onTap: _pickFiles,
-            child: Container(
+              child: Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
                   color: AppColors.border,

@@ -1153,7 +1153,7 @@ class _Podium extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient:  LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [AppColors.primarySurface, AppColors.background],

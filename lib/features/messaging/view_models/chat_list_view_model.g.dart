@@ -42,7 +42,7 @@ final class ChatListUiViewModelProvider
 }
 
 String _$chatListUiViewModelHash() =>
-    r'922875ab2b918b571fcf9facaa6e49596fc6043d';
+    r'36e70fc696d3f7ca376144782b5b3d5467e83d82';
 
 abstract class _$ChatListUiViewModel extends $Notifier<ChatListUiState> {
   ChatListUiState build();
@@ -62,55 +62,126 @@ abstract class _$ChatListUiViewModel extends $Notifier<ChatListUiState> {
   }
 }
 
-@ProviderFor(NewChatSearchViewModel)
-final newChatSearchViewModelProvider = NewChatSearchViewModelProvider._();
+/// Exact unread count via a server-side count() aggregation — one billed
+/// read per refresh regardless of backlog size. Only watched for chats whose
+/// [since] cursor is behind `lastMessageAt`; read rows never query.
+///
+/// The provider family key includes the cursor so a new message (which bumps
+/// lastMessageAt → list rebuild with unchanged cursor still matches) or a
+/// markAsRead (cursor advances → new key) naturally re-runs this.
 
-final class NewChatSearchViewModelProvider
-    extends $NotifierProvider<NewChatSearchViewModel, NewChatSearchState> {
-  NewChatSearchViewModelProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'newChatSearchViewModelProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+@ProviderFor(unreadCount)
+final unreadCountProvider = UnreadCountFamily._();
+
+/// Exact unread count via a server-side count() aggregation — one billed
+/// read per refresh regardless of backlog size. Only watched for chats whose
+/// [since] cursor is behind `lastMessageAt`; read rows never query.
+///
+/// The provider family key includes the cursor so a new message (which bumps
+/// lastMessageAt → list rebuild with unchanged cursor still matches) or a
+/// markAsRead (cursor advances → new key) naturally re-runs this.
+
+final class UnreadCountProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
+    with $FutureModifier<int>, $FutureProvider<int> {
+  /// Exact unread count via a server-side count() aggregation — one billed
+  /// read per refresh regardless of backlog size. Only watched for chats whose
+  /// [since] cursor is behind `lastMessageAt`; read rows never query.
+  ///
+  /// The provider family key includes the cursor so a new message (which bumps
+  /// lastMessageAt → list rebuild with unchanged cursor still matches) or a
+  /// markAsRead (cursor advances → new key) naturally re-runs this.
+  UnreadCountProvider._({
+    required UnreadCountFamily super.from,
+    required ({String chatId, String userId, DateTime? since}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'unreadCountProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
-  String debugGetCreateSourceHash() => _$newChatSearchViewModelHash();
+  String debugGetCreateSourceHash() => _$unreadCountHash();
+
+  @override
+  String toString() {
+    return r'unreadCountProvider'
+        ''
+        '$argument';
+  }
 
   @$internal
   @override
-  NewChatSearchViewModel create() => NewChatSearchViewModel();
+  $FutureProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(NewChatSearchState value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<NewChatSearchState>(value),
+  @override
+  FutureOr<int> create(Ref ref) {
+    final argument =
+        this.argument as ({String chatId, String userId, DateTime? since});
+    return unreadCount(
+      ref,
+      chatId: argument.chatId,
+      userId: argument.userId,
+      since: argument.since,
     );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is UnreadCountProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
   }
 }
 
-String _$newChatSearchViewModelHash() =>
-    r'8eec798cc0ccf78acf884422771e2ccdbe55d711';
+String _$unreadCountHash() => r'78e691118024f20ecc47187bd40ca13d6096077a';
 
-abstract class _$NewChatSearchViewModel extends $Notifier<NewChatSearchState> {
-  NewChatSearchState build();
-  @$mustCallSuper
+/// Exact unread count via a server-side count() aggregation — one billed
+/// read per refresh regardless of backlog size. Only watched for chats whose
+/// [since] cursor is behind `lastMessageAt`; read rows never query.
+///
+/// The provider family key includes the cursor so a new message (which bumps
+/// lastMessageAt → list rebuild with unchanged cursor still matches) or a
+/// markAsRead (cursor advances → new key) naturally re-runs this.
+
+final class UnreadCountFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<int>,
+          ({String chatId, String userId, DateTime? since})
+        > {
+  UnreadCountFamily._()
+    : super(
+        retry: null,
+        name: r'unreadCountProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Exact unread count via a server-side count() aggregation — one billed
+  /// read per refresh regardless of backlog size. Only watched for chats whose
+  /// [since] cursor is behind `lastMessageAt`; read rows never query.
+  ///
+  /// The provider family key includes the cursor so a new message (which bumps
+  /// lastMessageAt → list rebuild with unchanged cursor still matches) or a
+  /// markAsRead (cursor advances → new key) naturally re-runs this.
+
+  UnreadCountProvider call({
+    required String chatId,
+    required String userId,
+    required DateTime? since,
+  }) => UnreadCountProvider._(
+    argument: (chatId: chatId, userId: userId, since: since),
+    from: this,
+  );
+
   @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<NewChatSearchState, NewChatSearchState>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<NewChatSearchState, NewChatSearchState>,
-              NewChatSearchState,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
+  String toString() => r'unreadCountProvider';
 }

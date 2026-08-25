@@ -2636,12 +2636,6 @@ abstract class AppLocalizations {
   /// **'Level {value}'**
   String levelValue(Object value);
 
-  /// Text from Text in driver_profile_screen.dart
-  ///
-  /// In en, this message translates to:
-  /// **'Verified Driver'**
-  String get verifiedDriver;
-
   /// Text from _buildQuickStat in driver_profile_screen.dart
   ///
   /// In en, this message translates to:
@@ -2677,6 +2671,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Quick Actions'**
   String get quickActions;
+
+  /// No description provided for @needsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get needsAttention;
 
   /// Text from Text in driver_profile_screen.dart
   ///
@@ -3457,12 +3457,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New member'**
   String get newMember;
-
-  /// Text from Text in profile_screen.dart
-  ///
-  /// In en, this message translates to:
-  /// **'Verified Info'**
-  String get verifiedInfo;
 
   /// Text from Text in profile_screen.dart
   ///
@@ -4844,6 +4838,30 @@ abstract class AppLocalizations {
   /// **'Keep Ride'**
   String get keepRide;
 
+  /// No description provided for @cancelBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel booking'**
+  String get cancelBooking;
+
+  /// No description provided for @cancelBookingConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel your booking? Cancellation policies may apply.'**
+  String get cancelBookingConfirm;
+
+  /// No description provided for @bookingCancelledRefundPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking cancelled - refund will be processed within 5-10 business days.'**
+  String get bookingCancelledRefundPending;
+
+  /// No description provided for @bookingCancelledNoRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking cancelled - no refund applies as the ride had already started.'**
+  String get bookingCancelledNoRefund;
+
   /// Text from Text in active_ride_screen.dart
   ///
   /// In en, this message translates to:
@@ -5617,12 +5635,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{value}+'**
   String value13(Object value);
-
-  /// Text from _buildToggleChip.label in ride_search_screen.dart
-  ///
-  /// In en, this message translates to:
-  /// **'Verified driver'**
-  String get verifiedDriver2;
 
   /// Text from _buildToggleChip.label in ride_search_screen.dart
   ///
@@ -7123,18 +7135,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Browse available rides and book instantly'**
   String get browseAvailableRidesAndBook;
-
-  /// No description provided for @verifiedDrivers.
-  ///
-  /// In en, this message translates to:
-  /// **'Verified Drivers'**
-  String get verifiedDrivers;
-
-  /// No description provided for @allDriversAreVerified.
-  ///
-  /// In en, this message translates to:
-  /// **'All drivers are verified for your safety and comfort'**
-  String get allDriversAreVerified;
 
   /// No description provided for @locationGateDescription.
   ///
@@ -8822,6 +8822,324 @@ abstract class AppLocalizations {
   /// **'Processing payment...'**
   String get processingPaymentLoading;
 
+  /// No description provided for @paymentRefundAssurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Full refund if your driver cancels or doesn\'t show up'**
+  String get paymentRefundAssurance;
+
+  /// No description provided for @refundPolicyLinkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund Policy'**
+  String get refundPolicyLinkLabel;
+
+  /// No description provided for @searchErrorMissingLocations.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter both pickup and destination'**
+  String get searchErrorMissingLocations;
+
+  /// No description provided for @searchErrorSameLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup and destination can\'t be the same'**
+  String get searchErrorSameLocation;
+
+  /// No description provided for @searchErrorPastDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date from today onward'**
+  String get searchErrorPastDate;
+
+  /// No description provided for @searchErrorInvalidSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Seats must be between 1 and 4'**
+  String get searchErrorInvalidSeats;
+
+  /// No description provided for @paymentFinalizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Finalizing your payment…'**
+  String get paymentFinalizing;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Match system'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @bookingRequestExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This request expired before the driver responded.'**
+  String get bookingRequestExpired;
+
+  /// No description provided for @bookingRequestSearchAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Search rides again'**
+  String get bookingRequestSearchAgain;
+
+  /// No description provided for @opsConsoleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ops console'**
+  String get opsConsoleTitle;
+
+  /// No description provided for @tabOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get tabOverview;
+
+  /// No description provided for @tabRides.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides'**
+  String get tabRides;
+
+  /// No description provided for @tabPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get tabPeople;
+
+  /// No description provided for @kpiRidesToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides today'**
+  String get kpiRidesToday;
+
+  /// No description provided for @kpiBookingsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookings completed (7d)'**
+  String get kpiBookingsCompleted;
+
+  /// No description provided for @kpiPaymentVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume (7d)'**
+  String get kpiPaymentVolume;
+
+  /// No description provided for @kpiNewUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'New users (7d)'**
+  String get kpiNewUsers;
+
+  /// No description provided for @kpiOpenDisputes.
+  ///
+  /// In en, this message translates to:
+  /// **'Open disputes'**
+  String get kpiOpenDisputes;
+
+  /// No description provided for @kpiCancellationRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation rate'**
+  String get kpiCancellationRate;
+
+  /// No description provided for @sectionLiveNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Live now'**
+  String get sectionLiveNow;
+
+  /// No description provided for @sectionUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get sectionUpcoming;
+
+  /// No description provided for @sectionCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get sectionCompleted;
+
+  /// No description provided for @sectionCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get sectionCancelled;
+
+  /// No description provided for @peopleSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search people by username'**
+  String get peopleSearchHint;
+
+  /// No description provided for @actionSuspendUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspend user'**
+  String get actionSuspendUser;
+
+  /// No description provided for @actionReinstateUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Reinstate user'**
+  String get actionReinstateUser;
+
+  /// No description provided for @actionGrantPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant premium'**
+  String get actionGrantPremium;
+
+  /// No description provided for @actionRevokePremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke premium'**
+  String get actionRevokePremium;
+
+  /// No description provided for @actionCancelRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel ride'**
+  String get actionCancelRide;
+
+  /// No description provided for @tabMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Money'**
+  String get tabMoney;
+
+  /// No description provided for @tabMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get tabMore;
+
+  /// No description provided for @noResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results'**
+  String get noResults;
+
+  /// No description provided for @paymentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get paymentsTitle;
+
+  /// No description provided for @refundsQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund queue'**
+  String get refundsQueue;
+
+  /// No description provided for @reportsQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get reportsQueue;
+
+  /// No description provided for @supportInbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Support inbox'**
+  String get supportInbox;
+
+  /// No description provided for @broadcastPush.
+  ///
+  /// In en, this message translates to:
+  /// **'Send push'**
+  String get broadcastPush;
+
+  /// No description provided for @platformSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform settings'**
+  String get platformSettings;
+
+  /// No description provided for @auditLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Audit log'**
+  String get auditLog;
+
+  /// No description provided for @markResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark resolved'**
+  String get markResolved;
+
+  /// No description provided for @pushTargetUid.
+  ///
+  /// In en, this message translates to:
+  /// **'Target user UID'**
+  String get pushTargetUid;
+
+  /// No description provided for @pushTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification title'**
+  String get pushTitleHint;
+
+  /// No description provided for @pushBodyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification body'**
+  String get pushBodyHint;
+
+  /// No description provided for @commissionPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Commission %'**
+  String get commissionPercent;
+
+  /// No description provided for @refundWindowDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund window (days)'**
+  String get refundWindowDays;
+
+  /// No description provided for @maintenanceMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance mode'**
+  String get maintenanceMode;
+
+  /// No description provided for @configSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get configSaved;
+
+  /// No description provided for @approve.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get approve;
+
+  /// No description provided for @reject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get reject;
+
+  /// No description provided for @sendPushAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Send push'**
+  String get sendPushAction;
+
   /// No description provided for @completePaymentButton.
   ///
   /// In en, this message translates to:
@@ -10015,6 +10333,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to create chat. Please try again.'**
   String get failedToCreateChatTryAgain;
+
+  /// Context badge on a person card and chat header when a shared ride connects the users
+  ///
+  /// In en, this message translates to:
+  /// **'Shared ride · {name}'**
+  String connectionSharedRide(String name);
+
+  /// Context badge on a person card and chat header when a shared event connects the users
+  ///
+  /// In en, this message translates to:
+  /// **'Same event · {name}'**
+  String connectionSharedEvent(String name);
+
+  /// No description provided for @peopleNoSharedContext.
+  ///
+  /// In en, this message translates to:
+  /// **'No shared rides or events yet'**
+  String get peopleNoSharedContext;
+
+  /// No description provided for @chatLockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Messaging unlocks after you share a ride or event'**
+  String get chatLockedTitle;
+
+  /// No description provided for @chatLockedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This keeps SportConnect spam-free. Join a ride or event together and you can message right away.'**
+  String get chatLockedBody;
+
+  /// No description provided for @chatLockedBrowseRides.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse rides'**
+  String get chatLockedBrowseRides;
+
+  /// Secondary action in the locked-chat panel
+  ///
+  /// In en, this message translates to:
+  /// **'View {name}\'s profile'**
+  String chatLockedViewProfile(String name);
+
+  /// Pill above the first messages of a newly connected private chat
+  ///
+  /// In en, this message translates to:
+  /// **'You both rode in {name}'**
+  String warmStartRide(String name);
+
+  /// Pill above the first messages of a newly connected private chat
+  ///
+  /// In en, this message translates to:
+  /// **'You both attended {name}'**
+  String warmStartEvent(String name);
+
+  /// Inline reason under the disabled message affordance on a profile with no connection
+  ///
+  /// In en, this message translates to:
+  /// **'You can message {name} once you\'ve shared a ride or attended the same event.'**
+  String profileMessageGateReason(String name);
+
+  /// No description provided for @chatSendNetworkRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send. Tap to retry.'**
+  String get chatSendNetworkRetry;
+
+  /// No description provided for @chatOpenNetworkRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the chat. Check your connection.'**
+  String get chatOpenNetworkRetry;
 
   /// No description provided for @reportUser.
   ///

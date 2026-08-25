@@ -28,6 +28,31 @@
       }
     },
 
+    // Ephemeral chat signals (typing indicators).
+    // Path: chat_status/{chatId}/typing/{uid} - each client writes ONLY its own
+    // node (set while typing, removed on stop, plus onDisconnect cleanup);
+    // read is granted at the typing level because that is where the listener
+    // attaches. RTDB cannot cross-reference Firestore chat membership, so we
+    // enforce authentication here - same tradeoff as liveLocations above.
+    "chat_status": {
+      "$chatId": {
+        "typing": {
+          ".read": "auth != null",
+
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+
+            ".validate": "newData.hasChildren(['userId', 'username', 'startedAt'])",
+            "userId":    { ".validate": "newData.isString() && newData.val() === $uid" },
+            "username":  { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
+            "startedAt": { ".validate": "newData.isNumber() && newData.val() > 0" },
+
+            "$other": { ".validate": false }
+          }
+        }
+      }
+    },
+
     // Deny all other read/write by default
     ".read": false,
     ".write": false

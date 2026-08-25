@@ -204,6 +204,10 @@ class _PremiumTextFieldState extends State<PremiumTextField>
               enabled: widget.enabled,
               autofocus: widget.autofocus,
               keyboardType: widget.keyboardType,
+              keyboardAppearance:
+                  Theme.of(context).brightness == Brightness.dark
+                  ? Brightness.dark
+                  : Brightness.light,
               textInputAction: widget.textInputAction,
               inputFormatters: widget.inputFormatters,
               maxLines: widget.maxLines,
@@ -417,6 +421,10 @@ class _PremiumSearchFieldState extends State<PremiumSearchField> {
               controller: _controller,
               autofocus: widget.autofocus,
               readOnly: widget.readOnly,
+              keyboardAppearance:
+                  Theme.of(context).brightness == Brightness.dark
+                  ? Brightness.dark
+                  : Brightness.light,
               onChanged: widget.onChanged,
               onSubmitted: widget.onSubmitted,
               onTap: widget.onTap,
@@ -578,6 +586,10 @@ class _PremiumPinFieldState extends State<PremiumPinField> {
               controller: _controller,
               focusNode: _focusNode,
               keyboardType: TextInputType.number,
+              keyboardAppearance:
+                  Theme.of(context).brightness == Brightness.dark
+                  ? Brightness.dark
+                  : Brightness.light,
               maxLength: widget.length,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: const InputDecoration(counterText: ''),

@@ -248,17 +248,6 @@ class RideActionsViewModel extends _$RideActionsViewModel {
     return ref.read(rideRepositoryProvider).cancelBooking(rideId: rideId, bookingId: bookingId);
   }
 
-  /// Stamps the booking with the Stripe payment intent ID once payment
-  /// succeeds. Prevents the "Complete Payment" button from reappearing
-  /// and guards against double-charges on back-navigation.
-  Future<void> markBookingPaid({
-    required String bookingId,
-    required String paymentIntentId,
-  }) async {
-    // No-op on client.
-    // Booking payment fields are written by the Stripe webhook.
-  }
-
   Stream<RideModel?> streamRideById(String rideId) {
     return ref.read(rideRepositoryProvider).streamRideById(rideId);
   }
@@ -764,6 +753,9 @@ class RideFormViewModel extends _$RideFormViewModel {
 /// Search state - includes both committed filters and draft UI state
 enum RideSearchResultViewMode { list, map }
 
+/// Semantic search-input failures; the UI owns the localized copy.
+enum RideSearchInputError { missingLocations, sameLocation, pastDate, invalidSeats }
+
 class RideSearchState {
   RideSearchState({
     this.rides = const [],
@@ -780,7 +772,6 @@ class RideSearchState {
     this.hasSearched = false,
     this.draftMaxPrice = 100,
     this.draftFemaleOnly = false,
-    this.draftVerifiedOnly = false,
     this.draftPetFriendly = false,
     this.draftNoSmoking = false,
     this.draftLuggageRequired = false,
@@ -812,7 +803,6 @@ class RideSearchState {
   // Draft filter state
   final int draftMaxPrice;
   final bool draftFemaleOnly;
-  final bool draftVerifiedOnly;
   final bool draftPetFriendly;
   final bool draftNoSmoking;
   final bool draftLuggageRequired;
@@ -839,7 +829,6 @@ class RideSearchState {
     bool? hasSearched,
     int? draftMaxPrice,
     bool? draftFemaleOnly,
-    bool? draftVerifiedOnly,
     bool? draftPetFriendly,
     bool? draftNoSmoking,
     bool? draftLuggageRequired,
@@ -868,7 +857,6 @@ class RideSearchState {
       hasSearched: hasSearched ?? this.hasSearched,
       draftMaxPrice: draftMaxPrice ?? this.draftMaxPrice,
       draftFemaleOnly: draftFemaleOnly ?? this.draftFemaleOnly,
-      draftVerifiedOnly: draftVerifiedOnly ?? this.draftVerifiedOnly,
       draftPetFriendly: draftPetFriendly ?? this.draftPetFriendly,
       draftNoSmoking: draftNoSmoking ?? this.draftNoSmoking,
       draftLuggageRequired: draftLuggageRequired ?? this.draftLuggageRequired,
@@ -888,7 +876,6 @@ class RideSearchState {
 
   bool get hasActiveFilters =>
       draftFemaleOnly ||
-      draftVerifiedOnly ||
       draftPetFriendly ||
       draftNoSmoking ||
       draftLuggageRequired ||
@@ -899,7 +886,6 @@ class RideSearchState {
     var count = 0;
     if (draftMaxPrice < 100) count++;
     if (draftFemaleOnly) count++;
-    if (draftVerifiedOnly) count++;
     if (draftPetFriendly) count++;
     if (draftNoSmoking) count++;
     if (draftLuggageRequired) count++;
@@ -1024,9 +1010,6 @@ List<RideModel> _applyRideSearchPresentation(
     if (state.draftMinRating > 0 && ride.averageRating < state.draftMinRating) {
       return false;
     }
-    if (state.draftVerifiedOnly && !ride.isDriverVerified) {
-      return false;
-    }
     return true;
   }).toList();
 
@@ -1133,13 +1116,6 @@ class RideSearchViewModel extends _$RideSearchViewModel {
     );
   }
 
-  void setDraftVerifiedOnly(bool value) {
-    state = state.copyWith(
-      draftVerifiedOnly: value,
-      visibleResultCount: _pageSize,
-    );
-  }
-
   void setDraftPetFriendly(bool value) {
     state = state.copyWith(
       draftPetFriendly: value,
@@ -1187,7 +1163,6 @@ class RideSearchViewModel extends _$RideSearchViewModel {
     state = state.copyWith(
       draftMaxPrice: 100,
       draftFemaleOnly: false,
-      draftVerifiedOnly: false,
       draftPetFriendly: false,
       draftNoSmoking: false,
       draftLuggageRequired: false,
@@ -1232,27 +1207,27 @@ class RideSearchViewModel extends _$RideSearchViewModel {
 
   /// Validates and executes a search with current draft state.
   /// Returns error message if validation fails, null on success.
-  Future<String?> searchRides({bool forceRefresh = false}) async {
+  Future<RideSearchInputError?> searchRides({bool forceRefresh = false}) async {
     // Validation: origin and destination required
     if (state.draftOrigin == null || state.draftDestination == null) {
-      return 'Please enter both locations';
+      return RideSearchInputError.missingLocations;
     }
 
     // Validation: prevent same origin and destination
     if (state.draftOrigin!.latitude == state.draftDestination!.latitude &&
         state.draftOrigin!.longitude == state.draftDestination!.longitude) {
-      return 'Pickup and destination cannot be the same location';
+      return RideSearchInputError.sameLocation;
     }
 
     // Validation: date must not be in the past
     final now = DateTime.now();
     if (state.draftDate.isBefore(DateTime(now.year, now.month, now.day))) {
-      return 'Cannot search for past dates';
+      return RideSearchInputError.pastDate;
     }
 
     // Validation: seats must be valid
     if (state.draftSeats < 1 || state.draftSeats > 4) {
-      return 'Seats must be between 1 and 4';
+      return RideSearchInputError.invalidSeats;
     }
 
     final queryKey = _buildDraftQueryKey(state);
@@ -1346,7 +1321,9 @@ class RideSearchViewModel extends _$RideSearchViewModel {
         error: e.toString(),
         pendingQueryKey: null,
       );
-      return e.toString();
+      // Runtime failures surface through state.error (the results list shows
+      // a retryable error view); null means "no input validation problem".
+      return null;
     }
   }
 
@@ -1396,7 +1373,6 @@ String _buildDraftQueryKey(RideSearchState state) {
     state.draftSeats,
     state.draftMaxPrice.toStringAsFixed(2),
     state.draftFemaleOnly,
-    state.draftVerifiedOnly,
     state.draftPetFriendly,
     state.draftNoSmoking,
     state.draftLuggageRequired,

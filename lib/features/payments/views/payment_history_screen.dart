@@ -13,6 +13,7 @@ import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/utils/locale_formatters.dart';
 import 'package:sport_connect/core/utils/payment_error_handler.dart';
+import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/analytics_payment_widgets.dart';
 import 'package:sport_connect/core/widgets/app_modal_sheet.dart';
 import 'package:sport_connect/core/widgets/key_value_row.dart';
@@ -20,7 +21,6 @@ import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/payments/models/payment_model.dart';
 import 'package:sport_connect/features/payments/view_models/payment_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
-import 'package:sport_connect/core/utils/responsive_utils.dart';
 
 /// Payment History Screen - View all payment transactions for a rider
 class PaymentHistoryScreen extends ConsumerWidget {
@@ -1152,7 +1152,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
   }
 
   Widget _buildDivider() {
-    return const Divider(
+    return Divider(
       height: 1,
       thickness: 1,
       color: AppColors.divider,

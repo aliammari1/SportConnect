@@ -1569,7 +1569,7 @@ class _RequestCard extends ConsumerWidget {
       context.pop();
       AdaptiveSnackBar.show(
         context,
-        message: AppLocalizations.of(context).failedToCreateChatTryAgain,
+        message: AppLocalizations.of(context).chatOpenNetworkRetry,
         type: AdaptiveSnackBarType.error,
       );
     }

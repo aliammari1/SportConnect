@@ -148,7 +148,7 @@ class PermissionDialogHelper {
                         onPressed: () => Navigator.of(ctx).pop(false),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.textSecondary,
-                          side: const BorderSide(color: AppColors.border),
+                          side: BorderSide(color: AppColors.divider),
                           padding: EdgeInsets.symmetric(vertical: 14.h),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(

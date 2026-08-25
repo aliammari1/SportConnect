@@ -16,6 +16,7 @@ import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/services/location_service.dart';
+import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/platform_adaptive.dart';
 import 'package:sport_connect/core/utils/responsive_utils.dart';
@@ -24,6 +25,7 @@ import 'package:sport_connect/core/widgets/permission_dialog_helper.dart';
 import 'package:sport_connect/core/widgets/premium_avatar.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/messaging/models/message_model.dart';
+import 'package:sport_connect/features/messaging/repositories/chat_repository.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_view_model.dart';
 import 'package:sport_connect/features/messaging/widgets/message_content_widgets.dart';
 import 'package:sport_connect/features/messaging/widgets/typing_dot.dart';
@@ -57,6 +59,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   late UserModel _resolvedReceiver;
   bool _isResolvingReceiver = false;
 
+  // Caps the receiver-resolution retry loop: build() re-schedules resolution
+  // every frame while the receiver uid stays empty, so a permanently missing
+  // chat document would otherwise fire a network read per frame forever.
+  int _resolveAttempts = 0;
+  static const int _maxResolveAttempts = 3;
+
   // Local-only marker for the most recent send failure. The Firestore write
   // in ChatRepository.sendMessage is a single atomic batch, so a failure
   // means no message document was ever created — there is nothing server-side
@@ -65,12 +73,28 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   // dropping it (beyond the existing composer-restore + snackbar).
   MessageModel? _lastFailedMessage;
 
+  // Tri-state composer lock: null = not resolved yet, false = connected,
+  // true = locked (no shared ride/event/booking with the receiver).
+  bool? _connectionLocked;
+  ConnectionContext? _resolvedContext;
+
   // ── Convenience getters ──────────────────────────────────────────────────
 
   UserModel? get currentUser => ref.read(currentUserProvider).value;
   String get _chatId => _activeChatId;
   bool get _isDraftChat => isDraftChatId(_activeChatId);
   UserModel get _receiver => _resolvedReceiver;
+
+  /// Non-null only inside the widget tree below [build]'s login gate; event
+  /// callbacks must treat a null uid as "logged out mid-session" and no-op
+  /// instead of building providers keyed on an empty-string family argument,
+  /// which silently spawns a second, wrong provider instance.
+  String? get _safeUid => ref.read(currentUserProvider).value?.uid;
+
+  bool get _showWarmStartPill {
+    final ctx = _resolvedContext;
+    return ctx != null && ctx.connected && ctx.label != null;
+  }
 
   // ── Snack-bar helpers ────────────────────────────────────────────────────
 
@@ -110,6 +134,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     _messageController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _resolveReceiverIfNeeded();
+      unawaited(_resolveConnectionContext());
     });
   }
 
@@ -124,24 +149,21 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   // ── Scroll / text listeners ──────────────────────────────────────────────
 
   void _onScroll() {
+    final uid = _safeUid;
+    if (uid == null) return;
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       ref
-          .read(
-            chatDetailViewModelProvider(
-              _chatId,
-              currentUser?.uid ?? '',
-            ).notifier,
-          )
+          .read(chatDetailViewModelProvider(_chatId, uid).notifier)
           .loadMoreMessages();
     }
   }
 
   void _onTextChanged() {
+    final uid = _safeUid;
+    if (uid == null) return;
     ref
-        .read(
-          chatDetailViewModelProvider(_chatId, currentUser?.uid ?? '').notifier,
-        )
+        .read(chatDetailViewModelProvider(_chatId, uid).notifier)
         .handleComposerTextChanged(
           _messageController.text,
           currentUser?.username ?? AppLocalizations.of(context).user,
@@ -171,11 +193,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
       setState(() => _activeChatId = chat.id);
       ref.invalidate(userChatsProvider(user.uid));
       return true;
+    } on ChatException {
+      if (!mounted) return false;
+      setState(() => _connectionLocked = true);
+      return false;
     } on Exception {
       if (!mounted) return false;
       AdaptiveSnackBar.show(
         context,
-        message: AppLocalizations.of(context).failedToCreateChatTryAgain,
+        message: AppLocalizations.of(context).chatSendNetworkRetry,
         type: AdaptiveSnackBarType.error,
       );
       return false;
@@ -185,10 +211,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   Future<void> _resolveReceiverIfNeeded() async {
     if (_isResolvingReceiver || widget.isGroup) return;
     if (_receiver.uid.isNotEmpty || _isDraftChat) return;
+    if (_resolveAttempts >= _maxResolveAttempts) return;
     final user = currentUser;
     if (user == null) return;
 
     _isResolvingReceiver = true;
+    _resolveAttempts++;
     try {
       final chat = await ref
           .read(chatActionsViewModelProvider.notifier)
@@ -214,6 +242,25 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     }
   }
 
+  Future<void> _resolveConnectionContext() async {
+    if (!_isDraftChat) return;
+    final user = currentUser;
+    if (user == null || _receiver.uid.isEmpty) return;
+    try {
+      final ctx = await ref
+          .read(chatRepositoryProvider)
+          .getConnectionContext(user.uid, _receiver.uid);
+      if (!mounted) return;
+      setState(() {
+        _resolvedContext = ctx;
+        _connectionLocked = !ctx.connected;
+      });
+    } on Exception catch (e) {
+      TalkerService.warning('Connection context resolution failed: $e');
+      // Leave _connectionLocked null so the send-time guard still applies.
+    }
+  }
+
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
@@ -227,6 +274,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   // ── Send operations ──────────────────────────────────────────────────────
 
   Future<void> _sendMessage() async {
+    final uid = _safeUid;
+    final user = currentUser;
+    if (uid == null || user == null) return;
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
     if (!await _ensurePersistedChat()) return;
@@ -241,18 +291,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     _messageController.clear();
 
     final notifier = ref.read(
-      chatDetailViewModelProvider(_chatId, currentUser?.uid ?? '').notifier,
+      chatDetailViewModelProvider(_chatId, uid).notifier,
     );
-    final chatState = ref.read(
-      chatDetailViewModelProvider(_chatId, currentUser?.uid ?? ''),
-    );
+    final chatState = ref.read(chatDetailViewModelProvider(_chatId, uid));
 
     notifier.setEmojiPickerVisible(false);
 
     final success = await notifier.sendMessage(
       content: text,
-      senderName: currentUser?.username ?? AppLocalizations.of(context).user,
-      senderPhotoUrl: currentUser?.photoUrl,
+      senderName: user.username,
+      senderPhotoUrl: user.photoUrl,
       replyToMessageId: chatState.replyToMessage?.id,
       replyToContent: chatState.replyToMessage?.content,
     );
@@ -260,9 +308,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     if (!mounted) return;
 
     if (!success) {
-      final error = ref
-          .read(chatDetailViewModelProvider(_chatId, currentUser?.uid ?? ''))
-          .error;
+      final error =
+          ref.read(chatDetailViewModelProvider(_chatId, uid)).error;
 
       _messageController.value = TextEditingValue(
         text: text,
@@ -281,9 +328,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         _lastFailedMessage = MessageModel(
           id: 'local-failed-${DateTime.now().microsecondsSinceEpoch}',
           chatId: _chatId,
-          senderId: currentUser?.uid ?? '',
-          senderName:
-              currentUser?.username ?? AppLocalizations.of(context).user,
+          senderId: uid,
+          senderName: user.username,
           content: text,
           status: MessageStatus.failed,
           createdAt: DateTime.now(),
@@ -314,6 +360,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile == null) return;
     if (!await _ensurePersistedChat()) return;
+    final uid = _safeUid;
+    if (uid == null) return;
 
     unawaited(HapticFeedback.lightImpact());
     if (!context.mounted) return;
@@ -321,13 +369,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
     try {
       final notifier = ref.read(
-        chatDetailViewModelProvider(_chatId, currentUser?.uid ?? '').notifier,
+        chatDetailViewModelProvider(_chatId, uid).notifier,
       );
       final success = await notifier.sendImageMessage(
         imageFile: File(pickedFile.path),
         fileName: '${DateTime.now().millisecondsSinceEpoch}_${pickedFile.name}',
-        senderName: currentUser?.username ?? AppLocalizations.of(context).user,
+        senderName:
+            currentUser?.username ?? AppLocalizations.of(context).user,
         senderPhotoUrl: currentUser?.photoUrl,
+        caption: l10n.imageMessage,
       );
 
       if (!mounted) return;
@@ -335,11 +385,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
       if (!success) {
         final error =
-            ref
-                .read(
-                  chatDetailViewModelProvider(_chatId, currentUser?.uid ?? ''),
-                )
-                .error ??
+            ref.read(chatDetailViewModelProvider(_chatId, uid)).error ??
             AppLocalizations.of(context).failedToSendImage;
         _showStatusSnackBar(
           l10n.failedToSendImageValue(error),
@@ -361,11 +407,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   // ── Emoji picker ─────────────────────────────────────────────────────────
 
   void _toggleEmojiPicker() {
+    final uid = _safeUid;
+    if (uid == null) return;
     final showing = ref
-        .read(chatDetailViewModelProvider(_chatId, currentUser?.uid ?? ''))
+        .read(chatDetailViewModelProvider(_chatId, uid))
         .showEmojiPicker;
     final notifier = ref.read(
-      chatDetailViewModelProvider(_chatId, currentUser?.uid ?? '').notifier,
+      chatDetailViewModelProvider(_chatId, uid).notifier,
     );
 
     if (showing) {
@@ -823,6 +871,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
             Column(
               children: [
                 if (isReceiverBlocked) _buildBlockedBanner(),
+                if (_showWarmStartPill) _buildWarmStartPill(),
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
@@ -850,20 +899,28 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                 if (_lastFailedMessage != null) _buildFailedMessageBanner(),
                 if (chatState.replyToMessage != null)
                   _buildReplyPreview(chatState.replyToMessage!),
-                if (!isReceiverBlocked) _buildInputArea(),
-                if (!isReceiverBlocked && chatState.showEmojiPicker)
+                if (!isReceiverBlocked)
+                  _connectionLocked == true
+                      ? _LockedComposerPanel(
+                          receiverName: _receiver.username,
+                          receiverId: _receiver.uid,
+                        )
+                      : _buildInputArea(),
+                if (!isReceiverBlocked &&
+                    _connectionLocked != true &&
+                    chatState.showEmojiPicker)
                   SizedBox(
                     height: 280.h,
                     child: emoji_picker.EmojiPicker(
                       textEditingController: _messageController,
                       config: emoji_picker.Config(
                         height: 280.h,
-                        emojiViewConfig: const emoji_picker.EmojiViewConfig(
+                        emojiViewConfig: emoji_picker.EmojiViewConfig(
                           backgroundColor: AppColors.cardBg,
                           columns: 8,
                         ),
                         categoryViewConfig:
-                            const emoji_picker.CategoryViewConfig(
+                             emoji_picker.CategoryViewConfig(
                               backgroundColor: AppColors.cardBg,
                               indicatorColor: AppColors.primary,
                               iconColor: AppColors.textTertiary,
@@ -873,7 +930,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                             const emoji_picker.BottomActionBarConfig(
                               enabled: false,
                             ),
-                        searchViewConfig: const emoji_picker.SearchViewConfig(
+                        searchViewConfig: emoji_picker.SearchViewConfig(
                           backgroundColor: AppColors.cardBg,
                           buttonIconColor: AppColors.textSecondary,
                         ),
@@ -889,6 +946,50 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   }
 
   // ── Screen sections ──────────────────────────────────────────────────────
+
+  Widget _buildWarmStartPill() {
+    final ctx = _resolvedContext!;
+    final label = ctx.label!;
+    final l10n = AppLocalizations.of(context);
+    final isEvent = ctx.kind == ConnectionKind.sharedEvent;
+    return Padding(
+      padding: EdgeInsets.only(top: 8.h),
+      child: Center(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isEvent ? Icons.event_rounded : Icons.directions_car_rounded,
+                size: 14.sp,
+                color: AppColors.primary,
+              ),
+              SizedBox(width: 6.w),
+              Flexible(
+                child: Text(
+                  isEvent
+                      ? l10n.warmStartEvent(label)
+                      : l10n.warmStartRide(label),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildEmptyState() {
     return Center(
@@ -1227,7 +1328,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                 Text(
                   AppLocalizations.of(
                     context,
-                  ).replyingToValue(message.senderName),
+                  ).replyingToValue(message.senderName ?? ''),
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
@@ -1261,16 +1362,22 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     );
   }
 
+  // Message ids that already played their entrance animation. flutter_animate
+  // replays whenever its Animate element is rebuilt, and a reversed ListView
+  // rebuilds every bubble when an insertion shifts indexes — without this
+  // gate, incoming messages re-animate the entire visible history.
+  final Set<String> _animatedMessageIds = {};
+
   Widget _buildMessageBubble(
     MessageModel message,
     bool isMe,
     bool showAvatar,
     int index,
   ) {
-    return Semantics(
+    final Widget bubble = Semantics(
           label: AppLocalizations.of(
             context,
-          ).messageFromLongPressOptions(message.senderName),
+          ).messageFromLongPressOptions(message.senderName ?? ''),
           child: GestureDetector(
             onLongPress: () => _showMessageOptions(message),
             child: Padding(
@@ -1378,13 +1485,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
               ),
             ),
           ),
-        )
-        .animate()
-        .fadeIn(
-          duration: 300.ms,
-          delay: Duration(milliseconds: 50 * (index % 5)),
-        )
-        .slideX(begin: isMe ? 0.1 : -0.1, curve: Curves.easeOut);
+        );
+
+    if (!_animatedMessageIds.add(message.id)) return bubble;
+    // No index-derived stagger: it re-plays on every rebuild and shifts when
+    // the list changes. A single delay-free fade keeps new bubbles animated.
+    return bubble.animate().fadeIn(duration: 200.ms);
   }
 
   void _showMessageOptions(MessageModel message) {
@@ -1409,7 +1515,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
     Future<void> onDelete() async {
       try {
-        await notifier.deleteMessage(message.id);
+        await notifier.deleteMessage(message);
         if (!mounted) return;
         AdaptiveSnackBar.show(
           context,
@@ -1441,13 +1547,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
           title: l10n.copy,
           onTap: onCopy,
         ),
-        if (isMe && !message.isDeleted)
+        if (isMe && !message.isTombstone)
           AppModalAction(
             icon: Icons.edit_rounded,
             title: l10n.actionEdit,
             onTap: () => _showEditDialog(message),
           ),
-        if (isMe && !message.isDeleted)
+        if (isMe && !message.isTombstone)
           AppModalAction(
             icon: Icons.delete_outline_rounded,
             title: l10n.actionDelete,
@@ -1537,13 +1643,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                       border: Border.all(
                         color: _focusNode.hasFocus
                             ? AppColors.primary
-                            : AppColors.border.withOpacity(0.4),
+                            : AppColors.border.withValues(alpha: 0.4),
                         width: _focusNode.hasFocus ? 1.5 : 1,
                       ),
                       boxShadow: _focusNode.hasFocus
                           ? [
                               BoxShadow(
-                                color: AppColors.primary.withOpacity(0.1),
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.1,
+                                ),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -1803,13 +1911,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
       if (!mounted) return;
       Navigator.of(context).pop(); // Close loading dialog.
+      final uid = _safeUid;
+      if (uid == null) return;
 
       final success = await ref
           .read(
-            chatDetailViewModelProvider(
-              _chatId,
-              currentUser?.uid ?? '',
-            ).notifier,
+            chatDetailViewModelProvider(_chatId, uid).notifier,
           )
           .sendLocationMessage(
             content: locationName,
@@ -2000,3 +2107,99 @@ class _EditMessageDialogState extends ConsumerState<_EditMessageDialog> {
     );
   }
 }
+
+/// Rendered in place of the composer when the connection rule locks a draft
+/// chat (the pair share no ride, event, or booking yet).
+class _LockedComposerPanel extends StatelessWidget {
+  const _LockedComposerPanel({
+    required this.receiverName,
+    required this.receiverId,
+  });
+
+  final String receiverName;
+  final String receiverId;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          top: BorderSide(color: AppColors.border.withValues(alpha: 0.75)),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56.w,
+                height: 56.w,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.lock_outline_rounded,
+                  size: 26.sp,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              SizedBox(height: 14.h),
+              Text(
+                l10n.chatLockedTitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                l10n.chatLockedBody,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  height: 1.45,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => context.go(AppRoutes.home.path),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                  ),
+                  child: Text(
+                    l10n.chatLockedBrowseRides,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.pushNamed(
+                  AppRoutes.userProfile.name,
+                  pathParameters: {'id': receiverId},
+                ),
+                child: Text(l10n.chatLockedViewProfile(receiverName)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+

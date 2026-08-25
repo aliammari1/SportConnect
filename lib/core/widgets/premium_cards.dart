@@ -94,7 +94,7 @@ class _PremiumCardState extends State<PremiumCard>
       case PremiumCardStyle.glass:
         return BoxDecoration(
           // Glass: translucent surface (only styled on iOS)
-          color: (widget.backgroundColor ?? Colors.white).withValues(
+          color: (widget.backgroundColor ?? AppColors.cardBg).withValues(
             alpha: PlatformAdaptive.isApple ? 0.12 : 0.06,
           ),
           borderRadius: BorderRadius.circular(widget.borderRadius.r),

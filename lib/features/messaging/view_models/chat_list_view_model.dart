@@ -1,15 +1,20 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sport_connect/core/models/user/models.dart';
-import 'package:sport_connect/features/profile/view_models/profile_view_model.dart';
+import 'package:sport_connect/core/constants/app_constants.dart';
+import 'package:sport_connect/core/services/firebase_service.dart';
 
 part 'chat_list_view_model.g.dart';
 
-// ── ChatListUiState ───────────────────────────────────────────────────────────
+// ── ChatListUiViewModel ───────────────────────────────────────────────────────
 
 /// Holds the search query typed in the chat list search bar.
-/// Kept as a plain class — too simple to justify @freezed overhead.
+///
+/// The query is debounced before it reaches state: watchers drive the
+/// Firestore people-search and list filtering, so an un-debounced query would
+/// fire one remote search per keystroke. The TextField itself keeps its own
+/// text; only consumers of `searchQuery` observe the settled value (~250 ms).
 class ChatListUiState {
   const ChatListUiState({this.searchQuery = ''});
 
@@ -21,113 +26,54 @@ class ChatListUiState {
 
 @riverpod
 class ChatListUiViewModel extends _$ChatListUiViewModel {
-  @override
-  ChatListUiState build() => const ChatListUiState();
-
-  void setSearchQuery(String value) =>
-      state = state.copyWith(searchQuery: value.trim().toLowerCase());
-}
-
-// ── NewChatSearchState ────────────────────────────────────────────────────────
-
-class NewChatSearchState {
-  const NewChatSearchState({
-    this.searchFieldKey = 0,
-    this.searchQuery = '',
-    this.searchResults = const [],
-    this.isLoading = false,
-    this.error,
-  });
-
-  final int searchFieldKey;
-  final String searchQuery;
-  final List<UserModel> searchResults;
-  final bool isLoading;
-  final String? error;
-
-  // FIX: `clearError` named parameter is the pragmatic solution for clearing
-  // a nullable field without a sentinel `_unset` object or @freezed generation.
-  // The alternative would be @freezed, but adds codegen overhead for this
-  // small state class.
-  NewChatSearchState copyWith({
-    int? searchFieldKey,
-    String? searchQuery,
-    List<UserModel>? searchResults,
-    bool? isLoading,
-    String? error,
-    bool clearError = false,
-  }) => NewChatSearchState(
-    searchFieldKey: searchFieldKey ?? this.searchFieldKey,
-    searchQuery: searchQuery ?? this.searchQuery,
-    searchResults: searchResults ?? this.searchResults,
-    isLoading: isLoading ?? this.isLoading,
-    error: clearError ? null : (error ?? this.error),
-  );
-}
-
-// ── NewChatSearchViewModel ────────────────────────────────────────────────────
-
-@riverpod
-class NewChatSearchViewModel extends _$NewChatSearchViewModel {
-  // FIX: Field declared before build() — conventional placement so the field
-  // is visible before the methods that reference it.
   Timer? _debounceTimer;
 
+  static const Duration _debounceDelay = Duration(milliseconds: 250);
+
   @override
-  NewChatSearchState build() {
-    // Timer is cancelled when the provider is disposed (e.g. on navigation pop).
+  ChatListUiState build() {
     ref.onDispose(() => _debounceTimer?.cancel());
-    return const NewChatSearchState();
+    return const ChatListUiState();
   }
 
-  /// Schedules a search after 400 ms of inactivity.
-  /// Cancels any pending search if called again before the delay fires.
-  void scheduleSearch(String query) {
+  /// Applies [value] to state after a short idle window, cancelling any
+  /// pending application from a previous keystroke.
+  void setSearchQuery(String value) {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(
-      const Duration(milliseconds: 400),
-      () => _performSearch(query),
-    );
-  }
-
-  /// Clears search state and forces a widget key change to reset the
-  /// TextField (so its internal text value resets without a controller).
-  void clearSearch() {
-    _debounceTimer?.cancel();
-    // Construct fresh state (not copyWith) to reset ALL fields including query
-    // and results, not just the key.
-    state = NewChatSearchState(searchFieldKey: state.searchFieldKey + 1);
-  }
-
-  Future<void> _performSearch(String query) async {
-    if (query.length < 2) {
-      state = state.copyWith(
-        searchResults: const [],
-        searchQuery: query,
-        isLoading: false,
-        clearError: true,
-      );
-      return;
-    }
-
-    state = state.copyWith(
-      isLoading: true,
-      searchQuery: query,
-      clearError: true,
-    );
-
-    try {
-      final results = await ref
-          .read(profileActionsViewModelProvider.notifier)
-          .searchUsers(query: query);
+    final normalized = value.trim().toLowerCase();
+    if (normalized == state.searchQuery) return;
+    _debounceTimer = Timer(_debounceDelay, () {
       if (!ref.mounted) return;
-      state = state.copyWith(searchResults: results, isLoading: false);
-    } on Exception {
-      if (!ref.mounted) return;
-      state = state.copyWith(
-        error: 'Failed to search users',
-        isLoading: false,
-      );
-    }
+      state = state.copyWith(searchQuery: normalized);
+    });
   }
+}
+
+// ── Derived unread counts ─────────────────────────────────────────────────────
+
+/// Exact unread count via a server-side count() aggregation — one billed
+/// read per refresh regardless of backlog size. Only watched for chats whose
+/// [since] cursor is behind `lastMessageAt`; read rows never query.
+///
+/// The provider family key includes the cursor so a new message (which bumps
+/// lastMessageAt → list rebuild with unchanged cursor still matches) or a
+/// markAsRead (cursor advances → new key) naturally re-runs this.
+@riverpod
+Future<int> unreadCount(
+  Ref ref, {
+  required String chatId,
+  required String userId,
+  required DateTime? since,
+}) async {
+  final db = ref.watch(firebaseServiceProvider).firestore;
+  final effectiveSince = since ?? DateTime.fromMillisecondsSinceEpoch(0);
+  final snapshot = await db
+      .collection(AppConstants.chatsCollection)
+      .doc(chatId)
+      .collection(AppConstants.messagesCollection)
+      .where('deletedAt', isEqualTo: null)
+      .where('createdAt', isGreaterThan: Timestamp.fromDate(effectiveSince))
+      .count()
+      .get();
+  return snapshot.count ?? 0;
 }

@@ -390,7 +390,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
     final topPad = MediaQuery.paddingOf(context).top;
     return Container(
       padding: EdgeInsets.fromLTRB(20.w, topPad + 12.h, 20.w, 16.h),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.background,
         border: Border(bottom: BorderSide(color: AppColors.borderLight)),
       ),
@@ -999,9 +999,8 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                     builder: (context, child) {
                       return Theme(
                         data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.light(
+                          colorScheme: Theme.of(context).colorScheme.copyWith(
                             primary: AppColors.primary,
-                            onSurface: AppColors.textPrimary,
                           ),
                         ),
                         child: child!,
@@ -1912,7 +1911,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
 
     return Container(
       padding: EdgeInsets.fromLTRB(20.w, 14.h, 20.w, 0),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.background,
         border: Border(top: BorderSide(color: AppColors.borderLight)),
       ),
@@ -1955,7 +1954,7 @@ class _DriverOfferRideScreenState extends ConsumerState<DriverOfferRideScreen> {
                       child: OutlinedButton(
                         onPressed: _goToPreviousStep,
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.border),
+                          side:  BorderSide(color: AppColors.border),
                           padding: EdgeInsets.symmetric(vertical: 14.h),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),

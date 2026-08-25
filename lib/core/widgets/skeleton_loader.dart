@@ -68,7 +68,7 @@ class _Bone extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.shimmerHighlight,
         borderRadius: BorderRadius.circular(radius.r),
       ),
     );
@@ -84,8 +84,8 @@ class _CircleBone extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.shimmerHighlight,
         shape: BoxShape.circle,
       ),
     );

@@ -548,7 +548,7 @@ class _DriverRequestsScreenState extends ConsumerState<DriverRequestsScreen> {
 
       AdaptiveSnackBar.show(
         context,
-        message: AppLocalizations.of(context).failedToCreateChatTryAgain,
+        message: AppLocalizations.of(context).chatOpenNetworkRetry,
         type: AdaptiveSnackBarType.error,
       );
     }

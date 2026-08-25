@@ -1438,9 +1438,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get verifiedDriver => 'Conducteur vérifié';
-
-  @override
   String get rating => 'Évaluation';
 
   @override
@@ -1457,6 +1454,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get quickActions => 'Actions rapides';
+
+  @override
+  String get needsAttention => 'À traiter';
 
   @override
   String get performanceOverview => 'Aperçu des performances';
@@ -1888,9 +1888,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get newMember => 'Nouveau membre';
-
-  @override
-  String get verifiedInfo => 'Informations vérifiées';
 
   @override
   String get verified => 'Vérifié';
@@ -2684,6 +2681,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get keepRide => 'Garder le trajet';
 
   @override
+  String get cancelBooking => 'Annuler la réservation';
+
+  @override
+  String get cancelBookingConfirm =>
+      'Voulez-vous vraiment annuler votre réservation ? Des conditions d\'annulation peuvent s\'appliquer.';
+
+  @override
+  String get bookingCancelledRefundPending =>
+      'Réservation annulée - le remboursement sera traité sous 5 à 10 jours ouvrés.';
+
+  @override
+  String get bookingCancelledNoRefund =>
+      'Réservation annulée - aucun remboursement ne s\'applique car le trajet avait déjà commencé.';
+
+  @override
   String get failedToLoadRide => 'Échec du chargement du trajet';
 
   @override
@@ -3134,9 +3146,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String value13(Object value) {
     return '$value+';
   }
-
-  @override
-  String get verifiedDriver2 => 'Conducteur vérifié';
 
   @override
   String get musicAllowed => 'Musique autorisée';
@@ -3952,13 +3961,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get browseAvailableRidesAndBook =>
       'Parcourez les trajets disponibles et réservez';
-
-  @override
-  String get verifiedDrivers => 'Conducteurs vérifiés';
-
-  @override
-  String get allDriversAreVerified =>
-      'Tous les conducteurs sont vérifiés pour votre sécurité';
 
   @override
   String get locationGateDescription =>
@@ -4912,6 +4914,170 @@ class AppLocalizationsFr extends AppLocalizations {
   String get processingPaymentLoading => 'Traitement du paiement...';
 
   @override
+  String get paymentRefundAssurance =>
+      'Remboursement intégral si votre conducteur annule ou ne se présente pas';
+
+  @override
+  String get refundPolicyLinkLabel => 'Politique de remboursement';
+
+  @override
+  String get searchErrorMissingLocations =>
+      'Saisissez le départ et la destination';
+
+  @override
+  String get searchErrorSameLocation =>
+      'Le départ et la destination ne peuvent pas être identiques';
+
+  @override
+  String get searchErrorPastDate =>
+      'Choisissez une date à partir d\'aujourd\'hui';
+
+  @override
+  String get searchErrorInvalidSeats => 'Les places doivent être entre 1 et 4';
+
+  @override
+  String get paymentFinalizing => 'Finalisation de votre paiement…';
+
+  @override
+  String get themeSystem => 'Selon le système';
+
+  @override
+  String get themeLight => 'Clair';
+
+  @override
+  String get themeDark => 'Sombre';
+
+  @override
+  String get bookingRequestExpired =>
+      'Cette demande a expiré sans réponse du conducteur.';
+
+  @override
+  String get bookingRequestSearchAgain => 'Rechercher d\'autres trajets';
+
+  @override
+  String get opsConsoleTitle => 'Console d\'administration';
+
+  @override
+  String get tabOverview => 'Aperçu';
+
+  @override
+  String get tabRides => 'Trajets';
+
+  @override
+  String get tabPeople => 'Personnes';
+
+  @override
+  String get kpiRidesToday => 'Trajets aujourd\'hui';
+
+  @override
+  String get kpiBookingsCompleted => 'Réservations terminées (7j)';
+
+  @override
+  String get kpiPaymentVolume => 'Volume (7j)';
+
+  @override
+  String get kpiNewUsers => 'Nouveaux utilisateurs (7j)';
+
+  @override
+  String get kpiOpenDisputes => 'Litiges ouverts';
+
+  @override
+  String get kpiCancellationRate => 'Taux d\'annulation';
+
+  @override
+  String get sectionLiveNow => 'En cours';
+
+  @override
+  String get sectionUpcoming => 'À venir';
+
+  @override
+  String get sectionCompleted => 'Terminés';
+
+  @override
+  String get sectionCancelled => 'Annulés';
+
+  @override
+  String get peopleSearchHint => 'Rechercher des personnes par pseudo';
+
+  @override
+  String get actionSuspendUser => 'Suspendre l\'utilisateur';
+
+  @override
+  String get actionReinstateUser => 'Réactiver l\'utilisateur';
+
+  @override
+  String get actionGrantPremium => 'Accorder premium';
+
+  @override
+  String get actionRevokePremium => 'Retirer premium';
+
+  @override
+  String get actionCancelRide => 'Annuler le trajet';
+
+  @override
+  String get tabMoney => 'Finances';
+
+  @override
+  String get tabMore => 'Plus';
+
+  @override
+  String get noResults => 'Aucun résultat';
+
+  @override
+  String get paymentsTitle => 'Paiements';
+
+  @override
+  String get refundsQueue => 'File de remboursements';
+
+  @override
+  String get reportsQueue => 'Signalements';
+
+  @override
+  String get supportInbox => 'Boîte support';
+
+  @override
+  String get broadcastPush => 'Envoyer une notification';
+
+  @override
+  String get platformSettings => 'Paramètres plateforme';
+
+  @override
+  String get auditLog => 'Journal d\'audit';
+
+  @override
+  String get markResolved => 'Marquer résolu';
+
+  @override
+  String get pushTargetUid => 'UID de l\'utilisateur cible';
+
+  @override
+  String get pushTitleHint => 'Titre de la notification';
+
+  @override
+  String get pushBodyHint => 'Corps de la notification';
+
+  @override
+  String get commissionPercent => 'Commission %';
+
+  @override
+  String get refundWindowDays => 'Fenêtre de remboursement (jours)';
+
+  @override
+  String get maintenanceMode => 'Mode maintenance';
+
+  @override
+  String get configSaved => 'Enregistré';
+
+  @override
+  String get approve => 'Approuver';
+
+  @override
+  String get reject => 'Refuser';
+
+  @override
+  String get sendPushAction => 'Envoyer la notification';
+
+  @override
   String get completePaymentButton => 'Compléter le paiement';
 
   @override
@@ -5553,6 +5719,59 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get failedToCreateChatTryAgain =>
       'Impossible de créer la discussion. Veuillez réessayer.';
+
+  @override
+  String connectionSharedRide(String name) {
+    return 'Trajet partagé · $name';
+  }
+
+  @override
+  String connectionSharedEvent(String name) {
+    return 'Même événement · $name';
+  }
+
+  @override
+  String get peopleNoSharedContext =>
+      'Aucun trajet ou événement en commun pour l\'instant';
+
+  @override
+  String get chatLockedTitle =>
+      'La messagerie se débloque après un trajet ou un événement en commun';
+
+  @override
+  String get chatLockedBody =>
+      'Cela permet de garder SportConnect sans spam. Participez ensemble à un trajet ou à un événement et vous pourrez discuter aussitôt.';
+
+  @override
+  String get chatLockedBrowseRides => 'Voir les trajets';
+
+  @override
+  String chatLockedViewProfile(String name) {
+    return 'Voir le profil de $name';
+  }
+
+  @override
+  String warmStartRide(String name) {
+    return 'Vous avez fait le trajet $name ensemble';
+  }
+
+  @override
+  String warmStartEvent(String name) {
+    return 'Vous avez participé à $name ensemble';
+  }
+
+  @override
+  String profileMessageGateReason(String name) {
+    return 'Vous pourrez écrire à $name après avoir partagé un trajet ou participé au même événement.';
+  }
+
+  @override
+  String get chatSendNetworkRetry =>
+      'Envoi impossible. Touchez pour réessayer.';
+
+  @override
+  String get chatOpenNetworkRetry =>
+      'Impossible d\'ouvrir la discussion. Vérifiez votre connexion.';
 
   @override
   String get reportUser => 'Signaler l\'utilisateur';

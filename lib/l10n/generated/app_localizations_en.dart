@@ -1403,9 +1403,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get verifiedDriver => 'Verified Driver';
-
-  @override
   String get rating => 'Rating';
 
   @override
@@ -1422,6 +1419,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get quickActions => 'Quick Actions';
+
+  @override
+  String get needsAttention => 'Needs attention';
 
   @override
   String get performanceOverview => 'Performance Overview';
@@ -1843,9 +1843,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newMember => 'New member';
-
-  @override
-  String get verifiedInfo => 'Verified Info';
 
   @override
   String get verified => 'Verified';
@@ -2629,6 +2626,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keepRide => 'Keep Ride';
 
   @override
+  String get cancelBooking => 'Cancel booking';
+
+  @override
+  String get cancelBookingConfirm =>
+      'Are you sure you want to cancel your booking? Cancellation policies may apply.';
+
+  @override
+  String get bookingCancelledRefundPending =>
+      'Booking cancelled - refund will be processed within 5-10 business days.';
+
+  @override
+  String get bookingCancelledNoRefund =>
+      'Booking cancelled - no refund applies as the ride had already started.';
+
+  @override
   String get failedToLoadRide => 'Failed to load ride';
 
   @override
@@ -3071,9 +3083,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String value13(Object value) {
     return '$value+';
   }
-
-  @override
-  String get verifiedDriver2 => 'Verified driver';
 
   @override
   String get musicAllowed => 'Music allowed';
@@ -3863,13 +3872,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get browseAvailableRidesAndBook =>
       'Browse available rides and book instantly';
-
-  @override
-  String get verifiedDrivers => 'Verified Drivers';
-
-  @override
-  String get allDriversAreVerified =>
-      'All drivers are verified for your safety and comfort';
 
   @override
   String get locationGateDescription =>
@@ -4808,6 +4810,168 @@ class AppLocalizationsEn extends AppLocalizations {
   String get processingPaymentLoading => 'Processing payment...';
 
   @override
+  String get paymentRefundAssurance =>
+      'Full refund if your driver cancels or doesn\'t show up';
+
+  @override
+  String get refundPolicyLinkLabel => 'Refund Policy';
+
+  @override
+  String get searchErrorMissingLocations => 'Enter both pickup and destination';
+
+  @override
+  String get searchErrorSameLocation =>
+      'Pickup and destination can\'t be the same';
+
+  @override
+  String get searchErrorPastDate => 'Pick a date from today onward';
+
+  @override
+  String get searchErrorInvalidSeats => 'Seats must be between 1 and 4';
+
+  @override
+  String get paymentFinalizing => 'Finalizing your payment…';
+
+  @override
+  String get themeSystem => 'Match system';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get bookingRequestExpired =>
+      'This request expired before the driver responded.';
+
+  @override
+  String get bookingRequestSearchAgain => 'Search rides again';
+
+  @override
+  String get opsConsoleTitle => 'Ops console';
+
+  @override
+  String get tabOverview => 'Overview';
+
+  @override
+  String get tabRides => 'Rides';
+
+  @override
+  String get tabPeople => 'People';
+
+  @override
+  String get kpiRidesToday => 'Rides today';
+
+  @override
+  String get kpiBookingsCompleted => 'Bookings completed (7d)';
+
+  @override
+  String get kpiPaymentVolume => 'Volume (7d)';
+
+  @override
+  String get kpiNewUsers => 'New users (7d)';
+
+  @override
+  String get kpiOpenDisputes => 'Open disputes';
+
+  @override
+  String get kpiCancellationRate => 'Cancellation rate';
+
+  @override
+  String get sectionLiveNow => 'Live now';
+
+  @override
+  String get sectionUpcoming => 'Upcoming';
+
+  @override
+  String get sectionCompleted => 'Completed';
+
+  @override
+  String get sectionCancelled => 'Cancelled';
+
+  @override
+  String get peopleSearchHint => 'Search people by username';
+
+  @override
+  String get actionSuspendUser => 'Suspend user';
+
+  @override
+  String get actionReinstateUser => 'Reinstate user';
+
+  @override
+  String get actionGrantPremium => 'Grant premium';
+
+  @override
+  String get actionRevokePremium => 'Revoke premium';
+
+  @override
+  String get actionCancelRide => 'Cancel ride';
+
+  @override
+  String get tabMoney => 'Money';
+
+  @override
+  String get tabMore => 'More';
+
+  @override
+  String get noResults => 'No results';
+
+  @override
+  String get paymentsTitle => 'Payments';
+
+  @override
+  String get refundsQueue => 'Refund queue';
+
+  @override
+  String get reportsQueue => 'Reports';
+
+  @override
+  String get supportInbox => 'Support inbox';
+
+  @override
+  String get broadcastPush => 'Send push';
+
+  @override
+  String get platformSettings => 'Platform settings';
+
+  @override
+  String get auditLog => 'Audit log';
+
+  @override
+  String get markResolved => 'Mark resolved';
+
+  @override
+  String get pushTargetUid => 'Target user UID';
+
+  @override
+  String get pushTitleHint => 'Notification title';
+
+  @override
+  String get pushBodyHint => 'Notification body';
+
+  @override
+  String get commissionPercent => 'Commission %';
+
+  @override
+  String get refundWindowDays => 'Refund window (days)';
+
+  @override
+  String get maintenanceMode => 'Maintenance mode';
+
+  @override
+  String get configSaved => 'Saved';
+
+  @override
+  String get approve => 'Approve';
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get sendPushAction => 'Send push';
+
+  @override
   String get completePaymentButton => 'Complete Payment';
 
   @override
@@ -5437,6 +5601,57 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get failedToCreateChatTryAgain =>
       'Failed to create chat. Please try again.';
+
+  @override
+  String connectionSharedRide(String name) {
+    return 'Shared ride · $name';
+  }
+
+  @override
+  String connectionSharedEvent(String name) {
+    return 'Same event · $name';
+  }
+
+  @override
+  String get peopleNoSharedContext => 'No shared rides or events yet';
+
+  @override
+  String get chatLockedTitle =>
+      'Messaging unlocks after you share a ride or event';
+
+  @override
+  String get chatLockedBody =>
+      'This keeps SportConnect spam-free. Join a ride or event together and you can message right away.';
+
+  @override
+  String get chatLockedBrowseRides => 'Browse rides';
+
+  @override
+  String chatLockedViewProfile(String name) {
+    return 'View $name\'s profile';
+  }
+
+  @override
+  String warmStartRide(String name) {
+    return 'You both rode in $name';
+  }
+
+  @override
+  String warmStartEvent(String name) {
+    return 'You both attended $name';
+  }
+
+  @override
+  String profileMessageGateReason(String name) {
+    return 'You can message $name once you\'ve shared a ride or attended the same event.';
+  }
+
+  @override
+  String get chatSendNetworkRetry => 'Couldn\'t send. Tap to retry.';
+
+  @override
+  String get chatOpenNetworkRetry =>
+      'Couldn\'t open the chat. Check your connection.';
 
   @override
   String get reportUser => 'Report User';

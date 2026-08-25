@@ -9,6 +9,7 @@ import 'package:sport_connect/core/services/location_service.dart';
 import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/features/events/models/event_model.dart';
 import 'package:sport_connect/features/events/repositories/event_repository.dart';
+import 'package:sport_connect/features/messaging/repositories/chat_repository.dart';
 import 'package:sport_connect/features/notifications/repositories/notification_repository.dart';
 import 'package:sport_connect/features/rides/models/ride/ride_model.dart';
 import 'package:sport_connect/features/rides/repositories/ride_repository.dart';
@@ -1235,7 +1236,7 @@ class EventDetailViewModel extends _$EventDetailViewModel {
   Future<String?> ensureEventGroupChat(EventModel event, String userId) async {
     try {
       return await ref
-          .read(eventRepositoryProvider)
+          .read(chatRepositoryProvider)
           .ensureEventGroupChat(event: event, userId: userId);
     } on Exception catch (e, st) {
       TalkerService.error('ensureEventGroupChat failed', e, st);

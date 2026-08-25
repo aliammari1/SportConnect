@@ -49,7 +49,7 @@ class _TypingDotState extends State<TypingDot>
       child: Container(
         width: 8.w,
         height: 8.w,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.textTertiary,
           shape: BoxShape.circle,
         ),

@@ -127,6 +127,23 @@ class StripeService {
     return value;
   }
 
+  /// Verifies a captured ride payment with Stripe and stamps the booking as
+  /// paid server-side. Call right after the PaymentSheet reports success so
+  /// every screen reflects "paid" without waiting for webhook delivery.
+  ///
+  /// Throws [StripePaymentException] when Stripe has not recorded a
+  /// successful charge for this booking — in that case the booking is NOT
+  /// marked paid and callers must keep the retry path available.
+  Future<void> verifyBookingPayment({
+    required String bookingId,
+    required String paymentIntentId,
+  }) async {
+    await _callFunction('verifyBookingPayment', {
+      'bookingId': bookingId,
+      'paymentIntentId': paymentIntentId,
+    });
+  }
+
   /// Create Payment Intent for ride booking
   /// Uses Firebase Cloud Functions for secure server-side processing
   ///

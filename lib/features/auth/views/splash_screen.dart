@@ -23,13 +23,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   late Animation<double> _progressAnim;
 
-  static const Color _bg = Color(0xFFF7FAF8);
-  static const Color _bgAlt = Color(0xFFEFF7F2);
+  // Brightness-aware tokens; `_green`/`_greenDeep` stay literal brand accents
+  // (mid-tone saturated, legible on both light and dark surfaces).
+  static Color get _bg => AppColors.background;
+  static Color get _bgAlt => AppColors.surfaceVariant;
   static const Color _green = Color(0xFF2D9B6F);
-  static const Color _greenLight = Color(0xFFE8F5EF);
+  static Color get _greenLight => AppColors.surfaceVariant;
   static const Color _greenDeep = Color(0xFF1A6B4A);
-  static const Color _textMain = Color(0xFF111B16);
-  static const Color _textSub = Color(0xFF7A9E8E);
+  static Color get _textMain => AppColors.textPrimary;
+  static Color get _textSub => AppColors.textSecondary;
 
   @override
   void initState() {
@@ -67,7 +69,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     return AdaptiveScaffold(
       body: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,

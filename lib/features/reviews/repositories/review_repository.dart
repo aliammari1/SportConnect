@@ -97,7 +97,8 @@ class ReviewRepository {
   CollectionReference<RideModel> get _ridesCollection => _firestore
       .collection(AppConstants.ridesCollection)
       .withConverter<RideModel>(
-        fromFirestore: (snap, _) => RideModel.fromJson(snap.data()!),
+        fromFirestore: (snap, _) =>
+            RideModel.fromJson({...snap.data()!, 'id': snap.id}),
         toFirestore: (ride, _) => ride.toJson(),
       );
 

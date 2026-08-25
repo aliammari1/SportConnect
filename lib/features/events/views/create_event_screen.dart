@@ -52,6 +52,39 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
     super.dispose();
   }
 
+  bool get _formHasContent {
+    final title = _form.control('title').value as String?;
+    final description = _form.control('description').value as String?;
+    return (title?.trim().isNotEmpty ?? false) ||
+        (description?.trim().isNotEmpty ?? false);
+  }
+
+  Future<bool> _confirmDiscard() async {
+    if (!_formHasContent) return true;
+    final l10n = AppLocalizations.of(context);
+    final result = await showAdaptiveDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog.adaptive(
+        title: Text(l10n.discardChanges),
+        content: Text(l10n.youHaveUnsavedChanges),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.keepEditing),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              l10n.discard,
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
   // ════════════════════════════════════════════════════════════
   // BUILD
   // ════════════════════════════════════════════════════════════
@@ -82,55 +115,66 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
       }
     });
 
-    return AdaptiveScaffold(
-      appBar: AdaptiveAppBar(
-        useNativeToolbar: false,
-        leading: IconButton(
-          icon: Icon(
-            Icons.close_rounded,
-            size: 22.sp,
-            color: AppColors.textSecondary,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final discard = await _confirmDiscard();
+        if (discard && context.mounted) context.pop();
+      },
+      child: AdaptiveScaffold(
+        appBar: AdaptiveAppBar(
+          useNativeToolbar: false,
+          leading: IconButton(
+            icon: Icon(
+              Icons.close_rounded,
+              size: 22.sp,
+              color: AppColors.textSecondary,
+            ),
+            onPressed: () async {
+              final discard = await _confirmDiscard();
+              if (discard && context.mounted) context.pop();
+            },
           ),
-          onPressed: () => context.pop(),
+          title: l10n.createEventTitle,
         ),
-        title: l10n.createEventTitle,
-      ),
-      body: MaxWidthContainer(
-        maxWidth: kMaxWidthForm,
-        child: ReactiveForm(
-          formGroup: _form,
-          child: GestureDetector(
-            onTap: () => FocusScope.of(context).unfocus(),
-            child: SafeArea(
-              top: false,
-              child: Builder(
-                builder: (context) {
-                  final formItems = <Widget>[
-                    _buildSportTypeSelector(ref, createState, l10n),
-                    SizedBox(height: 20.h),
-                    _buildTitleField(ref, createState, l10n),
-                    SizedBox(height: 14.h),
-                    SizedBox(height: 14.h),
-                    _buildDescriptionField(ref, createState, l10n),
-                    SizedBox(height: 20.h),
-                    _buildImagePicker(ref, createState, l10n),
-                    SizedBox(height: 20.h),
-                    _buildLocationPicker(context, ref, createState, l10n),
-                    SizedBox(height: 20.h),
-                    _buildWhenSection(context, ref, createState, l10n),
-                    SizedBox(height: 20.h),
-                    _buildParticipantSlider(ref, createState, l10n),
-                    SizedBox(height: 20.h),
-                    _buildRecurringToggle(context, ref, createState, l10n),
-                    SizedBox(height: 32.h),
-                    _buildSubmitButton(context, ref, createState, l10n),
-                  ];
-                  return ListView.builder(
-                    padding: adaptiveScreenPadding(context),
-                    itemCount: formItems.length,
-                    itemBuilder: (context, index) => formItems[index],
-                  );
-                },
+        body: MaxWidthContainer(
+          maxWidth: kMaxWidthForm,
+          child: ReactiveForm(
+            formGroup: _form,
+            child: GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: SafeArea(
+                top: false,
+                child: Builder(
+                  builder: (context) {
+                    final formItems = <Widget>[
+                      _buildSportTypeSelector(ref, createState, l10n),
+                      SizedBox(height: 20.h),
+                      _buildTitleField(ref, createState, l10n),
+                      SizedBox(height: 14.h),
+                      SizedBox(height: 14.h),
+                      _buildDescriptionField(ref, createState, l10n),
+                      SizedBox(height: 20.h),
+                      _buildImagePicker(ref, createState, l10n),
+                      SizedBox(height: 20.h),
+                      _buildLocationPicker(context, ref, createState, l10n),
+                      SizedBox(height: 20.h),
+                      _buildWhenSection(context, ref, createState, l10n),
+                      SizedBox(height: 20.h),
+                      _buildParticipantSlider(ref, createState, l10n),
+                      SizedBox(height: 20.h),
+                      _buildRecurringToggle(context, ref, createState, l10n),
+                      SizedBox(height: 32.h),
+                      _buildSubmitButton(context, ref, createState, l10n),
+                    ];
+                    return ListView.builder(
+                      padding: adaptiveScreenPadding(context),
+                      itemCount: formItems.length,
+                      itemBuilder: (context, index) => formItems[index],
+                    );
+                  },
+                ),
               ),
             ),
           ),

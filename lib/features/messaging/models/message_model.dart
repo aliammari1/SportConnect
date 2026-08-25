@@ -6,11 +6,13 @@ part 'message_model.g.dart';
 
 enum MessageType { text, image, location, ride, system }
 
-enum MessageStatus { sending, sent, delivered, read, failed }
+/// Local, client-only send pipeline state. Server-side read/delivery truth
+/// lives on [ChatModel.members].{uid}.lastReadAt — never persisted here.
+enum MessageStatus { sending, sent, failed }
 
 enum ChatType { private, rideGroup, eventGroup, support }
 
-enum ParticipantRole {
+enum MemberRole {
   @JsonValue('member')
   member,
   @JsonValue('admin')
@@ -27,16 +29,25 @@ abstract class MessageModel with _$MessageModel {
     required String id,
     required String chatId,
     required String senderId,
-    required String senderName,
-    required String content,
+
+    /// Idempotency key: deterministic doc id = hash(chatId, clientMsgId) so
+    /// offline retries overwrite instead of duplicating (zero extra reads).
+    String? clientMsgId,
+
+    /// Hydrated display copy; bubbles fall back to chat.profiles when null.
+    String? senderName,
     String? senderPhotoUrl,
+
+    required String content,
     @Default(MessageType.text) MessageType type,
+
+    /// Local send-pipeline state only (sending/sent/failed).
     @Default(MessageStatus.sending) MessageStatus status,
 
     String? mediaUrl,
     String? thumbnailUrl,
 
-    // Location
+    // Location attachment
     double? latitude,
     double? longitude,
     String? locationName,
@@ -51,77 +62,59 @@ abstract class MessageModel with _$MessageModel {
     // Reactions: emoji → [userId, ...]
     @Default({}) Map<String, List<String>> reactions,
 
-    // Read receipts
-    @Default([]) List<String> readBy,
-    @Default([]) List<String> deliveredTo,
-
     // Metadata
     @Default(false) bool isEdited,
-    @Default(false) bool isDeleted,
+    @TimestampConverter() DateTime? deletedAt,
     @TimestampConverter() DateTime? createdAt,
     @TimestampConverter() DateTime? editedAt,
   }) = _MessageModel;
-  // FIX: private constructor BEFORE the factory — required by freezed so that
-  // custom methods below can reference `this` on the generated concrete class.
+
   const MessageModel._();
 
   factory MessageModel.fromJson(Map<String, dynamic> json) =>
       _$MessageModelFromJson(json);
 
+  bool get isTombstone => deletedAt != null;
+
   bool isFromUser(String userId) => senderId == userId;
-  bool isReadBy(String userId) => readBy.contains(userId);
 
   int get totalReactions =>
       reactions.values.fold(0, (sum, list) => sum + list.length);
 
-  /// Whether this message carries an image/media attachment.
   bool get hasMedia => mediaUrl != null && mediaUrl!.isNotEmpty;
 
-  /// Whether this message is a reply to another message.
   bool get isReply => replyToMessageId != null;
 
-  /// Whether this message carries a (complete) location attachment.
   bool get hasLocation => latitude != null && longitude != null;
 
-  /// Whether this message has any emoji reactions.
   bool get hasReactions => reactions.isNotEmpty;
 
-  /// Whether the message is still being sent (optimistic/in-flight).
   bool get isPending => status == MessageStatus.sending;
 
-  /// Whether the message failed to send.
   bool get hasFailed => status == MessageStatus.failed;
-
-  /// Whether every participant other than the sender has read this message.
-  bool isReadByAll(Iterable<String> participantIds) =>
-      participantIds.where((id) => id != senderId).every(readBy.contains);
 }
 
-// ── ChatParticipant ───────────────────────────────────────────────────────────
+// ── ChatMember ────────────────────────────────────────────────────────────────
 
+/// Per-member channel state — the single source of truth for read cursors.
 @freezed
-abstract class ChatParticipant with _$ChatParticipant {
-  const factory ChatParticipant({
+abstract class ChatMember with _$ChatMember {
+  const factory ChatMember({
     @JsonKey(name: 'uid') required String userId,
-    required String username,
+    String? username,
     String? photoUrl,
-    @Default(false) bool isAdmin,
-    @Default(false) bool isMuted,
-    // Role distinguishes the group owner/creator from regular admins/members.
-    // Optional & nullable: legacy docs without this key deserialize to null.
-    ParticipantRole? role,
-    @TimestampConverter() DateTime? lastSeenAt,
+    @Default(MemberRole.member) MemberRole role,
     @TimestampConverter() DateTime? joinedAt,
-  }) = _ChatParticipant;
-  // Private constructor before factory — required to host custom methods.
-  const ChatParticipant._();
 
-  factory ChatParticipant.fromJson(Map<String, dynamic> json) =>
-      _$ChatParticipantFromJson(json);
+    /// Read cursor: everything with createdAt <= this is read by this member.
+    /// Derived receipts/badges compare against this — no per-message writes.
+    @TimestampConverter() DateTime? lastReadAt,
+  }) = _ChatMember;
 
-  /// Whether the participant was recently seen within [window].
-  bool isOnline({Duration window = const Duration(minutes: 2)}) =>
-      lastSeenAt != null && DateTime.now().difference(lastSeenAt!) < window;
+  const ChatMember._();
+
+  factory ChatMember.fromJson(Map<String, dynamic> json) =>
+      _$ChatMemberFromJson(json);
 }
 
 // ── ChatModel ─────────────────────────────────────────────────────────────────
@@ -131,60 +124,58 @@ abstract class ChatModel with _$ChatModel {
   const factory ChatModel({
     required String id,
     @Default(ChatType.private) ChatType type,
+    String? createdBy,
 
-    // Participants
-    @Default([]) List<ChatParticipant> participants,
+    // Membership: primitive array powers arrayContains queries; the map holds
+    // per-member state and is patched via dot-paths (members.{uid}.lastReadAt).
     @Default([]) List<String> participantIds,
+    @Default({}) Map<String, ChatMember> members,
 
-    // Group
+    // Group display
     String? groupName,
     String? groupPhotoUrl,
     String? description,
 
-    // Ride / event
+    // Linked context
     String? rideId,
     String? eventId,
+    @Default(false) bool premiumOnly,
 
     // Last message preview
     String? lastMessageContent,
     String? lastMessageSenderId,
-    String? lastMessageSenderName,
     @Default(MessageType.text) MessageType lastMessageType,
     @TimestampConverter() DateTime? lastMessageAt,
 
-    // Unread counts: userId → count
-    @Default({}) Map<String, int> unreadCounts,
-
     // Per-user settings
-    @Default({}) Map<String, bool> mutedBy,
-    @Default({}) Map<String, bool> pinnedBy,
+    @TimestampMapConverter() @Default({}) Map<String, DateTime> mutedUntil,
+    @Default([]) List<String> pinnedBy,
 
-    // One-sided deletion: userId → true
-    // User removed the conversation from their chat list.
-    // If a newer message arrives after this timestamp, the chat appears again.
-    @TimestampMapConverter() @Default({}) Map<String, DateTime> deletedAtBy,
+    // One-sided hide: userId → hidden-at timestamp
+    @TimestampMapConverter() @Default({}) Map<String, DateTime> hiddenBy,
 
-    // User cleared message history up to this timestamp.
-    // The chat can stay visible, but older messages are hidden for this user.
-    @TimestampMapConverter() @Default({}) Map<String, DateTime> clearedAtBy,
+    // One-sided history clear: userId → cleared-up-to timestamp
+    @TimestampMapConverter() @Default({}) Map<String, DateTime> clearedAt,
 
     @Default(true) bool isActive,
     @TimestampConverter() DateTime? createdAt,
     @TimestampConverter() DateTime? updatedAt,
   }) = _ChatModel;
-  // FIX: private constructor before factory — required for custom methods below.
+
   const ChatModel._();
 
   factory ChatModel.fromJson(Map<String, dynamic> json) =>
       _$ChatModelFromJson(json);
 
-  /// Returns the other participant in a private 1:1 chat, or null for groups.
-  ChatParticipant? getOtherParticipant(String currentUserId) {
-    if (type != ChatType.private || participants.length != 2) return null;
-    return participants.firstWhere(
-      (p) => p.userId != currentUserId,
-      orElse: () => participants.first,
+  ChatMember? member(String userId) => members[userId];
+
+  ChatMember? getOtherParticipant(String currentUserId) {
+    if (type != ChatType.private || participantIds.length != 2) return null;
+    final otherId = participantIds.firstWhere(
+      (id) => id != currentUserId,
+      orElse: () => participantIds.first,
     );
+    return members[otherId];
   }
 
   String getChatTitle(String currentUserId) {
@@ -193,61 +184,75 @@ abstract class ChatModel with _$ChatModel {
       ChatType.eventGroup => groupName ?? 'Event Chat',
       ChatType.support => 'Support',
       _ =>
-        groupName ?? getOtherParticipant(currentUserId)?.username ?? 'Unknown',
+        groupName ??
+            getOtherParticipant(currentUserId)?.username ??
+            'Unknown',
     };
   }
 
   String? getChatPhoto(String currentUserId) =>
       groupPhotoUrl ?? getOtherParticipant(currentUserId)?.photoUrl;
 
-  /// Whether this chat is a multi-participant group (ride or event).
   bool get isGroup => type == ChatType.rideGroup || type == ChatType.eventGroup;
 
-  /// Whether this chat is a 1:1 private conversation.
   bool get isPrivate => type == ChatType.private;
 
-  /// Participant count derived from whichever list is populated.
-  int get participantCount =>
-      participantIds.isNotEmpty ? participantIds.length : participants.length;
+  int get memberCount => participantIds.length;
 
-  int getUnreadCount(String userId) => unreadCounts[userId] ?? 0;
-  bool hasUnread(String userId) => getUnreadCount(userId) > 0;
-  bool isMutedBy(String userId) => mutedBy[userId] ?? false;
-  bool isPinnedBy(String userId) => pinnedBy[userId] ?? false;
+  /// Unread indicator, derived — never stored. True when the latest activity
+  /// is newer than this member's read cursor and wasn't authored by them.
+  bool hasUnread(String userId) {
+    final at = lastMessageAt;
+    if (at == null) return false;
+    if (lastMessageSenderId == userId) return false;
+    final cursor = members[userId]?.lastReadAt;
+    return cursor == null || at.isAfter(cursor);
+  }
+
+  /// Derived receipt: [message] counts as read by [otherUid] once their
+  /// cursor covers it. Replaces per-message readBy arrays entirely.
+  bool isMessageReadBy(MessageModel message, String otherUid) {
+    final cursor = members[otherUid]?.lastReadAt;
+    if (cursor == null) return false;
+    final at = message.createdAt;
+    if (at == null) return false;
+    return !at.isAfter(cursor);
+  }
+
+  bool isMutedBy(String userId) => mutedUntil[userId] != null;
+
+  bool isPinnedBy(String userId) => pinnedBy.contains(userId);
+
   bool isVisibleFor(String userId) {
-    final deletedAt = deletedAtBy[userId];
-
-    if (deletedAt == null) return true;
-
+    final hiddenAt = hiddenBy[userId];
+    if (hiddenAt == null) return true;
     final latestActivity = lastMessageAt ?? updatedAt ?? createdAt;
-
     if (latestActivity == null) return false;
-
-    return latestActivity.isAfter(deletedAt);
+    return latestActivity.isAfter(hiddenAt);
   }
 
-  DateTime? messagesClearedBefore(String userId) {
-    return clearedAtBy[userId];
-  }
+  DateTime? messagesClearedBefore(String userId) => clearedAt[userId];
 }
 
 // ── TypingIndicator ───────────────────────────────────────────────────────────
 
+/// DTO for RTDB typing nodes at `chat_status/{chatId}/typing/{uid}`.
+/// Freshness is enforced by the repository against server-written
+/// startedAt millis; crashed clients are cleaned up by onDisconnect().
 @freezed
 abstract class TypingIndicator with _$TypingIndicator {
   const factory TypingIndicator({
     required String userId,
-    required String username,
+    @Default('') String username,
     required String chatId,
     @TimestampConverter() DateTime? startedAt,
   }) = _TypingIndicator;
-  // Private constructor before factory — required to host custom methods.
+
   const TypingIndicator._();
 
   factory TypingIndicator.fromJson(Map<String, dynamic> json) =>
       _$TypingIndicatorFromJson(json);
 
-  /// Whether the typing record is still fresh (not a stale lingering entry).
-  bool isActive({Duration ttl = const Duration(seconds: 6)}) =>
+  bool isActive({Duration ttl = const Duration(seconds: 30)}) =>
       startedAt != null && DateTime.now().difference(startedAt!) < ttl;
 }

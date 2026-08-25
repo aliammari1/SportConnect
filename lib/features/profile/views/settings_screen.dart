@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,7 @@ import 'package:sport_connect/core/config/app_config.dart';
 import 'package:sport_connect/core/config/app_routes.dart';
 import 'package:sport_connect/core/models/user/models.dart';
 import 'package:sport_connect/core/providers/admin_access_provider.dart';
+import 'package:sport_connect/core/providers/theme_mode_provider.dart';
 import 'package:sport_connect/core/providers/user_providers.dart';
 import 'package:sport_connect/core/services/talker_service.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
@@ -112,6 +114,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   await settingsViewModel.setLanguage(code);
                 },
               ),
+              _buildThemeTile(l10n),
             ]),
 
             SizedBox(height: 32.h),
@@ -479,6 +482,92 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             value: value,
             activeColor: AppColors.primary,
             onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeTile(AppLocalizations l10n) {
+    final mode = ref.watch(themeModeControllerProvider);
+    final options = <ThemeMode, String>{
+      ThemeMode.system: l10n.themeSystem,
+      ThemeMode.light: l10n.themeLight,
+      ThemeMode.dark: l10n.themeDark,
+    };
+
+    // Stacked layout: header row on top, full-width selector beneath.
+    // A side-by-side Row starved the title of width and wrapped it
+    // vertically once the three-segment control took its intrinsic size.
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.dark_mode_outlined,
+                size: 20.sp,
+                color: AppColors.textSecondary,
+              ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.settingsDarkMode,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      l10n.settingsDarkModeDesc,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          SizedBox(
+            width: double.infinity,
+            child: CupertinoSlidingSegmentedControl<ThemeMode>(
+              groupValue: mode,
+              thumbColor: AppColors.primary.withValues(alpha: 0.18),
+              children: {
+                for (final entry in options.entries)
+                  entry.key: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6.h),
+                    child: Text(
+                      entry.value,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight:
+                            entry.key == mode ? FontWeight.w700 : FontWeight.w500,
+                        color:
+                            entry.key == mode
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+              },
+              onValueChanged: (value) {
+                if (value == null) return;
+                unawaited(
+                  ref.read(themeModeControllerProvider.notifier).setMode(value),
+                );
+              },
+            ),
           ),
         ],
       ),

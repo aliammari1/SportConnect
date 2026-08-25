@@ -211,16 +211,16 @@ class _PremiumSubscribeScreenState
     if (alreadyPremium) return _AlreadyPremiumScreen(l10n: l10n);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.white,
+        systemNavigationBarColor: AppColors.surface,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: AdaptiveScaffold(
         body: ColoredBox(
-          color: Colors.white,
+          color: AppColors.background,
           child: isTabletLayout
               || (context.isLandscape && context.screenHeight < 500)
               ? _buildTabletLayout(l10n, checkoutState, isProcessing)
@@ -294,7 +294,7 @@ class _PremiumSubscribeScreenState
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FBFA),
+                      color: AppColors.surfaceVariant,
                       borderRadius: BorderRadius.circular(28.r),
                       border: Border.all(color: AppColors.borderLight),
                     ),
@@ -335,7 +335,7 @@ class _PremiumSubscribeScreenState
     return Container(
       padding: EdgeInsets.all(24.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(28.r),
         border: Border.all(color: AppColors.borderLight),
         boxShadow: [
@@ -472,7 +472,7 @@ class _PremiumSubscribeScreenState
     return Container(
       padding: EdgeInsets.all(18.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
+        color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(color: AppColors.borderLight),
       ),
@@ -768,7 +768,7 @@ class _PremiumSubscribeScreenState
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -951,7 +951,7 @@ class _PlanCard extends StatelessWidget {
         curve: Curves.easeOut,
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primarySurface : Colors.white,
+          color: isSelected ? AppColors.primarySurface : AppColors.surface,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
             color: borderColor,
@@ -1115,7 +1115,7 @@ class _AlreadyPremiumScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AdaptiveScaffold(
       body: ColoredBox(
-        color: Colors.white,
+        color: AppColors.background,
         child: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 32.w),

@@ -10,9 +10,10 @@ _MessageModel _$MessageModelFromJson(Map json) => _MessageModel(
   id: json['id'] as String,
   chatId: json['chatId'] as String,
   senderId: json['senderId'] as String,
-  senderName: json['senderName'] as String,
-  content: json['content'] as String,
+  clientMsgId: json['clientMsgId'] as String?,
+  senderName: json['senderName'] as String?,
   senderPhotoUrl: json['senderPhotoUrl'] as String?,
+  content: json['content'] as String,
   type:
       $enumDecodeNullable(_$MessageTypeEnumMap, json['type']) ??
       MessageType.text,
@@ -35,16 +36,8 @@ _MessageModel _$MessageModelFromJson(Map json) => _MessageModel(
         ),
       ) ??
       const {},
-  readBy:
-      (json['readBy'] as List<dynamic>?)?.map((e) => e as String).toList() ??
-      const [],
-  deliveredTo:
-      (json['deliveredTo'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      const [],
   isEdited: json['isEdited'] as bool? ?? false,
-  isDeleted: json['isDeleted'] as bool? ?? false,
+  deletedAt: const TimestampConverter().fromJson(json['deletedAt']),
   createdAt: const TimestampConverter().fromJson(json['createdAt']),
   editedAt: const TimestampConverter().fromJson(json['editedAt']),
 );
@@ -54,9 +47,10 @@ Map<String, dynamic> _$MessageModelToJson(_MessageModel instance) =>
       'id': instance.id,
       'chatId': instance.chatId,
       'senderId': instance.senderId,
+      'clientMsgId': instance.clientMsgId,
       'senderName': instance.senderName,
-      'content': instance.content,
       'senderPhotoUrl': instance.senderPhotoUrl,
+      'content': instance.content,
       'type': _$MessageTypeEnumMap[instance.type]!,
       'status': _$MessageStatusEnumMap[instance.status]!,
       'mediaUrl': instance.mediaUrl,
@@ -68,10 +62,8 @@ Map<String, dynamic> _$MessageModelToJson(_MessageModel instance) =>
       'replyToMessageId': instance.replyToMessageId,
       'replyToContent': instance.replyToContent,
       'reactions': instance.reactions,
-      'readBy': instance.readBy,
-      'deliveredTo': instance.deliveredTo,
       'isEdited': instance.isEdited,
-      'isDeleted': instance.isDeleted,
+      'deletedAt': const TimestampConverter().toJson(instance.deletedAt),
       'createdAt': const TimestampConverter().toJson(instance.createdAt),
       'editedAt': const TimestampConverter().toJson(instance.editedAt),
     };
@@ -87,90 +79,78 @@ const _$MessageTypeEnumMap = {
 const _$MessageStatusEnumMap = {
   MessageStatus.sending: 'sending',
   MessageStatus.sent: 'sent',
-  MessageStatus.delivered: 'delivered',
-  MessageStatus.read: 'read',
   MessageStatus.failed: 'failed',
 };
 
-_ChatParticipant _$ChatParticipantFromJson(Map json) => _ChatParticipant(
+_ChatMember _$ChatMemberFromJson(Map json) => _ChatMember(
   userId: json['uid'] as String,
-  username: json['username'] as String,
+  username: json['username'] as String?,
   photoUrl: json['photoUrl'] as String?,
-  isAdmin: json['isAdmin'] as bool? ?? false,
-  isMuted: json['isMuted'] as bool? ?? false,
-  role: $enumDecodeNullable(_$ParticipantRoleEnumMap, json['role']),
-  lastSeenAt: const TimestampConverter().fromJson(json['lastSeenAt']),
+  role:
+      $enumDecodeNullable(_$MemberRoleEnumMap, json['role']) ??
+      MemberRole.member,
   joinedAt: const TimestampConverter().fromJson(json['joinedAt']),
+  lastReadAt: const TimestampConverter().fromJson(json['lastReadAt']),
 );
 
-Map<String, dynamic> _$ChatParticipantToJson(_ChatParticipant instance) =>
+Map<String, dynamic> _$ChatMemberToJson(_ChatMember instance) =>
     <String, dynamic>{
       'uid': instance.userId,
       'username': instance.username,
       'photoUrl': instance.photoUrl,
-      'isAdmin': instance.isAdmin,
-      'isMuted': instance.isMuted,
-      'role': _$ParticipantRoleEnumMap[instance.role],
-      'lastSeenAt': const TimestampConverter().toJson(instance.lastSeenAt),
+      'role': _$MemberRoleEnumMap[instance.role]!,
       'joinedAt': const TimestampConverter().toJson(instance.joinedAt),
+      'lastReadAt': const TimestampConverter().toJson(instance.lastReadAt),
     };
 
-const _$ParticipantRoleEnumMap = {
-  ParticipantRole.member: 'member',
-  ParticipantRole.admin: 'admin',
-  ParticipantRole.owner: 'owner',
+const _$MemberRoleEnumMap = {
+  MemberRole.member: 'member',
+  MemberRole.admin: 'admin',
+  MemberRole.owner: 'owner',
 };
 
 _ChatModel _$ChatModelFromJson(Map json) => _ChatModel(
   id: json['id'] as String,
   type:
       $enumDecodeNullable(_$ChatTypeEnumMap, json['type']) ?? ChatType.private,
-  participants:
-      (json['participants'] as List<dynamic>?)
-          ?.map(
-            (e) =>
-                ChatParticipant.fromJson(Map<String, dynamic>.from(e as Map)),
-          )
-          .toList() ??
-      const [],
+  createdBy: json['createdBy'] as String?,
   participantIds:
       (json['participantIds'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList() ??
       const [],
+  members:
+      (json['members'] as Map?)?.map(
+        (k, e) => MapEntry(
+          k as String,
+          ChatMember.fromJson(Map<String, dynamic>.from(e as Map)),
+        ),
+      ) ??
+      const {},
   groupName: json['groupName'] as String?,
   groupPhotoUrl: json['groupPhotoUrl'] as String?,
   description: json['description'] as String?,
   rideId: json['rideId'] as String?,
   eventId: json['eventId'] as String?,
+  premiumOnly: json['premiumOnly'] as bool? ?? false,
   lastMessageContent: json['lastMessageContent'] as String?,
   lastMessageSenderId: json['lastMessageSenderId'] as String?,
-  lastMessageSenderName: json['lastMessageSenderName'] as String?,
   lastMessageType:
       $enumDecodeNullable(_$MessageTypeEnumMap, json['lastMessageType']) ??
       MessageType.text,
   lastMessageAt: const TimestampConverter().fromJson(json['lastMessageAt']),
-  unreadCounts:
-      (json['unreadCounts'] as Map?)?.map(
-        (k, e) => MapEntry(k as String, (e as num).toInt()),
-      ) ??
-      const {},
-  mutedBy:
-      (json['mutedBy'] as Map?)?.map(
-        (k, e) => MapEntry(k as String, e as bool),
-      ) ??
-      const {},
+  mutedUntil: json['mutedUntil'] == null
+      ? const {}
+      : const TimestampMapConverter().fromJson(json['mutedUntil']),
   pinnedBy:
-      (json['pinnedBy'] as Map?)?.map(
-        (k, e) => MapEntry(k as String, e as bool),
-      ) ??
-      const {},
-  deletedAtBy: json['deletedAtBy'] == null
+      (json['pinnedBy'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
+  hiddenBy: json['hiddenBy'] == null
       ? const {}
-      : const TimestampMapConverter().fromJson(json['deletedAtBy']),
-  clearedAtBy: json['clearedAtBy'] == null
+      : const TimestampMapConverter().fromJson(json['hiddenBy']),
+  clearedAt: json['clearedAt'] == null
       ? const {}
-      : const TimestampMapConverter().fromJson(json['clearedAtBy']),
+      : const TimestampMapConverter().fromJson(json['clearedAt']),
   isActive: json['isActive'] as bool? ?? true,
   createdAt: const TimestampConverter().fromJson(json['createdAt']),
   updatedAt: const TimestampConverter().fromJson(json['updatedAt']),
@@ -181,23 +161,23 @@ Map<String, dynamic> _$ChatModelToJson(
 ) => <String, dynamic>{
   'id': instance.id,
   'type': _$ChatTypeEnumMap[instance.type]!,
-  'participants': instance.participants.map((e) => e.toJson()).toList(),
+  'createdBy': instance.createdBy,
   'participantIds': instance.participantIds,
+  'members': instance.members.map((k, e) => MapEntry(k, e.toJson())),
   'groupName': instance.groupName,
   'groupPhotoUrl': instance.groupPhotoUrl,
   'description': instance.description,
   'rideId': instance.rideId,
   'eventId': instance.eventId,
+  'premiumOnly': instance.premiumOnly,
   'lastMessageContent': instance.lastMessageContent,
   'lastMessageSenderId': instance.lastMessageSenderId,
-  'lastMessageSenderName': instance.lastMessageSenderName,
   'lastMessageType': _$MessageTypeEnumMap[instance.lastMessageType]!,
   'lastMessageAt': const TimestampConverter().toJson(instance.lastMessageAt),
-  'unreadCounts': instance.unreadCounts,
-  'mutedBy': instance.mutedBy,
+  'mutedUntil': const TimestampMapConverter().toJson(instance.mutedUntil),
   'pinnedBy': instance.pinnedBy,
-  'deletedAtBy': const TimestampMapConverter().toJson(instance.deletedAtBy),
-  'clearedAtBy': const TimestampMapConverter().toJson(instance.clearedAtBy),
+  'hiddenBy': const TimestampMapConverter().toJson(instance.hiddenBy),
+  'clearedAt': const TimestampMapConverter().toJson(instance.clearedAt),
   'isActive': instance.isActive,
   'createdAt': const TimestampConverter().toJson(instance.createdAt),
   'updatedAt': const TimestampConverter().toJson(instance.updatedAt),
@@ -212,7 +192,7 @@ const _$ChatTypeEnumMap = {
 
 _TypingIndicator _$TypingIndicatorFromJson(Map json) => _TypingIndicator(
   userId: json['userId'] as String,
-  username: json['username'] as String,
+  username: json['username'] as String? ?? '',
   chatId: json['chatId'] as String,
   startedAt: const TimestampConverter().fromJson(json['startedAt']),
 );

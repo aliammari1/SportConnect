@@ -51,7 +51,7 @@ final class ChatActionsViewModelProvider
 }
 
 String _$chatActionsViewModelHash() =>
-    r'28a7c22e554722ed004680d215f1164454719513';
+    r'ffcaf78591ee116ad2d66156fc4221c11e7fc183';
 
 /// Plain-class wrapper for one-shot chat operations (upload, mute, block, etc.)
 /// that don't require reactive state of their own.
@@ -460,7 +460,7 @@ final class ChatDetailViewModelProvider
 }
 
 String _$chatDetailViewModelHash() =>
-    r'9d5efe4bcc2d45043252a7b195901d2ebd9583c4';
+    r'756e4828bcf946b75b44c3773af074c90e08fd03';
 
 final class ChatDetailViewModelFamily extends $Family
     with
@@ -599,7 +599,7 @@ final class GetOrCreateChatProvider
   }
 }
 
-String _$getOrCreateChatHash() => r'82e34af561bcddcb5f188b6251cc8d9d713e57a0';
+String _$getOrCreateChatHash() => r'e5f44fed4efe6f60df878b3283c9859c3cc17d72';
 
 /// Returns an existing direct chat or a local draft. The draft is persisted
 /// to Firestore on first message send.
@@ -652,12 +652,12 @@ final class GetOrCreateChatFamily extends $Family
   String toString() => r'getOrCreateChatProvider';
 }
 
-/// Fetches the ride group chat for [rideId], or null if none exists.
+/// Fetches the ride group chat for [rideId] visible to [userId], or null.
 
 @ProviderFor(rideChatByRideId)
 final rideChatByRideIdProvider = RideChatByRideIdFamily._();
 
-/// Fetches the ride group chat for [rideId], or null if none exists.
+/// Fetches the ride group chat for [rideId] visible to [userId], or null.
 
 final class RideChatByRideIdProvider
     extends
@@ -667,7 +667,7 @@ final class RideChatByRideIdProvider
           FutureOr<ChatModel?>
         >
     with $FutureModifier<ChatModel?>, $FutureProvider<ChatModel?> {
-  /// Fetches the ride group chat for [rideId], or null if none exists.
+  /// Fetches the ride group chat for [rideId] visible to [userId], or null.
   RideChatByRideIdProvider._({
     required RideChatByRideIdFamily super.from,
     required String super.argument,
@@ -711,9 +711,9 @@ final class RideChatByRideIdProvider
   }
 }
 
-String _$rideChatByRideIdHash() => r'6e3be780290c8d5f663870c558c286804a7544b7';
+String _$rideChatByRideIdHash() => r'2cc88bd1abf3766bf873b15098b64cd3f3f00069';
 
-/// Fetches the ride group chat for [rideId], or null if none exists.
+/// Fetches the ride group chat for [rideId] visible to [userId], or null.
 
 final class RideChatByRideIdFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ChatModel?>, String> {
@@ -726,7 +726,7 @@ final class RideChatByRideIdFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Fetches the ride group chat for [rideId], or null if none exists.
+  /// Fetches the ride group chat for [rideId] visible to [userId], or null.
 
   RideChatByRideIdProvider call({required String rideId}) =>
       RideChatByRideIdProvider._(argument: rideId, from: this);

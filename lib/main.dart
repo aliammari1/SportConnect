@@ -23,8 +23,11 @@ import 'package:sport_connect/core/services/firebase_service.dart';
 import 'package:sport_connect/core/services/push_notification_service.dart';
 import 'package:sport_connect/core/services/stripe_service.dart';
 import 'package:sport_connect/core/services/talker_service.dart';
+import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/cupertino_app_theme.dart';
 import 'package:sport_connect/core/theme/material_app_theme.dart';
+import 'package:flutter/services.dart';
+import 'package:sport_connect/core/providers/theme_mode_provider.dart';
 import 'package:sport_connect/features/auth/repositories/auth_repository.dart';
 import 'package:sport_connect/features/profile/view_models/settings_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
@@ -371,7 +374,7 @@ class _SportConnectAppState extends ConsumerState<SportConnectApp> {
               GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: AppLocalizations.supportedLocales,
-            themeMode: ThemeMode.light,
+            themeMode: ref.watch(themeModeControllerProvider),
             materialLightTheme: AppMaterialTheme.lightTheme,
             materialDarkTheme: AppMaterialTheme.darkTheme,
             cupertinoLightTheme: AppCupertinoTheme.lightTheme,
@@ -380,10 +383,25 @@ class _SportConnectAppState extends ConsumerState<SportConnectApp> {
             builder: (context, child) {
               final appChild = child ?? const SizedBox.shrink();
 
-              var wrappedChild = appChild;
+              // Keep the AppColors semantic tokens in lockstep with the
+              // resolved Material theme, so every screen that reads
+              // `AppColors.surface`-style getters flips with the mode.
+              // Android: matches the Material 3 colorScheme. iOS: matches
+              // the cupertinoDarkTheme surfaces. Also flips system-bar icon
+              // brightness per platform conventions (light icons on dark).
+              final resolvedBrightness = Theme.of(context).brightness;
+              if (AppColors.brightness != resolvedBrightness) {
+                AppColors.setBrightness(resolvedBrightness);
+              }
+              final overlayStyle =
+                  resolvedBrightness == Brightness.dark
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark;
+
+              Widget coreChild = appChild;
 
               if (_isFirebaseInitialized && _showUpgradeAlert) {
-                wrappedChild = UpgradeAlert(
+                coreChild = UpgradeAlert(
                   upgrader: _upgrader,
                   navigatorKey: rootNavigatorKey,
                   dialogStyle: UpgradeDialogStyle.cupertino,
@@ -392,6 +410,11 @@ class _SportConnectAppState extends ConsumerState<SportConnectApp> {
                   child: appChild,
                 );
               }
+
+              var wrappedChild = AnnotatedRegion<SystemUiOverlayStyle>(
+                value: overlayStyle,
+                child: coreChild,
+              );
 
               // Transparent root Material so Material widgets (InkWell,
               // TextField, etc.) inside Cupertino-scaffold screens

@@ -434,7 +434,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
         icon: Container(
           padding: EdgeInsets.all(8.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(12.r),
             boxShadow: AppSpacing.shadowSm,
           ),
@@ -487,7 +487,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
           icon: Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: AppSpacing.shadowSm,
             ),
@@ -632,7 +632,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                       vertical: 8.h,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(20.r),
                       boxShadow: AppSpacing.shadowSm,
                     ),
@@ -791,7 +791,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
             ],
           ),
           SizedBox(height: 20.h),
-          const Divider(color: AppColors.border),
+          Divider(color: AppColors.divider),
           SizedBox(height: 12.h),
           Row(
             children: [
@@ -1829,6 +1829,14 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
         AppColors.success,
         null,
       ),
+      // Charge captured but paidAt not yet visible: show a waiting state
+      // instead of asking the user to pay again.
+      BookingStatus.accepted when existingBooking.paymentIntentId != null => (
+        AppLocalizations.of(context).paymentFinalizing,
+        Icons.hourglass_top_rounded,
+        AppColors.warning,
+        null,
+      ),
       BookingStatus.accepted => (
         AppLocalizations.of(context).completePayment,
         Icons.payment_rounded,
@@ -2444,5 +2452,4 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
       _showSnackBar(AppLocalizations.of(context).failedToOpenChatTryAgain);
     }
   }
-
 }

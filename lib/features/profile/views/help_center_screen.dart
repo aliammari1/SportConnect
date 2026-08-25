@@ -166,7 +166,6 @@ class HelpCenterScreen extends ConsumerWidget {
         ),
       ),
       body: MaxWidthContainer(
-        maxWidth: kMaxWidthContent,
         child: SingleChildScrollView(
           padding: adaptiveScreenPadding(context),
           child: Column(
@@ -288,7 +287,7 @@ class HelpCenterScreen extends ConsumerWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
@@ -445,7 +444,7 @@ class _HelpCenterSearchFieldState extends State<_HelpCenterSearchField> {
         labelText: l10n.searchHelpArticles,
         hintText: l10n.searchHelpArticles,
         hintStyle: TextStyle(fontSize: 14.sp, color: AppColors.textTertiary),
-        prefixIcon: const Icon(
+        prefixIcon: Icon(
           Icons.search_rounded,
           color: AppColors.textSecondary,
         ),
@@ -461,14 +460,14 @@ class _HelpCenterSearchFieldState extends State<_HelpCenterSearchField> {
               )
             : null,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.inputFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14.r),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide:  BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14.r),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide:  BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14.r),

@@ -900,22 +900,6 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   Future<void> _openEventChat(EventModel event, String userId) async {
     if (userId.isEmpty) return;
 
-    final currentUser = ref.read(currentUserProvider).value;
-    final isPremiumSubscriber = switch (currentUser) {
-      final RiderModel rider => rider.isPremium,
-      final DriverModel driver => driver.isPremium,
-      _ => false,
-    };
-    if (!isPremiumSubscriber) {
-      if (!mounted) return;
-      AdaptiveSnackBar.show(
-        context,
-        message: 'Event group chat is available to Premium subscribers only.',
-        type: AdaptiveSnackBarType.warning,
-      );
-      return;
-    }
-
     unawaited(HapticFeedback.lightImpact());
 
     final chatId = await ref

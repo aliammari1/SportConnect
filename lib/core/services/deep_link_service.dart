@@ -356,7 +356,7 @@ class DeepLinkService {
         receiver: UserModel.rider(
           uid: participantId ?? chatId,
           email: '',
-          username: otherParticipant.username,
+          username: otherParticipant.username ?? 'User',
           photoUrl: otherParticipant.photoUrl,
         ),
         chatType: ChatType.private,

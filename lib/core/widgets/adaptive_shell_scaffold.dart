@@ -72,7 +72,7 @@ class AdaptiveShellScaffold extends StatelessWidget {
               selectedIconTheme: const IconThemeData(
                 color: AppColors.primaryLight,
               ),
-              unselectedIconTheme: const IconThemeData(
+              unselectedIconTheme: IconThemeData(
                 color: AppColors.textSecondary,
               ),
               selectedLabelTextStyle: Theme.of(context).textTheme.labelLarge
@@ -88,7 +88,7 @@ class AdaptiveShellScaffold extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.directions_car_rounded,
                       color: AppColors.primaryLight,
                       size: 28,

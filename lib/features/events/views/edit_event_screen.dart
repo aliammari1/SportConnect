@@ -67,6 +67,36 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     super.dispose();
   }
 
+  bool get _formHasContent =>
+      _titleController.text.trim().isNotEmpty ||
+      _descriptionController.text.trim().isNotEmpty;
+
+  Future<bool> _confirmDiscard() async {
+    if (!_formHasContent) return true;
+    final l10n = AppLocalizations.of(context);
+    final result = await showAdaptiveDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog.adaptive(
+        title: Text(l10n.discardChanges),
+        content: Text(l10n.youHaveUnsavedChanges),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.keepEditing),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              l10n.discard,
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final eventActions = ref.watch(
@@ -84,22 +114,33 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
         _onEditStateChanged,
       );
 
-    return AdaptiveScaffold(
-      appBar: AdaptiveAppBar(
-        useNativeToolbar: false,
-        leading: IconButton(
-          icon: Icon(
-            Icons.close_rounded,
-            size: 22.sp,
-            color: AppColors.textSecondary,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final discard = await _confirmDiscard();
+        if (discard && context.mounted) context.pop();
+      },
+      child: AdaptiveScaffold(
+        appBar: AdaptiveAppBar(
+          useNativeToolbar: false,
+          leading: IconButton(
+            icon: Icon(
+              Icons.close_rounded,
+              size: 22.sp,
+              color: AppColors.textSecondary,
+            ),
+            onPressed: () async {
+              final discard = await _confirmDiscard();
+              if (discard && context.mounted) context.pop();
+            },
           ),
-          onPressed: () => context.pop(),
+          title: AppLocalizations.of(context).editEventTitle,
         ),
-        title: AppLocalizations.of(context).editEventTitle,
-      ),
-      body: MaxWidthContainer(
-        maxWidth: kMaxWidthForm,
-        child: _buildBody(editState, eventActions),
+        body: MaxWidthContainer(
+          maxWidth: kMaxWidthForm,
+          child: _buildBody(editState, eventActions),
+        ),
       ),
     );
   }
@@ -946,11 +987,11 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14.r),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: AppColors.divider),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14.r),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: AppColors.divider),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14.r),

@@ -19,6 +19,7 @@ import 'package:sport_connect/core/widgets/premium_avatar.dart';
 import 'package:sport_connect/core/widgets/premium_text_field.dart';
 import 'package:sport_connect/core/widgets/skeleton_loader.dart';
 import 'package:sport_connect/features/messaging/models/message_model.dart';
+import 'package:sport_connect/features/messaging/repositories/chat_repository.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_list_view_model.dart';
 import 'package:sport_connect/features/messaging/view_models/chat_view_model.dart';
 import 'package:sport_connect/features/messaging/views/chat_detail_screen.dart';
@@ -93,6 +94,8 @@ class _SelectedChatDetail {
 
 class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   _SelectedChatDetail? _selectedChat;
+  Map<String, ConnectionContext>? _peopleContexts;
+  String? _peopleContextsKey;
 
   // ── Build ────────────────────────────────────────────────────────────────
 
@@ -380,11 +383,15 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                     directChats[chatIndex],
                     currentUser.uid,
                   );
+                  // Cap the stagger so long lists don't push trailing tiles'
+                  // entrance seconds into the future.
+                  final staggerIndex = (index - (showPeopleBlock ? 1 : 0))
+                      .clamp(0, 8);
                   return tile
                       .animate()
                       .fadeIn(
                         duration: 300.ms,
-                        delay: Duration(milliseconds: 50 + (index * 60)),
+                        delay: Duration(milliseconds: 50 + staggerIndex * 60),
                       )
                       .slideX(begin: 0.1, curve: Curves.easeOutCubic);
                 },
@@ -478,11 +485,9 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                 return false;
               }
               if (searchQuery.isEmpty) return true;
-              return _chatTitle(c, currentUserId)
-                  .toLowerCase()
-                  .contains(
-                    searchQuery,
-                  );
+              return _chatTitle(c, currentUserId).toLowerCase().contains(
+                searchQuery,
+              );
             }).toList();
 
             if (groupChats.isEmpty) {
@@ -537,11 +542,9 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
             final rideChats = chats.where((c) {
               if (c.type != ChatType.rideGroup) return false;
               if (searchQuery.isEmpty) return true;
-              return _chatTitle(c, currentUserId)
-                  .toLowerCase()
-                  .contains(
-                    searchQuery,
-                  );
+              return _chatTitle(c, currentUserId).toLowerCase().contains(
+                searchQuery,
+              );
             }).toList();
 
             if (rideChats.isEmpty) {
@@ -598,6 +601,26 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     );
 
     try {
+      final connection = await ref
+          .read(chatRepositoryProvider)
+          .getConnectionContext(currentUser.uid, user.uid);
+      if (!mounted) return;
+      if (!connection.connected) {
+        context.pop(); // Close spinner.
+        unawaited(
+          context.pushNamed(
+            AppRoutes.userProfile.name,
+            pathParameters: {'id': user.uid},
+          ),
+        );
+        return;
+      }
+    } on Exception {
+      // Fall through to the legacy open; the chat detail screen's locked
+      // panel guards sends downstream.
+    }
+
+    try {
       final chatModel = await ref.read(
         getOrCreateChatProvider(
           userId1: currentUser.uid,
@@ -637,7 +660,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
       context.pop(); // Close spinner.
       AdaptiveSnackBar.show(
         context,
-        message: AppLocalizations.of(context).failedToCreateChatTryAgain,
+        message: AppLocalizations.of(context).chatSendNetworkRetry,
         type: AdaptiveSnackBarType.error,
       );
     }
@@ -671,6 +694,8 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     }
 
     if (peopleMatches.isEmpty) return const SizedBox.shrink();
+
+    _schedulePeopleContextsFetch(currentUser.uid, peopleMatches);
 
     return Container(
       margin: EdgeInsets.fromLTRB(20.w, 0, 20.w, 10.h),
@@ -719,51 +744,135 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
           ),
           SizedBox(height: 8.h),
           ...peopleMatches.map(
-            (user) => Container(
-              margin: EdgeInsets.only(bottom: 6.h),
-              decoration: BoxDecoration(
+            (user) => Padding(
+              padding: EdgeInsets.only(bottom: 6.h),
+              child: Material(
                 color: AppColors.cardBg,
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(
-                  color: AppColors.border.withValues(alpha: 0.4),
-                ),
-              ),
-              child: AdaptiveListTile(
-                padding: EdgeInsets.symmetric(horizontal: 10.w),
-                leading: PremiumAvatar(
-                  imageUrl: user.photoUrl,
-                  name: user.username,
-                  size: 36,
-                ),
-                title: Text(
-                  user.username,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  side: BorderSide(
+                    color: AppColors.border.withValues(alpha: 0.4),
                   ),
                 ),
-                subtitle: Text(
-                  user.email,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textTertiary,
+                clipBehavior: Clip.antiAlias,
+                // The card is itself the ink surface, so AdaptiveListTile's
+                // Android splashes render correctly (framework ListTile
+                // diagnostic) while iOS keeps the Cupertino tile.
+                child: AdaptiveListTile(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w),
+                  leading: PremiumAvatar(
+                    imageUrl: user.photoUrl,
+                    name: user.username,
+                    size: 36,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.username,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      SizedBox(
+                        height: 16.h,
+                        child: _buildPersonSubtitle(user.uid),
+                      ),
+                    ],
+                  ),
+                  // No email subtitle: people search results surface another
+                  // user's address with no consent gate, so only the name and
+                  // photo are shown.
+                  trailing: Icon(
+                    Icons.north_east_rounded,
+                    size: 18.sp,
+                    color: AppColors.primary,
+                  ),
+                  onTap: () => _openChatWithUser(currentUser, user),
                 ),
-                trailing: Icon(
-                  Icons.north_east_rounded,
-                  size: 18.sp,
-                  color: AppColors.primary,
-                ),
-                onTap: () => _openChatWithUser(currentUser, user),
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  // ── People connection subtitles ──────────────────────────────────────────
+
+  void _schedulePeopleContextsFetch(
+    String currentUserId,
+    List<UserModel> peopleMatches,
+  ) {
+    final key = peopleMatches.map((user) => user.uid).join(',');
+    if (key == _peopleContextsKey) return;
+    _peopleContextsKey = key;
+    unawaited(
+      _fetchPeopleContexts(
+        currentUserId,
+        key,
+        [for (final user in peopleMatches) user.uid],
+      ),
+    );
+  }
+
+  Future<void> _fetchPeopleContexts(
+    String currentUserId,
+    String key,
+    List<String> uids,
+  ) async {
+    try {
+      final contexts = await ref
+          .read(chatRepositoryProvider)
+          .getConnectionContexts(currentUserId, uids);
+      if (!mounted || key != _peopleContextsKey) return;
+      setState(() => _peopleContexts = contexts);
+    } on Exception {
+      // Subtitles stay blank; the reserved height keeps rows stable.
+    }
+  }
+
+  Widget _buildPersonSubtitle(String userId) {
+    final l10n = AppLocalizations.of(context);
+    final connection = _peopleContexts?[userId];
+    if (connection == null) return const SizedBox.shrink();
+    if (!connection.connected) {
+      return Text(
+        l10n.peopleNoSharedContext,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+      );
+    }
+
+    final label = connection.label?.trim();
+    return switch (connection.kind) {
+      ConnectionKind.sharedRide || ConnectionKind.bookingPair => Text(
+        _connectionLine(l10n.connectionSharedRide, label),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 11.sp, color: AppColors.primary),
+      ),
+      ConnectionKind.sharedEvent => Text(
+        _connectionLine(l10n.connectionSharedEvent, label),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 11.sp, color: AppColors.success),
+      ),
+      null => const SizedBox.shrink(),
+    };
+  }
+
+  // l10n templates end in "· $name"; drop the dangling separator when the
+  // label is missing so only the bare prefix remains.
+  String _connectionLine(String Function(String name) template, String? label) {
+    final text = template(label ?? '').trim();
+    return text.endsWith('·')
+        ? text.substring(0, text.length - 1).trim()
+        : text;
   }
 
   // ── Error / empty states ─────────────────────────────────────────────────
@@ -838,7 +947,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   // ── Swipeable chat tile ──────────────────────────────────────────────────
 
   Widget _buildSwipeableChatTile(ChatModel chat, String currentUserId) {
-    final isMuted = chat.mutedBy[currentUserId] == true;
+    final isMuted = chat.isMutedBy(currentUserId);
 
     return Dismissible(
       key: ValueKey('chat_${chat.id}'),
@@ -1015,7 +1124,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   Widget _buildChatTile(ChatModel chat, String currentUserId) {
     final title = _chatTitle(chat, currentUserId);
     final photoUrl = chat.getChatPhoto(currentUserId);
-    final unreadCount = chat.getUnreadCount(currentUserId);
+    final hasUnread = chat.hasUnread(currentUserId);
     final lastMessage =
         chat.lastMessageContent ?? AppLocalizations.of(context).noMessagesYet;
     final lastMessageTime = _formatTime(chat.lastMessageAt);
@@ -1042,7 +1151,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                           title,
                           style: TextStyle(
                             fontSize: 16.sp,
-                            fontWeight: unreadCount > 0
+                            fontWeight: hasUnread
                                 ? FontWeight.w700
                                 : FontWeight.w600,
                             color: AppColors.textPrimary,
@@ -1054,10 +1163,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                         lastMessageTime,
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: unreadCount > 0
+                          color: hasUnread
                               ? AppColors.primary
                               : AppColors.textSecondary,
-                          fontWeight: unreadCount > 0
+                          fontWeight: hasUnread
                               ? FontWeight.w600
                               : FontWeight.w400,
                         ),
@@ -1072,10 +1181,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                           lastMessage,
                           style: TextStyle(
                             fontSize: 14.sp,
-                            color: unreadCount > 0
+                            color: hasUnread
                                 ? AppColors.textPrimary
                                 : AppColors.textSecondary,
-                            fontWeight: unreadCount > 0
+                            fontWeight: hasUnread
                                 ? FontWeight.w500
                                 : FontWeight.w400,
                           ),
@@ -1083,7 +1192,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (unreadCount > 0)
+                      if (hasUnread)
                         Container(
                           margin: EdgeInsets.only(left: 8.w),
                           padding: EdgeInsets.symmetric(
@@ -1094,17 +1203,30 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                             gradient: AppColors.primaryGradient,
                             borderRadius: BorderRadius.circular(10.r),
                           ),
-                          child: Text(
-                            unreadCount > 99
-                                ? AppLocalizations.of(context).text99
-                                : AppLocalizations.of(
-                                    context,
-                                  ).value2(unreadCount),
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
+                          child: Consumer(
+                            builder: (context, ref, _) {
+                              final countAsync = ref.watch(
+                                unreadCountProvider(
+                                  chatId: chat.id,
+                                  userId: currentUserId,
+                                  since:
+                                      chat.members[currentUserId]?.lastReadAt,
+                                ),
+                              );
+                              final count = countAsync.value ?? 0;
+                              return Text(
+                                count > 99
+                                    ? AppLocalizations.of(context).text99
+                                    : AppLocalizations.of(
+                                        context,
+                                      ).value2(count),
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              );
+                            },
                           ),
                         ),
                     ],

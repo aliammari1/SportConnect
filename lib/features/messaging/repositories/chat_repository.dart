@@ -2,31 +2,67 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart' as rtdb;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sport_connect/core/constants/app_constants.dart';
 import 'package:sport_connect/core/services/firebase_service.dart';
+import 'package:sport_connect/features/events/models/event_model.dart';
 import 'package:sport_connect/features/messaging/models/message_model.dart';
 
 part 'chat_repository.g.dart';
 
+/// Expected (recoverable) chat failures surfaced to the UI.
+///
+/// Implements [Exception] rather than extending [Error]: Dart guidance is that
+/// `Error` subtypes signal programmer bugs and are not meant to be caught,
+/// while these conditions (blocked recipient, non-participant sender, missing
+/// ride relationship) are ordinary runtime outcomes the caller must handle.
+class ChatException implements Exception {
+  const ChatException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+/// How two users are connected, per the single shared rule: a direct booking
+/// pair (one booked the other as driver), a shared ride (both hold bookings on
+/// the same ride), or a shared event (both in the event's participantIds).
+enum ConnectionKind { bookingPair, sharedRide, sharedEvent }
+
+/// Result of the connection rule for a user pair.
+class ConnectionContext {
+  final bool connected;
+  final ConnectionKind? kind;
+  final String? label;
+
+  const ConnectionContext.connected({required this.kind, this.label})
+      : connected = true;
+  const ConnectionContext.notConnected()
+      : connected = false,
+        kind = null,
+        label = null;
+}
+
 @Riverpod(keepAlive: true)
 ChatRepository chatRepository(Ref ref) {
+  final firebase = ref.watch(firebaseServiceProvider);
   return ChatRepository(
-    ref.watch(firebaseServiceProvider).firestore,
-    ref.watch(firebaseServiceProvider).storage,
+    firebase.firestore,
+    firebase.storage,
+    firebase.database,
   );
 }
 
 class ChatRepository {
-  ChatRepository(this._firestore, this._storage);
+  ChatRepository(this._firestore, this._storage, this._rtdb);
+
+  final rtdb.FirebaseDatabase _rtdb;
 
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
-  final Map<String, ({ChatModel chat, DateTime expiresAt})> _chatCache = {};
-  final Map<String, ({Set<String> blockedUsers, DateTime expiresAt})>
-  _blockedUsersCache = {};
-  static const Duration _cacheTtl = Duration(seconds: 20);
 
   // ── Collection references ────────────────────────────────────────────────
 
@@ -69,10 +105,9 @@ class ChatRepository {
     final map = chat.copyWith(id: docRef.id).toJson()
       ..['createdAt'] = FieldValue.serverTimestamp()
       ..['updatedAt'] = FieldValue.serverTimestamp()
-      ..['lastMessageAt'] =
-          chat.lastMessageAt != null
-              ? Timestamp.fromDate(chat.lastMessageAt!)
-              : FieldValue.serverTimestamp();
+      ..['lastMessageAt'] = chat.lastMessageAt != null
+          ? Timestamp.fromDate(chat.lastMessageAt!)
+          : FieldValue.serverTimestamp();
     await _rawChatRef(docRef.id).set(map);
     return docRef.id;
   }
@@ -90,8 +125,9 @@ class ChatRepository {
     // amplified reads and could miss a target chat beyond the 100-cap, creating
     // duplicates. Fall back to the legacy scan only if the deterministic doc is
     // absent, to still find chats created before deterministic ids existed.
-    final existing =
-        await getChatById(_deterministicPrivateChatId(userId1, userId2));
+    final existing = await getChatById(
+      _deterministicPrivateChatId(userId1, userId2),
+    );
     if (existing != null) return existing;
 
     final query = await _chatsCollection
@@ -105,13 +141,10 @@ class ChatRepository {
       if (chat.participantIds.contains(userId2)) return chat;
     }
 
-    final hasRideInteraction = await _hasRideInteractionBetween(
-      userId1,
-      userId2,
-    );
-    if (!hasRideInteraction) {
-      throw StateError(
-        'Direct chat requires a booking request or ride participation.',
+    final connection = await getConnectionContext(userId1, userId2);
+    if (!connection.connected) {
+      throw const ChatException(
+        'You can message this person after you share a ride or event.',
       );
     }
 
@@ -125,20 +158,20 @@ class ChatRepository {
     final newChat = ChatModel(
       id: chatId,
       participantIds: [userId1, userId2],
-      participants: [
-        ChatParticipant(
+      members: {
+        userId1: ChatMember(
           userId: userId1,
           username: userName1,
           photoUrl: userPhoto1,
           joinedAt: DateTime.now(),
         ),
-        ChatParticipant(
+        userId2: ChatMember(
           userId: userId2,
           username: userName2,
           photoUrl: userPhoto2,
           joinedAt: DateTime.now(),
         ),
-      ],
+      },
     );
 
     final created = await _firestore.runTransaction((txn) async {
@@ -168,26 +201,144 @@ class ChatRepository {
     return 'dm_${sorted[0]}__${sorted[1]}';
   }
 
-  Future<bool> _hasRideInteractionBetween(
+  /// Resolves how [userId1] and [userId2] are connected: a direct booking
+  /// pair (one booked the other as driver) or a shared event (both in the
+  /// event's participantIds). Ordered and bounded — stops at the first hit.
+  ///
+  /// Every bookings query constrains the caller's own identity with plain
+  /// equality, the only shape Firestore rules can prove readable here.
+  /// Co-passenger "shared ride" detection would require reading another
+  /// user's bookings or a participant array on ride docs; neither exists in
+  /// the current schema, so [ConnectionKind.sharedRide] stays reserved for a
+  /// future server-side implementation.
+  Future<ConnectionContext> getConnectionContext(
     String userId1,
     String userId2,
   ) async {
-    final firstDirection = await _firestore
+    final myBookings = await _firestore
         .collection(AppConstants.bookingsCollection)
         .where('passengerId', isEqualTo: userId1)
-        .where('driverId', isEqualTo: userId2)
-        .limit(1)
+        .limit(30)
         .get();
-    if (firstDirection.docs.isNotEmpty) return true;
+    for (final doc in myBookings.docs) {
+      if (doc.data()['driverId'] == userId2) {
+        return const ConnectionContext.connected(
+          kind: ConnectionKind.bookingPair,
+        );
+      }
+    }
 
-    final secondDirection = await _firestore
+    final myDrivenBookings = await _firestore
         .collection(AppConstants.bookingsCollection)
-        .where('passengerId', isEqualTo: userId2)
         .where('driverId', isEqualTo: userId1)
-        .limit(1)
+        .limit(30)
         .get();
-    return secondDirection.docs.isNotEmpty;
+    for (final doc in myDrivenBookings.docs) {
+      if (doc.data()['passengerId'] == userId2) {
+        return const ConnectionContext.connected(
+          kind: ConnectionKind.bookingPair,
+        );
+      }
+    }
+
+    final events = await _firestore
+        .collection(AppConstants.eventsCollection)
+        .where('participantIds', arrayContains: userId1)
+        .limit(30)
+        .get();
+    for (final doc in events.docs) {
+      final data = doc.data();
+      final participants = data['participantIds'];
+      if (participants is List && participants.contains(userId2)) {
+        return ConnectionContext.connected(
+          kind: ConnectionKind.sharedEvent,
+          label: data['title'] as String?,
+        );
+      }
+    }
+
+    return const ConnectionContext.notConnected();
   }
+
+  /// Batched connection resolution for list rendering. Fixed query budget:
+  /// two bounded booking scans of the caller's own docs for direct pairs and
+  /// one bounded events query for co-participants; candidates with no hit
+  /// map to [ConnectionContext.notConnected]. See [getConnectionContext] for
+  /// why co-passenger rides are not resolvable client-side today.
+  Future<Map<String, ConnectionContext>> getConnectionContexts(
+    String selfUid,
+    List<String> candidateUids,
+  ) async {
+    final candidates = candidateUids.where((uid) => uid != selfUid).toSet();
+    final contexts = <String, ConnectionContext>{};
+    if (candidates.isEmpty) return contexts;
+
+    void record(String uid, ConnectionKind kind, {String? label}) {
+      final existing = contexts[uid];
+      if (existing != null &&
+          _kindRank(existing.kind!) <= _kindRank(kind)) {
+        return;
+      }
+      contexts[uid] = ConnectionContext.connected(kind: kind, label: label);
+    }
+
+    final passengerBookings = await _firestore
+        .collection(AppConstants.bookingsCollection)
+        .where('passengerId', isEqualTo: selfUid)
+        .limit(30)
+        .get();
+    final driverBookings = await _firestore
+        .collection(AppConstants.bookingsCollection)
+        .where('driverId', isEqualTo: selfUid)
+        .limit(30)
+        .get();
+
+    for (final doc in passengerBookings.docs) {
+      final data = doc.data();
+      final driverId = data['driverId'];
+      if (driverId is String && candidates.contains(driverId)) {
+        record(driverId, ConnectionKind.bookingPair);
+      }
+    }
+    for (final doc in driverBookings.docs) {
+      final data = doc.data();
+      final passengerId = data['passengerId'];
+      if (passengerId is String && candidates.contains(passengerId)) {
+        record(passengerId, ConnectionKind.bookingPair);
+      }
+    }
+
+    final events = await _firestore
+        .collection(AppConstants.eventsCollection)
+        .where('participantIds', arrayContains: selfUid)
+        .limit(30)
+        .get();
+    for (final doc in events.docs) {
+      final data = doc.data();
+      final participants = data['participantIds'];
+      if (participants is! List) continue;
+      for (final uid in candidates) {
+        if (participants.contains(uid)) {
+          record(
+            uid,
+            ConnectionKind.sharedEvent,
+            label: data['title'] as String?,
+          );
+        }
+      }
+    }
+
+    for (final uid in candidates) {
+      contexts.putIfAbsent(uid, ConnectionContext.notConnected);
+    }
+    return contexts;
+  }
+
+  static int _kindRank(ConnectionKind kind) => switch (kind) {
+        ConnectionKind.bookingPair => 0,
+        ConnectionKind.sharedRide => 1,
+        ConnectionKind.sharedEvent => 2,
+      };
 
   Future<ChatModel> createRideChat({
     required String rideId,
@@ -202,15 +353,15 @@ class ChatRepository {
       rideId: rideId,
       groupName: rideName,
       participantIds: [driverId],
-      participants: [
-        ChatParticipant(
+      members: {
+        driverId: ChatMember(
           userId: driverId,
           username: driverName,
           photoUrl: driverPhoto,
-          isAdmin: true,
+          role: MemberRole.owner,
           joinedAt: DateTime.now(),
         ),
-      ],
+      },
     );
     final chatId = await createChat(chat);
     return chat.copyWith(id: chatId);
@@ -229,53 +380,51 @@ class ChatRepository {
       eventId: eventId,
       groupName: eventName,
       participantIds: [creatorId],
-      participants: [
-        ChatParticipant(
+      members: {
+        creatorId: ChatMember(
           userId: creatorId,
           username: creatorName,
           photoUrl: creatorPhoto,
-          isAdmin: true,
+          role: MemberRole.owner,
           joinedAt: DateTime.now(),
         ),
-      ],
+      },
     );
     final chatId = await createChat(chat);
     return chat.copyWith(id: chatId);
   }
 
   Future<ChatModel?> getChatById(String chatId) async {
-    final now = DateTime.now();
-    final cached = _chatCache[chatId];
-    if (cached != null && now.isBefore(cached.expiresAt)) {
-      return cached.chat;
-    }
-
     final doc = await _chatsCollection.doc(chatId).get();
-    final chat = doc.exists ? doc.data() : null;
-    if (chat != null) {
-      _chatCache[chatId] = (chat: chat, expiresAt: now.add(_cacheTtl));
-    }
-    return chat;
+    return doc.exists ? doc.data() : null;
   }
 
-  Future<ChatModel?> getChatByRideId(String rideId) async {
+  /// Ride group chats are looked up with the caller's membership filter so
+  /// the query provably satisfies the chats list rule (uid in
+  /// participantIds) — without it Firestore denies the read outright.
+  Future<ChatModel?> getChatByRideId(String rideId, String userId) async {
     final query = await _chatsCollection
         .where('type', isEqualTo: ChatType.rideGroup.name)
         .where('rideId', isEqualTo: rideId)
+        .where('participantIds', arrayContains: userId)
         .limit(1)
         .get();
     return query.docs.isEmpty ? null : query.docs.first.data();
   }
 
+  /// Over-fetches (150) because `isVisibleFor` filters client-side: hidden
+  /// chats would otherwise consume limit slots and silently drop real chats
+  /// below the visible cap.
   Stream<List<ChatModel>> streamUserChats(String userId) => _chatsCollection
       .where('participantIds', arrayContains: userId)
       .orderBy('lastMessageAt', descending: true)
-      .limit(50)
+      .limit(150)
       .snapshots()
       .map(
         (snap) => snap.docs
             .map((d) => d.data())
             .where((chat) => chat.isVisibleFor(userId))
+            .take(50)
             .toList(),
       );
 
@@ -286,8 +435,9 @@ class ChatRepository {
     // MSG-D5: Resolve by deterministic id first (single doc read) before falling
     // back to the bounded scan, which is both read-heavy and unsound past the
     // 100-cap.
-    final existing =
-        await getChatById(_deterministicPrivateChatId(userId1, userId2));
+    final existing = await getChatById(
+      _deterministicPrivateChatId(userId1, userId2),
+    );
     if (existing != null) return existing;
 
     final query = await _chatsCollection
@@ -307,15 +457,24 @@ class ChatRepository {
 
   Future<void> addParticipant({
     required String chatId,
-    required ChatParticipant participant,
+    required String userId,
+    String? displayName,
+    String? photoUrl,
+    MemberRole role = MemberRole.member,
   }) async {
     await _chatsCollection.doc(chatId).update({
-      'participantIds': FieldValue.arrayUnion([participant.userId]),
+      'participantIds': FieldValue.arrayUnion([userId]),
+      'members.$userId': ChatMember(
+        userId: userId,
+        username: displayName,
+        photoUrl: photoUrl,
+        role: role,
+        joinedAt: DateTime.now(),
+      ).toJson(),
       // FIX: serverTimestamp instead of DateTime.now() — avoids clock skew
       // on devices whose clocks are wrong.
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    _chatCache.remove(chatId);
   }
 
   /// Idempotent — adds [userId] to participants only if not already present.
@@ -338,7 +497,6 @@ class ChatRepository {
     };
 
     await _chatsCollection.doc(chatId).update(updates);
-    _chatCache.remove(chatId);
   }
 
   Future<void> removeParticipant({
@@ -347,9 +505,9 @@ class ChatRepository {
   }) async {
     await _chatsCollection.doc(chatId).update({
       'participantIds': FieldValue.arrayRemove([userId]),
+      'members.$userId': FieldValue.delete(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    _chatCache.remove(chatId);
   }
 
   // ── Chat settings ─────────────────────────────────────────────────────────
@@ -360,10 +518,10 @@ class ChatRepository {
     required bool mute,
   }) async {
     await _chatsCollection.doc(chatId).update({
-      'mutedBy.$userId': mute,
+      'mutedUntil.$userId':
+          mute ? FieldValue.serverTimestamp() : FieldValue.delete(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    _chatCache.remove(chatId);
   }
 
   Future<void> togglePin({
@@ -375,45 +533,26 @@ class ChatRepository {
       'pinnedBy.$userId': pin,
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    _chatCache.remove(chatId);
   }
 
   Future<void> clearChat({
     required String chatId,
     required String userId,
   }) async {
-    // MSG-D9: Read-then-write inside a transaction so a concurrent
-    // FieldValue.increment from sendMessage forces a retry instead of being
-    // silently clobbered by a blind set-0 update. The get() establishes the
-    // read that Firestore tracks for conflict detection.
-    final ref = _rawChatRef(chatId);
-    await _firestore.runTransaction((txn) async {
-      await txn.get(ref);
-      txn.update(ref, {
-        'deletedAtBy.$userId': FieldValue.serverTimestamp(),
-        'unreadCounts.$userId': 0,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+    await _rawChatRef(chatId).update({
+      'hiddenBy.$userId': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
-    _chatCache.remove(chatId);
   }
 
   Future<void> clearChatHistoryForUser({
     required String chatId,
     required String userId,
   }) async {
-    // MSG-D9: See clearChat — read-then-write inside a transaction so a racing
-    // increment from sendMessage cannot be clobbered.
-    final ref = _rawChatRef(chatId);
-    await _firestore.runTransaction((txn) async {
-      await txn.get(ref);
-      txn.update(ref, {
-        'clearedAtBy.$userId': FieldValue.serverTimestamp(),
-        'unreadCounts.$userId': 0,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+    await _rawChatRef(chatId).update({
+      'clearedAt.$userId': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
-    _chatCache.remove(chatId);
   }
 
   // ── Messages ──────────────────────────────────────────────────────────────
@@ -421,7 +560,7 @@ class ChatRepository {
   Future<String> sendMessage(MessageModel message) async {
     // Enforce message length to prevent Firestore document size abuse.
     if (message.content.length > 2000) {
-      throw ArgumentError(
+      throw ChatException(
         'Message content must not exceed 2000 characters '
         '(got ${message.content.length}).',
       );
@@ -439,7 +578,7 @@ class ChatRepository {
       // Verify sender is a participant — prevents message injection by
       // authenticated users who happen to know a chatId.
       if (!chat.participantIds.contains(message.senderId)) {
-        throw StateError(
+        throw ChatException(
           'sendMessage: ${message.senderId} is not a participant '
           'in chat ${message.chatId}',
         );
@@ -461,7 +600,7 @@ class ChatRepository {
 
       for (var i = 0; i < blockedChecks.length; i++) {
         if (blockedChecks[i]) {
-          throw StateError(
+          throw ChatException(
             'sendMessage: ${recipientIds[i]} has blocked ${message.senderId}',
           );
         }
@@ -474,7 +613,7 @@ class ChatRepository {
 
       if (participantIds.length != 2 ||
           !participantIds.contains(message.senderId)) {
-        throw StateError('Invalid draft chat id: ${message.chatId}');
+        throw ChatException('Invalid draft chat id: ${message.chatId}');
       }
 
       // MSG-D6: Enforce the same ride-interaction authorization gate as
@@ -484,18 +623,33 @@ class ChatRepository {
       final otherUserId = participantIds.firstWhere(
         (id) => id != message.senderId,
       );
-      final hasRideInteraction = await _hasRideInteractionBetween(
+      final connection = await getConnectionContext(
         message.senderId,
         otherUserId,
       );
-      if (!hasRideInteraction) {
-        throw StateError(
-          'Direct chat requires a booking request or ride participation.',
+      if (!connection.connected) {
+        throw const ChatException(
+          'You can message this person after you share a ride or event.',
+        );
+      }
+
+      // Blocked-check also applies on the create path: without it, a first
+      // message from a fresh draft would bypass the recipient's block list
+      // (the check below only ran when the chat document already existed).
+      final draftBlocked = await _hasRecipientBlockedSender(
+        recipientId: otherUserId,
+        senderId: message.senderId,
+      );
+      if (draftBlocked) {
+        throw ChatException(
+          'sendMessage: $otherUserId has blocked ${message.senderId}',
         );
       }
       isCreatingChat = true;
     } else {
-      throw StateError('sendMessage: chat does not exist: ${message.chatId}');
+      throw ChatException(
+        'sendMessage: chat does not exist: ${message.chatId}',
+      );
     }
 
     final docRef = _messagesCollection(message.chatId).doc();
@@ -513,18 +667,18 @@ class ChatRepository {
     final messageJson = messageWithId.toJson()
       ..['createdAt'] = FieldValue.serverTimestamp();
     batch.set(_rawMessageRef(message.chatId, docRef.id), messageJson);
-    // MSG-D3: Only write the full participantIds array when this send is
-    // creating the chat doc (draft path). For an existing chat the array is
-    // owned by add/removeParticipant (arrayUnion/arrayRemove); overwriting it
-    // here with up-to-20s cached data clobbers concurrent membership changes.
+
+    // COST: exactly two writes per send regardless of group size. Unread
+    // state is derived from members.{uid}.lastReadAt vs lastMessageAt — no
+    // per-recipient increments, so the chat document stays off the
+    // single-document contention path Firebase warns about.
     final previewUpdate = <String, dynamic>{
       'lastMessageContent': message.content,
       'lastMessageSenderId': message.senderId,
-      'lastMessageSenderName': message.senderName,
       'lastMessageType': message.type.name,
       'lastMessageAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
-      'deletedAtBy.${message.senderId}': FieldValue.delete(),
+      'hiddenBy.${message.senderId}': FieldValue.delete(),
     };
     if (isCreatingChat) {
       previewUpdate['participantIds'] = participantIds;
@@ -535,18 +689,7 @@ class ChatRepository {
       SetOptions(merge: true),
     );
 
-    // MSG-001: Increment unread count for every recipient atomically so that
-    // concurrent sends from different clients compose correctly.
-    for (final recipientId in participantIds.where(
-      (id) => id != message.senderId,
-    )) {
-      batch.update(_rawChatRef(message.chatId), {
-        'unreadCounts.$recipientId': FieldValue.increment(1),
-      });
-    }
-
     await batch.commit();
-    _chatCache.remove(message.chatId);
     return docRef.id;
   }
 
@@ -554,22 +697,12 @@ class ChatRepository {
     required String recipientId,
     required String senderId,
   }) async {
-    final now = DateTime.now();
-    final cached = _blockedUsersCache[recipientId];
-    if (cached != null && now.isBefore(cached.expiresAt)) {
-      return cached.blockedUsers.contains(senderId);
-    }
-
     final doc = await _firestore
         .collection(AppConstants.usersCollection)
         .doc(recipientId)
         .get();
     final blocked = Set<String>.from(
       doc.data()?['blockedUsers'] as List? ?? const <String>[],
-    );
-    _blockedUsersCache[recipientId] = (
-      blockedUsers: blocked,
-      expiresAt: now.add(_cacheTtl),
     );
     return blocked.contains(senderId);
   }
@@ -580,14 +713,6 @@ class ChatRepository {
     final parts = draftChatId.replaceFirst('draft-', '').split('__');
     return parts.length == 2 ? parts : const [];
   }
-
-  Stream<List<MessageModel>> streamMessages(String chatId, {int limit = 50}) =>
-      _messagesCollection(chatId)
-          .where('isDeleted', isEqualTo: false)
-          .orderBy('createdAt', descending: true)
-          .limit(limit)
-          .snapshots()
-          .map((snap) => snap.docs.map((d) => d.data()).toList());
 
   Stream<List<MessageModel>> streamMessagesForUser({
     required String chatId,
@@ -614,16 +739,16 @@ class ChatRepository {
     DateTime? lastClearedAt;
 
     void startInner(DateTime? clearedAt) {
-      innerSub?.cancel();
+      unawaited(innerSub?.cancel());
 
       var query = _messagesCollection(chatId)
-          .where('isDeleted', isEqualTo: false)
+          .where('deletedAt', isEqualTo: null)
           .orderBy('createdAt', descending: true)
           .limit(limit);
 
       if (clearedAt != null) {
         query = _messagesCollection(chatId)
-            .where('isDeleted', isEqualTo: false)
+            .where('deletedAt', isEqualTo: null)
             .where('createdAt', isGreaterThan: Timestamp.fromDate(clearedAt))
             .orderBy('createdAt', descending: true)
             .limit(limit);
@@ -642,26 +767,32 @@ class ChatRepository {
           );
     }
 
-    outerSub = _chatsCollection.doc(chatId).snapshots().listen(
-      (chatSnap) {
-        final clearedAt = chatSnap.data()?.clearedAtBy[userId];
-        // Only (re)start the inner stream when clearedAt changes or on first
-        // event; other chat-doc writes don't affect the message query.
-        if (hasStarted && clearedAt == lastClearedAt) return;
-        hasStarted = true;
-        lastClearedAt = clearedAt;
-        startInner(clearedAt);
-      },
-      onError: (Object e, StackTrace st) {
-        if (!controller.isClosed) controller.addError(e, st);
-      },
-    );
+    outerSub = _chatsCollection
+        .doc(chatId)
+        .snapshots()
+        .listen(
+          (chatSnap) {
+            final clearedAt = chatSnap.data()?.clearedAt[userId];
+            // Only (re)start the inner stream when clearedAt changes or on first
+            // event; other chat-doc writes don't affect the message query.
+            if (hasStarted && clearedAt == lastClearedAt) return;
+            hasStarted = true;
+            lastClearedAt = clearedAt;
+            startInner(clearedAt);
+          },
+          onError: (Object e, StackTrace st) {
+            // A permanent outer failure (e.g. chat doc deleted or permission
+            // revoked) must also stop the inner message stream, otherwise it keeps
+            // emitting orphaned messages after the parent listener is gone.
+            unawaited(innerSub?.cancel());
+            if (!controller.isClosed) controller.addError(e, st);
+          },
+        );
 
     controller.onCancel = () {
-      outerSub?.cancel();
-      innerSub?.cancel();
+      unawaited(outerSub?.cancel());
+      unawaited(innerSub?.cancel());
     };
-
     return controller.stream;
   }
 
@@ -671,7 +802,7 @@ class ChatRepository {
     int limit = 20,
   }) async {
     final snapshot = await _messagesCollection(chatId)
-        .where('isDeleted', isEqualTo: false)
+        .where('deletedAt', isEqualTo: null)
         .where('createdAt', isLessThan: Timestamp.fromDate(beforeTimestamp))
         .orderBy('createdAt', descending: true)
         .limit(limit + 1)
@@ -687,61 +818,24 @@ class ChatRepository {
   // rather than array membership — always returned nothing or threw.
   // Replaced with a client-side filter after a bounded fetch.
 
-  Future<void> markAsRead(String chatId, String userId) async {
-    // MSG-005: "Mark visible as read" means the NEWEST messages, so order purely
-    // by createdAt desc. A senderId inequality would force senderId to be the
-    // first orderBy (Firestore constraint), making the 50-doc window the
-    // alphabetically-first senders rather than the most recent messages — in
-    // group chats with >50 messages that permanently strands later-uid senders'
-    // unread messages. Filter senderId != userId client-side instead.
-    final snapshot = await _messagesCollection(chatId)
-        .where('isDeleted', isEqualTo: false)
-        .orderBy('createdAt', descending: true)
-        .limit(50)
-        .get();
-
-    final unreadDocs = snapshot.docs.where((doc) {
-      final msg = doc.data();
-      return msg.senderId != userId && !msg.isReadBy(userId);
-    }).toList();
-
-    if (unreadDocs.isEmpty) return;
-
-    final batch = _firestore.batch();
-    for (final doc in unreadDocs) {
-      batch.update(doc.reference, {
-        'readBy': FieldValue.arrayUnion([userId]),
-        'status': MessageStatus.read.name,
-      });
-    }
-    await batch.commit();
-
-    // MSG-D1/MSG-D2: Reconcile the per-user badge in a transaction and clamp at
-    // zero. The 50-doc window is not aligned with how unreadCounts was
-    // incremented (sendMessage adds +1 per recipient per message) and clearChat
-    // may have already zeroed the counter, so a blind FieldValue.increment(-n)
-    // can drive the badge negative. max(0, current - n) keeps it authoritative
-    // and non-negative.
-    final chatRef = _rawChatRef(chatId);
-    await _firestore.runTransaction((txn) async {
-      final snap = await txn.get(chatRef);
-      final data = snap.data();
-      final raw = (data?['unreadCounts'] as Map<String, dynamic>?)?[userId];
-      final current = (raw is num) ? raw.toInt() : 0;
-      final next = current - unreadDocs.length;
-      txn.update(chatRef, {
-        'unreadCounts.$userId': next < 0 ? 0 : next,
-      });
+  /// Advances the member's read cursor — ONE write, zero reads. Every
+  /// receipt and badge in the system is derived from this timestamp
+  /// (Sendbird/Twilio/Mattermost pattern); nothing per-message is written.
+  Future<void> markAsRead(String chatId, String userId) {
+    return _rawChatRef(chatId).update({
+      'members.$userId.lastReadAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
-    _chatCache.remove(chatId);
   }
 
+  /// Tombstone stores empty content + a timestamp; the UI renders the
+  /// locale-correct "message deleted" text from [MessageModel.isTombstone].
   Future<void> deleteMessage({
     required String chatId,
     required String messageId,
-  }) => _messagesCollection(chatId).doc(messageId).update({
-    'isDeleted': true,
-    'content': 'This message was deleted',
+  }) => _rawMessageRef(chatId, messageId).update({
+    'deletedAt': FieldValue.serverTimestamp(),
+    'content': '',
   });
 
   Future<void> editMessage({
@@ -755,25 +849,54 @@ class ChatRepository {
     'editedAt': FieldValue.serverTimestamp(),
   });
 
+  /// Reactions become Firestore map keys (`reactions.<emoji>`), so the value
+  /// must be short and free of field-path metacharacters; anything else would
+  /// corrupt the document's map structure.
+  static final RegExp _reactionForbidden = RegExp(r'[.^$#\[\]/\\]');
+
+  static bool _isValidReaction(String reaction) {
+    if (reaction.isEmpty || reaction.length > 8) return false;
+    return !_reactionForbidden.hasMatch(reaction);
+  }
+
   Future<void> addReaction({
     required String chatId,
     required String messageId,
     required String userId,
     required String reaction,
-  }) => _messagesCollection(chatId).doc(messageId).update({
-    'reactions.$reaction': FieldValue.arrayUnion([userId]),
-  });
+  }) {
+    if (!_isValidReaction(reaction)) {
+      throw ChatException('Unsupported reaction: $reaction');
+    }
+    return _messagesCollection(chatId).doc(messageId).update({
+      'reactions.$reaction': FieldValue.arrayUnion([userId]),
+    });
+  }
 
   Future<void> removeReaction({
     required String chatId,
     required String messageId,
     required String userId,
     required String reaction,
-  }) => _messagesCollection(chatId).doc(messageId).update({
-    'reactions.$reaction': FieldValue.arrayRemove([userId]),
-  });
+  }) {
+    if (!_isValidReaction(reaction)) {
+      throw ChatException('Unsupported reaction: $reaction');
+    }
+    return _messagesCollection(chatId).doc(messageId).update({
+      'reactions.$reaction': FieldValue.arrayRemove([userId]),
+    });
+  }
 
-  // ── Typing indicators ─────────────────────────────────────────────────────
+  // ── Typing indicators (Realtime Database) ─────────────────────────────────
+  // Ephemeral signals live in RTDB: flat-rate bandwidth instead of
+  // per-write Firestore billing, and onDisconnect() cleans up crashed
+  // clients server-side — the official Firebase presence pattern.
+
+  static const Duration _typingStaleAfter = Duration(seconds: 30);
+
+  rtdb.DatabaseReference _typingRef(String chatId, String userId) => _rtdb
+      .ref('chat_status/$chatId/typing')
+      .child(userId);
 
   Future<void> setTyping({
     required String chatId,
@@ -781,53 +904,69 @@ class ChatRepository {
     required String username,
     required bool isTyping,
   }) async {
-    final ref = _firestore
-        .collection(AppConstants.chatsCollection)
-        .doc(chatId)
-        .collection(AppConstants.typingCollection)
-        .doc(userId);
-
+    final ref = _typingRef(chatId, userId);
     if (isTyping) {
+      // onDisconnect guarantees removal even if the app is killed mid-typing.
+      await ref.onDisconnect().remove();
       await ref.set({
         'userId': userId,
         'username': username,
-        'chatId': chatId,
-        // MSG-D8: startedAt is a server timestamp, so the staleness filter in
-        // streamTypingIndicators is immune to device clock skew. The previous
-        // client-written 'expiresAt' (DateTime.now()+30s) made the indicator
-        // expire instantly or linger depending on the sender's clock.
-        'startedAt': FieldValue.serverTimestamp(),
+        'startedAt': rtdb.ServerValue.timestamp,
       });
     } else {
-      await ref.delete();
+      await ref.remove();
     }
   }
 
-  // MSG-D8: Typing indicators older than this are treated as stale. Compared
-  // against the server-written startedAt rather than a client-written expiry.
-  static const Duration _typingStaleAfter = Duration(seconds: 30);
-
-  Stream<List<TypingIndicator>> streamTypingIndicators(String chatId) =>
-      _firestore
-          .collection(AppConstants.chatsCollection)
-          .doc(chatId)
-          .collection(AppConstants.typingCollection)
-          .where(
-            'startedAt',
-            isGreaterThan: Timestamp.fromDate(
-              DateTime.now().subtract(_typingStaleAfter),
-            ),
-          )
-          .snapshots()
-          .map(
-            (snap) => snap.docs
-                .map((d) => TypingIndicator.fromJson(d.data()))
-                .toList(),
-          );
+  Stream<List<TypingIndicator>> streamTypingIndicators(String chatId) {
+    late StreamSubscription<rtdb.DatabaseEvent> sub;
+    final controller = StreamController<List<TypingIndicator>>();
+    controller.onListen = () {
+      sub = _rtdb
+          .ref('chat_status/$chatId/typing')
+          .onValue
+          .listen((event) {
+        if (!controller.isClosed) return;
+        final value = event.snapshot.value;
+        final list = <TypingIndicator>[];
+        if (value is Map<Object?, Object?>) {
+          final cutoff = DateTime.now()
+              .subtract(_typingStaleAfter)
+              .millisecondsSinceEpoch;
+          value.forEach((key, raw) {
+            if (raw is! Map<Object?, Object?>) return;
+            final startedAt = raw['startedAt'];
+            if (startedAt is! int || startedAt <= cutoff) return;
+            list.add(
+              TypingIndicator(
+                userId: raw['userId'] as String? ?? key.toString(),
+                username: raw['username'] as String? ?? '',
+                chatId: chatId,
+                startedAt: DateTime.fromMillisecondsSinceEpoch(startedAt),
+              ),
+            );
+          });
+        }
+        if (!controller.isClosed) controller.add(list);
+      });
+    };
+    controller.onCancel = () => unawaited(sub.cancel());
+    return controller.stream;
+  }
 
   // ── File uploads ──────────────────────────────────────────────────────────
 
   static const int _maxUploadBytes = 5 * 1024 * 1024; // 5 MB
+
+  static final RegExp _unsafeFileNameChars = RegExp('[^A-Za-z0-9._-]');
+
+  static const Set<String> _allowedImageExtensions = {
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.webp',
+    '.gif',
+  };
 
   Future<String> uploadChatImage({
     required String chatId,
@@ -836,14 +975,31 @@ class ChatRepository {
   }) async {
     final size = await imageFile.length();
     if (size > _maxUploadBytes) {
-      throw Exception('Image must be smaller than 5 MB');
+      throw const ChatException('Image must be smaller than 5 MB');
     }
+    // The picker supplies the original file name; strip any directory or
+    // path-hostile characters and verify the extension is an image so a
+    // renamed archive cannot be planted under chats/.
+    final dotIndex = fileName.lastIndexOf('.');
+    final ext = (dotIndex >= 0
+        ? fileName.substring(dotIndex).toLowerCase()
+        : '');
+    if (!_allowedImageExtensions.contains(ext)) {
+      throw const ChatException('Only image attachments are supported.');
+    }
+    final baseName = fileName
+        .substring(0, dotIndex >= 0 ? dotIndex : fileName.length)
+        .replaceAll(_unsafeFileNameChars, '_');
+    if (baseName.isEmpty) {
+      throw const ChatException('Invalid file name.');
+    }
+
     final ref = _storage
         .ref()
         .child('chats')
         .child(chatId)
         .child('attachments')
-        .child(fileName);
+        .child('$baseName$ext');
     await ref.putFile(imageFile);
     return ref.getDownloadURL();
   }
@@ -856,17 +1012,17 @@ class ChatRepository {
     int limit = 20,
   }) async {
     final chat = await getChatById(chatId);
-    final clearedAt = chat?.clearedAtBy[userId];
+    final clearedAt = chat?.clearedAt[userId];
 
     var query = _messagesCollection(chatId)
-        .where('isDeleted', isEqualTo: false)
+        .where('deletedAt', isEqualTo: null)
         .where('createdAt', isLessThan: Timestamp.fromDate(beforeTimestamp))
         .orderBy('createdAt', descending: true)
         .limit(limit + 1);
 
     if (clearedAt != null) {
       query = _messagesCollection(chatId)
-          .where('isDeleted', isEqualTo: false)
+          .where('deletedAt', isEqualTo: null)
           .where('createdAt', isGreaterThan: Timestamp.fromDate(clearedAt))
           .where('createdAt', isLessThan: Timestamp.fromDate(beforeTimestamp))
           .orderBy('createdAt', descending: true)
@@ -879,4 +1035,186 @@ class ChatRepository {
       hasMore: snapshot.docs.length > limit,
     );
   }
+
+  // ── Event group chats ────────────────────────────────────────────────────
+  // Migrated from features/events so every chat-creation path lives here.
+
+  /// Ensures the event group chat exists and contains the requesting user.
+  ///
+  /// Premium entitlement is enforced inside the transaction; the caller does
+  /// not need to pre-check it.
+  Future<String> ensureEventGroupChat({
+    required EventModel event,
+    required String userId,
+  }) async {
+    final eventRef = _firestore
+        .collection(AppConstants.eventsCollection)
+        .doc(event.id);
+
+    return _firestore.runTransaction((tx) async {
+      final eventSnap = await tx.get(eventRef);
+      final latestEvent = eventSnap.exists
+          ? EventModel.fromJson(eventSnap.data()! as Map<String, dynamic>)
+          : event;
+
+      final isParticipant =
+          latestEvent.participantIds.contains(userId) ||
+          latestEvent.creatorId == userId;
+
+      if (!isParticipant) {
+        throw Exception('Join the event before opening the group chat.');
+      }
+
+      final userIsPremium = await _isPremiumSubscriber(
+        tx: tx,
+        userId: userId,
+      );
+
+      if (!userIsPremium) {
+        throw Exception(
+          'Event group chat is a Premium feature. Upgrade to access attendee chat.',
+        );
+      }
+
+      final creatorIsPremium = await _isPremiumSubscriber(
+        tx: tx,
+        userId: latestEvent.creatorId,
+      );
+
+      final chatId = _resolveEventChatId(latestEvent);
+
+      final participantIds = _premiumEventChatParticipants(
+        creatorId: latestEvent.creatorId,
+        creatorIsPremium: creatorIsPremium,
+        userIsPremium: userIsPremium,
+        userId: userId,
+      );
+
+      final chatRef = _firestore
+          .collection(AppConstants.chatsCollection)
+          .doc(chatId);
+
+      final chatSnap = await tx.get(chatRef);
+
+      if (chatSnap.exists) {
+        tx.set(
+          chatRef,
+          _eventChatMergePayload(
+            participantIds: participantIds,
+            creatorId: latestEvent.creatorId,
+          ),
+          SetOptions(merge: true),
+        );
+      } else {
+        tx.set(
+          chatRef,
+          _eventChatCreatePayload(
+            chatId: chatId,
+            creatorId: latestEvent.creatorId,
+            event: latestEvent,
+            participantIds: participantIds,
+          ),
+        );
+      }
+
+      return chatId;
+    });
+  }
+
+  Future<bool> _isPremiumSubscriber({
+    required Transaction tx,
+    required String userId,
+  }) async {
+    final userSnap = await tx.get(
+      _firestore.collection(AppConstants.usersCollection).doc(userId),
+    );
+    final userData = userSnap.data();
+    return userData is Map<String, dynamic> && userData['isPremium'] == true;
+  }
+
+  List<String> _premiumEventChatParticipants({
+    required String creatorId,
+    required bool creatorIsPremium,
+    required bool userIsPremium,
+    required String userId,
+  }) {
+    return <String>{
+      if (creatorIsPremium) creatorId,
+      if (userIsPremium) userId,
+    }.toList();
+  }
+
+  String _resolveEventChatId(EventModel event) {
+    final configuredChatId = event.chatGroupId?.trim();
+    if (configuredChatId != null && configuredChatId.isNotEmpty) {
+      return configuredChatId;
+    }
+    return event.id;
+  }
+
+  Map<String, dynamic> _eventChatCreatePayload({
+    required String chatId,
+    required EventModel event,
+    required String creatorId,
+    required List<String> participantIds,
+  }) {
+    final joinedAt = DateTime.now();
+    return {
+      'id': chatId,
+      'type': ChatType.eventGroup.name,
+      'createdBy': creatorId,
+      'eventId': event.id,
+      'premiumOnly': true,
+      'groupName': event.title,
+      if ((event.imageUrl ?? '').isNotEmpty) 'groupPhotoUrl': event.imageUrl,
+
+      'participantIds': participantIds,
+      'members': {
+        for (final uid in participantIds)
+          uid: ChatMember(
+            userId: uid,
+            role: uid == creatorId ? MemberRole.owner : MemberRole.member,
+            joinedAt: joinedAt,
+          ).toJson(),
+      },
+
+      'lastMessageContent': null,
+      'lastMessageSenderId': null,
+      'lastMessageType': MessageType.system.name,
+
+      'pinnedBy': <String>[],
+
+      'isActive': true,
+      'lastMessageAt': FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+  }
+
+  Map<String, dynamic> _eventChatMergePayload({
+    required List<String> participantIds,
+    required String creatorId,
+  }) {
+    final joinedAt = DateTime.now();
+    return {
+      if (participantIds.isNotEmpty)
+        'participantIds': FieldValue.arrayUnion(participantIds),
+      // New members get a fresh cursor; existing entries are untouched so
+      // read cursors survive re-joins.
+      'members': {
+        for (final uid in participantIds)
+          uid: ChatMember(
+            userId: uid,
+            role: uid == creatorId ? MemberRole.owner : MemberRole.member,
+            joinedAt: joinedAt,
+          ).toJson(),
+      },
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+  }
 }
+
+
+
+
+

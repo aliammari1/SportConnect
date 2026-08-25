@@ -14,6 +14,8 @@ class RouteGuardService {
     this.hasCompletedOnboarding = false,
     this.isEmailVerified = false,
     this.hasVerifiableEmail = false,
+    this.hasAdminClaim = false,
+    this.isAdminClaimLoading = false,
     this.selectedRoleIntent,
     this.currentDriverConnectedAccount,
   });
@@ -27,6 +29,8 @@ class RouteGuardService {
     bool hasCompletedOnboarding = false,
     bool isEmailVerified = false,
     bool hasVerifiableEmail = false,
+    bool hasAdminClaim = false,
+    bool isAdminClaimLoading = false,
     UserRole? selectedRoleIntent,
     DriverConnectedAccount? currentDriverConnectedAccount,
   }) {
@@ -40,6 +44,8 @@ class RouteGuardService {
       user: userState.value,
       isEmailVerified: isEmailVerified,
       hasVerifiableEmail: hasVerifiableEmail,
+      hasAdminClaim: hasAdminClaim,
+      isAdminClaimLoading: isAdminClaimLoading,
       selectedRoleIntent: selectedRoleIntent,
       currentDriverConnectedAccount: currentDriverConnectedAccount,
     );
@@ -56,6 +62,15 @@ class RouteGuardService {
   final UserRole? selectedRoleIntent;
   final bool isConnectedAccountLoading;
   final DriverConnectedAccount? currentDriverConnectedAccount;
+
+  /// True when the signed-in user's ID token carries the admin custom claim.
+  /// Admins land on the oversight console instead of a role home.
+  final bool hasAdminClaim;
+
+  /// True while that claim check is still resolving. Landing decisions hold
+  /// (returning null = stay) rather than guessing a role home and then
+  /// yanking the user elsewhere a moment later.
+  final bool isAdminClaimLoading;
 
   bool get isLoggedIn => user != null;
 
@@ -260,7 +275,7 @@ class RouteGuardService {
     return null;
   }
 
-  String _getInitialRoute() {
+  String? _getInitialRoute() {
     if (!isLoggedIn) {
       return hasCompletedOnboarding
           ? AppRoutes.login.path
@@ -272,8 +287,15 @@ class RouteGuardService {
     return _getDashboardRoute();
   }
 
-  String _getDashboardRoute() {
+  String? _getDashboardRoute() {
     if (!isLoggedIn) return AppRoutes.login.path;
+
+    // Hold landing decisions until the admin claim is known, so a fresh
+    // grant redirects on the very next launch instead of after one stray
+    // bounce through the role home.
+    if (isAdminClaimLoading) return null;
+
+    if (hasAdminClaim) return AppRoutes.adminDashboard.path;
 
     return user!.map(
       rider: (_) => AppRoutes.home.path,

@@ -1446,10 +1446,6 @@
   "@levelValue": {
     "description": "Text from Text in achievements_screen.dart"
   },
-  "verifiedDriver": "Verified Driver",
-  "@verifiedDriver": {
-    "description": "Text from Text in driver_profile_screen.dart"
-  },
   "rating": "Rating",
   "@rating": {
     "description": "Text from _buildQuickStat in driver_profile_screen.dart"
@@ -1471,6 +1467,7 @@
     "description": "Text from _buildQuickStat in driver_profile_screen.dart"
   },
   "quickActions": "Quick Actions",
+  "needsAttention": "Needs attention",
   "@quickActions": {
     "description": "Text from Text in driver_profile_screen.dart"
   },
@@ -1971,10 +1968,6 @@
   },
   "newMember": "New member",
   "@newMember": {
-    "description": "Text from Text in profile_screen.dart"
-  },
-  "verifiedInfo": "Verified Info",
-  "@verifiedInfo": {
     "description": "Text from Text in profile_screen.dart"
   },
   "verified": "Verified",
@@ -2891,6 +2884,10 @@
     "description": "Text from Text in driver_view_ride_screen.dart"
   },
   "keepRide": "Keep Ride",
+  "cancelBooking": "Cancel booking",
+  "cancelBookingConfirm": "Are you sure you want to cancel your booking? Cancellation policies may apply.",
+  "bookingCancelledRefundPending": "Booking cancelled - refund will be processed within 5-10 business days.",
+  "bookingCancelledNoRefund": "Booking cancelled - no refund applies as the ride had already started.",
   "@keepRide": {
     "description": "Text from Text in driver_view_ride_screen.dart"
   },
@@ -3410,10 +3407,6 @@
   "@value13": {
     "description": "Text from Text in ride_search_screen.dart"
   },
-  "verifiedDriver2": "Verified driver",
-  "@verifiedDriver2": {
-    "description": "Text from _buildToggleChip.label in ride_search_screen.dart"
-  },
   "musicAllowed": "Music allowed",
   "@musicAllowed": {
     "description": "Text from _buildToggleChip.label in ride_search_screen.dart"
@@ -3832,8 +3825,6 @@
   "chooseWhenYouWantToTravel": "Choose when you want to travel",
   "findAndBook": "Find & Book",
   "browseAvailableRidesAndBook": "Browse available rides and book instantly",
-  "verifiedDrivers": "Verified Drivers",
-  "allDriversAreVerified": "All drivers are verified for your safety and comfort",
   "locationGateDescription": "Enable location to discover rides near you, get accurate pickup times, and navigate safely.",
   "locationBenefitFind": "Find rides near your location",
   "locationBenefitNavigate": "Get turn-by-turn navigation",
@@ -4336,6 +4327,59 @@
   "waitingForConfirmation": "Waiting for the driver to confirm your booking. You'll be notified as soon as they respond.",
   "completePaymentMessage": "Complete your payment to confirm the ride.",
   "processingPaymentLoading": "Processing payment...",
+  "paymentRefundAssurance": "Full refund if your driver cancels or doesn't show up",
+  "refundPolicyLinkLabel": "Refund Policy",
+  "searchErrorMissingLocations": "Enter both pickup and destination",
+  "searchErrorSameLocation": "Pickup and destination can't be the same",
+  "searchErrorPastDate": "Pick a date from today onward",
+  "searchErrorInvalidSeats": "Seats must be between 1 and 4",
+  "paymentFinalizing": "Finalizing your payment…",
+  "themeSystem": "Match system",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "bookingRequestExpired": "This request expired before the driver responded.",
+  "bookingRequestSearchAgain": "Search rides again",
+  "opsConsoleTitle": "Ops console",
+  "tabOverview": "Overview",
+  "tabRides": "Rides",
+  "tabPeople": "People",
+  "kpiRidesToday": "Rides today",
+  "kpiBookingsCompleted": "Bookings completed (7d)",
+  "kpiPaymentVolume": "Volume (7d)",
+  "kpiNewUsers": "New users (7d)",
+  "kpiOpenDisputes": "Open disputes",
+  "kpiCancellationRate": "Cancellation rate",
+  "sectionLiveNow": "Live now",
+  "sectionUpcoming": "Upcoming",
+  "sectionCompleted": "Completed",
+  "sectionCancelled": "Cancelled",
+  "peopleSearchHint": "Search people by username",
+  "actionSuspendUser": "Suspend user",
+  "actionReinstateUser": "Reinstate user",
+  "actionGrantPremium": "Grant premium",
+  "actionRevokePremium": "Revoke premium",
+  "actionCancelRide": "Cancel ride",
+  "tabMoney": "Money",
+  "tabMore": "More",
+  "noResults": "No results",
+  "paymentsTitle": "Payments",
+  "refundsQueue": "Refund queue",
+  "reportsQueue": "Reports",
+  "supportInbox": "Support inbox",
+  "broadcastPush": "Send push",
+  "platformSettings": "Platform settings",
+  "auditLog": "Audit log",
+  "markResolved": "Mark resolved",
+  "pushTargetUid": "Target user UID",
+  "pushTitleHint": "Notification title",
+  "pushBodyHint": "Notification body",
+  "commissionPercent": "Commission %",
+  "refundWindowDays": "Refund window (days)",
+  "maintenanceMode": "Maintenance mode",
+  "configSaved": "Saved",
+  "approve": "Approve",
+  "reject": "Reject",
+  "sendPushAction": "Send push",
   "completePaymentButton": "Complete Payment",
   "expiresInLabel": "Expires in",
   "cancelRequestButton": "Cancel Request",
@@ -4567,6 +4611,66 @@
   "timeNow": "now",
   "creatingChatLabel": "Creating chat",
   "failedToCreateChatTryAgain": "Failed to create chat. Please try again.",
+  "connectionSharedRide": "Shared ride · {name}",
+  "@connectionSharedRide": {
+    "description": "Context badge on a person card and chat header when a shared ride connects the users",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectionSharedEvent": "Same event · {name}",
+  "@connectionSharedEvent": {
+    "description": "Context badge on a person card and chat header when a shared event connects the users",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "peopleNoSharedContext": "No shared rides or events yet",
+  "chatLockedTitle": "Messaging unlocks after you share a ride or event",
+  "chatLockedBody": "This keeps SportConnect spam-free. Join a ride or event together and you can message right away.",
+  "chatLockedBrowseRides": "Browse rides",
+  "chatLockedViewProfile": "View {name}'s profile",
+  "@chatLockedViewProfile": {
+    "description": "Secondary action in the locked-chat panel",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "warmStartRide": "You both rode in {name}",
+  "@warmStartRide": {
+    "description": "Pill above the first messages of a newly connected private chat",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "warmStartEvent": "You both attended {name}",
+  "@warmStartEvent": {
+    "description": "Pill above the first messages of a newly connected private chat",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileMessageGateReason": "You can message {name} once you've shared a ride or attended the same event.",
+  "@profileMessageGateReason": {
+    "description": "Inline reason under the disabled message affordance on a profile with no connection",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chatSendNetworkRetry": "Couldn't send. Tap to retry.",
+  "chatOpenNetworkRetry": "Couldn't open the chat. Check your connection.",
   "reportUser": "Report User",
   "blockUser": "Block User",
   "blockUserDialogTitle": "Block User",
@@ -6829,3 +6933,7 @@
   "endsLabel": "Ends",
   "setEndDate": "Set end date"
 }
+
+
+
+

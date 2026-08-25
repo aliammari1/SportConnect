@@ -433,7 +433,7 @@ class _SecurityPanel extends StatelessWidget {
         children: [
           GlassPanel(
             padding: EdgeInsets.all(18.w),
-            color: Colors.white.withValues(alpha: 0.72),
+            color: AppColors.surface.withValues(alpha: 0.72),
             borderColor: AppColors.primary.withValues(alpha: 0.18),
             child: Icon(
               isSuccess

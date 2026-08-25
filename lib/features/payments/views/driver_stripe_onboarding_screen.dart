@@ -20,7 +20,6 @@ import 'package:sport_connect/l10n/generated/app_localizations.dart';
 const _ink = Color(0xFF062015);
 const _muted = Color(0xFF607466);
 const _border = Color(0xFFDCEADF);
-const _screenBg = Color(0xFFF6FBF7);
 const _primaryGreen = Color(0xFF13A35B);
 const _deepGreen = Color(0xFF087A3D);
 const _mintGreen = Color(0xFF5CCF88);
@@ -244,11 +243,13 @@ class _DriverStripeOnboardingScreenState extends ConsumerState<DriverStripeOnboa
       body: MaxWidthContainer(
         maxWidth: kMaxWidthForm,
         child: Container(
-          decoration: const BoxDecoration(
+          // Page chrome tracks the app theme; the Stripe-branded light cards
+          // below stay light inside it (see balance card / success header).
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [_screenBg, Colors.white],
+              colors: [AppColors.background, AppColors.surface],
             ),
           ),
           child: SafeArea(child: child),
@@ -534,7 +535,7 @@ class _DriverStripeOnboardingScreenState extends ConsumerState<DriverStripeOnboa
         Text(
           'Why drivers love payouts on\nSportConnect',
           style: TextStyle(
-            color: _ink,
+            color: AppColors.textPrimary,
             fontSize: 18.sp,
             height: 1.18,
             fontWeight: FontWeight.w900,
@@ -549,7 +550,7 @@ class _DriverStripeOnboardingScreenState extends ConsumerState<DriverStripeOnboa
               children: [
                 Icon(
                   Icons.check_circle_outline_rounded,
-                  color: _ink,
+                  color: AppColors.textPrimary,
                   size: 18.sp,
                 ),
                 SizedBox(width: 10.w),
@@ -557,7 +558,7 @@ class _DriverStripeOnboardingScreenState extends ConsumerState<DriverStripeOnboa
                   child: Text(
                     item,
                     style: TextStyle(
-                      color: const Color(0xFF34415F),
+                      color: AppColors.textSecondary,
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -595,7 +596,7 @@ class _DriverStripeOnboardingScreenState extends ConsumerState<DriverStripeOnboa
                   Text(
                     l10n.heres_what_youll_need_to_get_set_up,
                     style: TextStyle(
-                      color: _muted,
+                      color: AppColors.textSecondary,
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -705,7 +706,7 @@ class _DriverStripeOnboardingScreenState extends ConsumerState<DriverStripeOnboa
                   textAlign: TextAlign.center,
                   text: TextSpan(
                     style: TextStyle(
-                      color: _muted,
+                      color: AppColors.textSecondary,
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -796,7 +797,18 @@ class _DriverStripeOnboardingScreenState extends ConsumerState<DriverStripeOnboa
                 end: const Offset(1, 1),
               ),
               SizedBox(height: 24.h),
-              Text(l10n.payouts_ready, style: _titleStyle(27)),
+              // Success header is a Stripe-branded light section that stays
+              // light in dark mode, so its title pins to the light-UI ink
+              // instead of the theme-flipping [_titleStyle].
+              Text(
+                l10n.payouts_ready,
+                style: TextStyle(
+                  color: _ink,
+                  fontSize: 27.sp,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
+              ),
               SizedBox(height: 8.h),
               Text(
                 l10n.your_account_is_connected_and_yourenall_set_to_receive_earnings,
@@ -979,7 +991,7 @@ class _StickyFooter extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 14.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -1077,7 +1089,7 @@ class _PoweredByStripe extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(l10n.powered_by, style: _labelStyle(_muted)),
+        Text(l10n.powered_by, style: _labelStyle(AppColors.textSecondary)),
         SizedBox(width: 5.w),
         Text(
           'stripe',
@@ -1352,18 +1364,18 @@ class _TimeChip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 9.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F3FA),
+        color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(999.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.schedule_rounded, size: 15.sp, color: _ink),
+          Icon(Icons.schedule_rounded, size: 15.sp, color: AppColors.textPrimary),
           SizedBox(width: 7.w),
           Text(
             l10n.takes_about_3_minutes,
             style: TextStyle(
-              color: _ink,
+              color: AppColors.textPrimary,
               fontSize: 12.sp,
               fontWeight: FontWeight.w800,
             ),
@@ -1448,7 +1460,7 @@ class _ChecklistRow extends StatelessWidget {
           ),
           Icon(
             Icons.chevron_right_rounded,
-            color: const Color(0xFF7481A6),
+            color: AppColors.textTertiary,
             size: 24.sp,
           ),
         ],
@@ -1467,9 +1479,9 @@ class _SecurityCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FBFF),
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(23.r),
-        border: Border.all(color: _border),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
@@ -1543,14 +1555,14 @@ class _SecurityBadge extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 9.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(999.r),
-        border: Border.all(color: _border),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: _ink, size: 14.sp),
+          Icon(icon, color: AppColors.textPrimary, size: 14.sp),
           SizedBox(width: 5.w),
           Flexible(
             child: Text(
@@ -1558,7 +1570,7 @@ class _SecurityBadge extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: _ink,
+                color: AppColors.textPrimary,
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w700,
               ),
@@ -1660,9 +1672,9 @@ class _InfoCard extends StatelessWidget {
       width: double.infinity,
       padding: padding ?? EdgeInsets.all(15.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(21.r),
-        border: Border.all(color: _border),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.035),
@@ -1863,7 +1875,7 @@ class _SparklinePainter extends CustomPainter {
 
 TextStyle _titleStyle(double fontSize) {
   return TextStyle(
-    color: _ink,
+    color: AppColors.textPrimary,
     fontSize: fontSize.sp,
     fontWeight: FontWeight.w900,
     letterSpacing: 0,
@@ -1872,7 +1884,7 @@ TextStyle _titleStyle(double fontSize) {
 
 TextStyle _cardTitleStyle() {
   return TextStyle(
-    color: _ink,
+    color: AppColors.textPrimary,
     fontSize: 14.sp,
     fontWeight: FontWeight.w900,
   );
@@ -1880,7 +1892,7 @@ TextStyle _cardTitleStyle() {
 
 TextStyle _captionStyle() {
   return TextStyle(
-    color: _muted,
+    color: AppColors.textSecondary,
     fontSize: 11.sp,
     height: 1.35,
     fontWeight: FontWeight.w600,

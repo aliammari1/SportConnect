@@ -557,7 +557,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               excludeSemantics: true,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: AppColors.surface.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(14.r),
                 ),
                 child: const Center(
@@ -801,11 +801,11 @@ class _GoogleButton extends StatelessWidget {
     child: OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14.r),
         ),
-        side: const BorderSide(color: Color(0xFF747775)),
+        side: BorderSide(color: AppColors.border),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -822,7 +822,7 @@ class _GoogleButton extends StatelessWidget {
               fontFamily: 'Roboto',
               fontSize: 14.sp,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF1F1F1F),
+              color: AppColors.textPrimary,
             ),
           ),
         ],

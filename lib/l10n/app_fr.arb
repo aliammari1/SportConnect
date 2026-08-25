@@ -1386,10 +1386,6 @@
   "@levelValue": {
     "description": "Text from Text in achievements_screen.dart"
   },
-  "verifiedDriver": "Conducteur vérifié",
-  "@verifiedDriver": {
-    "description": "Text from Text in driver_profile_screen.dart"
-  },
   "rating": "Évaluation",
   "@rating": {
     "description": "Text from _buildQuickStat in driver_profile_screen.dart"
@@ -1411,6 +1407,8 @@
     "description": "Text from _buildQuickStat in driver_profile_screen.dart"
   },
   "quickActions": "Actions rapides",
+  "needsAttention": "À traiter",
+  "needsAttention": "À traiter",
   "@quickActions": {
     "description": "Text from Text in driver_profile_screen.dart"
   },
@@ -1903,10 +1901,6 @@
   },
   "newMember": "Nouveau membre",
   "@newMember": {
-    "description": "Text from Text in profile_screen.dart"
-  },
-  "verifiedInfo": "Informations vérifiées",
-  "@verifiedInfo": {
     "description": "Text from Text in profile_screen.dart"
   },
   "verified": "Vérifié",
@@ -2817,6 +2811,10 @@
     "description": "Text from Text in driver_view_ride_screen.dart"
   },
   "keepRide": "Garder le trajet",
+  "cancelBooking": "Annuler la réservation",
+  "cancelBookingConfirm": "Voulez-vous vraiment annuler votre réservation ? Des conditions d'annulation peuvent s'appliquer.",
+  "bookingCancelledRefundPending": "Réservation annulée - le remboursement sera traité sous 5 à 10 jours ouvrés.",
+  "bookingCancelledNoRefund": "Réservation annulée - aucun remboursement ne s'applique car le trajet avait déjà commencé.",
   "@keepRide": {
     "description": "Text from Text in driver_view_ride_screen.dart"
   },
@@ -3321,10 +3319,6 @@
   "@value13": {
     "description": "Text from Text in ride_search_screen.dart"
   },
-  "verifiedDriver2": "Conducteur vérifié",
-  "@verifiedDriver2": {
-    "description": "Text from _buildToggleChip.label in ride_search_screen.dart"
-  },
   "musicAllowed": "Musique autorisée",
   "@musicAllowed": {
     "description": "Text from _buildToggleChip.label in ride_search_screen.dart"
@@ -3743,8 +3737,6 @@
   "chooseWhenYouWantToTravel": "Choisissez quand vous voulez voyager",
   "findAndBook": "Trouver et réserver",
   "browseAvailableRidesAndBook": "Parcourez les trajets disponibles et réservez",
-  "verifiedDrivers": "Conducteurs vérifiés",
-  "allDriversAreVerified": "Tous les conducteurs sont vérifiés pour votre sécurité",
   "locationGateDescription": "Activez la localisation pour découvrir des trajets près de vous, obtenir des horaires de prise en charge précis et naviguer en toute sécurité.",
   "locationBenefitFind": "Trouvez des trajets près de votre position",
   "locationBenefitNavigate": "Obtenez une navigation étape par étape",
@@ -4235,6 +4227,59 @@
   "waitingForConfirmation": "En attente de la confirmation du conducteur. Vous serez notifié dès qu'il répondra.",
   "completePaymentMessage": "Complétez votre paiement pour confirmer le trajet.",
   "processingPaymentLoading": "Traitement du paiement...",
+  "paymentRefundAssurance": "Remboursement intégral si votre conducteur annule ou ne se présente pas",
+  "refundPolicyLinkLabel": "Politique de remboursement",
+  "searchErrorMissingLocations": "Saisissez le départ et la destination",
+  "searchErrorSameLocation": "Le départ et la destination ne peuvent pas être identiques",
+  "searchErrorPastDate": "Choisissez une date à partir d'aujourd'hui",
+  "searchErrorInvalidSeats": "Les places doivent être entre 1 et 4",
+  "paymentFinalizing": "Finalisation de votre paiement…",
+  "themeSystem": "Selon le système",
+  "themeLight": "Clair",
+  "themeDark": "Sombre",
+  "bookingRequestExpired": "Cette demande a expiré sans réponse du conducteur.",
+  "bookingRequestSearchAgain": "Rechercher d'autres trajets",
+  "opsConsoleTitle": "Console d'administration",
+  "tabOverview": "Aperçu",
+  "tabRides": "Trajets",
+  "tabPeople": "Personnes",
+  "kpiRidesToday": "Trajets aujourd'hui",
+  "kpiBookingsCompleted": "Réservations terminées (7j)",
+  "kpiPaymentVolume": "Volume (7j)",
+  "kpiNewUsers": "Nouveaux utilisateurs (7j)",
+  "kpiOpenDisputes": "Litiges ouverts",
+  "kpiCancellationRate": "Taux d'annulation",
+  "sectionLiveNow": "En cours",
+  "sectionUpcoming": "À venir",
+  "sectionCompleted": "Terminés",
+  "sectionCancelled": "Annulés",
+  "peopleSearchHint": "Rechercher des personnes par pseudo",
+  "actionSuspendUser": "Suspendre l'utilisateur",
+  "actionReinstateUser": "Réactiver l'utilisateur",
+  "actionGrantPremium": "Accorder premium",
+  "actionRevokePremium": "Retirer premium",
+  "actionCancelRide": "Annuler le trajet",
+  "tabMoney": "Finances",
+  "tabMore": "Plus",
+  "noResults": "Aucun résultat",
+  "paymentsTitle": "Paiements",
+  "refundsQueue": "File de remboursements",
+  "reportsQueue": "Signalements",
+  "supportInbox": "Boîte support",
+  "broadcastPush": "Envoyer une notification",
+  "platformSettings": "Paramètres plateforme",
+  "auditLog": "Journal d'audit",
+  "markResolved": "Marquer résolu",
+  "pushTargetUid": "UID de l'utilisateur cible",
+  "pushTitleHint": "Titre de la notification",
+  "pushBodyHint": "Corps de la notification",
+  "commissionPercent": "Commission %",
+  "refundWindowDays": "Fenêtre de remboursement (jours)",
+  "maintenanceMode": "Mode maintenance",
+  "configSaved": "Enregistré",
+  "approve": "Approuver",
+  "reject": "Refuser",
+  "sendPushAction": "Envoyer la notification",
   "completePaymentButton": "Compléter le paiement",
   "expiresInLabel": "Expire dans",
   "cancelRequestButton": "Annuler la demande",
@@ -4466,6 +4511,18 @@
   "timeNow": "maintenant",
   "creatingChatLabel": "Création de la discussion",
   "failedToCreateChatTryAgain": "Impossible de créer la discussion. Veuillez réessayer.",
+  "connectionSharedRide": "Trajet partagé · {name}",
+  "connectionSharedEvent": "Même événement · {name}",
+  "peopleNoSharedContext": "Aucun trajet ou événement en commun pour l'instant",
+  "chatLockedTitle": "La messagerie se débloque après un trajet ou un événement en commun",
+  "chatLockedBody": "Cela permet de garder SportConnect sans spam. Participez ensemble à un trajet ou à un événement et vous pourrez discuter aussitôt.",
+  "chatLockedBrowseRides": "Voir les trajets",
+  "chatLockedViewProfile": "Voir le profil de {name}",
+  "warmStartRide": "Vous avez fait le trajet {name} ensemble",
+  "warmStartEvent": "Vous avez participé à {name} ensemble",
+  "profileMessageGateReason": "Vous pourrez écrire à {name} après avoir partagé un trajet ou participé au même événement.",
+  "chatSendNetworkRetry": "Envoi impossible. Touchez pour réessayer.",
+  "chatOpenNetworkRetry": "Impossible d'ouvrir la discussion. Vérifiez votre connexion.",
   "reportUser": "Signaler l'utilisateur",
   "blockUser": "Bloquer l'utilisateur",
   "blockUserDialogTitle": "Bloquer l'utilisateur",
@@ -6711,3 +6768,7 @@
   "endsLabel": "Fin",
   "setEndDate": "Définir une date de fin"
 }
+
+
+
+

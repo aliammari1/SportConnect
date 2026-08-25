@@ -253,6 +253,10 @@ class AdaptiveReactiveTextField extends StatelessWidget {
       textInputAction: textInputAction,
       validationMessages: validationMessages,
       obscureText: obscureText,
+      keyboardAppearance:
+          Theme.of(context).brightness == Brightness.dark
+          ? Brightness.dark
+          : Brightness.light,
       autofillHints: autofillHints,
       textCapitalization: textCapitalization,
       textAlign: textAlign,

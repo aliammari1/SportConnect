@@ -9,10 +9,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sport_connect/core/theme/app_colors.dart';
 import 'package:sport_connect/core/theme/platform_adaptive.dart';
+import 'package:sport_connect/core/utils/responsive_utils.dart';
 import 'package:sport_connect/core/widgets/premium_button.dart';
 import 'package:sport_connect/features/rides/view_models/ride_view_model.dart';
 import 'package:sport_connect/l10n/generated/app_localizations.dart';
-import 'package:sport_connect/core/utils/responsive_utils.dart';
 
 /// Cancellation reason selection screen.
 ///
@@ -405,7 +405,7 @@ class CancellationReasonScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary.withValues(alpha: 0.06)
-              : Colors.white,
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.border,
@@ -525,8 +525,7 @@ class _CancellationCommentFieldState extends State<_CancellationCommentField> {
   Widget build(BuildContext context) {
     return TextField(
       controller: _controller,
-      onChanged: (value) => widget
-          .ref
+      onChanged: (value) => widget.ref
           .read(cancellationReasonViewModelProvider(widget.rideId).notifier)
           .updateComment(value),
       maxLines: 3,
@@ -539,18 +538,18 @@ class _CancellationCommentFieldState extends State<_CancellationCommentField> {
           color: AppColors.textTertiary,
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.inputFill,
         counterStyle: TextStyle(
           fontSize: 11.sp,
           color: AppColors.textTertiary,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.divider),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.divider),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
