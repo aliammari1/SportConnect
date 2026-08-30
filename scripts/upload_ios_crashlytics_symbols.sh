@@ -3,8 +3,17 @@ set -euo pipefail
 
 ROOT_DIR="${1:-$(pwd)}"
 GOOGLE_SERVICE_INFO_PLIST="$ROOT_DIR/ios/Runner/GoogleService-Info.plist"
-# Swift Package Manager checks Firebase out into the build's SourcePackages dir.
-UPLOAD_SYMBOLS="$ROOT_DIR/build/ios/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols"
+# Xcode checks Firebase out into DerivedData's SourcePackages dir; fall back to
+# build/ios for builds that pass a custom -clonedSourcePackagesDirPath.
+UPLOAD_SYMBOLS=""
+for candidate in \
+  "$HOME/Library/Developer/Xcode/DerivedData"/Runner-*/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols \
+  "$ROOT_DIR/build/ios/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols"; do
+  if [[ -x "$candidate" ]]; then
+    UPLOAD_SYMBOLS="$candidate"
+    break
+  fi
+done
 ARCHIVE_ROOT="$ROOT_DIR/build/ios/archive"
 
 if [[ ! -f "$GOOGLE_SERVICE_INFO_PLIST" ]]; then
