@@ -76,6 +76,16 @@
 	<string>SportConnect uses your camera to take profile photos and attach images in chat. Photos are only uploaded when you explicitly choose to share them.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SportConnect needs your location to find nearby rides, show live trip progress, and detect pickup and dropoff arrival.</string>
+	<!--
+	  Do NOT add NSLocationAlwaysAndWhenInUseUsageDescription or
+	  NSLocationAlwaysUsageDescription here. geolocator_apple compiles a
+	  requestAlwaysAuthorization path that fires if either key exists, and the
+	  old CocoaPods BYPASS_PERMISSION_LOCATION_ALWAYS=1 macro (which disabled
+	  that path) is gone with the Swift Package Manager migration. If Always
+	  location is ever needed, vendor geolocator_apple and add
+	  .define("BYPASS_PERMISSION_LOCATION_ALWAYS", to: "1") to its Package.swift
+	  cSettings instead.
+	-->
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>SportConnect accesses your photo library to attach images in chat and update your profile picture. Photos are only uploaded when you explicitly choose to share them.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

@@ -15,14 +15,12 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-      cocoapods: default
       vars:
         FLUTTER_BUILD_MODE: debug
 
     cache:
       cache_paths:
         - $HOME/.pub-cache
-        - $HOME/Library/Caches/CocoaPods
         - $HOME/Library/Developer/Xcode/DerivedData
 
     triggering:
@@ -44,9 +42,6 @@ workflows:
 
           echo "Xcode:"
           xcodebuild -version
-
-          echo "CocoaPods:"
-          pod --version || true
 
           echo "Available simulators:"
           xcrun simctl list devices available | head -80
@@ -77,14 +72,6 @@ workflows:
           dart run build_runner build \
             --delete-conflicting-outputs \
             --build-filter=lib/core/config/environment.g.dart
-
-      - name: Install iOS pods
-        script: |
-          set -euo pipefail
-
-          cd ios
-          pod install
-          cd ..
 
       - name: Build iOS simulator app
         script: |

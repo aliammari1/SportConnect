@@ -3,7 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="${1:-$(pwd)}"
 GOOGLE_SERVICE_INFO_PLIST="$ROOT_DIR/ios/Runner/GoogleService-Info.plist"
-UPLOAD_SYMBOLS="$ROOT_DIR/ios/Pods/FirebaseCrashlytics/upload-symbols"
+# Swift Package Manager checks Firebase out into the build's SourcePackages dir.
+UPLOAD_SYMBOLS="$ROOT_DIR/build/ios/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols"
 ARCHIVE_ROOT="$ROOT_DIR/build/ios/archive"
 
 if [[ ! -f "$GOOGLE_SERVICE_INFO_PLIST" ]]; then
@@ -12,7 +13,7 @@ if [[ ! -f "$GOOGLE_SERVICE_INFO_PLIST" ]]; then
 fi
 
 if [[ ! -x "$UPLOAD_SYMBOLS" ]]; then
-  echo "::error file=ios/Pods/FirebaseCrashlytics/upload-symbols::Crashlytics upload-symbols script is missing. Run pod install via flutter build first."
+  echo "::error file=scripts/upload_ios_crashlytics_symbols.sh::Crashlytics upload-symbols script is missing. Run 'flutter build ipa' first so SPM checks out firebase-ios-sdk."
   exit 1
 fi
 
