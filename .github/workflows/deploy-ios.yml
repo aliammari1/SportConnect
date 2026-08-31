@@ -31,6 +31,8 @@ jobs:
       APP_STORE_APPLE_ID:               ${{ secrets.APP_STORE_APP_ID }}
       # ── Primary app bundle ID ─────────────────────────────────────────────
       IOS_BUNDLE_ID:                    com.sportconnect.SportConnectApplication
+      # Compile out geolocator_apple's unused Always authorization API.
+      BYPASS_PERMISSION_LOCATION_ALWAYS: "1"
 
     steps:
       # ── Source ──────────────────────────────────────────────────────────────
